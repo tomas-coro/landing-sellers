@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
-const { formattaStato, validaClienteForm, classeUrgenza } = require('../js/validators.js');
+const { formattaStato, validaClienteForm, classeUrgenza, giorniResiduiCestino } = require('../js/validators.js');
 
 test('formattaStato traduce ogni stato in etichetta italiana', () => {
   assert.strictEqual(formattaStato('contattato'), 'Contattato');
@@ -62,4 +62,19 @@ test('classeUrgenza segnala vicino per oggi e fino a 3 giorni', () => {
 test('classeUrgenza ritorna vuoto oltre i 3 giorni', () => {
   const oggi = new Date('2026-08-31T10:00:00');
   assert.strictEqual(classeUrgenza('2026-09-04', oggi), '');
+});
+
+test('giorniResiduiCestino ritorna 30 il giorno stesso della cancellazione', () => {
+  const oggi = new Date('2026-09-01T10:00:00');
+  assert.strictEqual(giorniResiduiCestino('2026-09-01T09:00:00', oggi), 30);
+});
+
+test('giorniResiduiCestino conta i giorni trascorsi', () => {
+  const oggi = new Date('2026-09-30T10:00:00');
+  assert.strictEqual(giorniResiduiCestino('2026-09-01T09:00:00', oggi), 1);
+});
+
+test('giorniResiduiCestino non va mai sotto zero oltre i 30 giorni', () => {
+  const oggi = new Date('2026-10-05T10:00:00');
+  assert.strictEqual(giorniResiduiCestino('2026-09-01T09:00:00', oggi), 0);
 });
