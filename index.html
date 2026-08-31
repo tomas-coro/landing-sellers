@@ -67,6 +67,9 @@
       <div class="brandbar">
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
         <div style="display:flex;gap:8px">
+          <button class="iconbtn" @click="apriCestino()" aria-label="Cestino">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
           <button class="iconbtn" @click="controllaAggiornamenti()" aria-label="Controlla aggiornamenti">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
           </button>
@@ -306,6 +309,37 @@
           </div>
         </template>
         <p x-show="note.length === 0" style="color:var(--muted);font-size:13.5px">Nessuna nota ancora.</p>
+      </div>
+    </div>
+
+    <!-- CESTINO -->
+    <div x-show="view === 'cestino'">
+      <div class="brandbar">
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+      </div>
+      <div class="topbar">
+        <button type="button" class="linkback" @click="view = 'lista'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Torna alla lista
+        </button>
+        <h1 style="font-size:19px">Cestino</h1>
+      </div>
+      <div class="content">
+        <p x-show="erroreCestino" x-text="erroreCestino" class="err" style="margin-bottom:14px"></p>
+
+        <template x-for="cliente in cestino" :key="cliente.id">
+          <div class="card-cliente">
+            <div class="cc-top">
+              <strong x-text="cliente.nome"></strong>
+              <button type="button" class="btn btn-ghost" style="width:auto;padding:8px 14px;font-size:12.5px" @click="ripristinaCliente(cliente.id)">Ripristina</button>
+            </div>
+            <span class="cc-next">Eliminato il <span x-text="formattaData(cliente.cancellato_il)"></span> - rimosso tra <span x-text="giorniResiduiCestino(cliente.cancellato_il)"></span> giorni</span>
+          </div>
+        </template>
+
+        <div x-show="cestino.length === 0 && !erroreCestino" class="empty">
+          <div class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></div>
+          <p>Cestino vuoto.<br>I clienti eliminati compaiono qui per 30 giorni.</p>
+        </div>
       </div>
     </div>
 
