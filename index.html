@@ -9,16 +9,108 @@
 <!-- TODO: @supabase/supabase-js@2 è un file "dynamically generated" - jsdelivr consiglia di NON usare SRI -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 <script src="js/config.js" defer></script>
+<script src="js/auth-logic.js" defer></script>
 <script src="js/supabase-client.js" defer></script>
+<script src="js/auth.js" defer></script>
+<script src="js/validators.js" defer></script>
+<script src="js/app.js" defer></script>
 <!-- TODO: aggiungere integrity SRI per Alpine.js@3, vedi https://www.jsdelivr.com/package/npm/alpinejs -->
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 </head>
 <body>
-  <div id="app">
-    <!-- Task 6: view login -->
-    <!-- Task 7: view lista clienti -->
-    <!-- Task 8: view nuovo cliente -->
-    <!-- Task 9: view scheda cliente -->
+  <div id="app" x-data="appState()" x-init="init()">
+    <div x-show="view === 'login'">
+      <h1>Venditori Landing Evolution</h1>
+      <form @submit.prevent="fareLogin()">
+        <label>
+          Email
+          <input type="email" x-model="emailInput" required>
+        </label>
+        <label>
+          Password
+          <input type="password" x-model="passwordInput" required>
+        </label>
+        <p x-show="erroreLogin" x-text="erroreLogin" style="color:#b00"></p>
+        <button type="submit">Entra</button>
+      </form>
+    </div>
+
+    <div x-show="view === 'lista'">
+      <header>
+        <h1>I tuoi clienti</h1>
+        <button @click="fareLogout()">Esci</button>
+      </header>
+      <button @click="view = 'nuovo'">+ Nuovo cliente</button>
+      <p x-show="erroreClienti" x-text="erroreClienti" style="color:#b00"></p>
+      <template x-for="cliente in clienti" :key="cliente.id">
+        <div class="card-cliente" @click="apriScheda(cliente.id)">
+          <strong x-text="cliente.nome"></strong>
+          <span x-text="formattaStato(cliente.stato)"></span>
+          <span x-show="cliente.prossimo_contatto" x-text="cliente.prossimo_contatto"></span>
+        </div>
+      </template>
+      <p x-show="clienti.length === 0 && !erroreClienti">Nessun cliente ancora.</p>
+    </div>
+
+    <div x-show="view === 'nuovo'">
+      <h1>Nuovo cliente</h1>
+      <form @submit.prevent="creaCliente()">
+        <label>Nome <input x-model="nuovoClienteForm.nome" required></label>
+        <p x-show="erroriNuovoCliente.nome" x-text="erroriNuovoCliente.nome" style="color:#b00"></p>
+        <label>Referente <input x-model="nuovoClienteForm.referente"></label>
+        <label>Telefono <input x-model="nuovoClienteForm.telefono"></label>
+        <label>Email <input type="email" x-model="nuovoClienteForm.email"></label>
+        <label>P.IVA <input x-model="nuovoClienteForm.piva"></label>
+        <label>IBAN <input x-model="nuovoClienteForm.iban"></label>
+        <label>Importo abbonamento <input type="number" step="0.01" x-model.number="nuovoClienteForm.importo_abbonamento"></label>
+        <p x-show="erroriNuovoCliente.importo_abbonamento" x-text="erroriNuovoCliente.importo_abbonamento" style="color:#b00"></p>
+        <p x-show="erroriNuovoCliente.generale" x-text="erroriNuovoCliente.generale" style="color:#b00"></p>
+        <button type="submit">Salva</button>
+        <button type="button" @click="view = 'lista'">Annulla</button>
+      </form>
+    </div>
+
+    <div x-show="view === 'scheda'">
+      <button @click="view = 'lista'">&larr; Torna alla lista</button>
+      <h1 x-text="clienteSelezionato().nome"></h1>
+      <p x-show="erroreScheda" x-text="erroreScheda" style="color:#b00"></p>
+
+      <dl>
+        <dt>Referente</dt><dd x-text="clienteSelezionato().referente"></dd>
+        <dt>Telefono</dt><dd x-text="clienteSelezionato().telefono"></dd>
+        <dt>Email</dt><dd x-text="clienteSelezionato().email"></dd>
+        <dt>P.IVA</dt><dd x-text="clienteSelezionato().piva"></dd>
+        <dt>IBAN</dt><dd x-text="clienteSelezionato().iban"></dd>
+        <dt>Importo abbonamento</dt><dd x-text="clienteSelezionato().importo_abbonamento"></dd>
+        <dt>Stato</dt><dd x-text="formattaStato(clienteSelezionato().stato)"></dd>
+      </dl>
+
+      <div>
+        <button @click="cambiaStato('contattato')">Contattato</button>
+        <button @click="cambiaStato('brief_mandato')">Brief mandato</button>
+        <button @click="cambiaStato('in_lavorazione')">In lavorazione</button>
+        <button @click="cambiaStato('pubblicato')">Pubblicato</button>
+      </div>
+
+      <a href="https://landingevolution.it/brief.html" target="_blank" rel="noopener">
+        Manda a brief
+      </a>
+
+      <h2>Note</h2>
+      <form @submit.prevent="aggiungiNota()">
+        <textarea x-model="nuovaNotaTesto" placeholder="Scrivi una nota..."></textarea>
+        <button type="submit">Aggiungi nota</button>
+      </form>
+      <template x-for="n in note" :key="n.id">
+        <p x-text="n.testo"></p>
+      </template>
+      <p x-show="note.length === 0">Nessuna nota ancora.</p>
+    </div>
   </div>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js');
+    }
+  </script>
 </body>
 </html>
