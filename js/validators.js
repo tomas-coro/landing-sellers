@@ -10,6 +10,22 @@ function formattaStato(stato) {
   return ETICHETTE_STATO[stato] || stato;
 }
 
+const CLASSE_STATO = {
+  contattato: 'contattato',
+  brief_mandato: 'brief',
+  in_lavorazione: 'lavorazione',
+  pubblicato: 'pubblicato'
+};
+
+function classeStato(stato) {
+  return CLASSE_STATO[stato] || 'contattato';
+}
+
+function formattaData(data) {
+  if (!data) return '';
+  return new Date(data).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
+}
+
 function validaClienteForm(dati) {
   const errori = {};
   if (!dati.nome || !dati.nome.trim()) {
@@ -22,5 +38,5 @@ function validaClienteForm(dati) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { formattaStato, validaClienteForm, ETICHETTE_STATO };
+  module.exports = { formattaStato, validaClienteForm, ETICHETTE_STATO, classeStato, formattaData };
 }
