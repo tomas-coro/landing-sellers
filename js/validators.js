@@ -37,6 +37,15 @@ function formattaEuro(numero) {
     .format(Number(numero) || 0);
 }
 
+function classeUrgenza(prossimoContatto, oggi = new Date()) {
+  if (!prossimoContatto) return '';
+  const soloData = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffGiorni = Math.round((soloData(new Date(prossimoContatto)) - soloData(oggi)) / 86400000);
+  if (diffGiorni < 0) return 'ritardo';
+  if (diffGiorni <= 3) return 'vicino';
+  return '';
+}
+
 function validaClienteForm(dati) {
   const errori = {};
   if (!dati.nome || !dati.nome.trim()) {
@@ -52,5 +61,5 @@ function validaClienteForm(dati) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { formattaStato, validaClienteForm, ETICHETTE_STATO, classeStato, formattaData, formattaMese, formattaEuro };
+  module.exports = { formattaStato, validaClienteForm, ETICHETTE_STATO, classeStato, formattaData, formattaMese, formattaEuro, classeUrgenza };
 }

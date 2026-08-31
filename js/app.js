@@ -18,6 +18,8 @@ function appState() {
     isAdmin: false,
     filtroVenditoreId: '',
     filtroVenditoreNome: '',
+    filtroTesto: '',
+    filtroStato: '',
     nuovoClienteForm: formModuloVuoto(),
     erroriNuovoCliente: {},
     clienteInModificaId: null,
@@ -59,6 +61,8 @@ function appState() {
       const { data: profilo } = await window.supabaseClient
         .from('profili').select('ruolo').eq('id', this.sessione.user.id).single();
       this.isAdmin = profilo?.ruolo === 'admin';
+      this.filtroTesto = '';
+      this.filtroStato = '';
 
       if (this.isAdmin) { await this.caricaDashboardAdmin(); this.view = 'admin'; }
       else { await this.caricaClienti(); this.view = 'lista'; }
@@ -73,7 +77,9 @@ function appState() {
     async caricaClienti() {
       this.erroreClienti = '';
       let query = window.supabaseClient.from('clienti').select('*')
-        .is('cancellato_il', null).order('creato_il', { ascending: false });
+        .is('cancellato_il', null)
+        .order('prossimo_contatto', { ascending: true, nullsFirst: false })
+        .order('creato_il', { ascending: false });
       if (this.isAdmin && this.filtroVenditoreId) {
         query = query.eq('venditore_id', this.filtroVenditoreId);
       } else if (!this.isAdmin) {
@@ -82,6 +88,16 @@ function appState() {
       const { data, error } = await query;
       if (error) { this.erroreClienti = 'Errore nel caricare i clienti: ' + error.message; return; }
       this.clienti = data;
+    },
+
+    clientiFiltrati() {
+      const testo = this.filtroTesto.trim().toLowerCase();
+      return this.clienti.filter(c => {
+        if (this.filtroStato && c.stato !== this.filtroStato) return false;
+        if (!testo) return true;
+        return (c.nome || '').toLowerCase().includes(testo)
+          || (c.referente || '').toLowerCase().includes(testo);
+      });
     },
 
     // --- statistiche venditore (home) ---
@@ -236,6 +252,8 @@ function appState() {
     async apriClientiVenditore(venditoreId, nomeVenditore) {
       this.filtroVenditoreId = venditoreId;
       this.filtroVenditoreNome = nomeVenditore;
+      this.filtroTesto = '';
+      this.filtroStato = '';
       await this.caricaClienti();
       this.view = 'lista';
     },

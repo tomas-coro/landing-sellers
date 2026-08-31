@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
-const { formattaStato, validaClienteForm } = require('../js/validators.js');
+const { formattaStato, validaClienteForm, classeUrgenza } = require('../js/validators.js');
 
 test('formattaStato traduce ogni stato in etichetta italiana', () => {
   assert.strictEqual(formattaStato('contattato'), 'Contattato');
@@ -41,4 +41,25 @@ test('validaClienteForm accetta sito_url https valido', () => {
 test('validaClienteForm accetta sito_url vuoto (campo opzionale)', () => {
   const r = validaClienteForm({ nome: 'X', sito_url: '' });
   assert.strictEqual(r.valido, true);
+});
+
+test('classeUrgenza ritorna vuoto quando non c\'e\' data', () => {
+  assert.strictEqual(classeUrgenza(null), '');
+  assert.strictEqual(classeUrgenza(''), '');
+});
+
+test('classeUrgenza segnala ritardo per date passate', () => {
+  const oggi = new Date('2026-08-31T10:00:00');
+  assert.strictEqual(classeUrgenza('2026-08-30', oggi), 'ritardo');
+});
+
+test('classeUrgenza segnala vicino per oggi e fino a 3 giorni', () => {
+  const oggi = new Date('2026-08-31T10:00:00');
+  assert.strictEqual(classeUrgenza('2026-08-31', oggi), 'vicino');
+  assert.strictEqual(classeUrgenza('2026-09-03', oggi), 'vicino');
+});
+
+test('classeUrgenza ritorna vuoto oltre i 3 giorni', () => {
+  const oggi = new Date('2026-08-31T10:00:00');
+  assert.strictEqual(classeUrgenza('2026-09-04', oggi), '');
 });

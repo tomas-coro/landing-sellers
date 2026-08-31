@@ -101,19 +101,34 @@
           </template>
         </div>
 
-        <template x-for="cliente in clienti" :key="cliente.id">
+        <div class="search-row" x-show="clienti.length > 0">
+          <input type="search" placeholder="Cerca per nome o referente..." aria-label="Cerca clienti per nome o referente" x-model="filtroTesto">
+        </div>
+        <div class="filtro-stati" x-show="clienti.length > 0">
+          <button type="button" class="chip-stato" :class="{ on: filtroStato === '' }" @click="filtroStato = ''">Tutti</button>
+          <template x-for="s in ['contattato','brief_mandato','in_lavorazione','pubblicato']" :key="s">
+            <button type="button" class="chip-stato" :class="{ on: filtroStato === s }" @click="filtroStato = filtroStato === s ? '' : s" x-text="formattaStato(s)"></button>
+          </template>
+        </div>
+
+        <template x-for="cliente in clientiFiltrati()" :key="cliente.id">
           <div class="card-cliente" @click="apriScheda(cliente.id)">
             <div class="cc-top">
               <strong x-text="cliente.nome"></strong>
               <span class="pill" :class="'s-' + classeStato(cliente.stato)"><i></i><span x-text="formattaStato(cliente.stato)"></span></span>
             </div>
-            <span class="cc-next" x-show="cliente.prossimo_contatto">Prossimo contatto: <span x-text="cliente.prossimo_contatto"></span></span>
+            <span class="cc-next" :class="'urg-' + classeUrgenza(cliente.prossimo_contatto)" x-show="cliente.prossimo_contatto">Prossimo contatto: <span x-text="cliente.prossimo_contatto"></span></span>
           </div>
         </template>
 
         <div x-show="clienti.length === 0 && !erroreClienti" class="empty">
           <div class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.7-3.4 3-5.2 5.5-5.2s4.8 1.8 5.5 5.2"/><path d="M16.5 4.8a3.2 3.2 0 0 1 0 6.2"/><path d="M17.5 14.9c2.2.5 3.8 2.2 4.3 5"/></svg></div>
           <p>Nessun cliente ancora.<br>Aggiungi il primo per iniziare a tracciare la pipeline.</p>
+        </div>
+
+        <div x-show="clienti.length > 0 && clientiFiltrati().length === 0 && !erroreClienti" class="empty">
+          <div class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+          <p>Nessun cliente trovato.<br>Prova a cambiare ricerca o filtro.</p>
         </div>
 
         <button x-show="!isAdmin" class="btn btn-lime fab" @click="apriNuovoCliente()">
