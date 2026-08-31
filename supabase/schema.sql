@@ -15,12 +15,33 @@ create table public.clienti (
   email text default '',
   piva text default '',
   iban text default '',
+  sito_url text default '',
   importo_abbonamento numeric default 0,
   stato text not null default 'contattato'
     check (stato in ('contattato', 'brief_mandato', 'in_lavorazione', 'pubblicato')),
   prossimo_contatto date,
-  creato_il timestamptz not null default now()
+  creato_il timestamptz not null default now(),
+  pubblicato_il timestamptz,
+  cancellato_il timestamptz
 );
+
+-- Valorizza pubblicato_il in automatico la prima volta che un cliente
+-- passa a stato 'pubblicato' (serve per raggruppare le vendite per mese).
+create function public.valorizza_pubblicato_il()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.stato = 'pubblicato' and old.stato is distinct from 'pubblicato' and new.pubblicato_il is null then
+    new.pubblicato_il := now();
+  end if;
+  return new;
+end;
+$$;
+
+create trigger trg_valorizza_pubblicato_il
+  before update on public.clienti
+  for each row execute function public.valorizza_pubblicato_il();
 
 create table public.note (
   id uuid primary key default gen_random_uuid(),

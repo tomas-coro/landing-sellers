@@ -26,3 +26,19 @@ test('validaClienteForm segnala importo_abbonamento negativo', () => {
   assert.strictEqual(r.valido, false);
   assert.strictEqual(r.errori.importo_abbonamento, 'L\'importo non può essere negativo');
 });
+
+test('validaClienteForm rifiuta sito_url senza http/https (blocca javascript: e simili)', () => {
+  const r = validaClienteForm({ nome: 'X', sito_url: 'javascript:alert(1)' });
+  assert.strictEqual(r.valido, false);
+  assert.strictEqual(r.errori.sito_url, 'L\'URL deve iniziare con http:// o https://');
+});
+
+test('validaClienteForm accetta sito_url https valido', () => {
+  const r = validaClienteForm({ nome: 'X', sito_url: 'https://cliente.it' });
+  assert.strictEqual(r.valido, true);
+});
+
+test('validaClienteForm accetta sito_url vuoto (campo opzionale)', () => {
+  const r = validaClienteForm({ nome: 'X', sito_url: '' });
+  assert.strictEqual(r.valido, true);
+});

@@ -24,13 +24,24 @@ body{
 }
 ::selection{background:var(--lime);color:var(--ink)}
 :focus-visible{outline:2.5px solid var(--ink);outline-offset:2px;border-radius:4px}
+[x-cloak]{display:none!important}
+
+.update-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:var(--ink);color:var(--paper)}
+.update-bar span{font-size:12.5px;font-weight:700}
+.update-bar .btn{width:auto;padding:8px 14px;font-size:12.5px}
 
 #app{max-width:460px;margin:0 auto;min-height:100vh;background:var(--paper);
   display:flex;flex-direction:column;position:relative}
 
 /* --- brand lockup (dot lime + wordmark), in cima a lista/nuovo/scheda --- */
-.brandbar{flex:none;padding:22px 18px 14px;display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid var(--line)}
+/* sticky + padding-top con la safe-area: da PWA (viewport-fit=cover) il
+   contenuto disegna sotto la barra di stato/notch, senza questo il logo
+   e il titolo scorrono via e finiscono sotto l'orario mentre si scrolla */
+.brandbar{position:sticky;top:0;z-index:20;flex:none;
+  padding:calc(22px + env(safe-area-inset-top)) 18px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--paper);border-bottom:1px solid var(--line)}
 .brand{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:13.5px;letter-spacing:-.01em}
 .brand .bdot{width:9px;height:9px;border-radius:50%;background:var(--lime);flex:none;
   box-shadow:0 0 0 3px rgba(200,255,61,.25)}
@@ -44,7 +55,7 @@ body{
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 14px;flex:none}
 .topbar h1{margin-bottom:0}
 
-.content{flex:1;padding:6px 18px 32px}
+.content{flex:1;padding:6px 18px calc(32px + env(safe-area-inset-bottom))}
 h1{font-size:22px;font-weight:800;letter-spacing:-.01em;margin-bottom:18px}
 h2{font-size:14px;font-weight:800;letter-spacing:-.005em;margin:22px 0 10px}
 
@@ -78,7 +89,7 @@ h2{font-size:14px;font-weight:800;letter-spacing:-.005em;margin:22px 0 10px}
 /* --- login: scenografica, grammatica del sito, un solo elemento memorabile --- */
 .login-stage{
   flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column;
-  justify-content:center;padding:36px 0 28px;
+  justify-content:center;padding:calc(36px + env(safe-area-inset-top)) 0 calc(28px + env(safe-area-inset-bottom));
   background:
     radial-gradient(120% 46% at 50% 0%, rgba(200,255,61,.42) 0%, rgba(200,255,61,0) 60%),
     var(--paper);
@@ -172,6 +183,16 @@ h2{font-size:14px;font-weight:800;letter-spacing:-.005em;margin:22px 0 10px}
 .note-item{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:12px 13px;margin-bottom:8px}
 .note-item p{font-size:13.5px;line-height:1.5}
 .note-item time{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:5px}
+
+/* --- popup conferma eliminazione: sfondo fermo, niente scroll dietro --- */
+.modal-overlay{position:fixed;inset:0;z-index:50;background:rgba(17,17,17,.5);
+  display:flex;align-items:flex-end;justify-content:center;padding:0}
+.modal-card{width:100%;max-width:460px;background:var(--card);border-radius:20px 20px 0 0;
+  padding:24px 20px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -20px 50px -20px rgba(17,17,17,.4)}
+@media (min-width:461px){
+  .modal-overlay{align-items:center}
+  .modal-card{border-radius:var(--radius);margin:0 20px}
+}
 
 @media (min-width:461px){
   body{padding:28px 12px;background:#e5e1d6}

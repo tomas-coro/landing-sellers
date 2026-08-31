@@ -21,7 +21,14 @@
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 </head>
 <body>
-  <div id="app" x-data="appState()" x-init="init()">
+  <div id="app" x-data="appState()" x-init="init()"
+    x-effect="document.body.style.overflow = confermaEliminazione ? 'hidden' : ''">
+
+    <!-- BANNER AGGIORNAMENTO: appare sopra qualunque vista appena il service worker scarica una versione nuova -->
+    <div x-show="aggiornamentoDisponibile" x-cloak class="update-bar">
+      <span>Nuova versione disponibile</span>
+      <button type="button" class="btn btn-lime" @click="aggiornaApp()">Aggiorna</button>
+    </div>
 
     <!-- LOGIN -->
     <div x-show="view === 'login'" class="login-stage">
@@ -59,13 +66,40 @@
     <div x-show="view === 'lista'">
       <div class="brandbar">
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
-        <button class="iconbtn" @click="fareLogout()" aria-label="Esci">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
-        </button>
+        <div style="display:flex;gap:8px">
+          <button class="iconbtn" @click="controllaAggiornamenti()" aria-label="Controlla aggiornamenti">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+          </button>
+          <button class="iconbtn" @click="fareLogout()" aria-label="Esci">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+          </button>
+        </div>
       </div>
-      <div class="topbar"><h1 style="font-size:19px">I tuoi clienti</h1></div>
+      <div class="topbar">
+        <button x-show="isAdmin" type="button" class="linkback" @click="tornaAllaDashboard()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Dashboard
+        </button>
+        <h1 style="font-size:19px" x-text="isAdmin ? filtroVenditoreNome : 'I tuoi clienti'"></h1>
+      </div>
       <div class="content">
         <p x-show="erroreClienti" x-text="erroreClienti" class="err" style="margin-bottom:14px"></p>
+
+        <div class="stack-card" x-show="!isAdmin" style="margin-bottom:16px">
+          <div class="stato-current" style="margin-bottom:0;border:none;padding:0">
+            <span class="lbl">Totale generato</span>
+            <strong style="font-size:19px" x-text="formattaEuro(totaleGenerato())"></strong>
+          </div>
+          <template x-if="andamentoMensile().length > 0">
+            <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+              <template x-for="m in andamentoMensile()" :key="m.chiave">
+                <div style="display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0">
+                  <span style="color:var(--muted);font-weight:600" x-text="m.etichetta"></span>
+                  <span style="font-weight:700"><span x-text="m.conteggio"></span> pubblicati - <span x-text="formattaEuro(m.totale)"></span></span>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
 
         <template x-for="cliente in clienti" :key="cliente.id">
           <div class="card-cliente" @click="apriScheda(cliente.id)">
@@ -82,10 +116,53 @@
           <p>Nessun cliente ancora.<br>Aggiungi il primo per iniziare a tracciare la pipeline.</p>
         </div>
 
-        <button class="btn btn-lime fab" @click="view = 'nuovo'">
+        <button x-show="!isAdmin" class="btn btn-lime fab" @click="apriNuovoCliente()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           Nuovo cliente
         </button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD ADMIN -->
+    <div x-show="view === 'admin'">
+      <div class="brandbar">
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+        <div style="display:flex;gap:8px">
+          <button class="iconbtn" @click="controllaAggiornamenti()" aria-label="Controlla aggiornamenti">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+          </button>
+          <button class="iconbtn" @click="fareLogout()" aria-label="Esci">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="topbar"><h1 style="font-size:19px">Dashboard venditori</h1></div>
+      <div class="content">
+        <p x-show="erroreAdmin" x-text="erroreAdmin" class="err" style="margin-bottom:14px"></p>
+
+        <div class="stack-card" style="margin-bottom:16px">
+          <div class="stato-current" style="margin-bottom:0;border:none;padding:0">
+            <span class="lbl">Totale generato (tutti)</span>
+            <strong style="font-size:19px" x-text="formattaEuro(totaleGeneraleAdmin())"></strong>
+          </div>
+        </div>
+
+        <template x-for="v in venditori" :key="v.id">
+          <div class="card-cliente" @click="apriClientiVenditore(v.id, v.nome)">
+            <div class="cc-top">
+              <strong x-text="v.nome"></strong>
+              <span class="pill s-pubblicato"><i></i><span x-text="formattaEuro(v.totaleGenerato)"></span></span>
+            </div>
+            <span class="cc-next">
+              <span x-text="v.nPubblicati"></span> pubblicati totali - <span x-text="v.nPubblicatiMese"></span> questo mese - <span x-text="v.nClientiTotali"></span> clienti in pipeline
+            </span>
+          </div>
+        </template>
+
+        <div x-show="venditori.length === 0 && !erroreAdmin" class="empty">
+          <div class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.7-3.4 3-5.2 5.5-5.2s4.8 1.8 5.5 5.2"/><path d="M16.5 4.8a3.2 3.2 0 0 1 0 6.2"/><path d="M17.5 14.9c2.2.5 3.8 2.2 4.3 5"/></svg></div>
+          <p>Nessun venditore ancora.</p>
+        </div>
       </div>
     </div>
 
@@ -95,13 +172,13 @@
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
       <div class="topbar">
-        <button class="linkback" type="button" @click="view = 'lista'">
+        <button class="linkback" type="button" @click="view = clienteInModificaId ? 'scheda' : 'lista'">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Annulla
         </button>
       </div>
       <div class="content">
-        <h1>Aggiungi cliente</h1>
-        <form @submit.prevent="creaCliente()">
+        <h1 x-text="clienteInModificaId ? 'Modifica cliente' : 'Aggiungi cliente'"></h1>
+        <form @submit.prevent="salvaCliente()">
           <div class="field">
             <label>Nome *</label>
             <input x-model="nuovoClienteForm.nome" placeholder="Es. Panificio Argento" required>
@@ -128,12 +205,17 @@
             <input x-model="nuovoClienteForm.iban" placeholder="IT00 A000 0000 0000">
           </div>
           <div class="field">
+            <label>URL sito</label>
+            <input type="url" x-model="nuovoClienteForm.sito_url" placeholder="https://cliente.it">
+            <p x-show="erroriNuovoCliente.sito_url" x-text="erroriNuovoCliente.sito_url" class="err"></p>
+          </div>
+          <div class="field">
             <label>Importo abbonamento</label>
             <input type="number" step="0.01" x-model.number="nuovoClienteForm.importo_abbonamento" placeholder="39.00">
             <p x-show="erroriNuovoCliente.importo_abbonamento" x-text="erroriNuovoCliente.importo_abbonamento" class="err"></p>
           </div>
           <p x-show="erroriNuovoCliente.generale" x-text="erroriNuovoCliente.generale" class="err" style="margin-bottom:14px"></p>
-          <button type="submit" class="btn btn-primary">Salva cliente</button>
+          <button type="submit" class="btn btn-primary" x-text="clienteInModificaId ? 'Salva modifiche' : 'Salva cliente'"></button>
         </form>
       </div>
     </div>
@@ -149,7 +231,17 @@
         </button>
       </div>
       <div class="content">
-        <h1 x-text="clienteSelezionato().nome"></h1>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:18px">
+          <h1 style="margin-bottom:0" x-text="clienteSelezionato().nome"></h1>
+          <div style="display:flex;gap:8px;flex:none">
+            <button type="button" class="iconbtn" @click="apriModificaCliente(clienteSelezionatoId)" aria-label="Modifica cliente">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            </button>
+            <button type="button" class="iconbtn" @click="confermaEliminazione = true" aria-label="Elimina cliente">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            </button>
+          </div>
+        </div>
         <p x-show="erroreScheda" x-text="erroreScheda" class="err" style="margin-bottom:14px"></p>
 
         <div class="stato-current">
@@ -174,6 +266,11 @@
           </dl>
         </div>
 
+        <a x-show="clienteSelezionato().sito_url" :href="clienteSelezionato().sito_url" target="_blank" rel="noopener" class="btn btn-ghost" style="margin-bottom:12px">
+          Apri il sito
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
+        </a>
+
         <a href="https://landingevolution.it/brief.html" target="_blank" rel="noopener" class="btn btn-lime" style="margin-bottom:22px">
           Manda a brief
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
@@ -197,11 +294,57 @@
       </div>
     </div>
 
+    <!-- POPUP CONFERMA ELIMINAZIONE -->
+    <div x-show="confermaEliminazione" x-cloak class="modal-overlay" @click.self="confermaEliminazione = false">
+      <div class="modal-card">
+        <h2 style="margin-top:0">Eliminare questo cliente?</h2>
+        <p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:20px">
+          <strong x-text="clienteSelezionato().nome"></strong> sparisce dalle liste. Puoi chiedere di recuperarlo, non e' una cancellazione definitiva dal database.
+        </p>
+        <div class="btn-row">
+          <button type="button" class="btn btn-ghost" @click="confermaEliminazione = false">Annulla</button>
+          <button type="button" class="btn btn-primary" @click="confermaEliminaCliente()">Elimina</button>
+        </div>
+      </div>
+    </div>
+
   </div>
   <script>
+    // Gestione aggiornamento PWA: senza questo, ogni modifica al sito resta
+    // invisibile finche' non si disinstalla e reinstalla l'icona da Safari.
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./service-worker.js');
+      let ricaricaGiaFatta = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (ricaricaGiaFatta) return;
+        ricaricaGiaFatta = true;
+        window.location.reload();
+      });
+
+      navigator.serviceWorker.register('./service-worker.js').then((reg) => {
+        window.leSwRegistration = reg;
+        if (reg.waiting) window.dispatchEvent(new Event('le:aggiornamento-pronto'));
+
+        reg.addEventListener('updatefound', () => {
+          const nuovo = reg.installing;
+          if (!nuovo) return;
+          nuovo.addEventListener('statechange', () => {
+            if (nuovo.state === 'installed' && navigator.serviceWorker.controller) {
+              window.dispatchEvent(new Event('le:aggiornamento-pronto'));
+            }
+          });
+        });
+      });
     }
+
+    window.leAggiornaApp = function () {
+      const reg = window.leSwRegistration;
+      if (reg && reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
+      else window.location.reload();
+    };
+
+    window.leControllaAggiornamenti = function () {
+      if (window.leSwRegistration) window.leSwRegistration.update();
+    };
   </script>
 </body>
 </html>
