@@ -26,6 +26,9 @@ function appState() {
 
     confermaEliminazione: false,
 
+    cestino: [],
+    erroreCestino: '',
+
     note: [],
     nuovaNotaTesto: '',
     erroreScheda: '',
@@ -212,6 +215,34 @@ function appState() {
       this.confermaEliminazione = false;
       await this.caricaClienti();
       this.view = 'lista';
+    },
+
+    async caricaCestino() {
+      this.erroreCestino = '';
+      let query = window.supabaseClient.from('clienti').select('*')
+        .not('cancellato_il', 'is', null)
+        .order('cancellato_il', { ascending: false });
+      if (this.isAdmin && this.filtroVenditoreId) {
+        query = query.eq('venditore_id', this.filtroVenditoreId);
+      } else if (!this.isAdmin) {
+        query = query.eq('venditore_id', this.sessione.user.id);
+      }
+      const { data, error } = await query;
+      if (error) { this.erroreCestino = 'Errore nel caricare il cestino: ' + error.message; return; }
+      this.cestino = data;
+    },
+
+    async apriCestino() {
+      this.view = 'cestino';
+      await this.caricaCestino();
+    },
+
+    async ripristinaCliente(clienteId) {
+      const { error } = await window.supabaseClient.from('clienti')
+        .update({ cancellato_il: null }).eq('id', clienteId);
+      if (error) { this.erroreCestino = 'Ripristino fallito: ' + error.message; return; }
+      await this.caricaCestino();
+      await this.caricaClienti();
     },
 
     // --- dashboard admin ---
