@@ -1,7 +1,8 @@
 // js/app.js
 function formModuloVuoto() {
   return { nome: '', referente: '', telefono: '', email: '',
-    piva: '', iban: '', sito_url: '', importo_abbonamento: null };
+    piva: '', iban: '', sito_url: '', importo_abbonamento: null,
+    nome_pacchetto: '', note_prezzo: '', data_rinnovo: null };
 }
 
 function appState() {
@@ -142,7 +143,9 @@ function appState() {
       this.nuovoClienteForm = {
         nome: c.nome || '', referente: c.referente || '', telefono: c.telefono || '',
         email: c.email || '', piva: c.piva || '', iban: c.iban || '',
-        sito_url: c.sito_url || '', importo_abbonamento: c.importo_abbonamento
+        sito_url: c.sito_url || '', importo_abbonamento: c.importo_abbonamento,
+        nome_pacchetto: c.nome_pacchetto || '', note_prezzo: c.note_prezzo || '',
+        data_rinnovo: c.data_rinnovo || null
       };
       this.erroriNuovoCliente = {};
       this.view = 'nuovo';

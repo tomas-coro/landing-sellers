@@ -232,6 +232,19 @@
             <input type="number" step="0.01" x-model.number="nuovoClienteForm.importo_abbonamento" placeholder="39.00">
             <p x-show="erroriNuovoCliente.importo_abbonamento" x-text="erroriNuovoCliente.importo_abbonamento" class="err"></p>
           </div>
+          <div class="field">
+            <label>Nome pacchetto/piano</label>
+            <input x-model="nuovoClienteForm.nome_pacchetto" placeholder="Es. Sito base">
+          </div>
+          <div class="field">
+            <label>Note prezzo</label>
+            <textarea x-model="nuovoClienteForm.note_prezzo" placeholder="Es. scontato i primi 3 mesi"></textarea>
+          </div>
+          <div class="field">
+            <label>Data rinnovo</label>
+            <input type="date" x-model="nuovoClienteForm.data_rinnovo">
+            <p x-show="erroriNuovoCliente.data_rinnovo" x-text="erroriNuovoCliente.data_rinnovo" class="err"></p>
+          </div>
           <p x-show="erroriNuovoCliente.generale" x-text="erroriNuovoCliente.generale" class="err" style="margin-bottom:14px"></p>
           <button type="submit" class="btn btn-primary" x-text="clienteInModificaId ? 'Salva modifiche' : 'Salva cliente'"></button>
         </form>
