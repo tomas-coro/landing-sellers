@@ -112,7 +112,7 @@ function appState() {
       const segno = this.ordinamentoDesc ? -1 : 1;
       const valore = c => {
         if (campo === 'nome') return (c.nome || '').toLowerCase();
-        if (campo === 'importo') return Number(c.importo_abbonamento) || null;
+        if (campo === 'importo') return c.importo_abbonamento == null ? null : Number(c.importo_abbonamento);
         if (campo === 'prossimo_contatto') return c.prossimo_contatto || null;
         return c.creato_il || null;
       };
