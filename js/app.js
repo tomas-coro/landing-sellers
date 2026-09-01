@@ -229,7 +229,7 @@ function appState() {
       const cliente = this.clienteSelezionato();
       this.schedaAperture = {
         stato: true,
-        pacchetto: !!(cliente.importo_abbonamento || cliente.nome_pacchetto),
+        pacchetto: !!(cliente.importo_abbonamento != null || cliente.nome_pacchetto),
         contatti: false,
         note: true
       };
