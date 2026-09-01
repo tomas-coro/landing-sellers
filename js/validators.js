@@ -47,9 +47,16 @@ function classeUrgenza(prossimoContatto, oggi = new Date()) {
 }
 
 function giorniResiduiCestino(cancellatoIl, oggi = new Date()) {
+  if (!cancellatoIl) return 0;
   const soloData = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const diffGiorni = Math.round((soloData(oggi) - soloData(new Date(cancellatoIl))) / 86400000);
   return Math.max(0, 30 - diffGiorni);
+}
+
+function etichettaGiorniResidui(giorni) {
+  if (giorni === 0) return 'ultimo giorno';
+  if (giorni === 1) return '1 giorno';
+  return `${giorni} giorni`;
 }
 
 function validaClienteForm(dati) {
@@ -67,5 +74,5 @@ function validaClienteForm(dati) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { formattaStato, validaClienteForm, ETICHETTE_STATO, classeStato, formattaData, formattaMese, formattaEuro, classeUrgenza, giorniResiduiCestino };
+  module.exports = { formattaStato, validaClienteForm, ETICHETTE_STATO, classeStato, formattaData, formattaMese, formattaEuro, classeUrgenza, giorniResiduiCestino, etichettaGiorniResidui };
 }

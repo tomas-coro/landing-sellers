@@ -332,7 +332,7 @@
               <strong x-text="cliente.nome"></strong>
               <button type="button" class="btn btn-ghost" style="width:auto;padding:8px 14px;font-size:12.5px" @click="ripristinaCliente(cliente.id)">Ripristina</button>
             </div>
-            <span class="cc-next">Eliminato il <span x-text="formattaData(cliente.cancellato_il)"></span> - rimosso tra <span x-text="giorniResiduiCestino(cliente.cancellato_il)"></span> giorni</span>
+            <span class="cc-next">Eliminato il <span x-text="formattaData(cliente.cancellato_il)"></span> - <span x-text="giorniResiduiCestino(cliente.cancellato_il) === 0 ? 'rimosso: ultimo giorno' : 'rimosso tra ' + etichettaGiorniResidui(giorniResiduiCestino(cliente.cancellato_il))"></span></span>
           </div>
         </template>
 

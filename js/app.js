@@ -233,8 +233,8 @@ function appState() {
     },
 
     async apriCestino() {
-      this.view = 'cestino';
       await this.caricaCestino();
+      this.view = 'cestino';
     },
 
     async ripristinaCliente(clienteId) {
@@ -242,6 +242,7 @@ function appState() {
         .update({ cancellato_il: null }).eq('id', clienteId);
       if (error) { this.erroreCestino = 'Ripristino fallito: ' + error.message; return; }
       await this.caricaCestino();
+      // se questa fallisce, l'errore va in erroreClienti e si vede solo tornando alla vista lista
       await this.caricaClienti();
     },
 

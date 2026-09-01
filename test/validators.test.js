@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
-const { formattaStato, validaClienteForm, classeUrgenza, giorniResiduiCestino } = require('../js/validators.js');
+const { formattaStato, validaClienteForm, classeUrgenza, giorniResiduiCestino, etichettaGiorniResidui } = require('../js/validators.js');
 
 test('formattaStato traduce ogni stato in etichetta italiana', () => {
   assert.strictEqual(formattaStato('contattato'), 'Contattato');
@@ -77,4 +77,21 @@ test('giorniResiduiCestino conta i giorni trascorsi', () => {
 test('giorniResiduiCestino non va mai sotto zero oltre i 30 giorni', () => {
   const oggi = new Date('2026-10-05T10:00:00');
   assert.strictEqual(giorniResiduiCestino('2026-09-01T09:00:00', oggi), 0);
+});
+
+test('giorniResiduiCestino ritorna 0 con input nullo o vuoto', () => {
+  assert.strictEqual(giorniResiduiCestino(null), 0);
+  assert.strictEqual(giorniResiduiCestino(''), 0);
+});
+
+test('etichettaGiorniResidui ritorna "ultimo giorno" per 0', () => {
+  assert.strictEqual(etichettaGiorniResidui(0), 'ultimo giorno');
+});
+
+test('etichettaGiorniResidui ritorna "1 giorno" al singolare', () => {
+  assert.strictEqual(etichettaGiorniResidui(1), '1 giorno');
+});
+
+test('etichettaGiorniResidui ritorna "N giorni" al plurale', () => {
+  assert.strictEqual(etichettaGiorniResidui(5), '5 giorni');
 });
