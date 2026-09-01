@@ -95,3 +95,20 @@ test('etichettaGiorniResidui ritorna "1 giorno" al singolare', () => {
 test('etichettaGiorniResidui ritorna "N giorni" al plurale', () => {
   assert.strictEqual(etichettaGiorniResidui(5), '5 giorni');
 });
+
+test('validaClienteForm accetta data_rinnovo assente', () => {
+  const r = validaClienteForm({ nome: 'X' });
+  assert.strictEqual(r.valido, true);
+  assert.strictEqual(r.errori.data_rinnovo, undefined);
+});
+
+test('validaClienteForm accetta data_rinnovo valida', () => {
+  const r = validaClienteForm({ nome: 'X', data_rinnovo: '2026-12-01' });
+  assert.strictEqual(r.valido, true);
+});
+
+test('validaClienteForm rifiuta data_rinnovo non valida', () => {
+  const r = validaClienteForm({ nome: 'X', data_rinnovo: 'non-una-data' });
+  assert.strictEqual(r.valido, false);
+  assert.strictEqual(r.errori.data_rinnovo, 'La data di rinnovo non è valida');
+});

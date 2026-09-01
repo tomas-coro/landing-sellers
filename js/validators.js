@@ -70,6 +70,9 @@ function validaClienteForm(dati) {
   if (dati.sito_url && dati.sito_url.trim() && !/^https?:\/\//i.test(dati.sito_url.trim())) {
     errori.sito_url = 'L\'URL deve iniziare con http:// o https://';
   }
+  if (dati.data_rinnovo && isNaN(new Date(dati.data_rinnovo).getTime())) {
+    errori.data_rinnovo = 'La data di rinnovo non è valida';
+  }
   return { valido: Object.keys(errori).length === 0, errori };
 }
 

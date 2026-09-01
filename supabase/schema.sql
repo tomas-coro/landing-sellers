@@ -17,6 +17,9 @@ create table public.clienti (
   iban text default '',
   sito_url text default '',
   importo_abbonamento numeric default 0,
+  nome_pacchetto text default '',
+  note_prezzo text default '',
+  data_rinnovo date,
   stato text not null default 'contattato'
     check (stato in ('contattato', 'brief_mandato', 'in_lavorazione', 'pubblicato')),
   prossimo_contatto date,
