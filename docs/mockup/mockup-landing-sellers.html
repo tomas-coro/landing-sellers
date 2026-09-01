@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup - Landing Sellers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F4F1EA;
+    --paper-2:#EFEBE1;
+    --card:#FBFAF6;
+    --ink:#111111;
+    --ink-soft:#3a3a37;
+    --lime:#C8FF3D;
+    --lime-deep:#a9e214;
+    --muted:#6a6a61;
+    --line:#D8D4CB;
+    --radius:14px;
+    --sans:'Montserrat',system-ui,-apple-system,sans-serif;
+    --ease:cubic-bezier(.2,.7,.2,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:var(--sans);background:#e5e1d6;color:var(--ink);
+    -webkit-font-smoothing:antialiased;padding:28px 12px 60px;
+  }
+  ::selection{background:var(--lime);color:var(--ink)}
+  :focus-visible{outline:2.5px solid var(--ink);outline-offset:2px;border-radius:4px}
+
+  /* --- selettore mockup (non fa parte dell'app) --- */
+  .mockup-bar{max-width:412px;margin:0 auto 18px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+  .mockup-bar button{
+    font-family:var(--sans);font-weight:700;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;
+    padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;
+  }
+  .mockup-bar button.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .mockup-label{max-width:412px;margin:0 auto 8px;text-align:center;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+
+  /* --- cornice telefono --- */
+  .phone{
+    max-width:412px;margin:0 auto;background:var(--paper);border-radius:34px;
+    border:8px solid #1a1a18;box-shadow:0 30px 60px -20px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.1);
+    overflow:hidden;min-height:780px;position:relative;
+  }
+  .phone .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:22px;background:#1a1a18;border-radius:0 0 14px 14px;z-index:5}
+  .screen{display:none;flex-direction:column;min-height:780px}
+  .screen.active{display:flex}
+
+  /* --- brand lockup (identico al sito: dot lime + wordmark) --- */
+  .brandbar{flex:none;padding:22px 18px 14px;display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--line)}
+  .brand{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:13.5px;letter-spacing:-.01em}
+  .brand .bdot{width:9px;height:9px;border-radius:50%;background:var(--lime);flex:none;
+    box-shadow:0 0 0 3px rgba(200,255,61,.25)}
+  @media (prefers-reduced-motion:no-preference){.brand .bdot{animation:bdotBeat 2.4s var(--ease) infinite}}
+  @keyframes bdotBeat{0%,100%{transform:scale(1)}50%{transform:scale(1.45)}}
+  .iconbtn{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--card);
+    display:flex;align-items:center;justify-content:center;color:var(--ink-soft);cursor:pointer}
+  .iconbtn svg{width:15px;height:15px}
+
+  /* --- topbar app (titolo pagina, sotto il brandbar) --- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 14px;flex:none}
+  .topbar h1{margin-bottom:0}
+
+  .content{flex:1;overflow-y:auto;padding:6px 18px 24px}
+  h1{font-size:22px;font-weight:800;letter-spacing:-.01em;margin-bottom:18px}
+  h2{font-size:14px;font-weight:800;letter-spacing:-.005em;margin:22px 0 10px}
+
+  /* --- form --- */
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:11.5px;font-weight:700;letter-spacing:.03em;color:var(--ink-soft);margin-bottom:6px}
+  .field input,.field textarea{
+    width:100%;font-family:var(--sans);font-size:14.5px;font-weight:500;color:var(--ink);
+    background:var(--card);border:1.5px solid var(--line);border-radius:11px;padding:12px 13px;
+  }
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--ink)}
+  .field textarea{resize:vertical;min-height:64px;font-weight:400}
+  .err{font-size:12px;font-weight:600;color:#a8321f;margin-top:5px}
+
+  /* --- bottoni --- */
+  .btn{font-family:var(--sans);font-weight:700;font-size:13.5px;letter-spacing:.005em;
+    padding:13px 18px;border-radius:11px;border:1.5px solid transparent;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;transition:transform .15s var(--ease)}
+  .btn:active{transform:scale(.98)}
+  .btn svg{width:15px;height:15px;flex:none}
+  .btn-primary{background:var(--ink);color:var(--paper)}
+  .btn-lime{background:var(--lime);color:var(--ink)}
+  .btn-ghost{border-color:var(--line);color:var(--ink);background:transparent}
+  .btn-row{display:flex;gap:10px}
+  .btn-row .btn{width:auto;flex:1}
+  .linkback{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--ink-soft);
+    background:none;border:none;padding:0;margin-bottom:14px;cursor:pointer}
+  .linkback svg{width:15px;height:15px;flex:none}
+
+  /* --- login: scenografica, grammatica del sito, un solo elemento memorabile --- */
+  .login-stage{
+    flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column;
+    justify-content:center;padding:36px 0 28px;
+    background:
+      radial-gradient(120% 46% at 50% 0%, rgba(200,255,61,.42) 0%, rgba(200,255,61,0) 60%),
+      var(--paper);
+  }
+  /* trama a puntini, stessa idea "grana/texture" del sito - atmosfera, non decorazione a caso */
+  .login-stage::before{
+    content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.6;
+    background-image:radial-gradient(rgba(17,17,17,.1) 1px, transparent 1px);
+    background-size:20px 20px;
+    mask-image:radial-gradient(65% 60% at 50% 18%, #000 0%, transparent 72%);
+  }
+
+  .login-brand{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:38px}
+  .login-brand .bdot-big{width:9px;height:9px;border-radius:50%;background:var(--lime);flex:none;
+    box-shadow:0 0 0 4px rgba(200,255,61,.28)}
+  @media (prefers-reduced-motion:no-preference){.login-brand .bdot-big{animation:bdotBeat 2.4s var(--ease) infinite}}
+  .login-brand .wordmark{font-weight:800;font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft)}
+
+  .login-hero{position:relative;z-index:1;padding:0 26px;text-align:center;margin-bottom:30px}
+  .login-hero h1{font-size:clamp(2.15rem,9vw,2.6rem);font-weight:900;line-height:1.06;letter-spacing:-.02em;margin-bottom:14px}
+  .login-hero h1 .hl{position:relative;display:inline-block;white-space:nowrap;padding:0 .07em;line-height:.86}
+  .login-hero h1 .hl::after{content:"";position:absolute;left:-3px;right:-3px;bottom:0;height:.4em;
+    background:var(--lime);z-index:-1;border-radius:2px;transform:skewX(-8deg)}
+  .login-hero p.sub{font-size:14.5px;line-height:1.5;color:var(--ink-soft);max-width:29ch;margin:0 auto}
+
+  .login-card{position:relative;z-index:1;margin:0 22px;padding:24px 20px 22px;
+    background:var(--card);border:1px solid var(--line);border-radius:calc(var(--radius) + 4px);
+    box-shadow:0 30px 60px -26px rgba(17,17,17,.28), 0 2px 0 rgba(255,255,255,.6) inset}
+
+  .field-icon{position:relative}
+  .field-icon svg{position:absolute;left:13px;top:38px;width:16px;height:16px;color:var(--muted);pointer-events:none;transition:color .15s var(--ease)}
+  .field-icon:focus-within svg{color:var(--ink)}
+  .field-icon input{padding-left:38px}
+  .field-icon.pw input{padding-right:40px}
+  .field-icon .eye{position:absolute;left:auto;right:11px;top:34px;width:26px;height:26px;pointer-events:auto;
+    display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--muted);cursor:pointer}
+  .field-icon .eye svg{position:static}
+
+  .login-card .field{margin-bottom:16px}
+  .login-card .field:last-of-type{margin-bottom:20px}
+  .login-card .btn-primary{gap:9px}
+  .login-card .btn-primary svg{width:15px;height:15px}
+
+  .login-foot{position:relative;z-index:1;text-align:center;margin-top:30px}
+  .login-foot span{font-size:11px;font-weight:600;color:var(--muted)}
+  .login-foot a{color:var(--ink);font-weight:700;text-decoration:none;border-bottom:1.5px solid var(--lime)}
+
+  /* --- card cliente (lista) --- */
+  .card-cliente{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:15px 15px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;cursor:pointer;
+    transition:border-color .15s var(--ease);
+  }
+  .card-cliente:active{border-color:var(--ink)}
+  .cc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .cc-top strong{font-size:15px;font-weight:700}
+  .cc-next{font-size:11.5px;color:var(--muted);font-weight:600}
+
+  .pill{font-size:10.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;
+    padding:5px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .pill i{width:6px;height:6px;border-radius:50%;flex:none}
+  .pill.s-nuovo{background:var(--paper-2);color:var(--ink-soft)}
+  .pill.s-nuovo i{background:var(--muted)}
+  .pill.s-contattato{background:#EAF0FB;color:#2b4f8f}
+  .pill.s-contattato i{background:#3f6fce}
+  .pill.s-brief{background:#FBF3D9;color:#7a5b00}
+  .pill.s-brief i{background:#d9a900}
+  .pill.s-lavorazione{background:#F0E6FB;color:#5b3a8f}
+  .pill.s-lavorazione i{background:#8b5ce0}
+  .pill.s-pubblicato{background:var(--lime);color:var(--ink)}
+  .pill.s-pubblicato i{background:var(--ink)}
+
+  .fab{position:sticky;bottom:18px;margin:6px auto 0;width:calc(100% - 0px)}
+
+  .empty{text-align:center;padding:60px 20px;color:var(--muted)}
+  .empty .glyph{width:44px;height:44px;border-radius:12px;background:var(--paper-2);margin:0 auto 14px;
+    display:flex;align-items:center;justify-content:center;color:var(--ink-soft)}
+  .empty .glyph svg{width:20px;height:20px}
+  .empty p{font-size:13.5px;font-weight:600;line-height:1.5}
+
+  /* --- scheda cliente --- */
+  .stack-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:18px}
+  .dl-row{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line)}
+  .dl-row:last-child{border-bottom:none}
+  .dl-row dt{font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.02em}
+  .dl-row dd{font-size:13.5px;font-weight:600;text-align:right}
+
+  .stato-current{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px}
+  .stato-current .lbl{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .stato-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+  .stato-chip{font-family:var(--sans);font-size:12px;font-weight:700;letter-spacing:.01em;text-align:center;
+    padding:11px 10px;border-radius:11px;border:1.5px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer}
+  .stato-chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .stato-chip:nth-child(5){grid-column:1 / -1}
+
+  .note-item{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:12px 13px;margin-bottom:8px}
+  .note-item p{font-size:13.5px;line-height:1.5}
+  .note-item time{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:5px}
+
+  /* --- bottom nav --- */
+  .tabbar{flex:none;display:flex;border-top:1px solid var(--line);background:var(--card)}
+  .tabbar button{flex:1;background:none;border:none;padding:12px 0 10px;display:flex;flex-direction:column;
+    align-items:center;gap:4px;color:var(--muted);font-family:var(--sans);font-size:10px;font-weight:700}
+  .tabbar button.on{color:var(--ink)}
+  .tabbar .dotwrap{width:20px;height:20px;display:flex;align-items:center;justify-content:center}
+  .tabbar button.on .dotwrap::after{content:"";width:5px;height:5px;border-radius:50%;background:var(--lime)}
+
+  @media (max-width:460px){body{padding:16px 0 40px}.phone{border-radius:0;border-width:0;min-height:100vh;box-shadow:none}}
+
+  /* --- counter siti venduti (lista clienti) --- */
+  .counter-bar{background:var(--ink);color:var(--paper);border-radius:var(--radius);padding:16px 16px 14px;margin-bottom:16px;
+    display:flex;align-items:center;gap:14px}
+  .counter-bar .cb-num{font-size:30px;font-weight:900;line-height:1;letter-spacing:-.02em}
+  .counter-bar .cb-lbl{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(244,241,234,.6);margin-top:3px}
+  .counter-bar .cb-split{display:flex;flex-direction:column;gap:6px;margin-left:auto;text-align:right}
+  .counter-bar .cb-chip{font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:flex-end;gap:6px}
+  .counter-bar .cb-chip i{width:6px;height:6px;border-radius:50%;flex:none}
+  .counter-bar .cb-chip.mensile i{background:var(--lime)}
+  .counter-bar .cb-chip.annuale i{background:#7fb8ff}
+
+  /* --- vendita: piano/ciclo/extra/sconto/totale --- */
+  .vendita-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 15px;margin-bottom:14px}
+  .vendita-card .dl-row dd{font-weight:700}
+  .vendita-edit-link{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;font-weight:700;
+    color:var(--ink-soft);background:var(--paper-2);border:none;border-radius:10px;padding:11px;width:100%;cursor:pointer}
+  .vendita-edit-link svg{width:14px;height:14px}
+
+  .segmented{display:flex;background:var(--paper-2);border-radius:11px;padding:4px;margin-bottom:4px}
+  .segmented button{flex:1;font-family:var(--sans);font-size:12.5px;font-weight:700;padding:10px 8px;border:none;
+    border-radius:8px;background:none;color:var(--ink-soft);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px}
+  .segmented button.on{background:var(--card);color:var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+  .segmented button small{font-size:10px;font-weight:600;color:var(--muted)}
+  .segmented button.on small{color:var(--ink-soft)}
+  .setup-note{font-size:11.5px;color:var(--muted);font-weight:600;margin:8px 0 0;display:flex;align-items:center;gap:6px}
+  .setup-note svg{width:13px;height:13px;flex:none}
+
+  .piano-opt{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--card);
+    border:1.5px solid var(--ink);border-radius:11px;padding:13px 14px;margin-bottom:4px}
+  .piano-opt .po-name{font-size:13.5px;font-weight:800}
+  .piano-opt .po-desc{font-size:11px;color:var(--muted);font-weight:600;margin-top:2px}
+  .piano-opt .po-price{font-size:14px;font-weight:800;white-space:nowrap}
+  .piano-note{font-size:11px;color:var(--muted);font-weight:600;margin:6px 0 0}
+
+  .extra-item{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .extra-item:last-child{border-bottom:none}
+  .extra-check{width:21px;height:21px;border-radius:6px;border:1.5px solid var(--line);flex:none;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--card)}
+  .extra-check.on{background:var(--ink);border-color:var(--ink)}
+  .extra-check svg{width:12px;height:12px;color:var(--paper);opacity:0}
+  .extra-check.on svg{opacity:1}
+  .extra-body{flex:1;min-width:0}
+  .extra-body .ex-name{font-size:13px;font-weight:700}
+  .extra-body .ex-price{font-size:11.5px;color:var(--muted);font-weight:600}
+  .qty-stepper{display:flex;align-items:center;gap:8px;margin-top:7px}
+  .qty-stepper button{width:24px;height:24px;border-radius:7px;border:1.5px solid var(--line);background:var(--card);
+    color:var(--ink);font-weight:800;font-size:14px;cursor:pointer;line-height:1}
+  .qty-stepper span{font-size:12.5px;font-weight:700;min-width:16px;text-align:center}
+
+  .sconto-row{display:flex;gap:8px;align-items:stretch}
+  .sconto-row .segmented{flex:none;width:128px;margin-bottom:0}
+  .sconto-row .field{flex:1;margin-bottom:0}
+
+  .totale-card{background:var(--ink);color:var(--paper);border-radius:var(--radius);padding:16px;margin:18px 0}
+  .totale-card .tc-row{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:rgba(244,241,234,.72);padding:4px 0}
+  .totale-card .tc-row.tc-sconto{color:var(--lime)}
+  .totale-card .tc-final{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:12px;border-top:1px solid rgba(244,241,234,.18)}
+  .totale-card .tc-final .tc-lbl{font-size:12px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:rgba(244,241,234,.7)}
+  .totale-card .tc-final .tc-amt{font-size:24px;font-weight:900;letter-spacing:-.01em}
+  .totale-card .tc-final .tc-amt span{font-size:12px;font-weight:700;color:rgba(244,241,234,.6)}
+</style>
+</head>
+<body>
+
+<div class="mockup-label">Mockup - non e' l'app, solo direzione visiva</div>
+<div class="mockup-bar">
+  <button class="active" data-target="s-login">Login</button>
+  <button data-target="s-lista">Lista clienti</button>
+  <button data-target="s-lista-vuota">Lista vuota</button>
+  <button data-target="s-nuovo">Nuovo cliente</button>
+  <button data-target="s-scheda">Scheda cliente</button>
+  <button data-target="s-vendita">Modifica vendita</button>
+</div>
+
+<div class="phone">
+  <div class="notch"></div>
+
+  <!-- LOGIN -->
+  <div class="screen active" id="s-login">
+    <div class="login-stage">
+      <div class="login-brand">
+        <div class="bdot-big"></div>
+        <span class="wordmark">Landing Evolution</span>
+      </div>
+      <div class="login-hero">
+        <h1>Area <span class="hl">venditori</span></h1>
+        <p class="sub">Accedi per gestire i tuoi clienti e la pipeline.</p>
+      </div>
+      <div class="login-card">
+        <div class="field field-icon">
+          <label>Email</label>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M4 7l8 6 8-6"/></svg>
+          <input type="email" value="mario.rossi@landingevolution.it" readonly>
+        </div>
+        <div class="field field-icon pw">
+          <label>Password</label>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          <input type="password" value="••••••••••" readonly>
+          <button type="button" class="eye" aria-label="Mostra password">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <button class="btn btn-primary">
+          Entra
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+      <div class="login-foot">
+        <span>Problemi ad accedere? <a href="#">Scrivi al team</a></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTA CLIENTI -->
+  <div class="screen" id="s-lista">
+    <div class="brandbar">
+      <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+      <button class="iconbtn" aria-label="Esci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></button>
+    </div>
+    <div class="topbar"><h1 style="font-size:19px">I tuoi clienti</h1></div>
+    <div class="content">
+      <div class="counter-bar">
+        <div>
+          <div class="cb-num">12</div>
+          <div class="cb-lbl">Siti venduti</div>
+        </div>
+        <div class="cb-split">
+          <span class="cb-chip mensile"><i></i>8 mensili</span>
+          <span class="cb-chip annuale"><i></i>4 annuali</span>
+        </div>
+      </div>
+      <div class="card-cliente">
+        <div class="cc-top">
+          <strong>Panificio Argento</strong>
+          <span class="pill s-brief"><i></i>Brief mandato</span>
+        </div>
+        <span class="cc-next">Prossimo contatto: 3 settembre</span>
+      </div>
+      <div class="card-cliente">
+        <div class="cc-top">
+          <strong>Officina Notturna</strong>
+          <span class="pill s-pubblicato"><i></i>Pubblicato</span>
+        </div>
+        <span class="cc-next">Prossimo contatto: -</span>
+      </div>
+      <div class="card-cliente">
+        <div class="cc-top">
+          <strong>Studio Legale Bianchi</strong>
+          <span class="pill s-contattato"><i></i>Contattato</span>
+        </div>
+        <span class="cc-next">Prossimo contatto: 5 settembre</span>
+      </div>
+      <div class="card-cliente">
+        <div class="cc-top">
+          <strong>GEFF Group</strong>
+          <span class="pill s-lavorazione"><i></i>In lavorazione</span>
+        </div>
+        <span class="cc-next">Prossimo contatto: -</span>
+      </div>
+      <div class="card-cliente">
+        <div class="cc-top">
+          <strong>Metrix Pellicole</strong>
+          <span class="pill s-nuovo"><i></i>Nuovo</span>
+        </div>
+        <span class="cc-next">Prossimo contatto: -</span>
+      </div>
+      <button class="btn btn-lime fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Nuovo cliente</button>
+    </div>
+  </div>
+
+  <!-- LISTA VUOTA -->
+  <div class="screen" id="s-lista-vuota">
+    <div class="brandbar">
+      <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+      <button class="iconbtn" aria-label="Esci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></button>
+    </div>
+    <div class="topbar"><h1 style="font-size:19px">I tuoi clienti</h1></div>
+    <div class="content" style="display:flex;flex-direction:column;justify-content:center;flex:1">
+      <div class="empty">
+        <div class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.7-3.4 3-5.2 5.5-5.2s4.8 1.8 5.5 5.2"/><path d="M16.5 4.8a3.2 3.2 0 0 1 0 6.2"/><path d="M17.5 14.9c2.2.5 3.8 2.2 4.3 5"/></svg></div>
+        <p>Nessun cliente ancora.<br>Aggiungi il primo per iniziare a tracciare la pipeline.</p>
+      </div>
+      <button class="btn btn-lime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Nuovo cliente</button>
+    </div>
+  </div>
+
+  <!-- NUOVO CLIENTE -->
+  <div class="screen" id="s-nuovo">
+    <div class="brandbar">
+      <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+    </div>
+    <div class="topbar">
+      <button class="linkback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Annulla</button>
+    </div>
+    <div class="content">
+      <h1>Aggiungi cliente</h1>
+      <div class="field">
+        <label>Nome *</label>
+        <input placeholder="Es. Panificio Argento">
+      </div>
+      <div class="field">
+        <label>Referente</label>
+        <input placeholder="Nome e cognome">
+      </div>
+      <div class="field">
+        <label>Telefono</label>
+        <input placeholder="333 1234567">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" placeholder="nome@email.it">
+      </div>
+      <div class="field">
+        <label>P.IVA</label>
+        <input placeholder="IT00000000000">
+      </div>
+      <div class="field">
+        <label>IBAN</label>
+        <input placeholder="IT00 A000 0000 0000">
+      </div>
+      <div class="field">
+        <label>Importo abbonamento</label>
+        <input type="number" placeholder="39.00">
+        <p class="err">Inserisci un importo valido</p>
+      </div>
+      <button class="btn btn-primary">Salva cliente</button>
+    </div>
+  </div>
+
+  <!-- SCHEDA CLIENTE -->
+  <div class="screen" id="s-scheda">
+    <div class="brandbar">
+      <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+    </div>
+    <div class="topbar">
+      <button class="linkback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Torna alla lista</button>
+    </div>
+    <div class="content">
+      <h1>Panificio Argento</h1>
+
+      <div class="stato-current">
+        <span class="lbl">Stato attuale</span>
+        <span class="pill s-brief"><i></i>Brief mandato</span>
+      </div>
+      <div class="stato-grid">
+        <button class="stato-chip">Nuovo</button>
+        <button class="stato-chip">Contattato</button>
+        <button class="stato-chip on">Brief mandato</button>
+        <button class="stato-chip">In lavorazione</button>
+        <button class="stato-chip">Pubblicato</button>
+      </div>
+
+      <div class="stack-card">
+        <div class="dl-row"><dt>Referente</dt><dd>Luca Argento</dd></div>
+        <div class="dl-row"><dt>Telefono</dt><dd>340 555 1234</dd></div>
+        <div class="dl-row"><dt>Email</dt><dd>luca@panificioargento.it</dd></div>
+        <div class="dl-row"><dt>P.IVA</dt><dd>IT02929510309</dd></div>
+        <div class="dl-row"><dt>IBAN</dt><dd>IT60 X054 2811 1010...</dd></div>
+      </div>
+
+      <h2>Vendita</h2>
+      <div class="vendita-card">
+        <div class="dl-row"><dt>Piano</dt><dd>Start</dd></div>
+        <div class="dl-row"><dt>Fatturazione</dt><dd>Annuale</dd></div>
+        <div class="dl-row"><dt>Extra</dt><dd>Gallery, Multilingua (2)</dd></div>
+        <div class="dl-row"><dt>Sconto</dt><dd>10%</dd></div>
+        <div class="dl-row"><dt>Totale</dt><dd>514,80 €/anno</dd></div>
+      </div>
+      <button class="vendita-edit-link" onclick="document.querySelector('[data-target=\'s-vendita\']').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        Modifica vendita
+      </button>
+
+      <div class="btn-row" style="margin:18px 0 22px">
+        <button class="btn btn-ghost">Manda a brief<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></button>
+        <button class="btn btn-lime">Manda a pagamento<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></button>
+      </div>
+
+      <h2>Note</h2>
+      <div class="field">
+        <textarea placeholder="Scrivi una nota..."></textarea>
+      </div>
+      <button class="btn btn-ghost" style="margin-bottom:18px">Aggiungi nota</button>
+
+      <div class="note-item">
+        <time>28 agosto</time>
+        <p>Interessato, vuole vedere il sito di Officina Notturna come esempio.</p>
+      </div>
+      <div class="note-item">
+        <time>25 agosto</time>
+        <p>Primo contatto telefonico, richiamare martedì mattina.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODIFICA VENDITA -->
+  <div class="screen" id="s-vendita">
+    <div class="brandbar">
+      <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+    </div>
+    <div class="topbar">
+      <button class="linkback" onclick="document.querySelector('[data-target=\'s-scheda\']').click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Annulla</button>
+    </div>
+    <div class="content">
+      <h1>Vendita - Panificio Argento</h1>
+
+      <h2 style="margin-top:0">Piano</h2>
+      <div class="piano-opt">
+        <div>
+          <div class="po-name">Start</div>
+          <div class="po-desc">Realizzazione, hosting, manutenzione</div>
+        </div>
+        <div class="po-price" id="pianoPrice">39 €/mese</div>
+      </div>
+      <p class="piano-note">Unico piano attivo nel catalogo.</p>
+
+      <h2>Fatturazione</h2>
+      <div class="segmented" id="ciclo">
+        <button class="on" data-ciclo="mensile">Mensile<small>39 € + setup 150 €</small></button>
+        <button data-ciclo="annuale">Annuale<small>468 €, setup incluso</small></button>
+      </div>
+      <p class="setup-note" id="setupNote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>Setup 150 € una tantum alla prima fattura.</p>
+
+      <h2>Extra</h2>
+      <div class="vendita-card" id="extraList">
+        <div class="extra-item" data-extra="form" data-price="3">
+          <button class="extra-check" onclick="toggleExtra(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></button>
+          <div class="extra-body"><div class="ex-name">Modulo di contatto dinamico</div><div class="ex-price">+ 3 €/mese</div></div>
+        </div>
+        <div class="extra-item" data-extra="gallery" data-price="3">
+          <button class="extra-check on" onclick="toggleExtra(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></button>
+          <div class="extra-body"><div class="ex-name">Gallery dinamica</div><div class="ex-price">+ 3 €/mese</div></div>
+        </div>
+        <div class="extra-item" data-extra="pagina" data-price="6">
+          <button class="extra-check" onclick="toggleExtra(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></button>
+          <div class="extra-body"><div class="ex-name">Pagina extra</div><div class="ex-price">+ 6 €/mese</div></div>
+        </div>
+        <div class="extra-item" data-extra="chatbot" data-price="18">
+          <button class="extra-check" onclick="toggleExtra(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></button>
+          <div class="extra-body"><div class="ex-name">Chatbot AI personalizzato</div><div class="ex-price">+ 18 €/mese</div></div>
+        </div>
+        <div class="extra-item" data-extra="lang" data-price="2">
+          <button class="extra-check on" onclick="toggleExtra(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></button>
+          <div class="extra-body">
+            <div class="ex-name">Sito multilingua</div>
+            <div class="ex-price">2 €/mese a lingua</div>
+            <div class="qty-stepper">
+              <button type="button" onclick="stepQty(-1)">-</button>
+              <span id="langQty">2</span>
+              <button type="button" onclick="stepQty(1)">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="sicurezzaBlock">
+        <h2>Pacchetto sicurezza</h2>
+        <div class="vendita-card">
+          <div class="extra-item sicurezza-item" style="border-bottom:none;padding-bottom:0">
+            <button class="extra-check" id="sicurezzaCheck" onclick="toggleSicurezza(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></button>
+            <div class="extra-body">
+              <div class="ex-name">Conservazione garantita 12 mesi</div>
+              <div class="ex-price">100 € una tantum - consigliato</div>
+            </div>
+          </div>
+        </div>
+        <p class="setup-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>Solo per la formula mensile. Senza, sito e dati vengono eliminati dopo un mese di mancato pagamento.</p>
+      </div>
+
+      <h2>Sconto</h2>
+      <div class="sconto-row">
+        <div class="segmented" id="scontoTipo">
+          <button class="on" data-tipo="percentuale">%</button>
+          <button data-tipo="importo">€</button>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <input type="number" id="scontoValore" value="10" oninput="ricalcola()">
+        </div>
+      </div>
+
+      <div class="totale-card" id="totaleCard">
+        <div class="tc-row"><span>Piano Start</span><span id="tRigaPiano">468,00 €/anno</span></div>
+        <div class="tc-row" id="rigaSetupWrap"><span>Setup una tantum</span><span id="tRigaSetup">150,00 €</span></div>
+        <div class="tc-row" id="rigaSicurezzaWrap" style="display:none"><span>Pacchetto sicurezza</span><span id="tRigaSicurezza">100,00 €</span></div>
+        <div class="tc-row"><span>Extra</span><span id="tRigaExtra">84,00 €/anno</span></div>
+        <div class="tc-row tc-sconto"><span>Sconto</span><span id="tRigaSconto">− 55,20 €</span></div>
+        <div class="tc-final">
+          <span class="tc-lbl">Totale oggi</span>
+          <span class="tc-amt" id="tFinale">496,80 <span>€/anno</span></span>
+        </div>
+      </div>
+
+      <button class="btn btn-primary">Salva vendita</button>
+    </div>
+  </div>
+
+  <div class="tabbar" id="tabbar" style="display:none">
+    <button class="on"><span class="dotwrap"></span>Clienti</button>
+    <button><span class="dotwrap"></span>Esci</button>
+  </div>
+</div>
+
+<script>
+  const buttons = document.querySelectorAll('.mockup-bar button');
+  const screens = document.querySelectorAll('.screen');
+  const tabbar = document.getElementById('tabbar');
+  buttons.forEach(b=>{
+    b.addEventListener('click',()=>{
+      buttons.forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      screens.forEach(s=>s.classList.remove('active'));
+      document.getElementById(b.dataset.target).classList.add('active');
+      tabbar.style.display = (b.dataset.target==='s-lista'||b.dataset.target==='s-lista-vuota') ? 'flex' : 'none';
+    });
+  });
+
+  /* --- vendita: piano/ciclo/extra/sconto/totale, ricalcolo dal vivo (solo mockup) --- */
+  const PIANO = { mensile: 39, annuale: 468, setup: 150 };
+  const EXTRA_PREZZO = { form: 3, gallery: 3, pagina: 6, chatbot: 18, lang: 2 };
+  let cicloAttuale = 'mensile';
+
+  let sicurezzaOn = false;
+
+  document.querySelectorAll('#ciclo button').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      document.querySelectorAll('#ciclo button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      cicloAttuale = b.dataset.ciclo;
+      document.getElementById('pianoPrice').textContent = cicloAttuale==='mensile' ? '39 €/mese' : '39 €/mese (468 €/anno)';
+      document.getElementById('setupNote').style.display = cicloAttuale==='mensile' ? 'flex' : 'none';
+      document.getElementById('sicurezzaBlock').style.display = cicloAttuale==='mensile' ? 'block' : 'none';
+      ricalcola();
+    });
+  });
+
+  function toggleSicurezza(btn){
+    sicurezzaOn = !sicurezzaOn;
+    btn.classList.toggle('on', sicurezzaOn);
+    ricalcola();
+  }
+
+  document.querySelectorAll('#scontoTipo button').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      document.querySelectorAll('#scontoTipo button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      ricalcola();
+    });
+  });
+
+  function toggleExtra(btn){
+    btn.classList.toggle('on');
+    ricalcola();
+  }
+
+  function stepQty(delta){
+    const el = document.getElementById('langQty');
+    const val = Math.max(1, parseInt(el.textContent,10) + delta);
+    el.textContent = val;
+    ricalcola();
+  }
+
+  function ricalcola(){
+    let extraMensile = 0;
+    document.querySelectorAll('.extra-item:not(.sicurezza-item)').forEach(item=>{
+      const check = item.querySelector('.extra-check');
+      if(!check.classList.contains('on')) return;
+      const nome = item.dataset.extra;
+      const prezzo = parseFloat(item.dataset.price);
+      const qty = nome === 'lang' ? parseInt(document.getElementById('langQty').textContent,10) : 1;
+      extraMensile += prezzo * qty;
+    });
+
+    const scontoTipo = document.querySelector('#scontoTipo button.on').dataset.tipo;
+    const scontoValore = parseFloat(document.getElementById('scontoValore').value) || 0;
+
+    let rigaPiano, rigaExtra, unita, subtotale;
+    if(cicloAttuale === 'mensile'){
+      rigaPiano = PIANO.mensile;
+      rigaExtra = extraMensile;
+      unita = '€/mese';
+      subtotale = rigaPiano + rigaExtra;
+    } else {
+      rigaPiano = PIANO.annuale;
+      rigaExtra = extraMensile * 12;
+      unita = '€/anno';
+      subtotale = rigaPiano + rigaExtra;
+    }
+
+    const sconto = scontoTipo === 'percentuale' ? subtotale * (scontoValore/100) : scontoValore;
+    const canoneScontato = Math.max(0, subtotale - sconto);
+
+    const setup = cicloAttuale === 'mensile' ? PIANO.setup : 0;
+    const sicurezza = (cicloAttuale === 'mensile' && sicurezzaOn) ? 100 : 0;
+    const finale = canoneScontato + setup + sicurezza;
+
+    document.getElementById('tRigaPiano').textContent = `${rigaPiano.toFixed(2).replace('.',',')} ${unita}`;
+    document.getElementById('tRigaExtra').textContent = `${rigaExtra.toFixed(2).replace('.',',')} ${unita}`;
+    document.getElementById('tRigaSconto').textContent = `− ${sconto.toFixed(2).replace('.',',')} €`;
+
+    document.getElementById('rigaSetupWrap').style.display = setup > 0 ? 'flex' : 'none';
+    document.getElementById('tRigaSetup').textContent = `${setup.toFixed(2).replace('.',',')} €`;
+    document.getElementById('rigaSicurezzaWrap').style.display = sicurezza > 0 ? 'flex' : 'none';
+    document.getElementById('tRigaSicurezza').textContent = `${sicurezza.toFixed(2).replace('.',',')} €`;
+
+    document.getElementById('tFinale').innerHTML = `${finale.toFixed(2).replace('.',',')} <span>${unita}</span>`;
+  }
+
+  document.getElementById('scontoValore').addEventListener('input', ricalcola);
+  ricalcola();
+</script>
+</body>
+</html>
