@@ -89,7 +89,7 @@
 
         <div class="stack-card" x-show="!isAdmin" style="margin-bottom:16px">
           <div class="stato-current" style="margin-bottom:0;border:none;padding:0">
-            <span class="lbl">Totale generato</span>
+            <span class="lbl">Incassi totali</span>
             <strong style="font-size:19px" x-text="formattaEuro(totaleGenerato())"></strong>
           </div>
           <template x-if="andamentoMensile().length > 0">
@@ -108,9 +108,11 @@
           <input type="search" placeholder="Cerca per nome o referente..." aria-label="Cerca clienti per nome o referente" x-model="filtroTesto">
         </div>
         <div class="filtro-stati" x-show="clienti.length > 0">
-          <button type="button" class="chip-stato" :class="{ on: filtroStato === '' }" @click="filtroStato = ''">Tutti</button>
+          <button type="button" class="chip-stato" :class="{ on: filtroStato === '' }" @click="filtroStato = ''">Tutti · <span x-text="clienti.length"></span></button>
           <template x-for="s in ['contattato','brief_mandato','in_lavorazione','pubblicato']" :key="s">
-            <button type="button" class="chip-stato" :class="{ on: filtroStato === s }" @click="filtroStato = filtroStato === s ? '' : s" x-text="formattaStato(s)"></button>
+            <button type="button" class="chip-stato" :class="{ on: filtroStato === s }" @click="filtroStato = filtroStato === s ? '' : s">
+              <span x-text="formattaStato(s)"></span> · <span x-text="conteggiPerStato()[s]"></span>
+            </button>
           </template>
         </div>
 

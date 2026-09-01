@@ -141,6 +141,14 @@ function appState() {
       return this.clienti.filter(c => c.stato === 'pubblicato');
     },
 
+    conteggiPerStato() {
+      const conteggi = { contattato: 0, brief_mandato: 0, in_lavorazione: 0, pubblicato: 0 };
+      for (const c of this.clienti) {
+        if (conteggi[c.stato] !== undefined) conteggi[c.stato] += 1;
+      }
+      return conteggi;
+    },
+
     totaleGenerato() {
       return this.clientiPubblicati().reduce((s, c) => s + (Number(c.importo_abbonamento) || 0), 0);
     },
