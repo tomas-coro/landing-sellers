@@ -290,53 +290,86 @@
         </div>
         <p x-show="erroreScheda" x-text="erroreScheda" class="err" style="margin-bottom:14px"></p>
 
-        <div class="stato-current">
-          <span class="lbl">Stato attuale</span>
-          <span class="pill" :class="'s-' + classeStato(clienteSelezionato().stato)"><i></i><span x-text="formattaStato(clienteSelezionato().stato)"></span></span>
-        </div>
-        <div class="stato-grid">
-          <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'contattato' }" @click="cambiaStato('contattato')">Contattato</button>
-          <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'brief_mandato' }" @click="cambiaStato('brief_mandato')">Brief mandato</button>
-          <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'in_lavorazione' }" @click="cambiaStato('in_lavorazione')">In lavorazione</button>
-          <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'pubblicato' }" @click="cambiaStato('pubblicato')">Pubblicato</button>
-        </div>
-
-        <div class="stack-card">
-          <dl>
-            <dt>Referente</dt><dd x-text="clienteSelezionato().referente"></dd>
-            <dt>Telefono</dt><dd x-text="clienteSelezionato().telefono"></dd>
-            <dt>Email</dt><dd x-text="clienteSelezionato().email"></dd>
-            <dt>P.IVA</dt><dd x-text="clienteSelezionato().piva"></dd>
-            <dt>IBAN</dt><dd x-text="clienteSelezionato().iban"></dd>
-            <dt>Importo</dt><dd x-text="clienteSelezionato().importo_abbonamento"></dd>
-          </dl>
+        <div class="accordion-section">
+          <button type="button" class="accordion-header" :class="{ open: schedaAperture.stato }" @click="toggleAccordion('stato')">
+            <span>Stato</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="accordion-body" x-show="schedaAperture.stato">
+            <div class="stato-current">
+              <span class="lbl">Stato attuale</span>
+              <span class="pill" :class="'s-' + classeStato(clienteSelezionato().stato)"><i></i><span x-text="formattaStato(clienteSelezionato().stato)"></span></span>
+            </div>
+            <div class="stato-grid" style="margin-bottom:0">
+              <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'contattato' }" @click="cambiaStato('contattato')">Contattato</button>
+              <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'brief_mandato' }" @click="cambiaStato('brief_mandato')">Brief mandato</button>
+              <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'in_lavorazione' }" @click="cambiaStato('in_lavorazione')">In lavorazione</button>
+              <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'pubblicato' }" @click="cambiaStato('pubblicato')">Pubblicato</button>
+            </div>
+          </div>
         </div>
 
-        <a x-show="clienteSelezionato().sito_url" :href="clienteSelezionato().sito_url" target="_blank" rel="noopener" class="btn btn-ghost" style="margin-bottom:12px">
-          Apri il sito
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
-        </a>
+        <div class="accordion-section">
+          <button type="button" class="accordion-header" :class="{ open: schedaAperture.pacchetto }" @click="toggleAccordion('pacchetto')">
+            <span>Pacchetto e pagamento</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="accordion-body" x-show="schedaAperture.pacchetto">
+            <dl>
+              <dt>Importo</dt><dd x-text="formattaEuro(clienteSelezionato().importo_abbonamento)"></dd>
+              <dt>Pacchetto</dt><dd x-text="clienteSelezionato().nome_pacchetto || '-'"></dd>
+              <dt>Note prezzo</dt><dd x-text="clienteSelezionato().note_prezzo || '-'"></dd>
+              <dt>Rinnovo</dt><dd x-text="clienteSelezionato().data_rinnovo ? formattaData(clienteSelezionato().data_rinnovo) : '-'"></dd>
+            </dl>
+          </div>
+        </div>
+
+        <div class="accordion-section">
+          <button type="button" class="accordion-header" :class="{ open: schedaAperture.contatti }" @click="toggleAccordion('contatti')">
+            <span>Contatti</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="accordion-body" x-show="schedaAperture.contatti">
+            <dl>
+              <dt>Referente</dt><dd x-text="clienteSelezionato().referente"></dd>
+              <dt>Telefono</dt><dd x-text="clienteSelezionato().telefono"></dd>
+              <dt>Email</dt><dd x-text="clienteSelezionato().email"></dd>
+              <dt>P.IVA</dt><dd x-text="clienteSelezionato().piva"></dd>
+              <dt>IBAN</dt><dd x-text="clienteSelezionato().iban"></dd>
+            </dl>
+            <a x-show="clienteSelezionato().sito_url" :href="clienteSelezionato().sito_url" target="_blank" rel="noopener" class="btn btn-ghost" style="margin-top:12px">
+              Apri il sito
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
+            </a>
+          </div>
+        </div>
 
         <a href="https://landingevolution.it/brief.html" target="_blank" rel="noopener" class="btn btn-lime" style="margin-bottom:22px">
           Manda a brief
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
         </a>
 
-        <h2>Note</h2>
-        <form @submit.prevent="aggiungiNota()">
-          <div class="field">
-            <textarea x-model="nuovaNotaTesto" placeholder="Scrivi una nota..."></textarea>
+        <div class="accordion-section">
+          <button type="button" class="accordion-header" :class="{ open: schedaAperture.note }" @click="toggleAccordion('note')">
+            <span>Note</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="accordion-body" x-show="schedaAperture.note">
+            <form @submit.prevent="aggiungiNota()">
+              <div class="field" style="margin-top:14px">
+                <textarea x-model="nuovaNotaTesto" placeholder="Scrivi una nota..."></textarea>
+              </div>
+              <button type="submit" class="btn btn-ghost" style="margin-bottom:14px">Aggiungi nota</button>
+            </form>
+            <template x-for="n in note" :key="n.id">
+              <div class="note-item">
+                <time x-text="formattaData(n.creata_il)"></time>
+                <p x-text="n.testo"></p>
+              </div>
+            </template>
+            <p x-show="note.length === 0" style="color:var(--muted);font-size:13.5px">Nessuna nota ancora.</p>
           </div>
-          <button type="submit" class="btn btn-ghost" style="margin-bottom:18px">Aggiungi nota</button>
-        </form>
-
-        <template x-for="n in note" :key="n.id">
-          <div class="note-item">
-            <time x-text="formattaData(n.creata_il)"></time>
-            <p x-text="n.testo"></p>
-          </div>
-        </template>
-        <p x-show="note.length === 0" style="color:var(--muted);font-size:13.5px">Nessuna nota ancora.</p>
+        </div>
       </div>
     </div>
 

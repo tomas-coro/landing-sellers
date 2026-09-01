@@ -35,6 +35,7 @@ function appState() {
     note: [],
     nuovaNotaTesto: '',
     erroreScheda: '',
+    schedaAperture: { stato: true, pacchetto: false, contatti: false, note: true },
 
     aggiornamentoDisponibile: false,
 
@@ -225,11 +226,22 @@ function appState() {
       this.view = 'scheda';
       this.erroreScheda = '';
       this.confermaEliminazione = false;
+      const cliente = this.clienteSelezionato();
+      this.schedaAperture = {
+        stato: true,
+        pacchetto: !!(cliente.importo_abbonamento || cliente.nome_pacchetto),
+        contatti: false,
+        note: true
+      };
       const { data, error } = await window.supabaseClient
         .from('note').select('*').eq('cliente_id', clienteId)
         .order('creata_il', { ascending: false });
       if (error) { this.erroreScheda = 'Errore nel caricare le note: ' + error.message; return; }
       this.note = data;
+    },
+
+    toggleAccordion(sezione) {
+      this.schedaAperture[sezione] = !this.schedaAperture[sezione];
     },
 
     async aggiungiNota() {
