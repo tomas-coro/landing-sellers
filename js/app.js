@@ -21,6 +21,8 @@ function appState() {
     filtroVenditoreNome: '',
     filtroTesto: '',
     filtroStato: '',
+    ordinamento: 'prossimo_contatto',
+    ordinamentoDesc: false,
     nuovoClienteForm: formModuloVuoto(),
     erroriNuovoCliente: {},
     clienteInModificaId: null,
@@ -96,12 +98,42 @@ function appState() {
 
     clientiFiltrati() {
       const testo = this.filtroTesto.trim().toLowerCase();
-      return this.clienti.filter(c => {
+      const risultato = this.clienti.filter(c => {
         if (this.filtroStato && c.stato !== this.filtroStato) return false;
         if (!testo) return true;
         return (c.nome || '').toLowerCase().includes(testo)
           || (c.referente || '').toLowerCase().includes(testo);
       });
+      return this.ordinaClienti(risultato);
+    },
+
+    ordinaClienti(elenco) {
+      const campo = this.ordinamento;
+      const segno = this.ordinamentoDesc ? -1 : 1;
+      const valore = c => {
+        if (campo === 'nome') return (c.nome || '').toLowerCase();
+        if (campo === 'importo') return Number(c.importo_abbonamento) || null;
+        if (campo === 'prossimo_contatto') return c.prossimo_contatto || null;
+        return c.creato_il || null;
+      };
+      return [...elenco].sort((a, b) => {
+        const va = valore(a), vb = valore(b);
+        if (va === null && vb === null) return 0;
+        if (va === null) return 1;
+        if (vb === null) return -1;
+        if (va < vb) return -1 * segno;
+        if (va > vb) return 1 * segno;
+        return 0;
+      });
+    },
+
+    impostaOrdinamento(campo) {
+      if (this.ordinamento === campo) {
+        this.ordinamentoDesc = !this.ordinamentoDesc;
+      } else {
+        this.ordinamento = campo;
+        this.ordinamentoDesc = campo === 'importo' || campo === 'creato_il';
+      }
     },
 
     // --- statistiche venditore (home) ---

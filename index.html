@@ -114,6 +114,19 @@
           </template>
         </div>
 
+        <div class="filtro-stati" x-show="clienti.length > 0">
+          <template x-for="opz in [
+            { campo: 'nome', etichetta: 'Nome' },
+            { campo: 'importo', etichetta: 'Importo' },
+            { campo: 'prossimo_contatto', etichetta: 'Prossimo contatto' },
+            { campo: 'creato_il', etichetta: 'Più recenti' }
+          ]" :key="opz.campo">
+            <button type="button" class="chip-stato" :class="{ on: ordinamento === opz.campo }" @click="impostaOrdinamento(opz.campo)">
+              <span x-text="opz.etichetta"></span><span x-show="ordinamento === opz.campo" x-text="ordinamentoDesc ? ' ↓' : ' ↑'"></span>
+            </button>
+          </template>
+        </div>
+
         <template x-for="cliente in clientiFiltrati()" :key="cliente.id">
           <div class="card-cliente" @click="apriScheda(cliente.id)">
             <div class="cc-top">
