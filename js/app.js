@@ -21,27 +21,34 @@ function appState() {
     filtroVenditoreNome: '',
     filtroTesto: '',
     filtroStato: '',
+    filtroSoloRitardo: false,
     ordinamento: 'prossimo_contatto',
     ordinamentoDesc: false,
     nuovoClienteForm: formModuloVuoto(),
     erroriNuovoCliente: {},
     clienteInModificaId: null,
+    salvandoCliente: false,
 
     confermaEliminazione: false,
+    eliminandoCliente: false,
 
     cestino: [],
     erroreCestino: '',
+    filtroTestoCestino: '',
 
     note: [],
     nuovaNotaTesto: '',
+    aggiungendoNota: false,
     erroreScheda: '',
     schedaAperture: { stato: true, pacchetto: false, contatti: false, note: true },
 
     aggiornamentoDisponibile: false,
+    accedendo: false,
 
     // dashboard admin
     venditori: [],
     erroreAdmin: '',
+    filtroTestoAdmin: '',
 
     async init() {
       window.addEventListener('le:aggiornamento-pronto', () => { this.aggiornamentoDisponibile = true; });
@@ -55,12 +62,16 @@ function appState() {
     controllaAggiornamenti() { window.leControllaAggiornamenti(); },
 
     async fareLogin() {
+      if (this.accedendo) return;
+      this.accedendo = true;
       this.erroreLogin = '';
       try {
         this.sessione = await login(this.emailInput, this.passwordInput);
         await this.dopoLogin();
       } catch (err) {
         this.erroreLogin = err.message;
+      } finally {
+        this.accedendo = false;
       }
     },
 
@@ -70,6 +81,7 @@ function appState() {
       this.isAdmin = profilo?.ruolo === 'admin';
       this.filtroTesto = '';
       this.filtroStato = '';
+      this.filtroSoloRitardo = false;
 
       if (this.isAdmin) { await this.caricaDashboardAdmin(); this.view = 'admin'; }
       else { await this.caricaClienti(); this.view = 'lista'; }
@@ -101,11 +113,20 @@ function appState() {
       const testo = this.filtroTesto.trim().toLowerCase();
       const risultato = this.clienti.filter(c => {
         if (this.filtroStato && c.stato !== this.filtroStato) return false;
+        if (this.filtroSoloRitardo && classeUrgenza(c.prossimo_contatto) !== 'ritardo') return false;
         if (!testo) return true;
         return (c.nome || '').toLowerCase().includes(testo)
           || (c.referente || '').toLowerCase().includes(testo);
       });
       return this.ordinaClienti(risultato);
+    },
+
+    clientiInRitardo() {
+      return this.clienti.filter(c => classeUrgenza(c.prossimo_contatto) === 'ritardo');
+    },
+
+    toggleFiltroSoloRitardo() {
+      this.filtroSoloRitardo = !this.filtroSoloRitardo;
     },
 
     ordinaClienti(elenco) {
@@ -193,28 +214,34 @@ function appState() {
     },
 
     async salvaCliente() {
+      if (this.salvandoCliente) return;
       const check = validaClienteForm(this.nuovoClienteForm);
       this.erroriNuovoCliente = check.errori;
       if (!check.valido) return;
 
-      if (this.clienteInModificaId) {
-        const { error } = await window.supabaseClient.from('clienti')
-          .update({ ...this.nuovoClienteForm }).eq('id', this.clienteInModificaId);
-        if (error) { this.erroriNuovoCliente.generale = 'Salvataggio fallito: ' + error.message; return; }
-      } else {
-        const { error } = await window.supabaseClient.from('clienti').insert({
-          ...this.nuovoClienteForm,
-          venditore_id: this.sessione.user.id
-        });
-        if (error) { this.erroriNuovoCliente.generale = 'Salvataggio fallito: ' + error.message; return; }
-      }
+      this.salvandoCliente = true;
+      try {
+        if (this.clienteInModificaId) {
+          const { error } = await window.supabaseClient.from('clienti')
+            .update({ ...this.nuovoClienteForm }).eq('id', this.clienteInModificaId);
+          if (error) { this.erroriNuovoCliente.generale = 'Salvataggio fallito: ' + error.message; return; }
+        } else {
+          const { error } = await window.supabaseClient.from('clienti').insert({
+            ...this.nuovoClienteForm,
+            venditore_id: this.sessione.user.id
+          });
+          if (error) { this.erroriNuovoCliente.generale = 'Salvataggio fallito: ' + error.message; return; }
+        }
 
-      const idModificato = this.clienteInModificaId;
-      this.clienteInModificaId = null;
-      this.nuovoClienteForm = formModuloVuoto();
-      await this.caricaClienti();
-      this.view = idModificato ? 'scheda' : 'lista';
-      if (idModificato) { this.clienteSelezionatoId = idModificato; }
+        const idModificato = this.clienteInModificaId;
+        this.clienteInModificaId = null;
+        this.nuovoClienteForm = formModuloVuoto();
+        await this.caricaClienti();
+        this.view = idModificato ? 'scheda' : 'lista';
+        if (idModificato) { this.clienteSelezionatoId = idModificato; }
+      } finally {
+        this.salvandoCliente = false;
+      }
     },
 
     clienteSelezionato() {
@@ -245,15 +272,20 @@ function appState() {
     },
 
     async aggiungiNota() {
-      if (!this.nuovaNotaTesto.trim()) return;
-      const { error } = await window.supabaseClient.from('note').insert({
-        cliente_id: this.clienteSelezionatoId,
-        venditore_id: this.sessione.user.id,
-        testo: this.nuovaNotaTesto
-      });
-      if (error) { this.erroreScheda = 'Nota non salvata: ' + error.message; return; }
-      this.nuovaNotaTesto = '';
-      await this.apriScheda(this.clienteSelezionatoId);
+      if (this.aggiungendoNota || !this.nuovaNotaTesto.trim()) return;
+      this.aggiungendoNota = true;
+      try {
+        const { error } = await window.supabaseClient.from('note').insert({
+          cliente_id: this.clienteSelezionatoId,
+          venditore_id: this.sessione.user.id,
+          testo: this.nuovaNotaTesto
+        });
+        if (error) { this.erroreScheda = 'Nota non salvata: ' + error.message; return; }
+        this.nuovaNotaTesto = '';
+        await this.apriScheda(this.clienteSelezionatoId);
+      } finally {
+        this.aggiungendoNota = false;
+      }
     },
 
     async cambiaStato(nuovoStato) {
@@ -264,12 +296,18 @@ function appState() {
     },
 
     async confermaEliminaCliente() {
-      const { error } = await window.supabaseClient.from('clienti')
-        .update({ cancellato_il: new Date().toISOString() }).eq('id', this.clienteSelezionatoId);
-      if (error) { this.erroreScheda = 'Eliminazione fallita: ' + error.message; return; }
-      this.confermaEliminazione = false;
-      await this.caricaClienti();
-      this.view = 'lista';
+      if (this.eliminandoCliente) return;
+      this.eliminandoCliente = true;
+      try {
+        const { error } = await window.supabaseClient.from('clienti')
+          .update({ cancellato_il: new Date().toISOString() }).eq('id', this.clienteSelezionatoId);
+        if (error) { this.erroreScheda = 'Eliminazione fallita: ' + error.message; return; }
+        this.confermaEliminazione = false;
+        await this.caricaClienti();
+        this.view = 'lista';
+      } finally {
+        this.eliminandoCliente = false;
+      }
     },
 
     async caricaCestino() {
@@ -288,8 +326,17 @@ function appState() {
     },
 
     async apriCestino() {
+      this.filtroTestoCestino = '';
       await this.caricaCestino();
       this.view = 'cestino';
+    },
+
+    cestinoFiltrato() {
+      const testo = this.filtroTestoCestino.trim().toLowerCase();
+      if (!testo) return this.cestino;
+      return this.cestino.filter(c =>
+        (c.nome || '').toLowerCase().includes(testo)
+        || (c.referente || '').toLowerCase().includes(testo));
     },
 
     async ripristinaCliente(clienteId) {
@@ -336,11 +383,18 @@ function appState() {
       return this.venditori.reduce((s, v) => s + v.totaleGenerato, 0);
     },
 
+    venditoriFiltrati() {
+      const testo = this.filtroTestoAdmin.trim().toLowerCase();
+      if (!testo) return this.venditori;
+      return this.venditori.filter(v => (v.nome || '').toLowerCase().includes(testo));
+    },
+
     async apriClientiVenditore(venditoreId, nomeVenditore) {
       this.filtroVenditoreId = venditoreId;
       this.filtroVenditoreNome = nomeVenditore;
       this.filtroTesto = '';
       this.filtroStato = '';
+      this.filtroSoloRitardo = false;
       await this.caricaClienti();
       this.view = 'lista';
     },
@@ -348,6 +402,7 @@ function appState() {
     tornaAllaDashboard() {
       this.filtroVenditoreId = '';
       this.filtroVenditoreNome = '';
+      this.filtroTestoAdmin = '';
       this.view = 'admin';
     }
   };

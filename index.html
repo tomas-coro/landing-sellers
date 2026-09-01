@@ -55,8 +55,8 @@
           </button>
         </div>
         <p x-show="erroreLogin" x-text="erroreLogin" class="err"></p>
-        <button type="submit" class="btn btn-primary">
-          Entra
+        <button type="submit" class="btn btn-primary" :disabled="accedendo">
+          <span x-text="accedendo ? 'Accesso...' : 'Entra'"></span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
       </form>
@@ -103,6 +103,11 @@
             </div>
           </template>
         </div>
+
+        <button type="button" class="alert-ritardo" :class="{ on: filtroSoloRitardo }" x-show="clientiInRitardo().length > 0" @click="toggleFiltroSoloRitardo()">
+          <span x-text="clientiInRitardo().length === 1 ? '1 cliente con contatto in ritardo' : clientiInRitardo().length + ' clienti con contatto in ritardo'"></span>
+          <span x-text="filtroSoloRitardo ? 'mostra tutti' : 'mostra solo questi'"></span>
+        </button>
 
         <div class="search-row" x-show="clienti.length > 0">
           <input type="search" placeholder="Cerca per nome o referente..." aria-label="Cerca clienti per nome o referente" x-model="filtroTesto">
@@ -180,7 +185,11 @@
           </div>
         </div>
 
-        <template x-for="v in venditori" :key="v.id">
+        <div class="search-row" x-show="venditori.length > 0">
+          <input type="search" placeholder="Cerca venditore..." aria-label="Cerca venditore per nome" x-model="filtroTestoAdmin">
+        </div>
+
+        <template x-for="v in venditoriFiltrati()" :key="v.id">
           <div class="card-cliente" @click="apriClientiVenditore(v.id, v.nome)">
             <div class="cc-top">
               <strong x-text="v.nome"></strong>
@@ -195,6 +204,11 @@
         <div x-show="venditori.length === 0 && !erroreAdmin" class="empty">
           <div class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.7-3.4 3-5.2 5.5-5.2s4.8 1.8 5.5 5.2"/><path d="M16.5 4.8a3.2 3.2 0 0 1 0 6.2"/><path d="M17.5 14.9c2.2.5 3.8 2.2 4.3 5"/></svg></div>
           <p>Nessun venditore ancora.</p>
+        </div>
+
+        <div x-show="venditori.length > 0 && venditoriFiltrati().length === 0" class="empty">
+          <div class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+          <p>Nessun venditore trovato.</p>
         </div>
       </div>
     </div>
@@ -261,7 +275,8 @@
             <p x-show="erroriNuovoCliente.data_rinnovo" x-text="erroriNuovoCliente.data_rinnovo" class="err"></p>
           </div>
           <p x-show="erroriNuovoCliente.generale" x-text="erroriNuovoCliente.generale" class="err" style="margin-bottom:14px"></p>
-          <button type="submit" class="btn btn-primary" x-text="clienteInModificaId ? 'Salva modifiche' : 'Salva cliente'"></button>
+          <button type="submit" class="btn btn-primary" :disabled="salvandoCliente"
+            x-text="salvandoCliente ? 'Salvataggio...' : (clienteInModificaId ? 'Salva modifiche' : 'Salva cliente')"></button>
         </form>
       </div>
     </div>
@@ -359,7 +374,8 @@
               <div class="field" style="margin-top:14px">
                 <textarea x-model="nuovaNotaTesto" placeholder="Scrivi una nota..."></textarea>
               </div>
-              <button type="submit" class="btn btn-ghost" style="margin-bottom:14px">Aggiungi nota</button>
+              <button type="submit" class="btn btn-ghost" style="margin-bottom:14px" :disabled="aggiungendoNota"
+                x-text="aggiungendoNota ? 'Salvataggio...' : 'Aggiungi nota'"></button>
             </form>
             <template x-for="n in note" :key="n.id">
               <div class="note-item">
@@ -387,7 +403,11 @@
       <div class="content">
         <p x-show="erroreCestino" x-text="erroreCestino" class="err" style="margin-bottom:14px"></p>
 
-        <template x-for="cliente in cestino" :key="cliente.id">
+        <div class="search-row" x-show="cestino.length > 0">
+          <input type="search" placeholder="Cerca per nome o referente..." aria-label="Cerca nel cestino per nome o referente" x-model="filtroTestoCestino">
+        </div>
+
+        <template x-for="cliente in cestinoFiltrato()" :key="cliente.id">
           <div class="card-cliente">
             <div class="cc-top">
               <strong x-text="cliente.nome"></strong>
@@ -401,6 +421,11 @@
           <div class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></div>
           <p>Cestino vuoto.<br>I clienti eliminati compaiono qui per 30 giorni.</p>
         </div>
+
+        <div x-show="cestino.length > 0 && cestinoFiltrato().length === 0 && !erroreCestino" class="empty">
+          <div class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+          <p>Nessun cliente trovato nel cestino.</p>
+        </div>
       </div>
     </div>
 
@@ -412,8 +437,9 @@
           <strong x-text="clienteSelezionato().nome"></strong> sparisce dalle liste. Puoi chiedere di recuperarlo entro 30 giorni, dopo di che verra' rimosso automaticamente dal database.
         </p>
         <div class="btn-row">
-          <button type="button" class="btn btn-ghost" @click="confermaEliminazione = false">Annulla</button>
-          <button type="button" class="btn btn-primary" @click="confermaEliminaCliente()">Elimina</button>
+          <button type="button" class="btn btn-ghost" :disabled="eliminandoCliente" @click="confermaEliminazione = false">Annulla</button>
+          <button type="button" class="btn btn-primary" :disabled="eliminandoCliente" @click="confermaEliminaCliente()"
+            x-text="eliminandoCliente ? 'Eliminazione...' : 'Elimina'"></button>
         </div>
       </div>
     </div>
