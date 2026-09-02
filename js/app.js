@@ -92,6 +92,7 @@ function appState() {
     async fareLogout() {
       if (this.sessione) { await disattivaDispositiviPush(this.sessione.user.id); }
       await logout();
+      rimuoviTokenPushLocale();
       this.sessione = null;
       this.view = 'login';
     },
