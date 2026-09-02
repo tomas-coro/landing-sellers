@@ -85,9 +85,12 @@ function appState() {
 
       if (this.isAdmin) { await this.caricaDashboardAdmin(); this.view = 'admin'; }
       else { await this.caricaClienti(); this.view = 'lista'; }
+
+      registraDispositivoPush(this.sessione.user.id);
     },
 
     async fareLogout() {
+      if (this.sessione) { await disattivaDispositiviPush(this.sessione.user.id); }
       await logout();
       this.sessione = null;
       this.view = 'login';
