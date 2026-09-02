@@ -11,7 +11,7 @@ function pushDisponibile() {
   return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 }
 
-async function registraDispositivoPush(userId) {
+async function registraDispositivoPush() {
   if (!pushDisponibile()) return;
 
   const PushNotifications = window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications;
@@ -33,7 +33,7 @@ async function registraDispositivoPush(userId) {
     }
 
     PushNotifications.addListener('registration', async (token) => {
-      await salvaTokenDispositivo(userId, token.value);
+      await salvaTokenDispositivo(token.value);
     });
 
     PushNotifications.addListener('registrationError', (err) => {
@@ -46,28 +46,22 @@ async function registraDispositivoPush(userId) {
   }
 }
 
-async function salvaTokenDispositivo(userId, token) {
+async function salvaTokenDispositivo(token) {
   try {
     const piattaforma = window.Capacitor.getPlatform();
     if (piattaforma !== 'ios' && piattaforma !== 'android') return;
 
-    const ora = new Date().toISOString();
-    const { error } = await window.supabaseClient
-      .from('push_devices')
-      .upsert({
-        user_id: userId,
-        token,
-        platform: piattaforma,
-        updated_at: ora,
-        last_seen_at: ora,
-        active: true
-      }, { onConflict: 'token' });
+    // Passa dalla RPC register_push_device invece di un upsert diretto
+    // sulla tabella: la RPC ricava l'utente da auth.uid() lato server e
+    // riassegna in sicurezza il token se apparteneva a un altro utente
+    // sullo stesso dispositivo (es. A fa logout, B fa login). Nessun
+    // user_id viene passato dal client: la RPC non lo accetta.
+    const { error } = await window.supabaseClient.rpc('register_push_device', {
+      p_token: token,
+      p_platform: piattaforma
+    });
 
     if (error) {
-      // Puo' succedere se il token esisteva gia' per un altro utente
-      // (stesso dispositivo, login precedente diverso): la RLS nega
-      // l'update perche' user_id non e' il proprietario del token.
-      // Non e' un caso da gestire automaticamente in questa fase.
       console.warn('[push] impossibile salvare il token dispositivo:', error.message);
     }
   } catch (errore) {

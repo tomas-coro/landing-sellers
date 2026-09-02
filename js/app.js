@@ -86,7 +86,7 @@ function appState() {
       if (this.isAdmin) { await this.caricaDashboardAdmin(); this.view = 'admin'; }
       else { await this.caricaClienti(); this.view = 'lista'; }
 
-      registraDispositivoPush(this.sessione.user.id);
+      registraDispositivoPush();
     },
 
     async fareLogout() {
