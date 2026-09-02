@@ -1,2 +1,7 @@
 .DS_Store
 .superpowers/
+
+# Capacitor: www/ e' generata dallo script di build (npm run build), non va versionata.
+# ios/ e android/ restano versionate di proposito.
+node_modules/
+www/
