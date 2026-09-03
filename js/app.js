@@ -37,6 +37,9 @@ function appState() {
     agendaVista: 'oggi',
     agendaMese: new Date().toISOString().slice(0, 7),
     agendaDataSelezionata: new Date().toISOString().slice(0, 10),
+
+    pipelineIndice: 0,
+
     ricercaGlobale: '',
     indiceNoteRicerca: [],
     erroreRicerca: '',
@@ -60,6 +63,7 @@ function appState() {
     schedaAperture: { stato: true, pacchetto: false, contatti: false, note: true },
 
     aggiornamentoDisponibile: false,
+    aggiornamentoStato: 'controllo', // controllo | aggiornato | disponibile | errore
     accedendo: false,
 
     // notifiche push (Web Push standard)
@@ -88,15 +92,57 @@ function appState() {
     swipeElement: null,
 
     async init() {
-      window.addEventListener('le:aggiornamento-pronto', () => { this.aggiornamentoDisponibile = true; });
+      window.addEventListener('le:aggiornamento-pronto', () => {
+        this.aggiornamentoDisponibile = true;
+        this.aggiornamentoStato = 'disponibile';
+      });
+
+      window.addEventListener('le:aggiornamento-nessuno', () => {
+        if (!this.aggiornamentoDisponibile) {
+          this.aggiornamentoStato = 'aggiornato';
+        }
+      });
+
+      window.addEventListener('le:aggiornamento-errore', () => {
+        if (!this.aggiornamentoDisponibile) {
+          this.aggiornamentoStato = 'errore';
+        }
+      });
 
       this.sessione = await getSessioneCorrente();
       if (this.sessione) { await this.dopoLogin(); }
       else { this.view = 'login'; }
     },
 
-    aggiornaApp() { window.leAggiornaApp(); },
-    controllaAggiornamenti() { window.leControllaAggiornamenti(); },
+    aggiornaApp() {
+      window.leAggiornaApp();
+    },
+
+    async controllaAggiornamenti() {
+      if (this.aggiornamentoDisponibile) {
+        this.aggiornaApp();
+        return;
+      }
+
+      this.aggiornamentoStato = 'controllo';
+
+      try {
+        await window.leControllaAggiornamenti();
+      } catch {
+        this.aggiornamentoStato = 'errore';
+      }
+    },
+
+    etichettaAggiornamento() {
+      if (this.aggiornamentoDisponibile || this.aggiornamentoStato === 'disponibile') {
+        return 'Aggiornamento disponibile';
+      }
+
+      if (this.aggiornamentoStato === 'controllo') return 'Controllo...';
+      if (this.aggiornamentoStato === 'errore') return 'Riprova';
+
+      return 'App aggiornata';
+    },
 
     async fareLogin() {
       if (this.accedendo) return;
@@ -770,6 +816,45 @@ function appState() {
       return this.clienti
         .filter(c => c.stato === stato)
         .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    },
+
+    statiPipeline() {
+      return [
+        { valore: 'contattato', label: 'Contattato' },
+        { valore: 'brief_mandato', label: 'Brief mandato' },
+        { valore: 'in_lavorazione', label: 'In lavorazione' },
+        { valore: 'pubblicato', label: 'Pubblicato' }
+      ];
+    },
+
+    aggiornaPipelineIndice(event) {
+      const el = event.currentTarget;
+      if (!el) return;
+
+      const larghezza = el.clientWidth || 1;
+      const indice = Math.round(el.scrollLeft / larghezza);
+
+      this.pipelineIndice = Math.max(
+        0,
+        Math.min(this.statiPipeline().length - 1, indice)
+      );
+    },
+
+    vaiAStatoPipeline(indice) {
+      const container = document.querySelector('.pipeline-scroll-v2');
+      if (!container) return;
+
+      const target = Math.max(
+        0,
+        Math.min(this.statiPipeline().length - 1, Number(indice) || 0)
+      );
+
+      this.pipelineIndice = target;
+
+      container.scrollTo({
+        left: container.clientWidth * target,
+        behavior: 'smooth'
+      });
     },
 
     async cambiaStatoDaPipeline(clienteId, stato) {
