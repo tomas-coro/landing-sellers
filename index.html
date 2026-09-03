@@ -267,7 +267,7 @@
         </div>
 
         <div class="stack-card profile-menu">
-          <button type="button" @click="attivaPush()" :disabled="pushInCorso || pushStato === 'non-supportato'"><span>Notifiche</span><strong x-text="etichettaPush()"></strong></button>
+          <button type="button" @click="togglePush()" :disabled="pushInCorso || pushStato === 'non-supportato'"><span>Notifiche</span><strong x-text="pushInCorso ? 'Attendi...' : etichettaPush()"></strong></button>
           <button type="button" @click="controllaAggiornamenti()"><span>Aggiornamenti</span><strong>Controlla</strong></button>
           <button type="button" @click="apriCestino()"><span>Cestino</span><strong>Apri</strong></button>
           <button type="button" class="danger-row" @click="fareLogout()"><span>Account</span><strong>Esci</strong></button>
