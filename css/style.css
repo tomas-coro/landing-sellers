@@ -798,3 +798,42 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
     grid-template-columns:repeat(2,minmax(0,1fr)) !important;
   }
 }
+
+/* --- Native-like mobile gestures --- */
+.app-main-view{
+  will-change:transform;
+  transform:translate3d(0,0,0);
+  backface-visibility:hidden;
+}
+
+.app-main-view.gesture-dragging{
+  position:relative;
+  z-index:20;
+  user-select:none;
+  -webkit-user-select:none;
+  cursor:grabbing;
+}
+
+/* Push toggle */
+.profile-menu .profile-push-toggle{
+  transition:
+    background-color .18s ease,
+    border-color .18s ease,
+    color .18s ease;
+}
+
+.profile-menu .profile-push-toggle.is-active{
+  background:var(--lime);
+  color:var(--ink);
+}
+
+.profile-menu .profile-push-toggle.is-active strong{
+  color:var(--ink);
+  font-weight:850;
+}
+
+@media(max-width:700px){
+  .app-main-view{
+    touch-action:pan-y;
+  }
+}
