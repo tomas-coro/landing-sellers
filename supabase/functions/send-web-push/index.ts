@@ -30,17 +30,25 @@ interface SubscriptionRow {
   auth: string;
 }
 
-function callerRole(authHeader: string | null): string | null {
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  const token = authHeader.slice("Bearer ".length);
-  const parts = token.split(".");
-  if (parts.length !== 3) return null;
-  try {
-    const payloadJson = atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"));
-    const payload = JSON.parse(payloadJson);
-    return typeof payload.role === "string" ? payload.role : null;
-  } catch {
-    return null;
+function hasServiceRoleCredential(authHeader: string | null): boolean {
+  if (!SERVICE_ROLE_KEY || !authHeader?.startsWith("Bearer ")) return false;
+  return authHeader.slice("Bearer ".length) === SERVICE_ROLE_KEY;
+}
+
+async function deactivateSubscription(id: string): Promise<void> {
+  const url = `${SUPABASE_URL}/rest/v1/web_push_subscriptions?id=eq.${encodeURIComponent(id)}`;
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: {
+      apikey: SERVICE_ROLE_KEY!,
+      Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+      "content-type": "application/json",
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify({ active: false, updated_at: new Date().toISOString() }),
+  });
+  if (!res.ok) {
+    throw new Error(`disattivazione subscription fallita: HTTP ${res.status}`);
   }
 }
 
@@ -67,8 +75,7 @@ Deno.serve(async (req) => {
 
   // Solo chiamate server-to-server con la service role key: nessun venditore
   // puo' invocare questa funzione con la propria sessione normale.
-  const role = callerRole(req.headers.get("authorization"));
-  if (role !== "service_role") {
+  if (!hasServiceRoleCredential(req.headers.get("authorization"))) {
     return new Response(JSON.stringify({ error: "forbidden" }), { status: 403 });
   }
 
@@ -132,8 +139,18 @@ Deno.serve(async (req) => {
       console.log(`push ok: subscription=${sub.id} host=${host}`);
       return { id: sub.id, ok: true };
     } catch (err) {
+      let gone = false;
+      if (err instanceof webpush.PushMessageError && err.isGone()) {
+        gone = true;
+        try {
+          await deactivateSubscription(sub.id);
+          console.warn(`subscription scaduta disattivata: subscription=${sub.id} host=${host}`);
+        } catch (cleanupErr) {
+          console.error(`cleanup subscription fallito: subscription=${sub.id} - ${String(cleanupErr)}`);
+        }
+      }
       console.error(`push fallita: subscription=${sub.id} host=${host} - ${String(err)}`);
-      return { id: sub.id, ok: false };
+      return { id: sub.id, ok: false, gone };
     }
   }));
 

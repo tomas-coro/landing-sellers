@@ -41,15 +41,6 @@ window.WebPush = (function () {
     return bytes;
   }
 
-  async function statoAttuale() {
-    if (!isSupported()) return 'non-supportato';
-    if (Notification.permission === 'denied') return 'bloccato';
-    const reg = await navigator.serviceWorker.getRegistration();
-    if (!reg) return 'inattivo';
-    const sub = await reg.pushManager.getSubscription();
-    return sub ? 'attivo' : 'inattivo';
-  }
-
   async function registraSottoscrizione(subscription) {
     const json = subscription.toJSON();
     const { error } = await window.supabaseClient.rpc('register_web_push_subscription', {
@@ -58,6 +49,23 @@ window.WebPush = (function () {
       p_auth: json.keys.auth
     });
     if (error) throw error;
+  }
+
+  async function statoAttuale() {
+    if (!isSupported()) return 'non-supportato';
+    if (Notification.permission === 'denied') return 'bloccato';
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) return 'inattivo';
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) return 'inattivo';
+
+    // Dopo un logout la subscription browser resta valida, ma sul DB viene
+    // marcata active=false. Al login la ri-registriamo senza nuovo prompt:
+    // la RPC la riattiva e gestisce anche il cambio utente sullo stesso device.
+    if (Notification.permission === 'granted') {
+      await registraSottoscrizione(sub);
+    }
+    return 'attivo';
   }
 
   // Avvia il flusso completo: richiesta permesso -> subscribe -> registrazione
