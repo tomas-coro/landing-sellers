@@ -300,7 +300,20 @@
             <input type="url" x-model="nuovoClienteForm.sito_url" placeholder="https://cliente.it">
             <p x-show="erroriNuovoCliente.sito_url" x-text="erroriNuovoCliente.sito_url" class="err"></p>
           </div>
-          <div class="price-builder">
+          <div x-show="selezionePrezzo.modalita === 'legacy'" class="price-legacy">
+            <div>
+              <strong>Prezzo storico</strong>
+              <span>Questo cliente usa un prezzo precedente o personalizzato. Verrà mantenuto finché non scegli di passare al catalogo attuale.</span>
+            </div>
+            <dl>
+              <dt>Importo</dt><dd x-text="formattaEuro(nuovoClienteForm.importo_abbonamento)"></dd>
+              <dt>Pacchetto</dt><dd x-text="nuovoClienteForm.nome_pacchetto || '-'"></dd>
+              <dt>Note prezzo</dt><dd x-text="nuovoClienteForm.note_prezzo || '-'"></dd>
+            </dl>
+            <button type="button" class="btn btn-ghost" @click="passaAlCatalogoPrezzi()">Passa al catalogo attuale</button>
+          </div>
+
+          <div class="price-builder" x-show="selezionePrezzo.modalita !== 'legacy'">
             <div class="field"><label>Formula</label><div class="price-choice-grid">
               <button type="button" class="price-choice" :class="{ on: selezionePrezzo.formula === 'mensile' }" @click="selezionaFormulaPrezzo('mensile')"><strong>Start mensile</strong><span>39 €/mese</span><small>+ 150 € setup una tantum</small></button>
               <button type="button" class="price-choice" :class="{ on: selezionePrezzo.formula === 'annuale' }" @click="selezionaFormulaPrezzo('annuale')"><strong>Start annuale</strong><span>468 €/anno</span><small>Setup incluso</small></button>
