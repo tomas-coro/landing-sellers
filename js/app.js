@@ -577,6 +577,71 @@ function appState() {
       return this.clienti.filter(c => classeUrgenza(c.prossimo_contatto) === 'ritardo');
     },
 
+    eventiOggiHome() {
+      const oggi = this.dataISOOggi();
+
+      return this.eventiAgenda().filter(evento =>
+        evento.data === oggi ||
+        (evento.tipo === 'contatto' && evento.data < oggi)
+      );
+    },
+
+    clientiInCorsoHome() {
+      const conteggi = this.conteggiPerStato();
+      return (conteggi.brief_mandato || 0) + (conteggi.in_lavorazione || 0);
+    },
+
+    clientiDaGestireHome() {
+      const oggi = this.dataISOOggi();
+      const limite = this.aggiungiGiorniISO(oggi, 7);
+      const perCliente = new Map();
+
+      const aggiungi = (cliente, priorita, motivo, tipo) => {
+        const corrente = perCliente.get(cliente.id);
+        if (corrente && corrente.priorita <= priorita) return;
+
+        perCliente.set(cliente.id, {
+          cliente,
+          priorita,
+          motivo,
+          tipo
+        });
+      };
+
+      this.clienti.forEach(cliente => {
+        const contatto = this.normalizzaDataAgenda(cliente.prossimo_contatto);
+
+        if (contatto && contatto < oggi) {
+          aggiungi(cliente, 0, 'Contatto in ritardo', 'ritardo');
+        } else if (contatto === oggi) {
+          aggiungi(cliente, 1, 'Da contattare oggi', 'oggi');
+        }
+
+        const rinnovo = this.normalizzaDataAgenda(cliente.data_rinnovo);
+
+        if (rinnovo && rinnovo >= oggi && rinnovo <= limite) {
+          let motivo = 'Rinnovo entro 7 giorni';
+
+          if (rinnovo === oggi) {
+            motivo = 'Rinnovo oggi';
+          } else {
+            const ms = Date.parse(rinnovo + 'T00:00:00Z') - Date.parse(oggi + 'T00:00:00Z');
+            const giorni = Math.round(ms / 86400000);
+            motivo = `Rinnovo tra ${giorni} ${giorni === 1 ? 'giorno' : 'giorni'}`;
+          }
+
+          aggiungi(cliente, 2, motivo, 'rinnovo');
+        }
+      });
+
+      return [...perCliente.values()]
+        .sort((a, b) =>
+          a.priorita - b.priorita ||
+          (a.cliente.nome || '').localeCompare(b.cliente.nome || '')
+        )
+        .slice(0, 4);
+    },
+
     dataISOOggi() {
       const d = new Date();
       const y = d.getFullYear();
