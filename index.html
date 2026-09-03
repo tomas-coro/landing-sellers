@@ -323,7 +323,31 @@
             <span>Notifiche</span>
             <strong x-text="pushInCorso ? 'Attendi...' : etichettaPush()"></strong>
           </button>
-          <button type="button" @click="controllaAggiornamenti()"><span>Aggiornamenti</span><strong>Controlla</strong></button>
+          <button
+            type="button"
+            class="profile-update-row"
+            :class="{
+              'is-available': aggiornamentoDisponibile,
+              'is-ok': aggiornamentoStato === 'aggiornato' && !aggiornamentoDisponibile,
+              'is-error': aggiornamentoStato === 'errore'
+            }"
+            @click="controllaAggiornamenti()"
+            :disabled="aggiornamentoStato === 'controllo'">
+
+            <span>Aggiornamenti</span>
+
+            <strong>
+              <i
+                class="update-status-dot"
+                :class="{
+                  available: aggiornamentoDisponibile,
+                  ok: aggiornamentoStato === 'aggiornato' && !aggiornamentoDisponibile,
+                  error: aggiornamentoStato === 'errore'
+                }"></i>
+
+              <span x-text="etichettaAggiornamento()"></span>
+            </strong>
+          </button>
           <button type="button" @click="apriCestino()"><span>Cestino</span><strong>Apri</strong></button>
           <button type="button" class="danger-row" @click="fareLogout()"><span>Account</span><strong>Esci</strong></button>
         </div>
@@ -1287,9 +1311,64 @@
       else window.location.reload();
     };
 
-    window.leControllaAggiornamenti = function () {
-      if (window.leSwRegistration) window.leSwRegistration.update();
+    window.leControllaAggiornamenti = async function () {
+      const reg = window.leSwRegistration;
+
+      if (!reg) {
+        window.dispatchEvent(new Event('le:aggiornamento-errore'));
+        throw new Error('Service Worker non disponibile');
+      }
+
+      try {
+        await reg.update();
+
+        if (reg.waiting) {
+          window.dispatchEvent(new Event('le:aggiornamento-pronto'));
+          return;
+        }
+
+        const worker = reg.installing;
+
+        if (worker) {
+          await new Promise((resolve) => {
+            if (
+              worker.state === 'installed' ||
+              worker.state === 'activated' ||
+              worker.state === 'redundant'
+            ) {
+              resolve();
+              return;
+            }
+
+            const onStateChange = () => {
+              if (
+                worker.state === 'installed' ||
+                worker.state === 'activated' ||
+                worker.state === 'redundant'
+              ) {
+                worker.removeEventListener('statechange', onStateChange);
+                resolve();
+              }
+            };
+
+            worker.addEventListener('statechange', onStateChange);
+          });
+        }
+
+        if (reg.waiting) {
+          window.dispatchEvent(new Event('le:aggiornamento-pronto'));
+        } else {
+          window.dispatchEvent(new Event('le:aggiornamento-nessuno'));
+        }
+      } catch (err) {
+        window.dispatchEvent(new Event('le:aggiornamento-errore'));
+        throw err;
+      }
     };
+
+    window.setTimeout(() => {
+      window.leControllaAggiornamenti().catch(() => {});
+    }, 1200);
   </script>
 </body>
 </html>
