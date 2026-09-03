@@ -85,21 +85,61 @@
       <div class="content">
         <p x-show="erroreClienti" x-text="erroreClienti" class="err" style="margin-bottom:14px"></p>
 
-        <div class="stack-card" x-show="!isAdmin" style="margin-bottom:16px">
-          <div class="stato-current" style="margin-bottom:0;border:none;padding:0">
-            <span class="lbl">Incassi totali</span>
-            <strong style="font-size:19px" x-text="formattaEuro(totaleGenerato())"></strong>
-          </div>
-          <template x-if="andamentoMensile().length > 0">
-            <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
-              <template x-for="m in andamentoMensile()" :key="m.chiave">
-                <div style="display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0">
-                  <span style="color:var(--muted);font-weight:600" x-text="m.etichetta"></span>
-                  <span style="font-weight:700"><span x-text="m.conteggio"></span> pubblicati - <span x-text="formattaEuro(m.totale)"></span></span>
-                </div>
-              </template>
+        <div class="home-dashboard" x-show="!isAdmin && clienti.length > 0">
+          <div class="home-welcome">
+            <div>
+              <span>Panoramica</span>
+              <strong>I tuoi clienti</strong>
             </div>
-          </template>
+            <small>Aggiornata in tempo reale</small>
+          </div>
+
+          <div class="home-kpi-grid">
+            <div class="home-kpi">
+              <span>Clienti</span>
+              <strong x-text="clienti.length"></strong>
+            </div>
+            <div class="home-kpi">
+              <span>Pubblicati</span>
+              <strong x-text="clientiPubblicati().length"></strong>
+            </div>
+            <div class="home-kpi">
+              <span>In lavorazione</span>
+              <strong x-text="conteggiPerStato().in_lavorazione"></strong>
+            </div>
+            <div class="home-kpi" :class="{ attention: clientiConRinnovoVicino().length > 0 }">
+              <span>Scadenze 30 gg</span>
+              <strong x-text="clientiConRinnovoVicino().length"></strong>
+            </div>
+          </div>
+
+          <div class="home-legacy-metric">
+            <div>
+              <span>Totale generato</span>
+              <strong x-text="formattaEuro(totaleGenerato())"></strong>
+            </div>
+            <small>Dato storico: può includere canoni mensili e annuali.</small>
+          </div>
+
+          <div class="home-renewals" x-show="clientiConRinnovoVicino().length > 0">
+            <div class="home-section-head">
+              <strong>Prossime scadenze</strong>
+              <span>entro 30 giorni</span>
+            </div>
+
+            <template x-for="cliente in clientiConRinnovoVicino().slice(0,3)" :key="'renew-' + cliente.id">
+              <button type="button" class="home-renewal-row" @click="apriScheda(cliente.id)">
+                <div>
+                  <strong x-text="cliente.nome"></strong>
+                  <small x-text="cliente.nome_pacchetto || 'Pacchetto non specificato'"></small>
+                </div>
+                <div>
+                  <strong x-text="formattaData(cliente.data_rinnovo)"></strong>
+                  <small x-text="etichettaImportoCliente(cliente)"></small>
+                </div>
+              </button>
+            </template>
+          </div>
         </div>
 
         <button type="button" class="alert-ritardo" :class="{ on: filtroSoloRitardo }" x-show="clientiInRitardo().length > 0" @click="toggleFiltroSoloRitardo()">
@@ -133,18 +173,46 @@
         </div>
 
         <template x-for="cliente in clientiFiltrati()" :key="cliente.id">
-          <div class="card-cliente" @click="apriScheda(cliente.id)">
+          <div class="card-cliente home-client-card" @click="apriScheda(cliente.id)">
             <div class="cc-top">
-              <strong x-text="cliente.nome"></strong>
-              <span class="pill" :class="'s-' + classeStato(cliente.stato)"><i></i><span x-text="formattaStato(cliente.stato)"></span></span>
+              <div class="home-client-main">
+                <strong x-text="cliente.nome"></strong>
+                <small x-text="cliente.nome_pacchetto || 'Pacchetto non specificato'"></small>
+              </div>
+              <span class="pill" :class="'s-' + classeStato(cliente.stato)">
+                <i></i>
+                <span x-text="formattaStato(cliente.stato)"></span>
+              </span>
             </div>
-            <span class="cc-next" :class="'urg-' + classeUrgenza(cliente.prossimo_contatto)" x-show="cliente.prossimo_contatto">Prossimo contatto: <span x-text="cliente.prossimo_contatto"></span></span>
+
+            <div class="home-client-meta">
+              <span x-text="etichettaImportoCliente(cliente)"></span>
+              <span x-show="cliente.data_rinnovo">
+                Rinnovo <strong x-text="formattaData(cliente.data_rinnovo)"></strong>
+              </span>
+            </div>
+
+            <span
+              class="cc-next"
+              :class="'urg-' + classeUrgenza(cliente.prossimo_contatto)"
+              x-show="cliente.prossimo_contatto">
+              Prossimo contatto: <span x-text="cliente.prossimo_contatto"></span>
+            </span>
           </div>
         </template>
 
-        <div x-show="clienti.length === 0 && !erroreClienti" class="empty">
-          <div class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.7-3.4 3-5.2 5.5-5.2s4.8 1.8 5.5 5.2"/><path d="M16.5 4.8a3.2 3.2 0 0 1 0 6.2"/><path d="M17.5 14.9c2.2.5 3.8 2.2 4.3 5"/></svg></div>
-          <p>Nessun cliente ancora.<br>Aggiungi il primo per iniziare a tracciare la pipeline.</p>
+        <div x-show="clienti.length === 0 && !erroreClienti" class="home-empty">
+          <div class="home-empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="9" cy="8" r="3.2"/>
+              <path d="M3.5 20c.7-3.4 3-5.2 5.5-5.2s4.8 1.8 5.5 5.2"/>
+              <path d="M17 8v6M14 11h6"/>
+            </svg>
+          </div>
+          <span>La tua area clienti è pronta</span>
+          <h2>Inizia dal primo cliente</h2>
+          <p>Qui vedrai pipeline, stato dei lavori, prezzi e prossime scadenze.</p>
+          <button type="button" class="btn btn-primary" @click="vaiNuovoCliente()">Aggiungi cliente</button>
         </div>
 
         <div x-show="clienti.length > 0 && clientiFiltrati().length === 0 && !erroreClienti" class="empty">
@@ -269,37 +337,57 @@
       </div>
       <div class="content">
         <h1 x-text="clienteInModificaId ? 'Modifica cliente' : 'Aggiungi cliente'"></h1>
-        <form @submit.prevent="salvaCliente()">
-          <div class="field">
-            <label>Nome *</label>
-            <input x-model="nuovoClienteForm.nome" placeholder="Es. Panificio Argento" required>
-            <p x-show="erroriNuovoCliente.nome" x-text="erroriNuovoCliente.nome" class="err"></p>
-          </div>
-          <div class="field">
-            <label>Referente</label>
-            <input x-model="nuovoClienteForm.referente" placeholder="Nome e cognome">
-          </div>
-          <div class="field">
-            <label>Telefono</label>
-            <input x-model="nuovoClienteForm.telefono" placeholder="333 1234567">
-          </div>
-          <div class="field">
-            <label>Email</label>
-            <input type="email" x-model="nuovoClienteForm.email" placeholder="nome@email.it">
-          </div>
-          <div class="field">
-            <label>P.IVA</label>
-            <input x-model="nuovoClienteForm.piva" placeholder="IT00000000000">
-          </div>
-          <div class="field">
-            <label>IBAN</label>
-            <input x-model="nuovoClienteForm.iban" placeholder="IT00 A000 0000 0000">
-          </div>
-          <div class="field">
-            <label>URL sito</label>
-            <input type="url" x-model="nuovoClienteForm.sito_url" placeholder="https://cliente.it">
-            <p x-show="erroriNuovoCliente.sito_url" x-text="erroriNuovoCliente.sito_url" class="err"></p>
-          </div>
+        <form @submit.prevent="salvaCliente()" class="client-form">
+
+          <section class="client-form-section">
+            <div class="client-form-section-head">
+              <span>01</span>
+              <div>
+                <strong>Dati cliente</strong>
+                <small>Informazioni anagrafiche e contatti</small>
+              </div>
+            </div>
+
+            <div class="client-fields-grid">
+              <div class="field field-full">
+                <label>Nome *</label>
+                <input x-model="nuovoClienteForm.nome" placeholder="Es. Panificio Argento" required>
+                <p x-show="erroriNuovoCliente.nome" x-text="erroriNuovoCliente.nome" class="err"></p>
+              </div>
+
+              <div class="field">
+                <label>Referente</label>
+                <input x-model="nuovoClienteForm.referente" placeholder="Nome e cognome">
+              </div>
+
+              <div class="field">
+                <label>Telefono</label>
+                <input x-model="nuovoClienteForm.telefono" placeholder="333 1234567">
+              </div>
+
+              <div class="field field-full">
+                <label>Email</label>
+                <input type="email" x-model="nuovoClienteForm.email" placeholder="nome@email.it">
+              </div>
+
+              <div class="field">
+                <label>P.IVA</label>
+                <input x-model="nuovoClienteForm.piva" placeholder="IT00000000000">
+              </div>
+
+              <div class="field">
+                <label>IBAN</label>
+                <input x-model="nuovoClienteForm.iban" placeholder="IT00 A000 0000 0000">
+              </div>
+
+              <div class="field field-full">
+                <label>URL sito</label>
+                <input type="url" x-model="nuovoClienteForm.sito_url" placeholder="https://cliente.it">
+                <p x-show="erroriNuovoCliente.sito_url" x-text="erroriNuovoCliente.sito_url" class="err"></p>
+              </div>
+            </div>
+          </section>
+
           <div x-show="selezionePrezzo.modalita === 'legacy'" class="price-legacy">
             <div>
               <strong>Prezzo storico</strong>
@@ -313,7 +401,15 @@
             <button type="button" class="btn btn-ghost" @click="passaAlCatalogoPrezzi()">Passa al catalogo attuale</button>
           </div>
 
-          <div class="price-builder" x-show="selezionePrezzo.modalita !== 'legacy'">
+          <div class="price-builder client-form-section" x-show="selezionePrezzo.modalita !== 'legacy'">
+            <div class="client-form-section-head">
+              <span>02</span>
+              <div>
+                <strong>Offerta e servizi</strong>
+                <small>Formula, extra, dominio e servizi accessori</small>
+              </div>
+            </div>
+
             <div class="field"><label>Formula</label><div class="price-choice-grid">
               <button type="button" class="price-choice" :class="{ on: selezionePrezzo.formula === 'mensile' }" @click="selezionaFormulaPrezzo('mensile')"><strong>Start mensile</strong><span>39 €/mese</span><small>+ 150 € setup una tantum</small></button>
               <button type="button" class="price-choice" :class="{ on: selezionePrezzo.formula === 'annuale' }" @click="selezionaFormulaPrezzo('annuale')"><strong>Start annuale</strong><span>468 €/anno</span><small>Setup incluso</small></button>
@@ -332,30 +428,265 @@
               </div>
             </div>
 
-            <div class="commercial-section"><div class="commercial-section-title">Sconto</div><div class="discount-row"><select x-model="nuovoClienteForm.sconto_tipo" @change="aggiornaPrezzoCliente()"><option value="">Nessuno</option><option value="percentuale">Percentuale %</option><option value="fisso">Importo fisso €</option></select><input x-show="nuovoClienteForm.sconto_tipo" type="number" min="0" :max="nuovoClienteForm.sconto_tipo === 'percentuale' ? 100 : null" step="0.01" x-model.number="nuovoClienteForm.sconto_valore" @input="aggiornaPrezzoCliente()" :placeholder="nuovoClienteForm.sconto_tipo === 'percentuale' ? '10' : '5.00'"></div></div>
+            <div class="contract-discount-section">
+              <div class="contract-discount-head">
+                <div>
+                  <strong>Contratto e sconto</strong>
+                  <small>Definisci durata e condizioni commerciali</small>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Durata contratto</label>
+                <div class="duration-choice-grid">
+                  <template x-for="anni in [1,2,3,4]" :key="anni">
+                    <button
+                      type="button"
+                      class="duration-choice"
+                      :class="{ on: Number(nuovoClienteForm.durata_contratto_anni) === anni }"
+                      @click="setDurataContratto(anni)">
+                      <strong x-text="anni"></strong>
+                      <small x-text="anni === 1 ? 'anno' : 'anni'"></small>
+                    </button>
+                  </template>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Sconto</label>
+                <div class="discount-row">
+                  <select
+                    x-model="nuovoClienteForm.sconto_tipo"
+                    @change="aggiornaPrezzoCliente()">
+                    <option value="">Nessuno</option>
+                    <option value="percentuale">Percentuale %</option>
+                    <option value="fisso">Importo fisso €</option>
+                  </select>
+
+                  <input
+                    x-show="nuovoClienteForm.sconto_tipo"
+                    type="number"
+                    min="0"
+                    :max="nuovoClienteForm.sconto_tipo === 'percentuale' ? 100 : null"
+                    step="0.01"
+                    x-model.number="nuovoClienteForm.sconto_valore"
+                    @input="aggiornaPrezzoCliente()"
+                    :placeholder="nuovoClienteForm.sconto_tipo === 'percentuale' ? '10' : '5.00'">
+                </div>
+              </div>
+
+              <div class="field" x-show="nuovoClienteForm.sconto_tipo && Number(nuovoClienteForm.sconto_valore) > 0">
+                <label>Durata sconto</label>
+
+                <button
+                  type="button"
+                  class="discount-duration-all"
+                  :class="{ on: nuovoClienteForm.sconto_durata_anni == null }"
+                  @click="setDurataSconto(null)">
+                  Tutto il contratto
+                </button>
+
+                <div class="discount-duration-grid">
+                  <template
+                    x-for="anni in [1,2,3,4].filter(n => n <= Number(nuovoClienteForm.durata_contratto_anni || 1))"
+                    :key="anni">
+                    <button
+                      type="button"
+                      class="discount-duration-choice"
+                      :class="{ on: Number(nuovoClienteForm.sconto_durata_anni) === anni }"
+                      @click="setDurataSconto(anni)">
+                      <span x-text="anni === 1 ? '1° anno' : 'Primi ' + anni + ' anni'"></span>
+                    </button>
+                  </template>
+                </div>
+              </div>
+
+              <div class="discount-contract-preview">
+                <div>
+                  <span>Durata</span>
+                  <strong>
+                    <span x-text="nuovoClienteForm.durata_contratto_anni"></span>
+                    <span x-text="Number(nuovoClienteForm.durata_contratto_anni) === 1 ? ' anno' : ' anni'"></span>
+                  </strong>
+                </div>
+
+                <div x-show="nuovoClienteForm.sconto_tipo && Number(nuovoClienteForm.sconto_valore) > 0">
+                  <span>Sconto</span>
+                  <strong x-text="etichettaDurataSconto()"></strong>
+                </div>
+              </div>
+            </div>
 
             <div class="commercial-section"><div class="commercial-section-title">Dominio e posta</div><div class="domain-choice-grid"><button type="button" :class="{ on: nuovoClienteForm.cliente_ha_dominio === true }" @click="nuovoClienteForm.cliente_ha_dominio=true; nuovoClienteForm.dominio_it=false; nuovoClienteForm.dominio_com=false; nuovoClienteForm.email_5_caselle=false; aggiornaPrezzoCliente()"><strong>Sì, ce l'ha già</strong><small>Colleghiamo quello esistente</small></button><button type="button" :class="{ on: nuovoClienteForm.cliente_ha_dominio === false }" @click="nuovoClienteForm.cliente_ha_dominio=false; aggiornaPrezzoCliente()"><strong>No, non ancora</strong><small>Lo gestiamo noi</small></button></div><div x-show="nuovoClienteForm.cliente_ha_dominio === false" class="annual-extras"><label><input type="checkbox" x-model="nuovoClienteForm.dominio_it" @change="aggiornaPrezzoCliente()"><span><strong>Dominio .it</strong><small>30 €/anno</small></span></label><label><input type="checkbox" x-model="nuovoClienteForm.dominio_com" @change="aggiornaPrezzoCliente()"><span><strong>Dominio .com</strong><small>45 €/anno</small></span></label><label><input type="checkbox" x-model="nuovoClienteForm.email_5_caselle" @change="aggiornaPrezzoCliente()"><span><strong>Email - 5 caselle da 1 GB</strong><small>35 €/anno</small></span></label></div></div>
 
             <div x-show="selezionePrezzo.formula === 'mensile'" class="commercial-section security-section"><div class="commercial-section-title">Pacchetto sicurezza</div><label class="security-choice"><input type="checkbox" x-model="nuovoClienteForm.pacchetto_sicurezza" @change="aggiornaPrezzoCliente()"><span><strong>Conservazione garantita per 12 mesi</strong><small>100 € una tantum</small></span></label><small class="security-warning">Senza pacchetto sicurezza, dopo un mese dalla sospensione dei pagamenti sito, dominio e dati possono essere eliminati definitivamente.</small></div>
 
-            <div class="price-summary commercial-summary"><div><span x-text="selezionePrezzo.formula === 'annuale' ? 'Totale annuale' : 'Totale mensile'"></span><strong x-text="formattaEuro(nuovoClienteForm.importo_abbonamento || 0)"></strong></div><small x-show="scontoRicorrente(prezzoLordoRicorrente()) > 0">Lordo <span x-text="formattaEuro(prezzoLordoRicorrente())"></span> · sconto <span x-text="'-' + formattaEuro(scontoRicorrente(prezzoLordoRicorrente()))"></span></small><small x-text="riepilogoSetupPrezzo()"></small><small x-show="selezionePrezzo.formula === 'mensile' && nuovoClienteForm.pacchetto_sicurezza">+ 100 € sicurezza una tantum</small><small x-show="totaleAnnualiSeparati() > 0">+ <span x-text="formattaEuro(totaleAnnualiSeparati())"></span>/anno dominio e posta</small><small x-show="riepilogoUpgradePrezzo()" x-text="riepilogoUpgradePrezzo()"></small></div>
+            <div class="price-summary commercial-summary contract-summary-full">
+              <div class="contract-summary-title">
+                <div>
+                  <span>Riepilogo contratto</span>
+                  <strong x-text="nuovoClienteForm.nome_pacchetto || 'Offerta'"></strong>
+                </div>
+                <span class="contract-years">
+                  <strong x-text="nuovoClienteForm.durata_contratto_anni"></strong>
+                  <small x-text="Number(nuovoClienteForm.durata_contratto_anni) === 1 ? 'anno' : 'anni'"></small>
+                </span>
+              </div>
+
+              <div class="contract-summary-lines">
+                <div>
+                  <span>Canone base</span>
+                  <strong>
+                    <span x-text="formattaEuro(prezzoLordoRicorrente())"></span>
+                    <small x-text="selezionePrezzo.formula === 'annuale' ? '/anno' : '/mese'"></small>
+                  </strong>
+                </div>
+
+                <div x-show="prezzoUpgradeMensile() > 0">
+                  <span>Upgrade inclusi</span>
+                  <strong x-text="riepilogoUpgradePrezzo()"></strong>
+                </div>
+
+                <div x-show="scontoRicorrente(prezzoLordoRicorrente()) > 0">
+                  <span>Sconto</span>
+                  <strong>
+                    <span x-text="nuovoClienteForm.sconto_tipo === 'percentuale'
+                      ? Number(nuovoClienteForm.sconto_valore) + '%'
+                      : '-' + formattaEuro(nuovoClienteForm.sconto_valore)"></span>
+                    <small x-text="etichettaDurataSconto()"></small>
+                  </strong>
+                </div>
+
+                <div x-show="scontoRicorrente(prezzoLordoRicorrente()) > 0">
+                  <span>Canone durante lo sconto</span>
+                  <strong>
+                    <span x-text="formattaEuro(prezzoRicorrenteScontato())"></span>
+                    <small x-text="selezionePrezzo.formula === 'annuale' ? '/anno' : '/mese'"></small>
+                  </strong>
+                </div>
+
+                <div x-show="scontoRicorrente(prezzoLordoRicorrente()) > 0 && anniScontoEffettivi() < Number(nuovoClienteForm.durata_contratto_anni)">
+                  <span>Canone dopo lo sconto</span>
+                  <strong>
+                    <span x-text="formattaEuro(prezzoLordoRicorrente())"></span>
+                    <small x-text="selezionePrezzo.formula === 'annuale' ? '/anno' : '/mese'"></small>
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Setup</span>
+                  <strong x-text="selezionePrezzo.formula === 'annuale' ? 'Incluso' : formattaEuro(catalogoPrezzi().formule.mensile.setup)"></strong>
+                </div>
+
+                <div x-show="nuovoClienteForm.pacchetto_sicurezza">
+                  <span>Sicurezza</span>
+                  <strong x-text="formattaEuro(catalogoPrezzi().sicurezza.prezzo) + ' una tantum'"></strong>
+                </div>
+
+                <div x-show="totaleAnnualiSeparati() > 0">
+                  <span>Dominio e posta</span>
+                  <strong x-text="formattaEuro(totaleAnnualiSeparati()) + '/anno'"></strong>
+                </div>
+
+                <div>
+                  <span>Avvisi</span>
+                  <strong x-text="notificheRinnovoAttive()
+                    ? etichettaPreavviso(nuovoClienteForm.giorni_preavviso_notifica)
+                    : 'Disattivati'"></strong>
+                </div>
+              </div>
+
+              <div class="contract-summary-total">
+                <span>Valore canone contratto</span>
+                <strong x-text="formattaEuro(valoreCanoneContratto())"></strong>
+              </div>
+
+              <div class="contract-summary-grand-total">
+                <span>Valore complessivo stimato</span>
+                <strong x-text="formattaEuro(valoreTotaleContrattoStimato())"></strong>
+                <small>Include canone, setup, sicurezza e costi annuali selezionati per la durata prevista.</small>
+              </div>
+            </div>
             <p x-show="erroriNuovoCliente.importo_abbonamento" x-text="erroriNuovoCliente.importo_abbonamento" class="err"></p>
           </div>
-          <div class="contract-renewal-card">
+          <section class="client-form-section renewal-form-section">
+            <div class="client-form-section-head">
+              <span>03</span>
+              <div>
+                <strong>Rinnovi e notifiche</strong>
+                <small>Attivazione, prossimo rinnovo e avviso automatico</small>
+              </div>
+            </div>
+
+            <div class="contract-renewal-card">
             <div class="field">
               <label>Data attivazione</label>
               <input type="date" x-model="nuovoClienteForm.data_attivazione" @change="aggiornaPreviewRinnovo()">
               <p x-show="erroriNuovoCliente.data_attivazione" x-text="erroriNuovoCliente.data_attivazione" class="err"></p>
             </div>
 
-            <div class="field">
-              <label>Avviso rinnovo</label>
-              <select x-model.number="nuovoClienteForm.giorni_preavviso_notifica">
-                <option :value="30">1 mese prima</option>
-                <option :value="7">1 settimana prima</option>
-                <option :value="2">2 giorni prima</option>
-                <option :value="1">1 giorno prima</option>
-              </select>
+            <div class="field field-full renewal-alert-config">
+              <label>Avvisi scadenza</label>
+
+              <div class="renewal-mode-grid" x-show="nuovoClienteForm.periodicita_contratto === 'mensile'">
+                <button type="button"
+                  :class="{ on: nuovoClienteForm.modalita_notifica_rinnovo === 'nessuna' }"
+                  @click="setModalitaNotificaRinnovo('nessuna')">
+                  <strong>Nessuno</strong>
+                  <small>Nessuna push</small>
+                </button>
+
+                <button type="button"
+                  :class="{ on: nuovoClienteForm.modalita_notifica_rinnovo === 'mensile' }"
+                  @click="setModalitaNotificaRinnovo('mensile')">
+                  <strong>Mensilità</strong>
+                  <small>Ogni scadenza mensile</small>
+                </button>
+
+                <button type="button"
+                  :class="{ on: nuovoClienteForm.modalita_notifica_rinnovo === 'annuale' }"
+                  @click="setModalitaNotificaRinnovo('annuale')">
+                  <strong>Annualità</strong>
+                  <small>Solo anniversario</small>
+                </button>
+
+                <button type="button"
+                  :class="{ on: nuovoClienteForm.modalita_notifica_rinnovo === 'entrambe' }"
+                  @click="setModalitaNotificaRinnovo('entrambe')">
+                  <strong>Entrambe</strong>
+                  <small>Mensile + annuale</small>
+                </button>
+              </div>
+
+              <div class="renewal-mode-grid annual-only" x-show="nuovoClienteForm.periodicita_contratto === 'annuale'">
+                <button type="button"
+                  :class="{ on: nuovoClienteForm.modalita_notifica_rinnovo === 'nessuna' }"
+                  @click="setModalitaNotificaRinnovo('nessuna')">
+                  <strong>Nessuno</strong>
+                  <small>Nessuna push</small>
+                </button>
+
+                <button type="button"
+                  :class="{ on: nuovoClienteForm.modalita_notifica_rinnovo === 'annuale' }"
+                  @click="setModalitaNotificaRinnovo('annuale')">
+                  <strong>Rinnovo annuale</strong>
+                  <small>Avviso alla scadenza</small>
+                </button>
+              </div>
+
+              <div class="renewal-notice-block" x-show="notificheRinnovoAttive()">
+                <span>Quanto prima vuoi essere avvisato?</span>
+                <div class="renewal-notice-grid">
+                  <template x-for="giorni in [30,7,2,1]" :key="giorni">
+                    <button type="button"
+                      :class="{ on: Number(nuovoClienteForm.giorni_preavviso_notifica) === giorni }"
+                      @click="nuovoClienteForm.giorni_preavviso_notifica = giorni">
+                      <strong x-text="giorni"></strong>
+                      <small x-text="giorni === 1 ? 'giorno' : 'giorni'"></small>
+                    </button>
+                  </template>
+                </div>
+              </div>
             </div>
 
             <div class="renewal-preview" x-show="nuovoClienteForm.data_attivazione && nuovoClienteForm.periodicita_contratto">
@@ -363,10 +694,16 @@
               <strong x-text="nuovoClienteForm.data_rinnovo ? formattaData(nuovoClienteForm.data_rinnovo) : '-'"></strong>
               <small>
                 <span x-text="nuovoClienteForm.periodicita_contratto === 'annuale' ? 'Contratto annuale' : 'Contratto mensile'"></span>
-                · notifica <span x-text="etichettaPreavviso(nuovoClienteForm.giorni_preavviso_notifica)"></span>
+                <template x-if="notificheRinnovoAttive()">
+                  <span> · avviso <span x-text="etichettaPreavviso(nuovoClienteForm.giorni_preavviso_notifica)"></span></span>
+                </template>
+                <template x-if="!notificheRinnovoAttive()">
+                  <span> · notifiche disattivate</span>
+                </template>
               </small>
             </div>
           </div>
+          </section>
           <p x-show="erroriNuovoCliente.generale" x-text="erroriNuovoCliente.generale" class="err" style="margin-bottom:14px"></p>
           <button type="submit" class="btn btn-primary" :disabled="salvandoCliente"
             x-text="salvandoCliente ? 'Salvataggio...' : (clienteInModificaId ? 'Salva modifiche' : 'Salva cliente')"></button>

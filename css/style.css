@@ -319,3 +319,482 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 .security-section{border:1px solid var(--lime,#c8ff00);border-radius:14px;padding:11px 12px}.security-choice{display:flex;gap:8px;align-items:flex-start}.security-choice input{width:18px;height:18px;flex:0 0 18px;margin:1px 0 0}.security-choice span{display:grid;gap:2px}.security-choice strong{font-size:11.5px}.security-choice small{font-size:9.5px;color:var(--muted)}.security-warning{font-size:9.5px;line-height:1.35;color:var(--muted)}
 .commercial-summary{position:sticky;bottom:calc(var(--mobile-tabbar-h,68px) + env(safe-area-inset-bottom) + 8px);z-index:20;box-shadow:0 10px 30px rgba(0,0,0,.08)}
 @media(max-width:420px){.upgrade-compact-grid{grid-template-columns:1fr}.annual-extras{grid-template-columns:1fr}.discount-row{grid-template-columns:1fr 110px}}
+
+/* --- Contratti 1-4 anni + form cliente ordinato --- */
+.client-form{display:grid;gap:16px}
+
+.client-form-section{
+  border:1px solid var(--line);
+  border-radius:17px;
+  background:rgba(251,250,246,.72);
+  padding:15px;
+}
+
+.client-form-section-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding-bottom:14px;
+  margin-bottom:14px;
+  border-bottom:1px solid var(--line);
+}
+
+.client-form-section-head>span{
+  width:30px;
+  height:30px;
+  flex:0 0 30px;
+  border-radius:9px;
+  display:grid;
+  place-items:center;
+  background:var(--ink);
+  color:var(--paper);
+  font-size:10px;
+  font-weight:800;
+}
+
+.client-form-section-head>div{
+  display:grid;
+  gap:1px;
+}
+
+.client-form-section-head strong{
+  font-size:13px;
+  font-weight:800;
+}
+
+.client-form-section-head small{
+  font-size:9.5px;
+  font-weight:600;
+  color:var(--muted);
+}
+
+.client-fields-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:0 9px;
+}
+
+.client-fields-grid .field-full{
+  grid-column:1/-1;
+}
+
+.client-form-section .field:last-child{
+  margin-bottom:0;
+}
+
+.price-builder.client-form-section{
+  gap:14px;
+}
+
+.contract-discount-section{
+  border:1.5px solid var(--ink);
+  border-radius:15px;
+  padding:13px;
+  display:grid;
+  gap:13px;
+  background:var(--paper);
+}
+
+.contract-discount-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+}
+
+.contract-discount-head>div{
+  display:grid;
+  gap:2px;
+}
+
+.contract-discount-head strong{
+  font-size:12.5px;
+  font-weight:800;
+}
+
+.contract-discount-head small{
+  font-size:9.5px;
+  color:var(--muted);
+  font-weight:600;
+}
+
+.duration-choice-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;
+}
+
+.duration-choice{
+  border:1.5px solid var(--line);
+  border-radius:12px;
+  padding:10px 4px;
+  background:var(--card);
+  font-family:var(--sans);
+  display:grid;
+  gap:0;
+  text-align:center;
+  cursor:pointer;
+}
+
+.duration-choice strong{
+  font-size:17px;
+  line-height:1.1;
+}
+
+.duration-choice small{
+  font-size:9px;
+  color:var(--muted);
+  font-weight:700;
+}
+
+.duration-choice.on{
+  border-color:var(--ink);
+  background:var(--ink);
+  color:var(--paper);
+}
+
+.duration-choice.on small{
+  color:var(--paper-2);
+}
+
+.discount-duration-all,
+.discount-duration-choice{
+  font-family:var(--sans);
+  border:1.5px solid var(--line);
+  background:var(--card);
+  color:var(--ink);
+  border-radius:11px;
+  padding:9px 10px;
+  font-size:10.5px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.discount-duration-all{
+  width:100%;
+  margin-bottom:7px;
+}
+
+.discount-duration-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+}
+
+.discount-duration-all.on,
+.discount-duration-choice.on{
+  border-color:var(--lime-deep);
+  background:var(--lime);
+}
+
+.discount-contract-preview{
+  border-top:1px solid var(--line);
+  padding-top:10px;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.discount-contract-preview>div{
+  display:grid;
+  gap:1px;
+}
+
+.discount-contract-preview>div:last-child{
+  text-align:right;
+}
+
+.discount-contract-preview span{
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  color:var(--muted);
+  font-weight:800;
+}
+
+.discount-contract-preview strong{
+  font-size:10.5px;
+  font-weight:800;
+}
+
+.contract-total-row{
+  margin-top:9px;
+  padding-top:9px;
+  border-top:1px solid var(--line);
+  display:flex!important;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.contract-total-row span{
+  font-size:10px;
+  font-weight:800;
+  color:var(--muted);
+}
+
+.contract-total-row strong{
+  font-size:14px!important;
+}
+
+.renewal-form-section{
+  padding-bottom:15px;
+}
+
+.renewal-form-section .contract-renewal-card{
+  margin-top:0;
+}
+
+@media(max-width:390px){
+  .client-fields-grid{
+    grid-template-columns:1fr;
+  }
+
+  .client-fields-grid .field-full{
+    grid-column:1;
+  }
+
+  .duration-choice-grid{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+  }
+
+  .client-form-section{
+    padding:13px;
+  }
+}
+
+/* --- Home dashboard v2 --- */
+.home-dashboard{display:grid;gap:12px;margin-bottom:18px}
+.home-welcome{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.home-welcome>div{display:grid;gap:1px}
+.home-welcome>div>span{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.home-welcome>div>strong{font-size:18px;font-weight:850}
+.home-welcome>small{font-size:9px;color:var(--muted);font-weight:650}
+
+.home-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.home-kpi{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:10px 9px;display:grid;gap:4px}
+.home-kpi span{font-size:8.5px;line-height:1.2;font-weight:750;color:var(--muted)}
+.home-kpi strong{font-size:19px;line-height:1;font-weight:850}
+.home-kpi.attention{border-color:var(--lime-deep);background:rgba(200,255,61,.18)}
+
+.home-legacy-metric{background:var(--ink);color:var(--paper);border-radius:15px;padding:13px 14px;display:grid;gap:4px}
+.home-legacy-metric>div{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.home-legacy-metric span{font-size:10px;font-weight:750}
+.home-legacy-metric strong{font-size:17px;font-weight:850}
+.home-legacy-metric small{font-size:8.5px;color:#b9b7af;font-weight:600}
+
+.home-renewals{background:var(--card);border:1px solid var(--line);border-radius:15px;overflow:hidden}
+.home-section-head{padding:12px 13px 9px;display:flex;align-items:center;justify-content:space-between}
+.home-section-head strong{font-size:11px;font-weight:800}
+.home-section-head span{font-size:8.5px;color:var(--muted);font-weight:700;text-transform:uppercase}
+.home-renewal-row{width:100%;border:0;border-top:1px solid var(--line);background:transparent;padding:10px 13px;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;font-family:var(--sans)}
+.home-renewal-row>div{display:grid;gap:1px}
+.home-renewal-row>div:last-child{text-align:right}
+.home-renewal-row strong{font-size:10.5px}
+.home-renewal-row small{font-size:8.5px;color:var(--muted);font-weight:650}
+
+.home-client-card{gap:10px}
+.home-client-main{display:grid;gap:1px;min-width:0}
+.home-client-main>strong{font-size:14.5px}
+.home-client-main>small{font-size:9.5px;color:var(--muted);font-weight:650}
+.home-client-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding-top:8px;font-size:9.5px;color:var(--muted);font-weight:700}
+.home-client-meta strong{color:var(--ink)}
+
+.home-empty{margin-top:26px;padding:28px 20px;border:1px solid var(--line);border-radius:20px;text-align:center;background:var(--card);display:flex;flex-direction:column;align-items:center}
+.home-empty-icon{width:52px;height:52px;border-radius:16px;background:var(--lime);display:grid;place-items:center;margin-bottom:15px}
+.home-empty-icon svg{width:25px;height:25px}
+.home-empty>span{font-size:9px;text-transform:uppercase;letter-spacing:.09em;font-weight:800;color:var(--muted)}
+.home-empty h2{font-size:19px;margin:5px 0 7px}
+.home-empty p{font-size:11px;line-height:1.5;color:var(--muted);max-width:30ch;margin-bottom:17px}
+.home-empty .btn{max-width:230px}
+
+/* --- Avvisi rinnovo v2 --- */
+.renewal-alert-config{grid-column:1/-1}
+.renewal-mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.renewal-mode-grid button{font-family:var(--sans);border:1.5px solid var(--line);border-radius:12px;background:var(--card);padding:10px;text-align:left;display:grid;gap:2px}
+.renewal-mode-grid button strong{font-size:10.5px}
+.renewal-mode-grid button small{font-size:8.5px;color:var(--muted);font-weight:650}
+.renewal-mode-grid button.on{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.renewal-mode-grid button.on small{color:#c8c5bc}
+.renewal-mode-grid.annual-only{grid-template-columns:repeat(2,minmax(0,1fr))}
+
+.renewal-notice-block{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:grid;gap:7px}
+.renewal-notice-block>span{font-size:9.5px;font-weight:750;color:var(--muted)}
+.renewal-notice-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.renewal-notice-grid button{font-family:var(--sans);border:1.5px solid var(--line);border-radius:11px;background:var(--card);padding:8px 4px;display:grid;text-align:center}
+.renewal-notice-grid button strong{font-size:13px}
+.renewal-notice-grid button small{font-size:8px;color:var(--muted);font-weight:700}
+.renewal-notice-grid button.on{background:var(--lime);border-color:var(--lime-deep)}
+
+/* --- Riepilogo contratto completo --- */
+.contract-summary-full{position:static!important;display:grid;gap:0!important;padding:0!important;overflow:hidden}
+.contract-summary-title{padding:13px 14px;background:var(--ink);color:var(--paper);display:flex!important;align-items:center;justify-content:space-between}
+.contract-summary-title>div{display:grid;gap:1px}
+.contract-summary-title>div>span{font-size:8.5px;text-transform:uppercase;letter-spacing:.07em;color:#bbb8b0;font-weight:800}
+.contract-summary-title>div>strong{font-size:14px!important}
+.contract-years{display:grid;text-align:right}
+.contract-years strong{font-size:18px!important;line-height:1}
+.contract-years small{font-size:8px;color:#bbb8b0}
+
+.contract-summary-lines{padding:8px 14px}
+.contract-summary-lines>div{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)}
+.contract-summary-lines>div:last-child{border-bottom:0}
+.contract-summary-lines>div>span{font-size:9.5px;color:var(--muted);font-weight:700}
+.contract-summary-lines>div>strong{font-size:10.5px!important;text-align:right;display:grid}
+.contract-summary-lines>div>strong small{font-size:8px;color:var(--muted);font-weight:650}
+
+.contract-summary-total{margin:0 14px;padding:11px 0;border-top:1.5px solid var(--ink);display:flex!important;align-items:center;justify-content:space-between}
+.contract-summary-total span{font-size:10px;font-weight:800}
+.contract-summary-total strong{font-size:16px!important}
+
+.contract-summary-grand-total{background:var(--lime);padding:12px 14px;display:grid!important;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+.contract-summary-grand-total>span{font-size:10px;font-weight:850}
+.contract-summary-grand-total>strong{font-size:17px!important}
+.contract-summary-grand-total>small{grid-column:1/-1;font-size:7.8px;line-height:1.3;font-weight:650;color:#495315}
+
+@media(max-width:390px){
+  .home-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* --- Mobile UI fixes: contract summary + renewal controls --- */
+
+.contract-summary-full{
+  width:100%;
+  max-width:100%;
+  overflow:hidden;
+}
+
+.contract-summary-lines{
+  display:block !important;
+  width:100%;
+  padding:8px 14px !important;
+  box-sizing:border-box;
+}
+
+.contract-summary-lines > div{
+  width:100%;
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:flex-start !important;
+  justify-content:space-between !important;
+  gap:14px !important;
+  box-sizing:border-box;
+  padding:8px 0 !important;
+}
+
+.contract-summary-lines > div > span{
+  flex:1 1 auto;
+  min-width:0;
+  font-size:10px !important;
+  line-height:1.3;
+}
+
+.contract-summary-lines > div > strong{
+  flex:0 0 auto;
+  max-width:55%;
+  min-width:0;
+  text-align:right !important;
+  font-size:11px !important;
+  line-height:1.25;
+  white-space:normal;
+}
+
+.contract-summary-lines > div > strong small{
+  display:block;
+  margin-top:1px;
+  font-size:8.5px !important;
+  line-height:1.25;
+}
+
+.contract-summary-title{
+  width:100%;
+  box-sizing:border-box;
+}
+
+.contract-summary-total,
+.contract-summary-grand-total{
+  width:auto;
+  box-sizing:border-box;
+}
+
+/* Notifiche più compatte */
+.renewal-mode-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:5px !important;
+}
+
+.renewal-mode-grid.annual-only{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+}
+
+.renewal-mode-grid button{
+  min-width:0;
+  min-height:54px;
+  padding:7px 6px !important;
+  border-radius:10px !important;
+  text-align:center !important;
+  align-content:center;
+}
+
+.renewal-mode-grid button strong{
+  font-size:9.5px !important;
+  line-height:1.15;
+}
+
+.renewal-mode-grid button small{
+  font-size:7.5px !important;
+  line-height:1.2;
+}
+
+.renewal-notice-block{
+  margin-top:8px !important;
+  padding-top:8px !important;
+}
+
+.renewal-notice-grid{
+  gap:5px !important;
+}
+
+.renewal-notice-grid button{
+  min-height:44px;
+  padding:6px 3px !important;
+}
+
+.renewal-notice-grid button strong{
+  font-size:12px !important;
+}
+
+.renewal-notice-grid button small{
+  font-size:7.5px !important;
+}
+
+.contract-renewal-card{
+  gap:12px !important;
+}
+
+@media(max-width:520px){
+  .contract-summary-title{
+    padding:12px 13px !important;
+  }
+
+  .contract-summary-lines{
+    padding:6px 13px !important;
+  }
+
+  .renewal-mode-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+
+  .renewal-mode-grid button{
+    min-height:48px;
+  }
+}
+
+@media(max-width:350px){
+  .contract-summary-lines > div > strong{
+    max-width:50%;
+  }
+
+  .renewal-mode-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+}

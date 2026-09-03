@@ -4,8 +4,9 @@ function formModuloVuoto() {
     piva: '', iban: '', sito_url: '', importo_abbonamento: null,
     nome_pacchetto: '', note_prezzo: '', data_rinnovo: null,
     data_attivazione: '', periodicita_contratto: 'mensile',
+    durata_contratto_anni: 1,
     giorni_preavviso_notifica: 7,
-    sconto_tipo: '', sconto_valore: 0,
+    sconto_tipo: '', sconto_valore: 0, sconto_durata_anni: null,
     pagine_extra: 0, lingue_extra: 0,
     cliente_ha_dominio: true,
     dominio_it: false, dominio_com: false, email_5_caselle: false,
@@ -320,6 +321,46 @@ function appState() {
       return this.clienti.filter(c => classeUrgenza(c.prossimo_contatto) === 'ritardo');
     },
 
+    clientiConRinnovoVicino(giorni = 30) {
+      const oggi = new Date();
+      const oggiUTC = Date.UTC(oggi.getFullYear(), oggi.getMonth(), oggi.getDate());
+
+      return this.clienti
+        .filter(c => {
+          if (!c.data_rinnovo) return false;
+          const data = Date.parse(`${c.data_rinnovo}T00:00:00Z`);
+          const diff = Math.ceil((data - oggiUTC) / 86400000);
+          return diff >= 0 && diff <= giorni;
+        })
+        .sort((a, b) => (a.data_rinnovo || '').localeCompare(b.data_rinnovo || ''));
+    },
+
+    etichettaImportoCliente(cliente) {
+      if (cliente.importo_abbonamento == null) return '-';
+      const importo = this.formattaNumeroEuro(cliente.importo_abbonamento);
+      if (cliente.periodicita_contratto === 'mensile') return `${importo}/mese`;
+      if (cliente.periodicita_contratto === 'annuale') return `${importo}/anno`;
+      return importo;
+    },
+
+    prezzoRicorrenteScontato() {
+      return Math.max(
+        0,
+        this.prezzoLordoRicorrente() - this.scontoRicorrente(this.prezzoLordoRicorrente())
+      );
+    },
+
+    valoreTotaleContrattoStimato() {
+      const durata = Math.max(
+        1,
+        Math.min(4, Number(this.nuovoClienteForm.durata_contratto_anni) || 1)
+      );
+
+      return this.valoreCanoneContratto()
+        + this.totaleUnaTantum()
+        + (this.totaleAnnualiSeparati() * durata);
+    },
+
     toggleFiltroSoloRitardo() {
       this.filtroSoloRitardo = !this.filtroSoloRitardo;
     },
@@ -412,9 +453,16 @@ function appState() {
           c.nome_pacchetto === 'Start annuale' ? 'annuale' :
           c.nome_pacchetto === 'Start mensile' ? 'mensile' : null
         ),
+        durata_contratto_anni: Math.max(1, Math.min(4, Number(c.durata_contratto_anni) || 1)),
         giorni_preavviso_notifica: Number(c.giorni_preavviso_notifica) || 7,
         sconto_tipo: c.sconto_tipo || '',
         sconto_valore: Number(c.sconto_valore) || 0,
+        sconto_durata_anni: c.sconto_durata_anni == null
+          ? null
+          : Math.max(1, Math.min(
+              Number(c.durata_contratto_anni) || 4,
+              Number(c.sconto_durata_anni) || 1
+            )),
         pagine_extra: Number(c.pagine_extra) || 0,
         lingue_extra: Number(c.lingue_extra) || 0,
         cliente_ha_dominio: c.cliente_ha_dominio !== false,
@@ -470,6 +518,74 @@ function appState() {
       return Math.min(importo, valore);
     },
 
+    setDurataContratto(anni) {
+      const durata = Math.max(1, Math.min(4, Number(anni) || 1));
+      this.nuovoClienteForm.durata_contratto_anni = durata;
+
+      const durataSconto = this.nuovoClienteForm.sconto_durata_anni;
+      if (durataSconto != null && Number(durataSconto) > durata) {
+        this.nuovoClienteForm.sconto_durata_anni = durata;
+      }
+
+      this.aggiornaPrezzoCliente();
+    },
+
+    setDurataSconto(anni) {
+      if (anni == null || anni === '') {
+        this.nuovoClienteForm.sconto_durata_anni = null;
+      } else {
+        const durataContratto = Math.max(
+          1,
+          Math.min(4, Number(this.nuovoClienteForm.durata_contratto_anni) || 1)
+        );
+        this.nuovoClienteForm.sconto_durata_anni = Math.max(
+          1,
+          Math.min(durataContratto, Number(anni) || 1)
+        );
+      }
+      this.aggiornaPrezzoCliente();
+    },
+
+    anniScontoEffettivi() {
+      if (!this.nuovoClienteForm.sconto_tipo || Number(this.nuovoClienteForm.sconto_valore) <= 0) {
+        return 0;
+      }
+      const durata = Math.max(
+        1,
+        Math.min(4, Number(this.nuovoClienteForm.durata_contratto_anni) || 1)
+      );
+      if (this.nuovoClienteForm.sconto_durata_anni == null) return durata;
+      return Math.max(
+        1,
+        Math.min(durata, Number(this.nuovoClienteForm.sconto_durata_anni) || 1)
+      );
+    },
+
+    etichettaDurataSconto() {
+      const anni = this.anniScontoEffettivi();
+      const durata = Number(this.nuovoClienteForm.durata_contratto_anni) || 1;
+      if (!anni) return '';
+      if (anni >= durata) return 'per tutto il contratto';
+      return anni === 1 ? 'per il primo anno' : `per i primi ${anni} anni`;
+    },
+
+    valoreCanoneContratto() {
+      const durata = Math.max(
+        1,
+        Math.min(4, Number(this.nuovoClienteForm.durata_contratto_anni) || 1)
+      );
+      const lordoPeriodo = this.prezzoLordoRicorrente();
+      const scontoPeriodo = this.scontoRicorrente(lordoPeriodo);
+      const nettoPeriodo = Math.max(0, lordoPeriodo - scontoPeriodo);
+      const anniScontati = this.anniScontoEffettivi();
+      const periodiPerAnno = this.nuovoClienteForm.periodicita_contratto === 'annuale' ? 1 : 12;
+
+      return (
+        nettoPeriodo * periodiPerAnno * anniScontati
+        + lordoPeriodo * periodiPerAnno * (durata - anniScontati)
+      );
+    },
+
     prezzoLordoRicorrente() {
       const c = this.catalogoPrezzi();
       const f = c.formule[this.selezionePrezzo.formula] || c.formule.mensile;
@@ -508,10 +624,17 @@ function appState() {
       if (pagine > 0) d.push(`${pagine} pagine extra (+${pagine * c.paginaExtra.prezzoMensile} €/mese)`);
       if (lingue > 0) d.push(`${lingue} lingue extra (+${lingue * c.multilingua.prezzoMensilePerLingua} €/mese)`);
       if (this.nuovoClienteForm.sconto_tipo && Number(this.nuovoClienteForm.sconto_valore) > 0) {
-        d.push(this.nuovoClienteForm.sconto_tipo === 'percentuale'
+        const descrizioneSconto = this.nuovoClienteForm.sconto_tipo === 'percentuale'
           ? `Sconto ${Number(this.nuovoClienteForm.sconto_valore)}%`
-          : `Sconto ${this.formattaNumeroEuro(this.nuovoClienteForm.sconto_valore)}`);
+          : `Sconto ${this.formattaNumeroEuro(this.nuovoClienteForm.sconto_valore)}`;
+        d.push(`${descrizioneSconto} ${this.etichettaDurataSconto()}`);
       }
+
+      const durataContratto = Math.max(
+        1,
+        Math.min(4, Number(this.nuovoClienteForm.durata_contratto_anni) || 1)
+      );
+      d.push(`Durata contratto: ${durataContratto} ${durataContratto === 1 ? 'anno' : 'anni'}`);
       if (this.nuovoClienteForm.cliente_ha_dominio === false) {
         const annuali = [];
         if (this.nuovoClienteForm.dominio_it) annuali.push('Dominio .it');
@@ -575,6 +698,31 @@ function appState() {
       if (n === 7) return '1 settimana prima';
       if (n === 2) return '2 giorni prima';
       return '1 giorno prima';
+    },
+
+    setModalitaNotificaRinnovo(modalita) {
+      const annuale = this.nuovoClienteForm.periodicita_contratto === 'annuale';
+
+      const consentite = annuale
+        ? ['nessuna', 'annuale']
+        : ['nessuna', 'mensile', 'annuale', 'entrambe'];
+
+      this.nuovoClienteForm.modalita_notifica_rinnovo =
+        consentite.includes(modalita) ? modalita : 'nessuna';
+    },
+
+    notificheRinnovoAttive() {
+      return (
+        this.nuovoClienteForm.modalita_notifica_rinnovo &&
+        this.nuovoClienteForm.modalita_notifica_rinnovo !== 'nessuna'
+      );
+    },
+
+    prossimoAnniversarioContratto() {
+      return this.calcolaProssimoRinnovo(
+        this.nuovoClienteForm.data_attivazione,
+        'annuale'
+      );
     },
 
     ripristinaSelezionePrezzo(c) {
