@@ -24,6 +24,8 @@
 </head>
 <body>
   <div id="app" x-data="appState()" x-init="init()"
+    @touchstart.passive="swipeStart($event)"
+    @touchend.passive="swipeEnd($event)"
     x-effect="document.body.style.overflow = confermaEliminazione ? 'hidden' : ''">
 
     <!-- BANNER AGGIORNAMENTO: appare sopra qualunque vista appena il service worker scarica una versione nuova -->
@@ -65,7 +67,7 @@
     </div>
 
     <!-- LISTA CLIENTI -->
-    <div x-show="view === 'lista'">
+    <div x-show="view === 'lista'" x-transition.opacity.duration.160ms class="app-main-view">
       <div class="brandbar">
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
         <button type="button" class="profile-trigger" @click="apriProfilo()" aria-label="Profilo">
@@ -149,22 +151,17 @@
           <div class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
           <p>Nessun cliente trovato.<br>Prova a cambiare ricerca o filtro.</p>
         </div>
-
-        <button x-show="!isAdmin" class="btn btn-lime fab" @click="apriNuovoCliente()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          Nuovo cliente
-        </button>
       </div>
     </div>
 
 
     <!-- PROFILO -->
-    <div x-show="view === 'profilo'" class="profile-view">
+    <div x-show="view === 'profilo'" x-transition.opacity.duration.160ms class="profile-view app-main-view">
       <div class="brandbar">
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
       <div class="topbar">
-        <button type="button" class="linkback" @click="tornaDaProfilo()">
+        <button type="button" class="linkback" @click="vaiHome()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Indietro
         </button>
         <h1 style="font-size:19px">Profilo</h1>
@@ -212,7 +209,7 @@
     </div>
 
     <!-- DASHBOARD ADMIN -->
-    <div x-show="view === 'admin'">
+    <div x-show="view === 'admin'" x-transition.opacity.duration.160ms class="app-main-view">
       <div class="brandbar">
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
         <div style="display:flex;gap:8px">
@@ -268,7 +265,7 @@
     </div>
 
     <!-- NUOVO CLIENTE -->
-    <div x-show="view === 'nuovo'">
+    <div x-show="view === 'nuovo'" x-transition.opacity.duration.160ms class="app-main-view">
       <div class="brandbar">
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
@@ -442,6 +439,28 @@
         </div>
       </div>
     </div>
+
+
+    <!-- NAVIGAZIONE MOBILE -->
+    <nav x-show="navVisibile()" x-cloak class="mobile-tabbar" aria-label="Navigazione principale">
+      <button type="button" :class="{ on: view === 'lista' || view === 'admin' }" @click="vaiHome()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-7h6v7"/></svg>
+        <span>Home</span>
+      </button>
+
+      <button x-show="!isAdmin" type="button" class="mobile-tabbar-add" :class="{ on: view === 'nuovo' }" @click="vaiNuovoCliente()">
+        <span class="mobile-add-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span>Cliente</span>
+      </button>
+
+      <button type="button" :class="{ on: view === 'profilo' }" @click="apriProfilo()">
+        <span class="mobile-nav-avatar">
+          <img x-show="profilo.avatar_url" :src="profilo.avatar_url" alt="">
+          <span x-show="!profilo.avatar_url" x-text="inizialeProfilo()"></span>
+        </span>
+        <span>Profilo</span>
+      </button>
+    </nav>
 
     <!-- CESTINO -->
     <div x-show="view === 'cestino'">

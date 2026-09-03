@@ -253,3 +253,16 @@ h2{font-size:14px;font-weight:800;letter-spacing:-.005em;margin:22px 0 10px}
 .profile-stats strong{font-size:15px}.profile-stats span{font-size:10px;color:var(--muted);font-weight:700}
 .profile-menu{padding:0;overflow:hidden}.profile-menu button{width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;padding:15px 16px;display:flex;align-items:center;justify-content:space-between;gap:14px;font:inherit;color:inherit}
 .profile-menu button:last-child{border-bottom:0}.profile-menu button span{font-weight:700}.profile-menu button strong{font-size:12px;color:var(--muted)}.profile-menu .danger-row strong{color:#c53434}
+
+
+/* --- Navigazione mobile app --- */
+:root{--mobile-tabbar-h:68px}
+body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
+.app-main-view .content,.profile-view .content{padding-bottom:calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom) + 22px)}
+.mobile-tabbar{position:fixed;z-index:90;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,720px);min-height:var(--mobile-tabbar-h);padding:8px 14px calc(8px + env(safe-area-inset-bottom));display:flex;align-items:flex-end;justify-content:space-around;gap:8px;background:rgba(255,255,255,.94);border-top:1px solid var(--line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.mobile-tabbar>button{min-width:72px;min-height:52px;border:0;background:transparent;color:var(--muted);font:inherit;display:grid;place-items:center;align-content:center;gap:4px;padding:4px 8px;border-radius:14px;touch-action:manipulation}
+.mobile-tabbar>button>svg{width:23px;height:23px}.mobile-tabbar>button>span:last-child{font-size:10px;font-weight:700}.mobile-tabbar>button.on{color:#111}
+.mobile-tabbar-add{margin-top:-26px}.mobile-add-circle{width:50px;height:50px;display:grid;place-items:center;border-radius:50%;background:var(--lime,#c8ff00);color:#111;box-shadow:0 7px 22px rgba(0,0,0,.16)}.mobile-add-circle svg{width:25px;height:25px}
+.mobile-nav-avatar{width:25px;height:25px;display:grid;place-items:center;overflow:hidden;border:1px solid currentColor;border-radius:50%;font-size:11px;font-weight:800}.mobile-nav-avatar img{width:100%;height:100%;object-fit:cover}
+@media (min-width:721px){.mobile-tabbar{bottom:16px;border:1px solid var(--line);border-radius:22px;padding-bottom:8px;box-shadow:0 12px 35px rgba(0,0,0,.10)}}
+@media (prefers-reduced-motion:reduce){.app-main-view{transition:none!important}}

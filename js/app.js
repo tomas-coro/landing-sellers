@@ -62,6 +62,10 @@ function appState() {
     profiloSalvando: false,
     avatarCaricando: false,
 
+    // navigazione mobile
+    swipeStartX: null,
+    swipeStartY: null,
+
     async init() {
       window.addEventListener('le:aggiornamento-pronto', () => { this.aggiornamentoDisponibile = true; });
 
@@ -137,6 +141,49 @@ function appState() {
       if (this.pushStato === 'bloccato') return 'Notifiche bloccate';
       if (this.pushStato === 'attivo') return 'Notifiche attive';
       return 'Attiva notifiche';
+    },
+
+    vaiHome() {
+      this.view = this.isAdmin ? 'admin' : 'lista';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    vaiNuovoCliente() {
+      if (this.isAdmin) return;
+      this.apriNuovoCliente();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    navVisibile() {
+      return !!this.sessione && ['lista', 'admin', 'nuovo', 'profilo'].includes(this.view);
+    },
+
+    swipeStart(event) {
+      if (event.touches?.length !== 1) return;
+      const target = event.target;
+      if (target.closest('input, textarea, select, button, label, [contenteditable="true"]')) return;
+      this.swipeStartX = event.touches[0].clientX;
+      this.swipeStartY = event.touches[0].clientY;
+    },
+
+    swipeEnd(event) {
+      if (this.swipeStartX == null || this.swipeStartY == null) return;
+      const touch = event.changedTouches?.[0];
+      if (!touch) return;
+
+      const dx = touch.clientX - this.swipeStartX;
+      const dy = touch.clientY - this.swipeStartY;
+      this.swipeStartX = null;
+      this.swipeStartY = null;
+
+      if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+      if (!['lista', 'admin', 'profilo'].includes(this.view)) return;
+
+      if (dx < 0) {
+        if (this.view === 'lista' || this.view === 'admin') this.apriProfilo();
+      } else {
+        if (this.view === 'profilo') this.vaiHome();
+      }
     },
 
     apriProfilo() {
