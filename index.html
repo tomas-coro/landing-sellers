@@ -17,6 +17,7 @@
 <script src="js/auth.js" defer></script>
 <script src="js/validators.js" defer></script>
 <script src="js/web-push.js" defer></script>
+<script src="js/catalogo-prezzi.js" defer></script>
 <script src="js/app.js" defer></script>
 <!-- TODO: aggiungere integrity SRI per Alpine.js@3, vedi https://www.jsdelivr.com/package/npm/alpinejs -->
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
@@ -265,18 +266,18 @@
             <input type="url" x-model="nuovoClienteForm.sito_url" placeholder="https://cliente.it">
             <p x-show="erroriNuovoCliente.sito_url" x-text="erroriNuovoCliente.sito_url" class="err"></p>
           </div>
-          <div class="field">
-            <label>Importo abbonamento</label>
-            <input type="number" step="0.01" x-model.number="nuovoClienteForm.importo_abbonamento" placeholder="39.00">
+          <div class="price-builder">
+            <div class="field"><label>Formula</label><div class="price-choice-grid">
+              <button type="button" class="price-choice" :class="{ on: selezionePrezzo.formula === 'mensile' }" @click="selezionaFormulaPrezzo('mensile')"><strong>Start mensile</strong><span>39 €/mese</span><small>+ 150 € setup una tantum</small></button>
+              <button type="button" class="price-choice" :class="{ on: selezionePrezzo.formula === 'annuale' }" @click="selezionaFormulaPrezzo('annuale')"><strong>Start annuale</strong><span>468 €/anno</span><small>Setup incluso</small></button>
+            </div></div>
+            <div class="field"><label>Upgrade</label><div class="upgrade-list">
+              <template x-for="u in catalogoPrezzi().upgrade" :key="u.id"><label class="upgrade-row"><input type="checkbox" :checked="selezionePrezzo.upgrade.includes(u.id)" @change="toggleUpgradePrezzo(u.id)"><span><strong x-text="u.nome"></strong><small x-text="'+' + formattaEuro(u.prezzoMensile) + '/mese'"></small></span></label></template>
+              <label class="upgrade-row"><input type="checkbox" :checked="selezionePrezzo.lingueExtra > 0" @change="toggleMultilinguaPrezzo($event.target.checked)"><span><strong>Multilingua</strong><small>+2 €/mese per lingua</small></span></label>
+              <div class="field" x-show="selezionePrezzo.lingueExtra > 0"><label>Lingue extra</label><input type="number" min="1" step="1" x-model.number="selezionePrezzo.lingueExtra" @input="aggiornaPrezzoCliente()"></div>
+            </div></div>
+            <div class="price-summary"><div><span x-text="selezionePrezzo.formula === 'annuale' ? 'Totale annuale' : 'Totale mensile'"></span><strong x-text="formattaEuro(nuovoClienteForm.importo_abbonamento || 0)"></strong></div><small x-text="riepilogoSetupPrezzo()"></small><small x-show="riepilogoUpgradePrezzo()" x-text="riepilogoUpgradePrezzo()"></small></div>
             <p x-show="erroriNuovoCliente.importo_abbonamento" x-text="erroriNuovoCliente.importo_abbonamento" class="err"></p>
-          </div>
-          <div class="field">
-            <label>Nome pacchetto/piano</label>
-            <input x-model="nuovoClienteForm.nome_pacchetto" placeholder="Es. Sito base">
-          </div>
-          <div class="field">
-            <label>Note prezzo</label>
-            <textarea x-model="nuovoClienteForm.note_prezzo" placeholder="Es. scontato i primi 3 mesi"></textarea>
           </div>
           <div class="field">
             <label>Data rinnovo</label>

@@ -25,6 +25,7 @@ function appState() {
     ordinamento: 'prossimo_contatto',
     ordinamentoDesc: false,
     nuovoClienteForm: formModuloVuoto(),
+    selezionePrezzo: { formula: 'mensile', upgrade: [], lingueExtra: 0 },
     erroriNuovoCliente: {},
     clienteInModificaId: null,
     salvandoCliente: false,
@@ -240,6 +241,8 @@ function appState() {
     apriNuovoCliente() {
       this.clienteInModificaId = null;
       this.nuovoClienteForm = formModuloVuoto();
+      this.selezionePrezzo = { formula: 'mensile', upgrade: [], lingueExtra: 0 };
+      this.aggiornaPrezzoCliente();
       this.erroriNuovoCliente = {};
       this.view = 'nuovo';
     },
@@ -255,12 +258,25 @@ function appState() {
         nome_pacchetto: c.nome_pacchetto || '', note_prezzo: c.note_prezzo || '',
         data_rinnovo: c.data_rinnovo || null
       };
+      this.ripristinaSelezionePrezzo(c);
       this.erroriNuovoCliente = {};
       this.view = 'nuovo';
     },
 
+    catalogoPrezzi() { return window.CATALOGO_PREZZI_LE; },
+    selezionaFormulaPrezzo(formula) { this.selezionePrezzo.formula = formula; this.aggiornaPrezzoCliente(); },
+    toggleUpgradePrezzo(id) { const a=this.selezionePrezzo.upgrade; this.selezionePrezzo.upgrade=a.includes(id)?a.filter(x=>x!==id):[...a,id]; this.aggiornaPrezzoCliente(); },
+    toggleMultilinguaPrezzo(attivo) { this.selezionePrezzo.lingueExtra=attivo?Math.max(1,Number(this.selezionePrezzo.lingueExtra)||1):0; this.aggiornaPrezzoCliente(); },
+    prezzoUpgradeMensile() { const c=this.catalogoPrezzi(); return c.upgrade.filter(u=>this.selezionePrezzo.upgrade.includes(u.id)).reduce((s,u)=>s+u.prezzoMensile,0)+((Number(this.selezionePrezzo.lingueExtra)||0)*c.multilingua.prezzoMensilePerLingua); },
+    aggiornaPrezzoCliente() { const c=this.catalogoPrezzi(), f=c.formule[this.selezionePrezzo.formula]||c.formule.mensile, up=this.prezzoUpgradeMensile(); this.nuovoClienteForm.importo_abbonamento=f.id==='annuale'?f.prezzoBase+(up*12):f.prezzoBase+up; this.nuovoClienteForm.nome_pacchetto=f.nome; const d=c.upgrade.filter(u=>this.selezionePrezzo.upgrade.includes(u.id)).map(u=>`${u.nome} (+${u.prezzoMensile} €/mese)`); if((Number(this.selezionePrezzo.lingueExtra)||0)>0)d.push(`Multilingua: ${Number(this.selezionePrezzo.lingueExtra)} lingue extra (+${Number(this.selezionePrezzo.lingueExtra)*c.multilingua.prezzoMensilePerLingua} €/mese)`); d.unshift(f.id==='annuale'?'Setup incluso':'Setup: 150 € una tantum'); this.nuovoClienteForm.note_prezzo=d.join(' · '); },
+    riepilogoSetupPrezzo() { return this.selezionePrezzo.formula==='annuale'?'Setup incluso':'Setup: 150 € una tantum'; },
+    riepilogoUpgradePrezzo() { const m=this.prezzoUpgradeMensile(); if(!m)return ''; return this.selezionePrezzo.formula==='annuale'?`Upgrade: +${this.formattaNumeroEuro(m*12)}/anno`:`Upgrade: +${this.formattaNumeroEuro(m)}/mese`; },
+    formattaNumeroEuro(v) { return new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(v)||0); },
+    ripristinaSelezionePrezzo(c) { const n=c.note_prezzo||'', f=(c.nome_pacchetto||'').toLowerCase().includes('annuale')?'annuale':'mensile', cat=this.catalogoPrezzi(), u=cat.upgrade.filter(x=>n.includes(x.nome)).map(x=>x.id), m=n.match(/Multilingua:\s*(\d+)\s*lingue extra/i); this.selezionePrezzo={formula:f,upgrade:u,lingueExtra:m?Number(m[1]):0}; },
+
     async salvaCliente() {
       if (this.salvandoCliente) return;
+      this.aggiornaPrezzoCliente();
       const check = validaClienteForm(this.nuovoClienteForm);
       this.erroriNuovoCliente = check.errori;
       if (!check.valido) return;
