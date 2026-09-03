@@ -56,6 +56,12 @@ function appState() {
     erroreAdmin: '',
     filtroTestoAdmin: '',
 
+    profilo: { nome: '', username: '', avatar_url: '', ruolo: '' },
+    profiloForm: { username: '' },
+    profiloErrore: '',
+    profiloSalvando: false,
+    avatarCaricando: false,
+
     async init() {
       window.addEventListener('le:aggiornamento-pronto', () => { this.aggiornamentoDisponibile = true; });
 
@@ -83,7 +89,14 @@ function appState() {
 
     async dopoLogin() {
       const { data: profilo } = await window.supabaseClient
-        .from('profili').select('ruolo').eq('id', this.sessione.user.id).single();
+        .from('profili').select('nome,ruolo,username,avatar_url').eq('id', this.sessione.user.id).single();
+      this.profilo = {
+        nome: profilo?.nome || '',
+        ruolo: profilo?.ruolo || 'venditore',
+        username: profilo?.username || '',
+        avatar_url: profilo?.avatar_url || ''
+      };
+      this.profiloForm.username = this.profilo.username;
       this.isAdmin = profilo?.ruolo === 'admin';
       this.filtroTesto = '';
       this.filtroStato = '';
@@ -124,6 +137,87 @@ function appState() {
       if (this.pushStato === 'bloccato') return 'Notifiche bloccate';
       if (this.pushStato === 'attivo') return 'Notifiche attive';
       return 'Attiva notifiche';
+    },
+
+    apriProfilo() {
+      this.profiloErrore = '';
+      this.profiloForm.username = this.profilo.username || '';
+      this.view = 'profilo';
+    },
+
+    tornaDaProfilo() {
+      this.view = this.isAdmin ? 'admin' : 'lista';
+    },
+
+    inizialeProfilo() {
+      const s = this.profilo.username || this.profilo.nome || this.sessione?.user?.email || '?';
+      return s.trim().charAt(0).toUpperCase();
+    },
+
+    async salvaProfilo() {
+      if (this.profiloSalvando) return;
+      this.profiloSalvando = true;
+      this.profiloErrore = '';
+      try {
+        const username = (this.profiloForm.username || '').trim();
+        if (username && username.length < 3) {
+          this.profiloErrore = "L'username deve avere almeno 3 caratteri.";
+          return;
+        }
+        const { error } = await window.supabaseClient.rpc('update_my_profile', {
+          p_username: username || null,
+          p_avatar_url: this.profilo.avatar_url || null
+        });
+        if (error) {
+          this.profiloErrore = error.message.includes('duplicate') ? 'Username gia utilizzato.' : 'Profilo non salvato: ' + error.message;
+          return;
+        }
+        this.profilo.username = username;
+      } finally {
+        this.profiloSalvando = false;
+      }
+    },
+
+    async caricaAvatar(event) {
+      const file = event.target.files?.[0];
+      if (!file || this.avatarCaricando) return;
+      if (!['image/jpeg','image/png','image/webp'].includes(file.type)) {
+        this.profiloErrore = 'Formato immagine non supportato.';
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        this.profiloErrore = 'Immagine troppo grande: massimo 5 MB.';
+        return;
+      }
+
+      this.avatarCaricando = true;
+      this.profiloErrore = '';
+      try {
+        const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+        const path = `${this.sessione.user.id}/avatar.${ext}`;
+        const { error: uploadError } = await window.supabaseClient.storage
+          .from('profile-avatars')
+          .upload(path, file, { upsert: true, contentType: file.type, cacheControl: '3600' });
+        if (uploadError) {
+          this.profiloErrore = 'Foto non caricata: ' + uploadError.message;
+          return;
+        }
+        const { data } = window.supabaseClient.storage.from('profile-avatars').getPublicUrl(path);
+        const avatarUrl = `${data.publicUrl}?v=${Date.now()}`;
+        const { error: saveError } = await window.supabaseClient.rpc('update_my_profile', {
+          p_username: (this.profiloForm.username || '').trim() || null,
+          p_avatar_url: avatarUrl
+        });
+        if (saveError) {
+          this.profiloErrore = 'Profilo non aggiornato: ' + saveError.message;
+          return;
+        }
+        this.profilo.avatar_url = avatarUrl;
+        this.profilo.username = (this.profiloForm.username || '').trim();
+      } finally {
+        this.avatarCaricando = false;
+        event.target.value = '';
+      }
     },
 
     async fareLogout() {
