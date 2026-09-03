@@ -273,3 +273,49 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 .price-legacy dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:7px 12px;font-size:12px}
 .price-legacy dt{color:var(--muted);font-weight:700}
 .price-legacy dd{margin:0;text-align:right;font-weight:700;overflow-wrap:anywhere}
+
+
+/* --- Fase D: configuratore prezzi compatto --- */
+.price-builder{display:grid;gap:14px}
+.price-choice-grid{gap:8px}
+.price-choice{min-height:0;padding:13px 14px;border-radius:15px}
+.price-choice strong{font-size:14px}
+.price-choice span{font-size:17px}
+.price-choice small{font-size:10.5px}
+.upgrade-list{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important}
+.upgrade-row{min-height:72px!important;padding:11px 12px!important;border-radius:14px!important;display:flex!important;align-items:flex-start!important;gap:9px!important}
+.upgrade-row input[type="checkbox"]{width:19px!important;height:19px!important;flex:0 0 19px!important;margin:1px 0 0!important}
+.upgrade-row span{display:grid!important;gap:3px!important;min-width:0!important}
+.upgrade-row strong{font-size:12px!important;line-height:1.25!important}
+.upgrade-row small{font-size:10.5px!important;line-height:1.2!important}
+.upgrade-list>.field{grid-column:1/-1;margin:0!important}
+.price-summary{margin-top:0!important;padding:13px 14px!important;border-radius:15px!important}
+.price-summary strong{font-size:18px!important}
+
+/* --- Fase E: contratto e rinnovi --- */
+.contract-renewal-card{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:4px}
+.contract-renewal-card>.field{margin:0}
+.renewal-preview{grid-column:1/-1;border:1px solid var(--line);border-radius:15px;padding:13px 14px;display:grid;gap:3px;background:var(--card,#fff)}
+.renewal-preview>span{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:800}
+.renewal-preview strong{font-size:16px}
+.renewal-preview small{font-size:10.5px;color:var(--muted);font-weight:600}
+
+@media(max-width:420px){
+  .upgrade-list{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .upgrade-row{min-height:78px!important;padding:10px!important}
+  .upgrade-row strong{font-size:11.5px!important}
+  .contract-renewal-card{grid-template-columns:1fr}
+  .renewal-preview{grid-column:1}
+}
+
+/* --- Fase G: configuratore commerciale completo --- */
+.upgrade-compact-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.upgrade-compact-toggle,.upgrade-qty-card{border:1px solid var(--line);border-radius:13px;min-height:64px;padding:10px 11px;background:var(--card,#fff)}
+.upgrade-compact-toggle{display:flex;align-items:flex-start;gap:8px}.upgrade-compact-toggle input{width:18px;height:18px;flex:0 0 18px;margin:1px 0 0}.upgrade-compact-toggle span,.upgrade-qty-card>div:first-child{display:grid;gap:2px;min-width:0}.upgrade-compact-toggle strong,.upgrade-qty-card strong{font-size:11.5px;line-height:1.25}.upgrade-compact-toggle small,.upgrade-qty-card small{font-size:9.5px;color:var(--muted);font-weight:650}
+.upgrade-qty-card{display:flex;align-items:center;justify-content:space-between;gap:8px}.qty-stepper{display:grid;grid-template-columns:30px 34px 30px;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:0 0 auto}.qty-stepper button{height:32px;border:0;background:transparent;font:inherit;font-weight:800}.qty-stepper input{width:34px;height:32px;border:0!important;border-left:1px solid var(--line)!important;border-right:1px solid var(--line)!important;border-radius:0!important;text-align:center;padding:0!important;font-weight:800;-moz-appearance:textfield}.qty-stepper input::-webkit-outer-spin-button,.qty-stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.commercial-section{display:grid;gap:9px;padding-top:2px}.commercial-section-title{font-size:12px;font-weight:800}.discount-row{display:grid;grid-template-columns:1fr .7fr;gap:8px}.discount-row select,.discount-row input{margin:0}
+.domain-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.domain-choice-grid button{border:1px solid var(--line);border-radius:13px;background:var(--card,#fff);padding:11px;text-align:left;display:grid;gap:2px;font:inherit}.domain-choice-grid button.on{border-color:var(--lime,#c8ff00);box-shadow:inset 0 0 0 1px var(--lime,#c8ff00)}.domain-choice-grid strong{font-size:11.5px}.domain-choice-grid small{font-size:9.5px;color:var(--muted)}
+.annual-extras{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.annual-extras label{display:flex;align-items:flex-start;gap:7px;border:1px solid var(--line);border-radius:12px;padding:9px;background:var(--card,#fff)}.annual-extras input{width:17px;height:17px;flex:0 0 17px;margin:1px 0 0}.annual-extras span{display:grid;gap:2px}.annual-extras strong{font-size:10.5px;line-height:1.2}.annual-extras small{font-size:9px;color:var(--muted)}
+.security-section{border:1px solid var(--lime,#c8ff00);border-radius:14px;padding:11px 12px}.security-choice{display:flex;gap:8px;align-items:flex-start}.security-choice input{width:18px;height:18px;flex:0 0 18px;margin:1px 0 0}.security-choice span{display:grid;gap:2px}.security-choice strong{font-size:11.5px}.security-choice small{font-size:9.5px;color:var(--muted)}.security-warning{font-size:9.5px;line-height:1.35;color:var(--muted)}
+.commercial-summary{position:sticky;bottom:calc(var(--mobile-tabbar-h,68px) + env(safe-area-inset-bottom) + 8px);z-index:20;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+@media(max-width:420px){.upgrade-compact-grid{grid-template-columns:1fr}.annual-extras{grid-template-columns:1fr}.discount-row{grid-template-columns:1fr 110px}}

@@ -318,18 +318,54 @@
               <button type="button" class="price-choice" :class="{ on: selezionePrezzo.formula === 'mensile' }" @click="selezionaFormulaPrezzo('mensile')"><strong>Start mensile</strong><span>39 €/mese</span><small>+ 150 € setup una tantum</small></button>
               <button type="button" class="price-choice" :class="{ on: selezionePrezzo.formula === 'annuale' }" @click="selezionaFormulaPrezzo('annuale')"><strong>Start annuale</strong><span>468 €/anno</span><small>Setup incluso</small></button>
             </div></div>
-            <div class="field"><label>Upgrade</label><div class="upgrade-list">
-              <template x-for="u in catalogoPrezzi().upgrade" :key="u.id"><label class="upgrade-row"><input type="checkbox" :checked="selezionePrezzo.upgrade.includes(u.id)" @change="toggleUpgradePrezzo(u.id)"><span><strong x-text="u.nome"></strong><small x-text="'+' + formattaEuro(u.prezzoMensile) + '/mese'"></small></span></label></template>
-              <label class="upgrade-row"><input type="checkbox" :checked="selezionePrezzo.lingueExtra > 0" @change="toggleMultilinguaPrezzo($event.target.checked)"><span><strong>Multilingua</strong><small>+2 €/mese per lingua</small></span></label>
-              <div class="field" x-show="selezionePrezzo.lingueExtra > 0"><label>Lingue extra</label><input type="number" min="1" step="1" x-model.number="selezionePrezzo.lingueExtra" @input="aggiornaPrezzoCliente()"></div>
-            </div></div>
-            <div class="price-summary"><div><span x-text="selezionePrezzo.formula === 'annuale' ? 'Totale annuale' : 'Totale mensile'"></span><strong x-text="formattaEuro(nuovoClienteForm.importo_abbonamento || 0)"></strong></div><small x-text="riepilogoSetupPrezzo()"></small><small x-show="riepilogoUpgradePrezzo()" x-text="riepilogoUpgradePrezzo()"></small></div>
+            <div class="field">
+              <label>Extra</label>
+              <div class="upgrade-compact-grid">
+                <template x-for="u in catalogoPrezzi().upgrade" :key="u.id">
+                  <label class="upgrade-compact-toggle">
+                    <input type="checkbox" :checked="selezionePrezzo.upgrade.includes(u.id)" @change="toggleUpgradePrezzo(u.id)">
+                    <span><strong x-text="u.nome"></strong><small x-text="'+' + formattaEuro(u.prezzoMensile) + '/mese'"></small></span>
+                  </label>
+                </template>
+                <div class="upgrade-qty-card"><div><strong>Pagine extra</strong><small>+6 €/mese cad. · max 15</small></div><div class="qty-stepper"><button type="button" @click="setQuantitaExtra('pagine_extra',-1,15)" :disabled="nuovoClienteForm.pagine_extra <= 0">−</button><input type="number" min="0" max="15" x-model.number="nuovoClienteForm.pagine_extra" @change="normalizzaQuantitaExtra('pagine_extra',15)"><button type="button" @click="setQuantitaExtra('pagine_extra',1,15)" :disabled="nuovoClienteForm.pagine_extra >= 15">+</button></div></div>
+                <div class="upgrade-qty-card"><div><strong>Multilingua</strong><small>+2 €/mese per lingua · max 5</small></div><div class="qty-stepper"><button type="button" @click="setQuantitaExtra('lingue_extra',-1,5)" :disabled="nuovoClienteForm.lingue_extra <= 0">−</button><input type="number" min="0" max="5" x-model.number="nuovoClienteForm.lingue_extra" @change="normalizzaQuantitaExtra('lingue_extra',5)"><button type="button" @click="setQuantitaExtra('lingue_extra',1,5)" :disabled="nuovoClienteForm.lingue_extra >= 5">+</button></div></div>
+              </div>
+            </div>
+
+            <div class="commercial-section"><div class="commercial-section-title">Sconto</div><div class="discount-row"><select x-model="nuovoClienteForm.sconto_tipo" @change="aggiornaPrezzoCliente()"><option value="">Nessuno</option><option value="percentuale">Percentuale %</option><option value="fisso">Importo fisso €</option></select><input x-show="nuovoClienteForm.sconto_tipo" type="number" min="0" :max="nuovoClienteForm.sconto_tipo === 'percentuale' ? 100 : null" step="0.01" x-model.number="nuovoClienteForm.sconto_valore" @input="aggiornaPrezzoCliente()" :placeholder="nuovoClienteForm.sconto_tipo === 'percentuale' ? '10' : '5.00'"></div></div>
+
+            <div class="commercial-section"><div class="commercial-section-title">Dominio e posta</div><div class="domain-choice-grid"><button type="button" :class="{ on: nuovoClienteForm.cliente_ha_dominio === true }" @click="nuovoClienteForm.cliente_ha_dominio=true; nuovoClienteForm.dominio_it=false; nuovoClienteForm.dominio_com=false; nuovoClienteForm.email_5_caselle=false; aggiornaPrezzoCliente()"><strong>Sì, ce l'ha già</strong><small>Colleghiamo quello esistente</small></button><button type="button" :class="{ on: nuovoClienteForm.cliente_ha_dominio === false }" @click="nuovoClienteForm.cliente_ha_dominio=false; aggiornaPrezzoCliente()"><strong>No, non ancora</strong><small>Lo gestiamo noi</small></button></div><div x-show="nuovoClienteForm.cliente_ha_dominio === false" class="annual-extras"><label><input type="checkbox" x-model="nuovoClienteForm.dominio_it" @change="aggiornaPrezzoCliente()"><span><strong>Dominio .it</strong><small>30 €/anno</small></span></label><label><input type="checkbox" x-model="nuovoClienteForm.dominio_com" @change="aggiornaPrezzoCliente()"><span><strong>Dominio .com</strong><small>45 €/anno</small></span></label><label><input type="checkbox" x-model="nuovoClienteForm.email_5_caselle" @change="aggiornaPrezzoCliente()"><span><strong>Email - 5 caselle da 1 GB</strong><small>35 €/anno</small></span></label></div></div>
+
+            <div x-show="selezionePrezzo.formula === 'mensile'" class="commercial-section security-section"><div class="commercial-section-title">Pacchetto sicurezza</div><label class="security-choice"><input type="checkbox" x-model="nuovoClienteForm.pacchetto_sicurezza" @change="aggiornaPrezzoCliente()"><span><strong>Conservazione garantita per 12 mesi</strong><small>100 € una tantum</small></span></label><small class="security-warning">Senza pacchetto sicurezza, dopo un mese dalla sospensione dei pagamenti sito, dominio e dati possono essere eliminati definitivamente.</small></div>
+
+            <div class="price-summary commercial-summary"><div><span x-text="selezionePrezzo.formula === 'annuale' ? 'Totale annuale' : 'Totale mensile'"></span><strong x-text="formattaEuro(nuovoClienteForm.importo_abbonamento || 0)"></strong></div><small x-show="scontoRicorrente(prezzoLordoRicorrente()) > 0">Lordo <span x-text="formattaEuro(prezzoLordoRicorrente())"></span> · sconto <span x-text="'-' + formattaEuro(scontoRicorrente(prezzoLordoRicorrente()))"></span></small><small x-text="riepilogoSetupPrezzo()"></small><small x-show="selezionePrezzo.formula === 'mensile' && nuovoClienteForm.pacchetto_sicurezza">+ 100 € sicurezza una tantum</small><small x-show="totaleAnnualiSeparati() > 0">+ <span x-text="formattaEuro(totaleAnnualiSeparati())"></span>/anno dominio e posta</small><small x-show="riepilogoUpgradePrezzo()" x-text="riepilogoUpgradePrezzo()"></small></div>
             <p x-show="erroriNuovoCliente.importo_abbonamento" x-text="erroriNuovoCliente.importo_abbonamento" class="err"></p>
           </div>
-          <div class="field">
-            <label>Data rinnovo</label>
-            <input type="date" x-model="nuovoClienteForm.data_rinnovo">
-            <p x-show="erroriNuovoCliente.data_rinnovo" x-text="erroriNuovoCliente.data_rinnovo" class="err"></p>
+          <div class="contract-renewal-card">
+            <div class="field">
+              <label>Data attivazione</label>
+              <input type="date" x-model="nuovoClienteForm.data_attivazione" @change="aggiornaPreviewRinnovo()">
+              <p x-show="erroriNuovoCliente.data_attivazione" x-text="erroriNuovoCliente.data_attivazione" class="err"></p>
+            </div>
+
+            <div class="field">
+              <label>Avviso rinnovo</label>
+              <select x-model.number="nuovoClienteForm.giorni_preavviso_notifica">
+                <option :value="30">1 mese prima</option>
+                <option :value="7">1 settimana prima</option>
+                <option :value="2">2 giorni prima</option>
+                <option :value="1">1 giorno prima</option>
+              </select>
+            </div>
+
+            <div class="renewal-preview" x-show="nuovoClienteForm.data_attivazione && nuovoClienteForm.periodicita_contratto">
+              <span>Prossimo rinnovo</span>
+              <strong x-text="nuovoClienteForm.data_rinnovo ? formattaData(nuovoClienteForm.data_rinnovo) : '-'"></strong>
+              <small>
+                <span x-text="nuovoClienteForm.periodicita_contratto === 'annuale' ? 'Contratto annuale' : 'Contratto mensile'"></span>
+                · notifica <span x-text="etichettaPreavviso(nuovoClienteForm.giorni_preavviso_notifica)"></span>
+              </small>
+            </div>
           </div>
           <p x-show="erroriNuovoCliente.generale" x-text="erroriNuovoCliente.generale" class="err" style="margin-bottom:14px"></p>
           <button type="submit" class="btn btn-primary" :disabled="salvandoCliente"
@@ -391,7 +427,9 @@
               <dt>Importo</dt><dd x-text="formattaEuro(clienteSelezionato().importo_abbonamento)"></dd>
               <dt>Pacchetto</dt><dd x-text="clienteSelezionato().nome_pacchetto || '-'"></dd>
               <dt>Note prezzo</dt><dd x-text="clienteSelezionato().note_prezzo || '-'"></dd>
+              <dt>Attivazione</dt><dd x-text="clienteSelezionato().data_attivazione ? formattaData(clienteSelezionato().data_attivazione) : '-'"></dd>
               <dt>Rinnovo</dt><dd x-text="clienteSelezionato().data_rinnovo ? formattaData(clienteSelezionato().data_rinnovo) : '-'"></dd>
+              <dt>Preavviso</dt><dd x-text="clienteSelezionato().giorni_preavviso_notifica ? etichettaPreavviso(clienteSelezionato().giorni_preavviso_notifica) : '-'"></dd>
             </dl>
           </div>
         </div>

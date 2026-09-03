@@ -2,7 +2,14 @@
 function formModuloVuoto() {
   return { nome: '', referente: '', telefono: '', email: '',
     piva: '', iban: '', sito_url: '', importo_abbonamento: null,
-    nome_pacchetto: '', note_prezzo: '', data_rinnovo: null };
+    nome_pacchetto: '', note_prezzo: '', data_rinnovo: null,
+    data_attivazione: '', periodicita_contratto: 'mensile',
+    giorni_preavviso_notifica: 7,
+    sconto_tipo: '', sconto_valore: 0,
+    pagine_extra: 0, lingue_extra: 0,
+    cliente_ha_dominio: true,
+    dominio_it: false, dominio_com: false, email_5_caselle: false,
+    pacchetto_sicurezza: false };
 }
 
 function appState() {
@@ -25,7 +32,7 @@ function appState() {
     ordinamento: 'prossimo_contatto',
     ordinamentoDesc: false,
     nuovoClienteForm: formModuloVuoto(),
-    selezionePrezzo: { modalita: 'catalogo', formula: 'mensile', upgrade: [], lingueExtra: 0 },
+    selezionePrezzo: { modalita: 'catalogo', formula: 'mensile', upgrade: [] },
     erroriNuovoCliente: {},
     clienteInModificaId: null,
     salvandoCliente: false,
@@ -382,7 +389,9 @@ function appState() {
     apriNuovoCliente() {
       this.clienteInModificaId = null;
       this.nuovoClienteForm = formModuloVuoto();
-      this.selezionePrezzo = { modalita: 'catalogo', formula: 'mensile', upgrade: [], lingueExtra: 0 };
+      this.selezionePrezzo = { modalita: 'catalogo', formula: 'mensile', upgrade: [] };
+      this.nuovoClienteForm.periodicita_contratto = 'mensile';
+      this.nuovoClienteForm.giorni_preavviso_notifica = 7;
       this.aggiornaPrezzoCliente();
       this.erroriNuovoCliente = {};
       this.view = 'nuovo';
@@ -397,7 +406,22 @@ function appState() {
         email: c.email || '', piva: c.piva || '', iban: c.iban || '',
         sito_url: c.sito_url || '', importo_abbonamento: c.importo_abbonamento,
         nome_pacchetto: c.nome_pacchetto || '', note_prezzo: c.note_prezzo || '',
-        data_rinnovo: c.data_rinnovo || null
+        data_rinnovo: c.data_rinnovo || null,
+        data_attivazione: c.data_attivazione || '',
+        periodicita_contratto: c.periodicita_contratto || (
+          c.nome_pacchetto === 'Start annuale' ? 'annuale' :
+          c.nome_pacchetto === 'Start mensile' ? 'mensile' : null
+        ),
+        giorni_preavviso_notifica: Number(c.giorni_preavviso_notifica) || 7,
+        sconto_tipo: c.sconto_tipo || '',
+        sconto_valore: Number(c.sconto_valore) || 0,
+        pagine_extra: Number(c.pagine_extra) || 0,
+        lingue_extra: Number(c.lingue_extra) || 0,
+        cliente_ha_dominio: c.cliente_ha_dominio !== false,
+        dominio_it: !!c.dominio_it,
+        dominio_com: !!c.dominio_com,
+        email_5_caselle: !!c.email_5_caselle,
+        pacchetto_sicurezza: !!c.pacchetto_sicurezza
       };
       this.ripristinaSelezionePrezzo(c);
       this.erroriNuovoCliente = {};
@@ -408,7 +432,10 @@ function appState() {
     selezionaFormulaPrezzo(formula) {
       this.selezionePrezzo.modalita = 'catalogo';
       this.selezionePrezzo.formula = formula;
+      this.nuovoClienteForm.periodicita_contratto = formula === 'annuale' ? 'annuale' : 'mensile';
+      if (formula === 'annuale') this.nuovoClienteForm.pacchetto_sicurezza = false;
       this.aggiornaPrezzoCliente();
+      this.aggiornaPreviewRinnovo();
     },
     toggleUpgradePrezzo(id) {
       this.selezionePrezzo.modalita = 'catalogo';
@@ -416,58 +443,182 @@ function appState() {
       this.selezionePrezzo.upgrade = a.includes(id) ? a.filter(x => x !== id) : [...a, id];
       this.aggiornaPrezzoCliente();
     },
-    toggleMultilinguaPrezzo(attivo) {
-      this.selezionePrezzo.modalita = 'catalogo';
-      this.selezionePrezzo.lingueExtra = attivo ? Math.max(1, Number(this.selezionePrezzo.lingueExtra) || 1) : 0;
+    setQuantitaExtra(campo, delta, max) {
+      const corrente = Number(this.nuovoClienteForm[campo]) || 0;
+      this.nuovoClienteForm[campo] = Math.max(0, Math.min(max, corrente + delta));
       this.aggiornaPrezzoCliente();
     },
-    prezzoUpgradeMensile() { const c=this.catalogoPrezzi(); return c.upgrade.filter(u=>this.selezionePrezzo.upgrade.includes(u.id)).reduce((s,u)=>s+u.prezzoMensile,0)+((Number(this.selezionePrezzo.lingueExtra)||0)*c.multilingua.prezzoMensilePerLingua); },
-    aggiornaPrezzoCliente() { const c=this.catalogoPrezzi(), f=c.formule[this.selezionePrezzo.formula]||c.formule.mensile, up=this.prezzoUpgradeMensile(); this.nuovoClienteForm.importo_abbonamento=f.id==='annuale'?f.prezzoBase+(up*12):f.prezzoBase+up; this.nuovoClienteForm.nome_pacchetto=f.nome; const d=c.upgrade.filter(u=>this.selezionePrezzo.upgrade.includes(u.id)).map(u=>`${u.nome} (+${u.prezzoMensile} €/mese)`); if((Number(this.selezionePrezzo.lingueExtra)||0)>0)d.push(`Multilingua: ${Number(this.selezionePrezzo.lingueExtra)} lingue extra (+${Number(this.selezionePrezzo.lingueExtra)*c.multilingua.prezzoMensilePerLingua} €/mese)`); d.unshift(f.id==='annuale'?'Setup incluso':'Setup: 150 € una tantum'); this.nuovoClienteForm.note_prezzo=d.join(' · '); },
+
+    normalizzaQuantitaExtra(campo, max) {
+      this.nuovoClienteForm[campo] = Math.max(0, Math.min(max, Number(this.nuovoClienteForm[campo]) || 0));
+      this.aggiornaPrezzoCliente();
+    },
+
+    prezzoUpgradeMensile() {
+      const c = this.catalogoPrezzi();
+      const toggle = c.upgrade.filter(u => this.selezionePrezzo.upgrade.includes(u.id)).reduce((s,u) => s + u.prezzoMensile, 0);
+      return toggle
+        + ((Number(this.nuovoClienteForm.pagine_extra) || 0) * c.paginaExtra.prezzoMensile)
+        + ((Number(this.nuovoClienteForm.lingue_extra) || 0) * c.multilingua.prezzoMensilePerLingua);
+    },
+
+    scontoRicorrente(importo) {
+      const tipo = this.nuovoClienteForm.sconto_tipo;
+      const valore = Math.max(0, Number(this.nuovoClienteForm.sconto_valore) || 0);
+      if (!tipo || valore <= 0) return 0;
+      if (tipo === 'percentuale') return Math.min(importo, importo * Math.min(valore,100) / 100);
+      return Math.min(importo, valore);
+    },
+
+    prezzoLordoRicorrente() {
+      const c = this.catalogoPrezzi();
+      const f = c.formule[this.selezionePrezzo.formula] || c.formule.mensile;
+      const up = this.prezzoUpgradeMensile();
+      return f.id === 'annuale' ? f.prezzoBase + (up * 12) : f.prezzoBase + up;
+    },
+
+    totaleAnnualiSeparati() {
+      if (this.nuovoClienteForm.cliente_ha_dominio !== false) return 0;
+      const a = this.catalogoPrezzi().annuali;
+      return (this.nuovoClienteForm.dominio_it ? a.dominioIt.prezzo : 0)
+        + (this.nuovoClienteForm.dominio_com ? a.dominioCom.prezzo : 0)
+        + (this.nuovoClienteForm.email_5_caselle ? a.email5.prezzo : 0);
+    },
+
+    totaleUnaTantum() {
+      const c = this.catalogoPrezzi();
+      const f = c.formule[this.selezionePrezzo.formula] || c.formule.mensile;
+      return f.setup + (f.id === 'mensile' && this.nuovoClienteForm.pacchetto_sicurezza ? c.sicurezza.prezzo : 0);
+    },
+
+    aggiornaPrezzoCliente() {
+      const c = this.catalogoPrezzi();
+      const f = c.formule[this.selezionePrezzo.formula] || c.formule.mensile;
+      this.nuovoClienteForm.periodicita_contratto = f.id === 'annuale' ? 'annuale' : 'mensile';
+      if (f.id === 'annuale') this.nuovoClienteForm.pacchetto_sicurezza = false;
+
+      const lordo = this.prezzoLordoRicorrente();
+      const sconto = this.scontoRicorrente(lordo);
+      this.nuovoClienteForm.importo_abbonamento = Math.max(0, lordo - sconto);
+      this.nuovoClienteForm.nome_pacchetto = f.nome;
+
+      const d = c.upgrade.filter(u => this.selezionePrezzo.upgrade.includes(u.id)).map(u => `${u.nome} (+${u.prezzoMensile} €/mese)`);
+      const pagine = Number(this.nuovoClienteForm.pagine_extra) || 0;
+      const lingue = Number(this.nuovoClienteForm.lingue_extra) || 0;
+      if (pagine > 0) d.push(`${pagine} pagine extra (+${pagine * c.paginaExtra.prezzoMensile} €/mese)`);
+      if (lingue > 0) d.push(`${lingue} lingue extra (+${lingue * c.multilingua.prezzoMensilePerLingua} €/mese)`);
+      if (this.nuovoClienteForm.sconto_tipo && Number(this.nuovoClienteForm.sconto_valore) > 0) {
+        d.push(this.nuovoClienteForm.sconto_tipo === 'percentuale'
+          ? `Sconto ${Number(this.nuovoClienteForm.sconto_valore)}%`
+          : `Sconto ${this.formattaNumeroEuro(this.nuovoClienteForm.sconto_valore)}`);
+      }
+      if (this.nuovoClienteForm.cliente_ha_dominio === false) {
+        const annuali = [];
+        if (this.nuovoClienteForm.dominio_it) annuali.push('Dominio .it');
+        if (this.nuovoClienteForm.dominio_com) annuali.push('Dominio .com');
+        if (this.nuovoClienteForm.email_5_caselle) annuali.push('Email 5 caselle');
+        if (annuali.length) d.push(`Annuali: ${annuali.join(', ')}`);
+      }
+      if (f.id === 'mensile' && this.nuovoClienteForm.pacchetto_sicurezza) d.push('Pacchetto sicurezza 100 € una tantum');
+      d.unshift(f.id === 'annuale' ? 'Setup incluso' : 'Setup: 150 € una tantum');
+      this.nuovoClienteForm.note_prezzo = d.join(' · ');
+    },
+
     riepilogoSetupPrezzo() { return this.selezionePrezzo.formula==='annuale'?'Setup incluso':'Setup: 150 € una tantum'; },
     riepilogoUpgradePrezzo() { const m=this.prezzoUpgradeMensile(); if(!m)return ''; return this.selezionePrezzo.formula==='annuale'?`Upgrade: +${this.formattaNumeroEuro(m*12)}/anno`:`Upgrade: +${this.formattaNumeroEuro(m)}/mese`; },
     formattaNumeroEuro(v) { return new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(v)||0); },
+    calcolaProssimoRinnovo(dataAttivazione, periodicita) {
+      if (!dataAttivazione || !['mensile','annuale'].includes(periodicita)) return null;
+
+      const parti = dataAttivazione.split('-').map(Number);
+      if (parti.length !== 3 || parti.some(Number.isNaN)) return null;
+
+      const [annoBase, meseBase, giornoBase] = parti;
+      const oggi = new Date();
+      const oggiUTC = Date.UTC(oggi.getFullYear(), oggi.getMonth(), oggi.getDate());
+
+      for (let n = 1; n <= 2400; n += 1) {
+        let anno = annoBase;
+        let mese = meseBase;
+
+        if (periodicita === 'mensile') {
+          const indice = (meseBase - 1) + n;
+          anno = annoBase + Math.floor(indice / 12);
+          mese = (indice % 12) + 1;
+        } else {
+          anno = annoBase + n;
+        }
+
+        const ultimoGiorno = new Date(Date.UTC(anno, mese, 0)).getUTCDate();
+        const giorno = Math.min(giornoBase, ultimoGiorno);
+        const candidato = Date.UTC(anno, mese - 1, giorno);
+
+        if (candidato >= oggiUTC) {
+          return `${anno}-${String(mese).padStart(2,'0')}-${String(giorno).padStart(2,'0')}`;
+        }
+      }
+
+      return null;
+    },
+
+    aggiornaPreviewRinnovo() {
+      if (this.selezionePrezzo.modalita !== 'catalogo') return;
+      this.nuovoClienteForm.data_rinnovo = this.calcolaProssimoRinnovo(
+        this.nuovoClienteForm.data_attivazione,
+        this.nuovoClienteForm.periodicita_contratto
+      );
+    },
+
+    etichettaPreavviso(giorni) {
+      const n = Number(giorni);
+      if (n === 30) return '1 mese prima';
+      if (n === 7) return '1 settimana prima';
+      if (n === 2) return '2 giorni prima';
+      return '1 giorno prima';
+    },
+
     ripristinaSelezionePrezzo(c) {
       const pacchetto = (c.nome_pacchetto || '').trim();
       const eCatalogo = pacchetto === 'Start mensile' || pacchetto === 'Start annuale';
-
       if (!eCatalogo) {
-        this.selezionePrezzo = {
-          modalita: 'legacy',
-          formula: 'mensile',
-          upgrade: [],
-          lingueExtra: 0
-        };
+        this.selezionePrezzo = { modalita: 'legacy', formula: 'mensile', upgrade: [] };
         return;
       }
-
       const n = c.note_prezzo || '';
       const f = pacchetto === 'Start annuale' ? 'annuale' : 'mensile';
       const cat = this.catalogoPrezzi();
       const u = cat.upgrade.filter(x => n.includes(x.nome)).map(x => x.id);
-      const m = n.match(/Multilingua:\s*(\d+)\s*lingue extra/i);
-
-      this.selezionePrezzo = {
-        modalita: 'catalogo',
-        formula: f,
-        upgrade: u,
-        lingueExtra: m ? Number(m[1]) : 0
-      };
+      this.selezionePrezzo = { modalita: 'catalogo', formula: f, upgrade: u };
+      this.nuovoClienteForm.pagine_extra = Number(c.pagine_extra) || 0;
+      this.nuovoClienteForm.lingue_extra = Number(c.lingue_extra) || 0;
     },
 
     passaAlCatalogoPrezzi() {
       this.selezionePrezzo = {
         modalita: 'catalogo',
         formula: 'mensile',
-        upgrade: [],
-        lingueExtra: 0
+        upgrade: []
       };
+      this.nuovoClienteForm.pagine_extra = 0;
+      this.nuovoClienteForm.lingue_extra = 0;
+      this.nuovoClienteForm.periodicita_contratto = 'mensile';
       this.aggiornaPrezzoCliente();
+      this.aggiornaPreviewRinnovo();
     },
 
     async salvaCliente() {
       if (this.salvandoCliente) return;
       if (this.selezionePrezzo.modalita === 'catalogo') {
         this.aggiornaPrezzoCliente();
+        this.aggiornaPreviewRinnovo();
+
+        if (!this.nuovoClienteForm.data_attivazione) {
+          this.erroriNuovoCliente = {
+            ...this.erroriNuovoCliente,
+            data_attivazione: 'Inserisci la data di attivazione.'
+          };
+          return;
+        }
       }
       const check = validaClienteForm(this.nuovoClienteForm);
       this.erroriNuovoCliente = check.errori;
