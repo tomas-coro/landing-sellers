@@ -50,6 +50,8 @@ body{
 .iconbtn{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--card);
   display:flex;align-items:center;justify-content:center;color:var(--ink-soft);cursor:pointer}
 .iconbtn svg{width:15px;height:15px}
+.iconbtn:disabled{opacity:.45;cursor:default}
+.iconbtn-active{background:var(--lime);border-color:var(--lime-deep);color:var(--ink)}
 
 /* --- topbar app (titolo pagina o link indietro, sotto il brandbar) --- */
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 14px;flex:none}

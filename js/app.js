@@ -45,6 +45,11 @@ function appState() {
     aggiornamentoDisponibile: false,
     accedendo: false,
 
+    // notifiche push (Web Push standard)
+    pushStato: 'inattivo', // 'non-supportato' | 'bloccato' | 'attivo' | 'inattivo'
+    pushInCorso: false,
+    pushErrore: '',
+
     // dashboard admin
     venditori: [],
     erroreAdmin: '',
@@ -85,9 +90,50 @@ function appState() {
 
       if (this.isAdmin) { await this.caricaDashboardAdmin(); this.view = 'admin'; }
       else { await this.caricaClienti(); this.view = 'lista'; }
+
+      // se il browser ha gia' una subscription da un login precedente sullo
+      // stesso device, aggiornaStatoPush() la ritrova subito (getSubscription)
+      // senza richiedere di nuovo il permesso.
+      await this.aggiornaStatoPush();
+    },
+
+    async aggiornaStatoPush() {
+      this.pushStato = await window.WebPush.statoAttuale();
+    },
+
+    async attivaPush() {
+      if (this.pushInCorso || this.pushStato === 'attivo') return;
+      this.pushInCorso = true;
+      this.pushErrore = '';
+      try {
+        const esito = await window.WebPush.attiva();
+        if (esito === 'denied') this.pushStato = 'bloccato';
+        else if (esito === 'granted') this.pushStato = 'attivo';
+        else await this.aggiornaStatoPush();
+      } catch (err) {
+        this.pushErrore = err.message;
+        await this.aggiornaStatoPush();
+      } finally {
+        this.pushInCorso = false;
+      }
+    },
+
+    etichettaPush() {
+      if (this.pushStato === 'non-supportato') return 'Notifiche non supportate';
+      if (this.pushStato === 'bloccato') return 'Notifiche bloccate';
+      if (this.pushStato === 'attivo') return 'Notifiche attive';
+      return 'Attiva notifiche';
     },
 
     async fareLogout() {
+      try {
+        await window.WebPush.disattivaSottoscrizioneCorrente();
+      } catch (err) {
+        // il logout non deve mai bloccarsi per un problema sulla push:
+        // nel peggiore dei casi la subscription resta attiva sul server
+        // finche' non si ripete un logout riuscito.
+        console.warn('Disattivazione notifiche push fallita al logout:', err);
+      }
       await logout();
       this.sessione = null;
       this.view = 'login';
