@@ -87,6 +87,23 @@
       <div class="content">
         <p x-show="erroreClienti" x-text="erroreClienti" class="err" style="margin-bottom:14px"></p>
 
+        <div class="crm-home-actions" x-show="!isAdmin">
+          <button type="button" @click="apriAgenda()">
+            <span>Agenda</span>
+            <strong x-text="eventiAgendaVisibili().length + ' attività'"></strong>
+          </button>
+
+          <button type="button" @click="apriPipeline()">
+            <span>Pipeline</span>
+            <strong x-text="clienti.length + ' clienti'"></strong>
+          </button>
+
+          <button type="button" @click="apriRicerca()">
+            <span>Ricerca</span>
+            <strong>Cerca ovunque</strong>
+          </button>
+        </div>
+
         <div class="home-dashboard" x-show="!isAdmin && clienti.length > 0">
           <div class="home-welcome">
             <div>
@@ -745,6 +762,62 @@
         </div>
         <p x-show="erroreScheda" x-text="erroreScheda" class="err" style="margin-bottom:14px"></p>
 
+        <div class="client-quick-actions">
+          <a
+            x-show="clienteSelezionato().telefono"
+            :href="'tel:' + telefonoPulito(clienteSelezionato())"
+            class="client-quick-action">
+            <span>☎</span>
+            <strong>Chiama</strong>
+          </a>
+
+          <a
+            x-show="clienteSelezionato().telefono"
+            :href="whatsappCliente(clienteSelezionato())"
+            target="_blank"
+            rel="noopener"
+            class="client-quick-action">
+            <span>WA</span>
+            <strong>WhatsApp</strong>
+          </a>
+
+          <a
+            x-show="clienteSelezionato().email"
+            :href="'mailto:' + clienteSelezionato().email"
+            class="client-quick-action">
+            <span>@</span>
+            <strong>Email</strong>
+          </a>
+
+          <a
+            x-show="clienteSelezionato().sito_url"
+            :href="sitoCliente(clienteSelezionato())"
+            target="_blank"
+            rel="noopener"
+            class="client-quick-action">
+            <span>↗</span>
+            <strong>Sito</strong>
+          </a>
+        </div>
+
+        <div
+          class="client-copy-actions"
+          x-show="clienteSelezionato().piva || clienteSelezionato().iban">
+          <button
+            type="button"
+            x-show="clienteSelezionato().piva"
+            @click="copiaTestoCliente(clienteSelezionato().piva)">
+            Copia P.IVA
+          </button>
+
+          <button
+            type="button"
+            x-show="clienteSelezionato().iban"
+            @click="copiaTestoCliente(clienteSelezionato().iban)">
+            Copia IBAN
+          </button>
+        </div>
+
         <div class="accordion-section">
           <button type="button" class="accordion-header" :class="{ open: schedaAperture.stato }" @click="toggleAccordion('stato')">
             <span>Stato</span>
@@ -832,16 +905,242 @@
     </div>
 
 
+
+    <!-- AGENDA -->
+    <div x-show="view === 'agenda'" x-cloak class="app-main-view crm-view">
+      <div class="brandbar">
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+      </div>
+
+      <div class="topbar">
+        <button type="button" class="linkback" @click="vaiHome()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M19 12H5M11 18l-6-6 6-6"/>
+          </svg>
+          Home
+        </button>
+        <h1 style="font-size:19px">Agenda</h1>
+      </div>
+
+      <div class="content crm-content">
+        <div class="agenda-switch">
+          <button type="button" :class="{ on: agendaVista === 'oggi' }" @click="agendaVista = 'oggi'">
+            Oggi
+          </button>
+          <button type="button" :class="{ on: agendaVista === '7giorni' }" @click="agendaVista = '7giorni'">
+            7 giorni
+          </button>
+          <button type="button" :class="{ on: agendaVista === 'mese' }" @click="agendaVista = 'mese'">
+            Mese
+          </button>
+        </div>
+
+        <div x-show="agendaVista === 'mese'" class="agenda-calendar">
+          <div class="agenda-month-head">
+            <button type="button" @click="cambiaMeseAgenda(-1)" aria-label="Mese precedente">‹</button>
+            <strong x-text="titoloMeseAgenda()"></strong>
+            <button type="button" @click="cambiaMeseAgenda(1)" aria-label="Mese successivo">›</button>
+          </div>
+
+          <div class="agenda-weekdays">
+            <span>L</span><span>M</span><span>M</span><span>G</span><span>V</span><span>S</span><span>D</span>
+          </div>
+
+          <div class="agenda-days">
+            <template x-for="giorno in giorniCalendarioAgenda()" :key="giorno.iso">
+              <button
+                type="button"
+                :class="{
+                  muted: !giorno.nelMese,
+                  today: giorno.oggi,
+                  selected: agendaDataSelezionata === giorno.iso,
+                  busy: giorno.eventi > 0
+                }"
+                @click="selezionaGiornoAgenda(giorno.iso)">
+                <span x-text="giorno.giorno"></span>
+                <i x-show="giorno.eventi > 0" x-text="giorno.eventi"></i>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <div class="agenda-list">
+          <template x-for="evento in eventiAgendaVisibili()" :key="evento.id">
+            <button
+              type="button"
+              class="agenda-event"
+              :class="{ overdue: evento.scaduto }"
+              @click="apriScheda(evento.clienteId)">
+              <div class="agenda-event-date">
+                <strong x-text="formattaData(evento.data)"></strong>
+                <span x-text="evento.tipo === 'contatto' ? 'Contatto' : 'Rinnovo'"></span>
+              </div>
+              <div>
+                <strong x-text="evento.clienteNome"></strong>
+                <small x-text="evento.titolo"></small>
+              </div>
+              <span>›</span>
+            </button>
+          </template>
+
+          <div x-show="eventiAgendaVisibili().length === 0" class="crm-empty">
+            Nessuna attività in questo periodo.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PIPELINE -->
+    <div x-show="view === 'pipeline'" x-cloak class="app-main-view crm-view">
+      <div class="brandbar">
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+      </div>
+
+      <div class="topbar">
+        <button type="button" class="linkback" @click="vaiHome()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M19 12H5M11 18l-6-6 6-6"/>
+          </svg>
+          Home
+        </button>
+        <h1 style="font-size:19px">Pipeline</h1>
+      </div>
+
+      <div class="pipeline-scroll">
+        <template
+          x-for="stato in ['contattato','brief_mandato','in_lavorazione','pubblicato']"
+          :key="stato">
+          <section class="pipeline-column">
+            <div class="pipeline-column-head">
+              <strong x-text="formattaStato(stato)"></strong>
+              <span x-text="clientiPipeline(stato).length"></span>
+            </div>
+
+            <div class="pipeline-column-list">
+              <template x-for="cliente in clientiPipeline(stato)" :key="cliente.id">
+                <article class="pipeline-card" @click="apriScheda(cliente.id)">
+                  <strong x-text="cliente.nome"></strong>
+                  <small x-text="cliente.referente || cliente.nome_pacchetto || 'Nessun referente'"></small>
+
+                  <div class="pipeline-card-bottom">
+                    <span x-text="etichettaImportoCliente(cliente)"></span>
+
+                    <select
+                      :value="cliente.stato"
+                      @click.stop
+                      @change.stop="cambiaStatoDaPipeline(cliente.id, $event.target.value)">
+                      <option value="contattato">Contattato</option>
+                      <option value="brief_mandato">Brief mandato</option>
+                      <option value="in_lavorazione">In lavorazione</option>
+                      <option value="pubblicato">Pubblicato</option>
+                    </select>
+                  </div>
+                </article>
+              </template>
+
+              <div x-show="clientiPipeline(stato).length === 0" class="pipeline-empty">
+                Nessun cliente
+              </div>
+            </div>
+          </section>
+        </template>
+      </div>
+    </div>
+
+    <!-- RICERCA GLOBALE -->
+    <div x-show="view === 'ricerca'" x-cloak class="app-main-view crm-view">
+      <div class="brandbar">
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+      </div>
+
+      <div class="topbar">
+        <button type="button" class="linkback" @click="vaiHome()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M19 12H5M11 18l-6-6 6-6"/>
+          </svg>
+          Home
+        </button>
+        <h1 style="font-size:19px">Cerca</h1>
+      </div>
+
+      <div class="content crm-content">
+        <div class="global-search">
+          <input
+            type="search"
+            x-model="ricercaGlobale"
+            placeholder="Cliente, telefono, email, P.IVA, nota..."
+            autocomplete="off">
+        </div>
+
+        <p class="global-search-hint" x-show="ricercaGlobale.trim().length < 2">
+          Inserisci almeno 2 caratteri. La ricerca comprende anche le note.
+        </p>
+
+        <div class="global-search-results">
+          <template x-for="risultato in risultatiRicercaGlobale()" :key="risultato.cliente.id">
+            <button type="button" @click="apriScheda(risultato.cliente.id)">
+              <div>
+                <strong x-text="risultato.cliente.nome"></strong>
+                <small>
+                  <span x-text="risultato.motivo"></span>
+                  <span> · </span>
+                  <span x-text="risultato.estratto"></span>
+                </small>
+              </div>
+              <span>›</span>
+            </button>
+          </template>
+
+          <div
+            class="crm-empty"
+            x-show="ricercaGlobale.trim().length >= 2 && risultatiRicercaGlobale().length === 0">
+            Nessun risultato.
+          </div>
+        </div>
+      </div>
+    </div>
+
+
     <!-- NAVIGAZIONE MOBILE -->
-    <nav x-show="navVisibile()" x-cloak class="mobile-tabbar" aria-label="Navigazione principale">
+    <nav x-show="navVisibile()" x-cloak class="mobile-tabbar crm-tabbar" aria-label="Navigazione principale">
+
       <button type="button" :class="{ on: view === 'lista' || view === 'admin' }" @click="vaiHome()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-7h6v7"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+          <path d="M3 10.5L12 3l9 7.5"/>
+          <path d="M5 9.5V21h14V9.5"/>
+        </svg>
         <span>Home</span>
       </button>
 
-      <button x-show="!isAdmin" type="button" class="mobile-tabbar-add" :class="{ on: view === 'nuovo' }" @click="vaiNuovoCliente()">
-        <span class="mobile-add-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+      <button x-show="!isAdmin" type="button" :class="{ on: view === 'agenda' }" @click="apriAgenda()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+          <rect x="3" y="5" width="18" height="16" rx="2"/>
+          <path d="M8 3v4M16 3v4M3 10h18"/>
+        </svg>
+        <span>Agenda</span>
+      </button>
+
+      <button
+        x-show="!isAdmin"
+        type="button"
+        class="mobile-tabbar-add"
+        :class="{ on: view === 'nuovo' }"
+        @click="vaiNuovoCliente()">
+        <span class="mobile-add-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        </span>
         <span>Cliente</span>
+      </button>
+
+      <button x-show="!isAdmin" type="button" :class="{ on: view === 'pipeline' }" @click="apriPipeline()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+          <rect x="3" y="4" width="5" height="16" rx="1.5"/>
+          <rect x="10" y="7" width="5" height="13" rx="1.5"/>
+          <rect x="17" y="10" width="4" height="10" rx="1.5"/>
+        </svg>
+        <span>Pipeline</span>
       </button>
 
       <button type="button" :class="{ on: view === 'profilo' }" @click="apriProfilo()">
@@ -851,6 +1150,7 @@
         </span>
         <span>Profilo</span>
       </button>
+
     </nav>
 
     <!-- CESTINO -->

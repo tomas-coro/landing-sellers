@@ -837,3 +837,487 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
     touch-action:pan-y;
   }
 }
+
+/* =========================================================
+   MINI CRM - Agenda / Pipeline / Search / Quick actions
+   ========================================================= */
+
+.crm-content{
+  padding-bottom:110px;
+}
+
+.crm-home-actions{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-bottom:18px;
+}
+
+.crm-home-actions button{
+  min-width:0;
+  border:1px solid var(--line);
+  background:var(--card);
+  border-radius:16px;
+  padding:14px 12px;
+  text-align:left;
+}
+
+.crm-home-actions span,
+.crm-home-actions strong{
+  display:block;
+  min-width:0;
+}
+
+.crm-home-actions span{
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:5px;
+}
+
+.crm-home-actions strong{
+  font-size:13px;
+  color:var(--ink);
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* quick actions */
+
+.client-quick-actions{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.client-quick-action{
+  min-width:0;
+  min-height:64px;
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:var(--card);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  text-decoration:none;
+  color:var(--ink);
+}
+
+.client-quick-action > span{
+  font-size:14px;
+  font-weight:800;
+}
+
+.client-quick-action strong{
+  font-size:10.5px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:100%;
+}
+
+.client-copy-actions{
+  display:flex;
+  gap:8px;
+  margin-bottom:18px;
+}
+
+.client-copy-actions button{
+  min-height:38px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:0 13px;
+  background:transparent;
+  color:var(--ink-soft);
+  font:inherit;
+  font-size:11px;
+  font-weight:700;
+}
+
+/* agenda */
+
+.agenda-switch{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+  padding:5px;
+  border-radius:15px;
+  background:var(--surface);
+  margin-bottom:16px;
+}
+
+.agenda-switch button{
+  border:0;
+  border-radius:11px;
+  min-height:40px;
+  background:transparent;
+  color:var(--muted);
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+}
+
+.agenda-switch button.on{
+  background:var(--ink);
+  color:white;
+}
+
+.agenda-calendar{
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:14px;
+  margin-bottom:16px;
+  background:var(--card);
+}
+
+.agenda-month-head{
+  display:grid;
+  grid-template-columns:44px 1fr 44px;
+  align-items:center;
+  margin-bottom:12px;
+}
+
+.agenda-month-head strong{
+  text-align:center;
+  text-transform:capitalize;
+  font-size:14px;
+}
+
+.agenda-month-head button{
+  width:40px;
+  height:40px;
+  border:0;
+  border-radius:12px;
+  background:var(--surface);
+  font-size:25px;
+  color:var(--ink);
+}
+
+.agenda-weekdays,
+.agenda-days{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+}
+
+.agenda-weekdays span{
+  text-align:center;
+  padding:5px 0 8px;
+  font-size:10px;
+  font-weight:800;
+  color:var(--muted);
+}
+
+.agenda-days{
+  gap:4px;
+}
+
+.agenda-days button{
+  position:relative;
+  min-width:0;
+  aspect-ratio:1;
+  border:0;
+  border-radius:11px;
+  background:transparent;
+  color:var(--ink);
+  font:inherit;
+  font-size:12px;
+  font-weight:650;
+}
+
+.agenda-days button.muted{
+  opacity:.28;
+}
+
+.agenda-days button.today{
+  outline:1px solid var(--ink);
+}
+
+.agenda-days button.selected{
+  background:var(--ink);
+  color:white;
+}
+
+.agenda-days button i{
+  position:absolute;
+  right:3px;
+  bottom:2px;
+  min-width:14px;
+  height:14px;
+  border-radius:7px;
+  background:var(--lime);
+  color:var(--ink);
+  font-style:normal;
+  font-size:8px;
+  font-weight:900;
+  line-height:14px;
+}
+
+.agenda-list{
+  display:grid;
+  gap:8px;
+}
+
+.agenda-event{
+  width:100%;
+  display:grid;
+  grid-template-columns:82px minmax(0,1fr) 16px;
+  gap:12px;
+  align-items:center;
+  border:1px solid var(--line);
+  background:var(--card);
+  border-radius:15px;
+  padding:12px;
+  text-align:left;
+  color:var(--ink);
+}
+
+.agenda-event.overdue{
+  border-color:#df6d6d;
+}
+
+.agenda-event-date strong,
+.agenda-event-date span,
+.agenda-event > div:nth-child(2) strong,
+.agenda-event > div:nth-child(2) small{
+  display:block;
+}
+
+.agenda-event-date strong{
+  font-size:11px;
+}
+
+.agenda-event-date span{
+  margin-top:3px;
+  font-size:9px;
+  color:var(--muted);
+}
+
+.agenda-event > div:nth-child(2){
+  min-width:0;
+}
+
+.agenda-event > div:nth-child(2) strong{
+  font-size:13px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.agenda-event > div:nth-child(2) small{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:10.5px;
+}
+
+/* pipeline */
+
+.pipeline-scroll{
+  display:flex;
+  gap:12px;
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;
+  padding:4px 16px 110px;
+  -webkit-overflow-scrolling:touch;
+}
+
+.pipeline-column{
+  flex:0 0 min(82vw,330px);
+  scroll-snap-align:start;
+  min-width:0;
+}
+
+.pipeline-column-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  min-height:45px;
+  margin-bottom:8px;
+}
+
+.pipeline-column-head strong{
+  font-size:13px;
+}
+
+.pipeline-column-head span{
+  min-width:27px;
+  height:27px;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  background:var(--surface);
+  font-size:11px;
+  font-weight:800;
+}
+
+.pipeline-column-list{
+  display:grid;
+  gap:9px;
+}
+
+.pipeline-card{
+  border:1px solid var(--line);
+  background:var(--card);
+  border-radius:16px;
+  padding:14px;
+  min-width:0;
+}
+
+.pipeline-card > strong,
+.pipeline-card > small{
+  display:block;
+}
+
+.pipeline-card > strong{
+  font-size:13.5px;
+}
+
+.pipeline-card > small{
+  margin-top:4px;
+  font-size:10.5px;
+  color:var(--muted);
+}
+
+.pipeline-card-bottom{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:13px;
+}
+
+.pipeline-card-bottom > span{
+  font-size:11px;
+  font-weight:750;
+}
+
+.pipeline-card-bottom select{
+  width:auto;
+  max-width:145px;
+  min-height:36px;
+  font-size:10px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--surface);
+  color:var(--ink);
+  padding:0 8px;
+}
+
+.pipeline-empty,
+.crm-empty{
+  border:1px dashed var(--line);
+  border-radius:14px;
+  padding:22px 14px;
+  color:var(--muted);
+  text-align:center;
+  font-size:11.5px;
+}
+
+/* global search */
+
+.global-search input{
+  width:100%;
+  min-height:50px;
+  padding:0 15px;
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:var(--card);
+  color:var(--ink);
+  font:inherit;
+  font-size:16px;
+}
+
+.global-search-hint{
+  margin:10px 2px 16px;
+  font-size:11px;
+  color:var(--muted);
+}
+
+.global-search-results{
+  display:grid;
+  gap:8px;
+  margin-top:12px;
+}
+
+.global-search-results > button{
+  width:100%;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 15px;
+  gap:10px;
+  align-items:center;
+  padding:13px;
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:var(--card);
+  text-align:left;
+  color:var(--ink);
+}
+
+.global-search-results strong,
+.global-search-results small{
+  display:block;
+}
+
+.global-search-results strong{
+  font-size:13px;
+}
+
+.global-search-results small{
+  margin-top:4px;
+  font-size:10.5px;
+  color:var(--muted);
+  overflow-wrap:anywhere;
+}
+
+/* 5 item mobile navigation */
+
+.crm-tabbar{
+  grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+}
+
+.crm-tabbar > button{
+  min-width:0;
+}
+
+.crm-tabbar > button > span:last-child{
+  font-size:9px;
+}
+
+.crm-tabbar svg{
+  width:20px;
+  height:20px;
+}
+
+@media(max-width:520px){
+  .crm-home-actions{
+    grid-template-columns:1fr;
+  }
+
+  .crm-home-actions button{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    min-height:50px;
+  }
+
+  .crm-home-actions span{
+    margin-bottom:0;
+  }
+
+  .client-quick-actions{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+  }
+
+  .agenda-calendar{
+    padding:10px;
+  }
+
+  .agenda-days{
+    gap:2px;
+  }
+
+  .agenda-event{
+    grid-template-columns:72px minmax(0,1fr) 12px;
+  }
+}
