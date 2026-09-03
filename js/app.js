@@ -32,6 +32,14 @@ function appState() {
     filtroSoloRitardo: false,
     ordinamento: 'prossimo_contatto',
     ordinamentoDesc: false,
+
+    // mini CRM
+    agendaVista: 'oggi',
+    agendaMese: new Date().toISOString().slice(0, 7),
+    agendaDataSelezionata: new Date().toISOString().slice(0, 10),
+    ricercaGlobale: '',
+    indiceNoteRicerca: [],
+    erroreRicerca: '',
     nuovoClienteForm: formModuloVuoto(),
     selezionePrezzo: { modalita: 'catalogo', formula: 'mensile', upgrade: [] },
     erroriNuovoCliente: {},
@@ -189,8 +197,36 @@ function appState() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
+    apriAgenda() {
+      this.agendaVista = 'oggi';
+      this.agendaDataSelezionata = this.dataISOOggi();
+      this.agendaMese = this.dataISOOggi().slice(0, 7);
+      this.view = 'agenda';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    apriPipeline() {
+      this.view = 'pipeline';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    apriRicerca() {
+      this.ricercaGlobale = '';
+      this.erroreRicerca = '';
+      this.view = 'ricerca';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
     navVisibile() {
-      return !!this.sessione && ['lista', 'admin', 'nuovo', 'profilo'].includes(this.view);
+      return !!this.sessione && [
+        'lista',
+        'admin',
+        'nuovo',
+        'profilo',
+        'agenda',
+        'pipeline',
+        'ricerca'
+      ].includes(this.view);
     },
 
     swipeStart(event) {
@@ -202,7 +238,7 @@ function appState() {
       )) return;
 
       const touch = event.touches[0];
-      const isBackView = ['profilo', 'cestino', 'scheda', 'nuovo'].includes(this.view);
+      const isBackView = ['profilo', 'cestino', 'scheda', 'nuovo', 'agenda', 'pipeline', 'ricerca'].includes(this.view);
       const isForwardView = ['lista', 'admin'].includes(this.view);
 
       // Lo swipe-back parte dal bordo sinistro, come nelle app native.
@@ -242,7 +278,7 @@ function appState() {
 
         this.swipeDirection = dx >= 0 ? 'right' : 'left';
 
-        const allowedRight = ['profilo', 'cestino', 'scheda', 'nuovo'].includes(this.view);
+        const allowedRight = ['profilo', 'cestino', 'scheda', 'nuovo', 'agenda', 'pipeline', 'ricerca'].includes(this.view);
         const allowedLeft = ['lista', 'admin'].includes(this.view);
 
         if (
@@ -358,6 +394,11 @@ function appState() {
 
       if (this.view === 'cestino') {
         this.apriProfilo();
+        return;
+      }
+
+      if (['agenda', 'pipeline', 'ricerca'].includes(this.view)) {
+        this.vaiHome();
         return;
       }
 
@@ -499,6 +540,25 @@ function appState() {
       const { data, error } = await query;
       if (error) { this.erroreClienti = 'Errore nel caricare i clienti: ' + error.message; return; }
       this.clienti = data;
+      await this.caricaIndiceNoteRicerca();
+    },
+
+    async caricaIndiceNoteRicerca() {
+      this.indiceNoteRicerca = [];
+      if (!this.clienti.length) return;
+
+      const ids = this.clienti.map(c => c.id);
+      const { data, error } = await window.supabaseClient
+        .from('note')
+        .select('cliente_id,testo')
+        .in('cliente_id', ids);
+
+      if (error) {
+        console.warn('Indice ricerca note non disponibile:', error.message);
+        return;
+      }
+
+      this.indiceNoteRicerca = data || [];
     },
 
     clientiFiltrati() {
@@ -515,6 +575,235 @@ function appState() {
 
     clientiInRitardo() {
       return this.clienti.filter(c => classeUrgenza(c.prossimo_contatto) === 'ritardo');
+    },
+
+    dataISOOggi() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const g = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${g}`;
+    },
+
+    normalizzaDataAgenda(value) {
+      if (!value) return null;
+      const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      return match ? `${match[1]}-${match[2]}-${match[3]}` : null;
+    },
+
+    aggiungiGiorniISO(iso, giorni) {
+      const [y, m, d] = iso.split('-').map(Number);
+      const date = new Date(Date.UTC(y, m - 1, d + giorni));
+      return date.toISOString().slice(0, 10);
+    },
+
+    eventiAgenda() {
+      const oggi = this.dataISOOggi();
+      const eventi = [];
+
+      this.clienti.forEach(cliente => {
+        const contatto = this.normalizzaDataAgenda(cliente.prossimo_contatto);
+        if (contatto) {
+          eventi.push({
+            id: `contatto-${cliente.id}-${contatto}`,
+            clienteId: cliente.id,
+            clienteNome: cliente.nome,
+            data: contatto,
+            tipo: 'contatto',
+            titolo: contatto < oggi ? 'Contatto in ritardo' : 'Contatto cliente',
+            scaduto: contatto < oggi
+          });
+        }
+
+        const rinnovo = this.normalizzaDataAgenda(cliente.data_rinnovo);
+        if (rinnovo) {
+          eventi.push({
+            id: `rinnovo-${cliente.id}-${rinnovo}`,
+            clienteId: cliente.id,
+            clienteNome: cliente.nome,
+            data: rinnovo,
+            tipo: 'rinnovo',
+            titolo: cliente.periodicita_contratto === 'annuale'
+              ? 'Rinnovo annuale'
+              : 'Rinnovo contratto',
+            scaduto: false
+          });
+        }
+      });
+
+      return eventi.sort((a, b) =>
+        a.data.localeCompare(b.data) ||
+        a.clienteNome.localeCompare(b.clienteNome)
+      );
+    },
+
+    eventiAgendaVisibili() {
+      const oggi = this.dataISOOggi();
+      const eventi = this.eventiAgenda();
+
+      if (this.agendaVista === 'oggi') {
+        return eventi.filter(e =>
+          e.data === oggi ||
+          (e.tipo === 'contatto' && e.data < oggi)
+        );
+      }
+
+      if (this.agendaVista === '7giorni') {
+        const fine = this.aggiungiGiorniISO(oggi, 7);
+        return eventi.filter(e =>
+          (e.data >= oggi && e.data <= fine) ||
+          (e.tipo === 'contatto' && e.data < oggi)
+        );
+      }
+
+      return eventi.filter(e => e.data === this.agendaDataSelezionata);
+    },
+
+    giorniCalendarioAgenda() {
+      const [anno, mese] = this.agendaMese.split('-').map(Number);
+      const primo = new Date(Date.UTC(anno, mese - 1, 1));
+      const offset = (primo.getUTCDay() + 6) % 7;
+      const start = new Date(Date.UTC(anno, mese - 1, 1 - offset));
+      const oggi = this.dataISOOggi();
+
+      return Array.from({ length: 42 }, (_, i) => {
+        const d = new Date(start.getTime() + i * 86400000);
+        const iso = d.toISOString().slice(0, 10);
+        return {
+          iso,
+          giorno: d.getUTCDate(),
+          nelMese: d.getUTCMonth() === mese - 1,
+          oggi: iso === oggi,
+          eventi: this.eventiAgenda().filter(e => e.data === iso).length
+        };
+      });
+    },
+
+    titoloMeseAgenda() {
+      const [anno, mese] = this.agendaMese.split('-').map(Number);
+      return new Intl.DateTimeFormat('it-IT', {
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC'
+      }).format(new Date(Date.UTC(anno, mese - 1, 1)));
+    },
+
+    cambiaMeseAgenda(delta) {
+      const [anno, mese] = this.agendaMese.split('-').map(Number);
+      const d = new Date(Date.UTC(anno, mese - 1 + delta, 1));
+      this.agendaMese = d.toISOString().slice(0, 7);
+      this.agendaDataSelezionata = d.toISOString().slice(0, 10);
+    },
+
+    selezionaGiornoAgenda(iso) {
+      this.agendaVista = 'mese';
+      this.agendaDataSelezionata = iso;
+      this.agendaMese = iso.slice(0, 7);
+    },
+
+    clientiPipeline(stato) {
+      return this.clienti
+        .filter(c => c.stato === stato)
+        .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    },
+
+    async cambiaStatoDaPipeline(clienteId, stato) {
+      const consentiti = ['contattato', 'brief_mandato', 'in_lavorazione', 'pubblicato'];
+      if (!consentiti.includes(stato)) return;
+
+      const { error } = await window.supabaseClient
+        .from('clienti')
+        .update({ stato })
+        .eq('id', clienteId);
+
+      if (error) {
+        this.erroreClienti = 'Stato non aggiornato: ' + error.message;
+        return;
+      }
+
+      await this.caricaClienti();
+    },
+
+    risultatiRicercaGlobale() {
+      const q = this.ricercaGlobale.trim().toLowerCase();
+      if (q.length < 2) return [];
+
+      const campi = [
+        ['nome', 'Nome'],
+        ['referente', 'Referente'],
+        ['telefono', 'Telefono'],
+        ['email', 'Email'],
+        ['piva', 'P.IVA'],
+        ['sito_url', 'Sito'],
+        ['nome_pacchetto', 'Pacchetto']
+      ];
+
+      const risultati = [];
+
+      this.clienti.forEach(cliente => {
+        let motivo = null;
+        let estratto = '';
+
+        for (const [campo, label] of campi) {
+          const valore = String(cliente[campo] || '');
+          if (valore.toLowerCase().includes(q)) {
+            motivo = label;
+            estratto = valore;
+            break;
+          }
+        }
+
+        if (!motivo) {
+          const nota = this.indiceNoteRicerca.find(n =>
+            n.cliente_id === cliente.id &&
+            String(n.testo || '').toLowerCase().includes(q)
+          );
+
+          if (nota) {
+            motivo = 'Nota';
+            estratto = nota.testo;
+          }
+        }
+
+        if (motivo) {
+          risultati.push({
+            cliente,
+            motivo,
+            estratto: estratto.length > 90
+              ? estratto.slice(0, 87) + '...'
+              : estratto
+          });
+        }
+      });
+
+      return risultati.slice(0, 30);
+    },
+
+    telefonoPulito(cliente) {
+      return String(cliente?.telefono || '').replace(/[^\d+]/g, '');
+    },
+
+    whatsappCliente(cliente) {
+      const numero = String(cliente?.telefono || '').replace(/\D/g, '');
+      return numero ? `https://wa.me/${numero}` : '';
+    },
+
+    sitoCliente(cliente) {
+      const sito = String(cliente?.sito_url || '').trim();
+      if (!sito) return '';
+      if (/^https?:\/\//i.test(sito)) return sito;
+      return `https://${sito}`;
+    },
+
+    async copiaTestoCliente(valore) {
+      const testo = String(valore || '').trim();
+      if (!testo) return;
+
+      try {
+        await navigator.clipboard.writeText(testo);
+      } catch {
+        this.erroreScheda = 'Impossibile copiare automaticamente questo dato.';
+      }
     },
 
     clientiConRinnovoVicino(giorni = 30) {
