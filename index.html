@@ -25,7 +25,9 @@
 <body>
   <div id="app" x-data="appState()" x-init="init()"
     @touchstart.passive="swipeStart($event)"
+    @touchmove="swipeMove($event)"
     @touchend.passive="swipeEnd($event)"
+    @touchcancel.passive="swipeCancel()"
     x-effect="document.body.style.overflow = confermaEliminazione ? 'hidden' : ''">
 
     <!-- BANNER AGGIORNAMENTO: appare sopra qualunque vista appena il service worker scarica una versione nuova -->
@@ -267,7 +269,15 @@
         </div>
 
         <div class="stack-card profile-menu">
-          <button type="button" @click="togglePush()" :disabled="pushInCorso || pushStato === 'non-supportato'"><span>Notifiche</span><strong x-text="pushInCorso ? 'Attendi...' : etichettaPush()"></strong></button>
+          <button
+            type="button"
+            class="profile-push-toggle"
+            :class="{ 'is-active': pushStato === 'attivo' }"
+            @click="togglePush()"
+            :disabled="pushInCorso || pushStato === 'non-supportato'">
+            <span>Notifiche</span>
+            <strong x-text="pushInCorso ? 'Attendi...' : etichettaPush()"></strong>
+          </button>
           <button type="button" @click="controllaAggiornamenti()"><span>Aggiornamenti</span><strong>Controlla</strong></button>
           <button type="button" @click="apriCestino()"><span>Cestino</span><strong>Apri</strong></button>
           <button type="button" class="danger-row" @click="fareLogout()"><span>Account</span><strong>Esci</strong></button>

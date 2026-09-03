@@ -73,6 +73,11 @@ function appState() {
     // navigazione mobile
     swipeStartX: null,
     swipeStartY: null,
+    swipeLastX: null,
+    swipeStartedAt: 0,
+    swipeTracking: false,
+    swipeDirection: null,
+    swipeElement: null,
 
     async init() {
       window.addEventListener('le:aggiornamento-pronto', () => { this.aggiornamentoDisponibile = true; });
@@ -190,37 +195,162 @@ function appState() {
 
     swipeStart(event) {
       if (event.touches?.length !== 1) return;
+
       const target = event.target;
-      if (target.closest('input, textarea, select, button, label, a, [role="button"], [contenteditable="true"]')) return;
-      this.swipeStartX = event.touches[0].clientX;
-      this.swipeStartY = event.touches[0].clientY;
+      if (target.closest(
+        'input, textarea, select, button, label, a, [role="button"], [contenteditable="true"]'
+      )) return;
+
+      const touch = event.touches[0];
+      const isBackView = ['profilo', 'cestino', 'scheda', 'nuovo'].includes(this.view);
+      const isForwardView = ['lista', 'admin'].includes(this.view);
+
+      // Lo swipe-back parte dal bordo sinistro, come nelle app native.
+      if (isBackView && touch.clientX > 42) return;
+
+      // Home -> Profilo può partire dalla parte destra dello schermo.
+      if (isForwardView && touch.clientX < window.innerWidth * 0.55) return;
+
+      this.swipeStartX = touch.clientX;
+      this.swipeStartY = touch.clientY;
+      this.swipeLastX = touch.clientX;
+      this.swipeStartedAt = performance.now();
+      this.swipeTracking = true;
+      this.swipeDirection = null;
+      this.swipeElement = target.closest('.app-main-view');
+
+      if (this.swipeElement) {
+        this.swipeElement.classList.add('gesture-dragging');
+      }
     },
 
-    swipeEnd(event) {
-      if (this.swipeStartX == null || this.swipeStartY == null) return;
-
-      const touch = event.changedTouches?.[0];
+    swipeMove(event) {
+      if (!this.swipeTracking || this.swipeStartX == null || this.swipeStartY == null) return;
+      const touch = event.touches?.[0];
       if (!touch) return;
 
       const dx = touch.clientX - this.swipeStartX;
       const dy = touch.clientY - this.swipeStartY;
 
-      this.swipeStartX = null;
-      this.swipeStartY = null;
+      if (!this.swipeDirection) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
 
-      // Richiede un gesto chiaramente orizzontale per non interferire
-      // con lo scroll verticale dell'app.
-      if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.35) return;
+        if (Math.abs(dy) > Math.abs(dx)) {
+          this.resetSwipeGesture();
+          return;
+        }
 
-      // Swipe verso sinistra: dalle viste principali apre il profilo.
-      if (dx < 0) {
+        this.swipeDirection = dx >= 0 ? 'right' : 'left';
+
+        const allowedRight = ['profilo', 'cestino', 'scheda', 'nuovo'].includes(this.view);
+        const allowedLeft = ['lista', 'admin'].includes(this.view);
+
+        if (
+          (this.swipeDirection === 'right' && !allowedRight) ||
+          (this.swipeDirection === 'left' && !allowedLeft)
+        ) {
+          this.resetSwipeGesture();
+          return;
+        }
+      }
+
+      event.preventDefault();
+      this.swipeLastX = touch.clientX;
+
+      if (!this.swipeElement) return;
+
+      let movement = dx;
+
+      if (this.swipeDirection === 'right') {
+        movement = Math.max(0, dx);
+      } else {
+        movement = Math.min(0, dx);
+      }
+
+      const max = window.innerWidth;
+      const translated = Math.max(-max, Math.min(max, movement));
+      const progress = Math.min(1, Math.abs(translated) / max);
+
+      this.swipeElement.style.transition = 'none';
+      this.swipeElement.style.transform = `translate3d(${translated}px,0,0)`;
+      this.swipeElement.style.boxShadow =
+        this.swipeDirection === 'right'
+          ? `-12px 0 28px rgba(0,0,0,${0.05 + progress * 0.13})`
+          : `12px 0 28px rgba(0,0,0,${0.05 + progress * 0.13})`;
+    },
+
+    swipeEnd(event) {
+      if (!this.swipeTracking || this.swipeStartX == null) {
+        this.resetSwipeGesture();
+        return;
+      }
+
+      const touch = event.changedTouches?.[0];
+      const endX = touch?.clientX ?? this.swipeLastX ?? this.swipeStartX;
+      const dx = endX - this.swipeStartX;
+      const elapsed = Math.max(1, performance.now() - this.swipeStartedAt);
+      const velocity = Math.abs(dx) / elapsed;
+
+      const complete =
+        Math.abs(dx) >= Math.min(120, window.innerWidth * 0.28) ||
+        (Math.abs(dx) > 55 && velocity > 0.55);
+
+      if (!complete || !this.swipeDirection) {
+        this.animateSwipeBack();
+        return;
+      }
+
+      this.completeSwipeGesture(this.swipeDirection);
+    },
+
+    swipeCancel() {
+      this.animateSwipeBack();
+    },
+
+    animateSwipeBack() {
+      const el = this.swipeElement;
+
+      if (!el) {
+        this.resetSwipeGesture();
+        return;
+      }
+
+      el.style.transition = 'transform 220ms cubic-bezier(.22,.61,.36,1), box-shadow 220ms ease';
+      el.style.transform = 'translate3d(0,0,0)';
+      el.style.boxShadow = 'none';
+
+      window.setTimeout(() => this.resetSwipeGesture(), 230);
+    },
+
+    completeSwipeGesture(direction) {
+      const el = this.swipeElement;
+      const targetX = direction === 'right' ? window.innerWidth : -window.innerWidth;
+
+      if (!el) {
+        this.eseguiNavigazioneGesture(direction);
+        this.resetSwipeGesture();
+        return;
+      }
+
+      el.style.transition = 'transform 180ms cubic-bezier(.22,.61,.36,1), box-shadow 180ms ease';
+      el.style.transform = `translate3d(${targetX}px,0,0)`;
+      el.style.boxShadow = 'none';
+
+      window.setTimeout(() => {
+        this.eseguiNavigazioneGesture(direction);
+        this.resetSwipeGesture();
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      }, 170);
+    },
+
+    eseguiNavigazioneGesture(direction) {
+      if (direction === 'left') {
         if (this.view === 'lista' || this.view === 'admin') {
           this.apriProfilo();
         }
         return;
       }
 
-      // Swipe verso destra: comportamento equivalente al tasto Indietro.
       if (this.view === 'profilo') {
         this.vaiHome();
         return;
@@ -233,18 +363,31 @@ function appState() {
 
       if (this.view === 'scheda') {
         this.view = this.isAdmin ? 'admin' : 'lista';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
 
       if (this.view === 'nuovo') {
-        if (this.clienteInModificaId) {
-          this.view = 'scheda';
-        } else {
-          this.view = this.isAdmin ? 'admin' : 'lista';
-        }
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        this.view = this.clienteInModificaId
+          ? 'scheda'
+          : (this.isAdmin ? 'admin' : 'lista');
       }
+    },
+
+    resetSwipeGesture() {
+      if (this.swipeElement) {
+        this.swipeElement.classList.remove('gesture-dragging');
+        this.swipeElement.style.transition = '';
+        this.swipeElement.style.transform = '';
+        this.swipeElement.style.boxShadow = '';
+      }
+
+      this.swipeStartX = null;
+      this.swipeStartY = null;
+      this.swipeLastX = null;
+      this.swipeStartedAt = 0;
+      this.swipeTracking = false;
+      this.swipeDirection = null;
+      this.swipeElement = null;
     },
 
     apriProfilo() {
