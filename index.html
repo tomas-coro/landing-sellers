@@ -72,10 +72,25 @@
     <div x-show="view === 'lista'" x-transition.opacity.duration.160ms class="app-main-view">
       <div class="brandbar">
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
-        <button type="button" class="profile-trigger" @click="apriProfilo()" aria-label="Profilo">
-          <img x-show="profilo.avatar_url" :src="profilo.avatar_url" alt="">
-          <span x-show="!profilo.avatar_url" x-text="inizialeProfilo()"></span>
-        </button>
+
+        <div class="home-header-actions">
+          <button
+            x-show="!isAdmin"
+            type="button"
+            class="home-search-trigger"
+            @click="apriRicerca()"
+            aria-label="Ricerca globale">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+              <circle cx="11" cy="11" r="6.5"/>
+              <path d="M16 16l4.5 4.5"/>
+            </svg>
+          </button>
+
+          <button type="button" class="profile-trigger" @click="apriProfilo()" aria-label="Profilo">
+            <img x-show="profilo.avatar_url" :src="profilo.avatar_url" alt="">
+            <span x-show="!profilo.avatar_url" x-text="inizialeProfilo()"></span>
+          </button>
+        </div>
       </div>
       <p x-show="pushErrore" x-text="pushErrore" class="err" style="margin:0 18px 10px"></p>
       <div class="topbar">
@@ -87,78 +102,83 @@
       <div class="content">
         <p x-show="erroreClienti" x-text="erroreClienti" class="err" style="margin-bottom:14px"></p>
 
-        <div class="crm-home-actions" x-show="!isAdmin">
-          <button type="button" @click="apriAgenda()">
-            <span>Agenda</span>
-            <strong x-text="eventiAgendaVisibili().length + ' attività'"></strong>
-          </button>
+        <div class="home-dashboard home-dashboard-v2" x-show="!isAdmin && clienti.length > 0">
 
-          <button type="button" @click="apriPipeline()">
-            <span>Pipeline</span>
-            <strong x-text="clienti.length + ' clienti'"></strong>
-          </button>
+          <section class="home-today">
+            <div class="home-section-title">
+              <div>
+                <span>OGGI</span>
+                <strong>Da tenere d'occhio</strong>
+              </div>
 
-          <button type="button" @click="apriRicerca()">
-            <span>Ricerca</span>
-            <strong>Cerca ovunque</strong>
-          </button>
-        </div>
-
-        <div class="home-dashboard" x-show="!isAdmin && clienti.length > 0">
-          <div class="home-welcome">
-            <div>
-              <span>Panoramica</span>
-              <strong>I tuoi clienti</strong>
-            </div>
-            <small>Aggiornata in tempo reale</small>
-          </div>
-
-          <div class="home-kpi-grid">
-            <div class="home-kpi">
-              <span>Clienti</span>
-              <strong x-text="clienti.length"></strong>
-            </div>
-            <div class="home-kpi">
-              <span>Pubblicati</span>
-              <strong x-text="clientiPubblicati().length"></strong>
-            </div>
-            <div class="home-kpi">
-              <span>In lavorazione</span>
-              <strong x-text="conteggiPerStato().in_lavorazione"></strong>
-            </div>
-            <div class="home-kpi" :class="{ attention: clientiConRinnovoVicino().length > 0 }">
-              <span>Scadenze 30 gg</span>
-              <strong x-text="clientiConRinnovoVicino().length"></strong>
-            </div>
-          </div>
-
-          <div class="home-legacy-metric">
-            <div>
-              <span>Totale generato</span>
-              <strong x-text="formattaEuro(totaleGenerato())"></strong>
-            </div>
-            <small>Dato storico: può includere canoni mensili e annuali.</small>
-          </div>
-
-          <div class="home-renewals" x-show="clientiConRinnovoVicino().length > 0">
-            <div class="home-section-head">
-              <strong>Prossime scadenze</strong>
-              <span>entro 30 giorni</span>
-            </div>
-
-            <template x-for="cliente in clientiConRinnovoVicino().slice(0,3)" :key="'renew-' + cliente.id">
-              <button type="button" class="home-renewal-row" @click="apriScheda(cliente.id)">
-                <div>
-                  <strong x-text="cliente.nome"></strong>
-                  <small x-text="cliente.nome_pacchetto || 'Pacchetto non specificato'"></small>
-                </div>
-                <div>
-                  <strong x-text="formattaData(cliente.data_rinnovo)"></strong>
-                  <small x-text="etichettaImportoCliente(cliente)"></small>
-                </div>
+              <button type="button" @click="apriAgenda()">
+                Agenda
+                <span>›</span>
               </button>
-            </template>
-          </div>
+            </div>
+
+            <div class="home-today-summary">
+              <div>
+                <strong x-text="eventiOggiHome().length"></strong>
+                <span x-text="eventiOggiHome().length === 1 ? 'attività' : 'attività'"></span>
+              </div>
+
+              <p
+                x-text="eventiOggiHome().length
+                  ? 'Hai attività che richiedono attenzione.'
+                  : 'Nessuna attività urgente per oggi.'">
+              </p>
+            </div>
+          </section>
+
+          <section class="home-kpi-strip">
+            <button type="button">
+              <strong x-text="clienti.length"></strong>
+              <span>Clienti</span>
+            </button>
+
+            <button type="button" @click="apriPipeline()">
+              <strong x-text="clientiInCorsoHome()"></strong>
+              <span>In corso</span>
+            </button>
+
+            <button type="button" @click="apriAgenda()">
+              <strong x-text="clientiConRinnovoVicino().length"></strong>
+              <span>Rinnovi</span>
+            </button>
+          </section>
+
+          <section class="home-attention" x-show="clientiDaGestireHome().length > 0">
+            <div class="home-section-title">
+              <div>
+                <span>PRIORITÀ</span>
+                <strong>Da gestire</strong>
+              </div>
+            </div>
+
+            <div class="home-attention-list">
+              <template x-for="item in clientiDaGestireHome()" :key="'attention-' + item.cliente.id">
+                <button
+                  type="button"
+                  class="home-attention-row"
+                  @click="apriScheda(item.cliente.id)">
+
+                  <span
+                    class="home-attention-dot"
+                    :class="'type-' + item.tipo">
+                  </span>
+
+                  <div>
+                    <strong x-text="item.cliente.nome"></strong>
+                    <small x-text="item.motivo"></small>
+                  </div>
+
+                  <span class="home-attention-arrow">›</span>
+                </button>
+              </template>
+            </div>
+          </section>
+
         </div>
 
         <button type="button" class="alert-ritardo" :class="{ on: filtroSoloRitardo }" x-show="clientiInRitardo().length > 0" @click="toggleFiltroSoloRitardo()">
@@ -166,8 +186,16 @@
           <span x-text="filtroSoloRitardo ? 'mostra tutti' : 'mostra solo questi'"></span>
         </button>
 
+        <div class="home-all-clients-head" x-show="clienti.length > 0">
+          <div>
+            <span>CLIENTI</span>
+            <strong>Tutti i clienti</strong>
+          </div>
+          <small x-text="clienti.length"></small>
+        </div>
+
         <div class="search-row" x-show="clienti.length > 0">
-          <input type="search" placeholder="Cerca per nome o referente..." aria-label="Cerca clienti per nome o referente" x-model="filtroTesto">
+          <input type="search" placeholder="Cerca nella lista..." aria-label="Cerca clienti per nome o referente" x-model="filtroTesto">
         </div>
         <div class="filtro-stati" x-show="clienti.length > 0">
           <button type="button" class="chip-stato" :class="{ on: filtroStato === '' }" @click="filtroStato = ''">Tutti · <span x-text="clienti.length"></span></button>
@@ -228,9 +256,9 @@
               <path d="M17 8v6M14 11h6"/>
             </svg>
           </div>
-          <span>La tua area clienti è pronta</span>
+          <span>LA TUA AREA CLIENTI</span>
           <h2>Inizia dal primo cliente</h2>
-          <p>Qui vedrai pipeline, stato dei lavori, prezzi e prossime scadenze.</p>
+          <p>Aggiungi il primo cliente per iniziare a costruire agenda, pipeline e rinnovi.</p>
           <button type="button" class="btn btn-primary" @click="vaiNuovoCliente()">Aggiungi cliente</button>
         </div>
 
@@ -307,10 +335,25 @@
     <div x-show="view === 'admin'" x-transition.opacity.duration.160ms class="app-main-view">
       <div class="brandbar">
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
-        <button type="button" class="profile-trigger" @click="apriProfilo()" aria-label="Profilo">
-          <img x-show="profilo.avatar_url" :src="profilo.avatar_url" alt="">
-          <span x-show="!profilo.avatar_url" x-text="inizialeProfilo()"></span>
-        </button>
+
+        <div class="home-header-actions">
+          <button
+            x-show="!isAdmin"
+            type="button"
+            class="home-search-trigger"
+            @click="apriRicerca()"
+            aria-label="Ricerca globale">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+              <circle cx="11" cy="11" r="6.5"/>
+              <path d="M16 16l4.5 4.5"/>
+            </svg>
+          </button>
+
+          <button type="button" class="profile-trigger" @click="apriProfilo()" aria-label="Profilo">
+            <img x-show="profilo.avatar_url" :src="profilo.avatar_url" alt="">
+            <span x-show="!profilo.avatar_url" x-text="inizialeProfilo()"></span>
+          </button>
+        </div>
       </div>
       <p x-show="pushErrore" x-text="pushErrore" class="err" style="margin:0 18px 10px"></p>
       <div class="topbar"><h1 style="font-size:19px">Dashboard venditori</h1></div>
