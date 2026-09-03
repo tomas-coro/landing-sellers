@@ -101,12 +101,11 @@ window.WebPush = (function () {
     return 'granted';
   }
 
-  // Disattiva SOLO la subscription di questo browser/device (identificata
-  // dal suo endpoint, univoco per browser+service worker). Non chiama
-  // subscription.unsubscribe(): la subscription resta valida a livello di
-  // browser, cosi' un login successivo sullo stesso device puo' ritrovarla
-  // subito con getSubscription() invece di dover richiedere di nuovo il
-  // permesso. Lato Supabase la si marca solo active=false.
+  // Disattiva realmente le notifiche su questo browser/device:
+  // 1. marca la subscription inattiva su Supabase
+  // 2. rimuove la PushSubscription dal browser.
+  // Il permesso Notification resta invariato; una futura riattivazione
+  // potra' creare una nuova subscription senza modificare i permessi browser.
   async function disattivaSottoscrizioneCorrente() {
     if (!isSupported()) return;
     const reg = await navigator.serviceWorker.getRegistration();
@@ -118,7 +117,13 @@ window.WebPush = (function () {
       .from('web_push_subscriptions')
       .update({ active: false, updated_at: new Date().toISOString() })
       .eq('endpoint', sub.endpoint);
+
     if (error) throw error;
+
+    const rimossa = await sub.unsubscribe();
+    if (!rimossa) {
+      throw new Error('Impossibile disattivare la subscription push del browser.');
+    }
   }
 
   return {

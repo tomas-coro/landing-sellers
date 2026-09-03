@@ -144,6 +144,28 @@ function appState() {
       }
     },
 
+    async togglePush() {
+      if (this.pushInCorso) return;
+
+      if (this.pushStato !== 'attivo') {
+        await this.attivaPush();
+        return;
+      }
+
+      this.pushInCorso = true;
+      this.pushErrore = '';
+
+      try {
+        await window.WebPush.disattivaSottoscrizioneCorrente();
+        this.pushStato = 'inattivo';
+      } catch (err) {
+        this.pushErrore = err.message;
+        await this.aggiornaStatoPush();
+      } finally {
+        this.pushInCorso = false;
+      }
+    },
+
     etichettaPush() {
       if (this.pushStato === 'non-supportato') return 'Notifiche non supportate';
       if (this.pushStato === 'bloccato') return 'Notifiche bloccate';
@@ -169,28 +191,59 @@ function appState() {
     swipeStart(event) {
       if (event.touches?.length !== 1) return;
       const target = event.target;
-      if (target.closest('input, textarea, select, button, label, [contenteditable="true"]')) return;
+      if (target.closest('input, textarea, select, button, label, a, [role="button"], [contenteditable="true"]')) return;
       this.swipeStartX = event.touches[0].clientX;
       this.swipeStartY = event.touches[0].clientY;
     },
 
     swipeEnd(event) {
       if (this.swipeStartX == null || this.swipeStartY == null) return;
+
       const touch = event.changedTouches?.[0];
       if (!touch) return;
 
       const dx = touch.clientX - this.swipeStartX;
       const dy = touch.clientY - this.swipeStartY;
+
       this.swipeStartX = null;
       this.swipeStartY = null;
 
-      if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
-      if (!['lista', 'admin', 'profilo'].includes(this.view)) return;
+      // Richiede un gesto chiaramente orizzontale per non interferire
+      // con lo scroll verticale dell'app.
+      if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.35) return;
 
+      // Swipe verso sinistra: dalle viste principali apre il profilo.
       if (dx < 0) {
-        if (this.view === 'lista' || this.view === 'admin') this.apriProfilo();
-      } else {
-        if (this.view === 'profilo') this.vaiHome();
+        if (this.view === 'lista' || this.view === 'admin') {
+          this.apriProfilo();
+        }
+        return;
+      }
+
+      // Swipe verso destra: comportamento equivalente al tasto Indietro.
+      if (this.view === 'profilo') {
+        this.vaiHome();
+        return;
+      }
+
+      if (this.view === 'cestino') {
+        this.apriProfilo();
+        return;
+      }
+
+      if (this.view === 'scheda') {
+        this.view = this.isAdmin ? 'admin' : 'lista';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      if (this.view === 'nuovo') {
+        if (this.clienteInModificaId) {
+          this.view = 'scheda';
+        } else {
+          this.view = this.isAdmin ? 'admin' : 'lista';
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     },
 
