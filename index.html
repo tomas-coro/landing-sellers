@@ -1508,17 +1508,17 @@
                   </strong>
                 </div>
 
-                <div>
+                <div x-show="nuovoClienteForm.sconto_tipo !== 'prezzo_fisso'">
                   <span>Setup</span>
                   <strong x-text="selezionePrezzo.formula === 'annuale' ? 'Incluso' : formattaEuro(catalogoPrezzi().formule.mensile.setup)"></strong>
                 </div>
 
-                <div x-show="nuovoClienteForm.pacchetto_sicurezza">
+                <div x-show="nuovoClienteForm.sconto_tipo !== 'prezzo_fisso' && nuovoClienteForm.pacchetto_sicurezza">
                   <span>Sicurezza</span>
                   <strong x-text="formattaEuro(catalogoPrezzi().sicurezza.prezzo) + ' una tantum'"></strong>
                 </div>
 
-                <div x-show="totaleAnnualiSeparati() > 0">
+                <div x-show="nuovoClienteForm.sconto_tipo !== 'prezzo_fisso' && totaleAnnualiSeparati() > 0">
                   <span>Dominio e posta</span>
                   <strong x-text="formattaEuro(totaleAnnualiSeparati()) + '/anno'"></strong>
                 </div>
@@ -1539,7 +1539,8 @@
               <div class="contract-summary-grand-total">
                 <span>Valore complessivo stimato</span>
                 <strong x-text="formattaEuro(valoreTotaleContrattoStimato())"></strong>
-                <small>Include canone, setup, sicurezza e costi annuali selezionati per la durata prevista.</small>
+                <small x-show="nuovoClienteForm.sconto_tipo === 'prezzo_fisso'">Include tutti i servizi selezionati.</small>
+                <small x-show="nuovoClienteForm.sconto_tipo !== 'prezzo_fisso'">Include canone, setup, sicurezza e costi annuali selezionati per la durata prevista.</small>
               </div>
             </div>
             <p x-show="erroriNuovoCliente.importo_abbonamento" x-text="erroriNuovoCliente.importo_abbonamento" class="err"></p>

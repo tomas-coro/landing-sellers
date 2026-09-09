@@ -33,6 +33,12 @@ function prezzoRicorrenteDaForm(prezzoCatalogo, form) {
   return lordo;
 }
 
+function totaleContrattoDaForm(canone, extra, form) {
+  return Number(canone) + (
+    form.sconto_tipo === 'prezzo_fisso' ? 0 : Number(extra)
+  );
+}
+
 function etichettaDurataScontoForm(form) {
   if (form.sconto_durata_anni == null) return 'Per sempre';
   const anni = Number(form.sconto_durata_anni) || 1;
@@ -1834,9 +1840,11 @@ function appState() {
         Math.min(4, Number(this.nuovoClienteForm.durata_contratto_anni) || 1)
       );
 
-      return this.valoreCanoneContratto()
-        + this.totaleUnaTantum()
-        + (this.totaleAnnualiSeparati() * durata);
+      return totaleContrattoDaForm(
+        this.valoreCanoneContratto(),
+        this.totaleUnaTantum() + (this.totaleAnnualiSeparati() * durata),
+        this.nuovoClienteForm
+      );
     },
 
     toggleFiltroSoloRitardo() {
@@ -2096,7 +2104,7 @@ function appState() {
       const d = c.upgrade.filter(u => this.selezionePrezzo.upgrade.includes(u.id)).map(u => `${u.nome} (+${u.prezzoMensile} €/mese)`);
       const pagine = Number(this.nuovoClienteForm.pagine_extra) || 0;
       const lingue = Number(this.nuovoClienteForm.lingue_extra) || 0;
-      if (pagine > 0) d.push(`${pagine} pagine extra (+${pagine * c.paginaExtra.prezzoMensile} €/mese)`);
+      if (pagine > 0) d.push(`${pagine} ${pagine === 1 ? 'pagina extra' : 'pagine extra'} (+${pagine * c.paginaExtra.prezzoMensile} €/mese)`);
       if (lingue > 0) d.push(`${lingue} lingue extra (+${lingue * c.multilingua.prezzoMensilePerLingua} €/mese)`);
       if (this.nuovoClienteForm.sconto_tipo && Number(this.nuovoClienteForm.sconto_valore) > 0) {
         const descrizioneSconto =
@@ -2485,6 +2493,7 @@ if (typeof module !== 'undefined') {
     filtroVenditoreClienti,
     normalizzaClientePerSalvataggio,
     prezzoRicorrenteDaForm,
-    etichettaDurataScontoForm
+    etichettaDurataScontoForm,
+    totaleContrattoDaForm
   };
 }

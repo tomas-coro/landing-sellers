@@ -3,7 +3,8 @@ const assert = require('node:assert');
 const {
   normalizzaClientePerSalvataggio,
   prezzoRicorrenteDaForm,
-  etichettaDurataScontoForm
+  etichettaDurataScontoForm,
+  totaleContrattoDaForm
 } = require('../js/app.js');
 
 test('il salvataggio converte lo sconto vuoto in null', () => {
@@ -36,4 +37,13 @@ test('gli sconti percentuale e fisso continuano a ridurre il catalogo', () => {
 test('la durata nulla indica un prezzo o sconto permanente', () => {
   assert.strictEqual(etichettaDurataScontoForm({ sconto_durata_anni: null }), 'Per sempre');
   assert.strictEqual(etichettaDurataScontoForm({ sconto_durata_anni: 2 }), 'Per i primi 2 anni');
+});
+
+test('il prezzo finale concordato include setup, dominio e altri extra', () => {
+  assert.strictEqual(totaleContrattoDaForm(300, 180, {
+    sconto_tipo: 'prezzo_fisso'
+  }), 300);
+  assert.strictEqual(totaleContrattoDaForm(300, 180, {
+    sconto_tipo: 'percentuale'
+  }), 480);
 });
