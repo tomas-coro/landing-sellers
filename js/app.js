@@ -13,6 +13,34 @@ function formModuloVuoto() {
     pacchetto_sicurezza: false };
 }
 
+function formVenditaEconomicaVuoto() {
+  return {
+    clienteRicerca: '',
+    clienteId: null,
+    servizio: '',
+    importoVendita: null,
+    costi: [],
+    costoDescrizione: '',
+    costoImporto: null,
+
+    // Regole economiche attualmente definite.
+    percentualeTasseFattura: 40,
+    percentualeRiduzioneNoFattura: 20,
+
+    modalitaFatturazioneAdmin: 'nessuna',
+    importoFatturatoAdmin: 0,
+
+    statoIncasso: 'incassato',
+    importoIncassato: null,
+    dataPagamento: '',
+    metodoPagamento: '',
+    notePagamento: '',
+
+    partecipanti: [],
+    nuovoPartecipanteNome: ''
+  };
+}
+
 function appState() {
   return {
     view: 'login',
@@ -44,6 +72,16 @@ function appState() {
     indiceNoteRicerca: [],
     erroreRicerca: '',
     nuovoClienteForm: formModuloVuoto(),
+
+    // CRM economico / vendite
+    venditaEconomicaForm: formVenditaEconomicaVuoto(),
+    clienteEconomiaSelezionato: null,
+    anagraficaEconomiaAperta: false,
+    menuAzioneAperto: false,
+    salvandoVenditaEconomica: false,
+    erroreEconomia: '',
+    successoEconomia: '',
+
     selezionePrezzo: { modalita: 'catalogo', formula: 'mensile', upgrade: [] },
     erroriNuovoCliente: {},
     clienteInModificaId: null,
@@ -60,6 +98,12 @@ function appState() {
     nuovaNotaTesto: '',
     aggiungendoNota: false,
     erroreScheda: '',
+
+    // pagamenti cliente
+    pagamentiCliente: [],
+    caricandoPagamentiCliente: false,
+    errorePagamentiCliente: '',
+
     schedaAperture: { stato: true, pacchetto: false, contatti: false, note: true },
 
     aggiornamentoDisponibile: false,
@@ -263,6 +307,778 @@ function appState() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
+    totaleIncassatoCliente() {
+      return this.pagamentiCliente
+        .filter(p => p.stato === 'incassato')
+        .reduce((totale, p) => totale + (Number(p.importo) || 0), 0);
+    },
+
+    residuoCliente() {
+      const cliente = this.clienteSelezionato();
+      if (!cliente) return 0;
+
+      const totale = Number(cliente.importo_abbonamento) || 0;
+      return Math.max(0, totale - this.totaleIncassatoCliente());
+    },
+
+    statoPagamentoCliente() {
+      const cliente = this.clienteSelezionato();
+      if (!cliente) return 'da_pagare';
+
+      const totale = Number(cliente.importo_abbonamento) || 0;
+      const incassato = this.totaleIncassatoCliente();
+
+      if (totale > 0 && incassato >= totale) return 'pagato';
+      if (incassato > 0) return 'parziale';
+      return 'da_pagare';
+    },
+
+    etichettaStatoPagamentoCliente() {
+      const stato = this.statoPagamentoCliente();
+
+      if (stato === 'pagato') return 'Pagato';
+      if (stato === 'parziale') return 'Parziale';
+      return 'Da pagare';
+    },
+
+    classeStatoPagamentoCliente() {
+      return 'payment-' + this.statoPagamentoCliente();
+    },
+
+    async apriPagamentoCliente() {
+      const cliente = this.clienteSelezionato();
+      if (!cliente) return;
+
+      await this.apriEconomia();
+      this.selezionaClienteEconomia(cliente);
+    },
+
+    async apriEconomia() {
+      this.venditaEconomicaForm = formVenditaEconomicaVuoto();
+      this.clienteEconomiaSelezionato = null;
+      this.anagraficaEconomiaAperta = false;
+      this.erroreEconomia = '';
+      this.successoEconomia = '';
+      await this.inizializzaPartecipantiEconomia();
+      this.view = 'economia';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    utenteCorrenteETomas() {
+      const valori = [
+        this.profilo.nome,
+        this.profilo.username,
+        this.sessione?.user?.email
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return valori.includes('tomas');
+    },
+
+    profiloEconomicoETomas(profilo) {
+      return [profilo?.nome, profilo?.username]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes('tomas');
+    },
+
+    async inizializzaPartecipantiEconomia() {
+      this.erroreEconomia = '';
+
+      const { data, error } = await window.supabaseClient
+        .rpc('get_partecipanti_economici');
+
+      if (error) {
+        this.venditaEconomicaForm.partecipanti = [];
+        this.erroreEconomia =
+          'Impossibile caricare i partecipanti: ' + error.message;
+        return;
+      }
+
+      const profili = data || [];
+      const referente = profili.find(p => p.ruolo_economico === 'referente');
+      const tomas = profili.find(p => p.ruolo_economico === 'produzione');
+      const corrente = profili.find(p => p.id === this.sessione?.user?.id);
+
+      if (!referente) {
+        this.erroreEconomia = 'Profilo economico di Alessandro non trovato.';
+        this.venditaEconomicaForm.partecipanti = [];
+        return;
+      }
+
+      if (!tomas) {
+        this.erroreEconomia = 'Profilo economico di Tomas non trovato.';
+        this.venditaEconomicaForm.partecipanti = [];
+        return;
+      }
+
+      const creaPartecipante = (profilo, ruolo) => ({
+        id: profilo.id,
+        nome:
+          ruolo === 'referente'
+            ? 'Alessandro'
+            : ruolo === 'produzione'
+              ? 'Tomas'
+              : (profilo.username || profilo.nome || 'Venditore'),
+        ruolo,
+        modalitaFatturazione: 'nessuna',
+        importoFatturato: 0,
+        faFattura: false,
+        haVenduto: false,
+        quotaOverride: false,
+        quotaEffettiva: null,
+        noteQuota: '',
+        saldato: false,
+        dataSaldo: null,
+        bloccato: true
+      });
+
+      const partecipanti = [
+        creaPartecipante(referente, 'referente')
+      ];
+
+      if (tomas.id !== referente.id) {
+        partecipanti.push(creaPartecipante(tomas, 'produzione'));
+      }
+
+      if (
+        corrente &&
+        corrente.ruolo !== 'admin' &&
+        corrente.id !== referente.id &&
+        corrente.id !== tomas.id
+      ) {
+        partecipanti.push(creaPartecipante(corrente, 'venditore'));
+      }
+
+      // Alessandro è il venditore commerciale predefinito nei casi ordinari.
+      // La scelta resta sempre modificabile dall'utente.
+      const venditoreDefault = partecipanti.find(p => p.ruolo === 'referente');
+      if (venditoreDefault) venditoreDefault.haVenduto = true;
+
+      this.venditaEconomicaForm.partecipanti = partecipanti;
+    },
+
+    impostaVenditoreEconomia(partecipante) {
+      this.venditaEconomicaForm.partecipanti.forEach(p => {
+        p.haVenduto = p.id === partecipante.id;
+      });
+    },
+
+    modalitaFatturazioneAdminEconomia() {
+      const valore = this.venditaEconomicaForm.modalitaFatturazioneAdmin;
+      return ['totale', 'mista', 'nessuna'].includes(valore)
+        ? valore
+        : 'nessuna';
+    },
+
+    importoFatturatoAdminEconomia() {
+      const importo = Math.max(
+        0,
+        Number(this.venditaEconomicaForm.importoVendita) || 0
+      );
+      const modalita = this.modalitaFatturazioneAdminEconomia();
+
+      if (modalita === 'totale') return importo;
+      if (modalita === 'nessuna') return 0;
+
+      return Math.min(
+        importo,
+        Math.max(
+          0,
+          Number(this.venditaEconomicaForm.importoFatturatoAdmin) || 0
+        )
+      );
+    },
+
+    percentualeFatturataAdminEconomia() {
+      const importo = Math.max(
+        0,
+        Number(this.venditaEconomicaForm.importoVendita) || 0
+      );
+      if (!importo) return 0;
+      return this.importoFatturatoAdminEconomia() / importo;
+    },
+
+    nettoDistribuibileEconomia() {
+      const margine = this.margineEconomia();
+      const tasse = Math.max(
+        0,
+        Math.min(
+          100,
+          Number(this.venditaEconomicaForm.percentualeTasseFattura) || 0
+        )
+      );
+
+      // Se Alessandro non fattura, il margine non viene ridotto.
+      // Se fattura solo una parte, il 40% incide solo in proporzione
+      // alla parte fatturata al cliente.
+      const incidenzaTasse =
+        (tasse / 100) * this.percentualeFatturataAdminEconomia();
+
+      return Math.max(0, margine * (1 - incidenzaTasse));
+    },
+
+    quotaBaseLordaEconomia() {
+      const numero = this.venditaEconomicaForm.partecipanti.length;
+      if (!numero) return 0;
+      return this.margineEconomia() / numero;
+    },
+
+    quotaBaseEconomia() {
+      const numero = this.venditaEconomicaForm.partecipanti.length;
+      if (!numero) return 0;
+      return this.nettoDistribuibileEconomia() / numero;
+    },
+
+    bonusVenditoreEconomia() {
+      const partecipanti = this.venditaEconomicaForm.partecipanti;
+      if (partecipanti.length !== 2) return 0;
+
+      const venditore = partecipanti.find(p => p.haVenduto);
+      if (!venditore) return 0;
+
+      return this.quotaBaseEconomia() * 0.12;
+    },
+
+    quotaTeoricaPartecipanteEconomia(partecipante) {
+      const base = this.quotaBaseEconomia();
+      const partecipanti = this.venditaEconomicaForm.partecipanti;
+
+      if (partecipanti.length !== 2) return base;
+
+      const bonus = this.bonusVenditoreEconomia();
+      if (!bonus) return base;
+
+      if (partecipante.haVenduto) return base + bonus;
+      return Math.max(0, base - bonus);
+    },
+
+    modalitaFatturazionePartecipanteEconomia(partecipante) {
+      const valore = partecipante.modalitaFatturazione || 'nessuna';
+      return ['totale', 'mista', 'nessuna'].includes(valore)
+        ? valore
+        : 'nessuna';
+    },
+
+    importoFatturatoPartecipanteEconomia(partecipante, quota = null) {
+      const riferimento = Math.max(
+        0,
+        quota == null
+          ? this.quotaTeoricaPartecipanteEconomia(partecipante)
+          : Number(quota) || 0
+      );
+      const modalita =
+        this.modalitaFatturazionePartecipanteEconomia(partecipante);
+
+      if (modalita === 'totale') return riferimento;
+      if (modalita === 'nessuna') return 0;
+
+      return Math.min(
+        riferimento,
+        Math.max(0, Number(partecipante.importoFatturato) || 0)
+      );
+    },
+
+    percentualeNonFatturataPartecipanteEconomia(partecipante) {
+      const quota = this.quotaTeoricaPartecipanteEconomia(partecipante);
+      if (!quota) return 0;
+
+      return Math.max(
+        0,
+        Math.min(
+          1,
+          (quota - this.importoFatturatoPartecipanteEconomia(
+            partecipante,
+            quota
+          )) / quota
+        )
+      );
+    },
+
+    riduzioneNoFatturaPartecipanteEconomia(partecipante) {
+      if (partecipante.ruolo === 'referente') return 0;
+
+      const quotaTeorica =
+        this.quotaTeoricaPartecipanteEconomia(partecipante);
+      const riduzione = Math.max(
+        0,
+        Math.min(
+          100,
+          Number(this.venditaEconomicaForm.percentualeRiduzioneNoFattura) || 0
+        )
+      );
+
+      // La riduzione del 20% esiste solo sulla quota collegata alla
+      // parte fatturata da Alessandro e non fatturata dal collaboratore.
+      return (
+        quotaTeorica *
+        this.percentualeFatturataAdminEconomia() *
+        this.percentualeNonFatturataPartecipanteEconomia(partecipante) *
+        (riduzione / 100)
+      );
+    },
+
+    bonusNoFatturaAdminEconomia() {
+      return this.venditaEconomicaForm.partecipanti
+        .filter(p => p.ruolo !== 'referente')
+        .reduce(
+          (totale, p) =>
+            totale + this.riduzioneNoFatturaPartecipanteEconomia(p),
+          0
+        );
+    },
+
+    quotaEffettivaPartecipanteEconomia(partecipante, quotaCalcolata = null) {
+      const calcolata = Math.max(
+        0,
+        quotaCalcolata == null
+          ? this.calcoloPartecipanteEconomia(partecipante).quotaCalcolata
+          : Number(quotaCalcolata) || 0
+      );
+
+      if (!partecipante.quotaOverride) return calcolata;
+
+      const valore = Number(partecipante.quotaEffettiva);
+      return Number.isFinite(valore) && valore >= 0 ? valore : calcolata;
+    },
+
+    calcoloPartecipanteEconomia(partecipante) {
+      const quotaBase = this.quotaBaseEconomia();
+      const quotaTeorica =
+        this.quotaTeoricaPartecipanteEconomia(partecipante);
+
+      const bonusVendita =
+        partecipante.haVenduto &&
+        this.venditaEconomicaForm.partecipanti.length === 2
+          ? this.bonusVenditoreEconomia()
+          : 0;
+
+      const percentualeRiduzione =
+        Number(this.venditaEconomicaForm.percentualeRiduzioneNoFattura) || 0;
+
+      const riduzioneNoFattura =
+        this.riduzioneNoFatturaPartecipanteEconomia(partecipante);
+
+      const bonusAdmin =
+        partecipante.ruolo === 'referente'
+          ? this.bonusNoFatturaAdminEconomia()
+          : 0;
+
+      const quotaCalcolata = Math.max(
+        0,
+        quotaTeorica - riduzioneNoFattura + bonusAdmin
+      );
+
+      const quotaEffettiva = partecipante.quotaOverride
+        ? Math.max(0, Number(partecipante.quotaEffettiva) || 0)
+        : quotaCalcolata;
+
+      const percentualeTasseEffettiva =
+        (Number(this.venditaEconomicaForm.percentualeTasseFattura) || 0) *
+        this.percentualeFatturataAdminEconomia();
+
+      const importoTasse = Math.max(
+        0,
+        this.quotaBaseLordaEconomia() - quotaBase
+      );
+
+      const importoFatturato =
+        partecipante.ruolo === 'referente'
+          ? this.importoFatturatoAdminEconomia()
+          : this.importoFatturatoPartecipanteEconomia(
+              partecipante,
+              quotaTeorica
+            );
+
+      return {
+        quotaBase,
+        quotaTeorica,
+        bonusVendita,
+        riduzioneNoFattura,
+        bonusAdmin,
+        quotaCalcolata,
+        quotaFinale: quotaEffettiva,
+        quotaEffettiva,
+        percentualeRiduzione,
+        percentualeTasseEffettiva,
+        importoTasse,
+        importoFatturato,
+        importoNonFatturato:
+          partecipante.ruolo === 'referente'
+            ? Math.max(
+                0,
+                (Number(this.venditaEconomicaForm.importoVendita) || 0) -
+                  this.importoFatturatoAdminEconomia()
+              )
+            : Math.max(0, quotaTeorica - importoFatturato)
+      };
+    },
+
+    totaleQuoteFinaliEconomia() {
+      return this.venditaEconomicaForm.partecipanti.reduce(
+        (totale, partecipante) =>
+          totale + this.calcoloPartecipanteEconomia(partecipante).quotaFinale,
+        0
+      );
+    },
+
+    totaleTrattenuteEconomia() {
+      return this.venditaEconomicaForm.partecipanti
+        .filter(partecipante => partecipante.ruolo !== 'referente')
+        .reduce(
+          (totale, partecipante) =>
+            totale +
+            this.calcoloPartecipanteEconomia(partecipante).riduzioneNoFattura,
+          0
+        );
+    },
+
+    etichettaRuoloEconomia(ruolo) {
+      if (ruolo === 'referente') return 'Referente';
+      if (ruolo === 'produzione') return 'Produzione sito';
+      if (ruolo === 'venditore') return 'Venditore';
+      return 'Collaboratore';
+    },
+
+    apriAnagraficaEconomia() {
+      if (!this.clienteEconomiaSelezionato) return;
+      this.anagraficaEconomiaAperta = true;
+    },
+
+    chiudiAnagraficaEconomia() {
+      this.anagraficaEconomiaAperta = false;
+    },
+
+    creaCostoEconomia(descrizione, importo) {
+      return {
+        id: `${Date.now()}-${Math.random()}`,
+        descrizione,
+        importo
+      };
+    },
+
+    impostaCostiClienteEconomia(cliente) {
+      const costi = [];
+
+      const multipagina = Number(cliente.pagine_extra || 0) > 0;
+
+      costi.push(
+        this.creaCostoEconomia(
+          multipagina ? 'Hosting Multipagina' : 'Hosting Landing',
+          multipagina ? 25 : 20
+        )
+      );
+
+      if (cliente.dominio_it || cliente.dominio_com) {
+        costi.push(this.creaCostoEconomia('Dominio', 20));
+      }
+
+      if (cliente.email_5_caselle) {
+        costi.push(this.creaCostoEconomia('Mail', 10));
+      }
+
+      costi.push(
+        this.creaCostoEconomia('Claude - Creazione e Skill', 20)
+      );
+
+      this.venditaEconomicaForm.costi = costi;
+    },
+
+    clientiEconomiaFiltrati() {
+      const testo = (this.venditaEconomicaForm.clienteRicerca || '')
+        .trim()
+        .toLowerCase();
+
+      if (!testo || this.clienteEconomiaSelezionato) return [];
+
+      return this.clienti
+        .filter(cliente => {
+          return [
+            cliente.nome,
+            cliente.referente,
+            cliente.telefono,
+            cliente.email,
+            cliente.piva
+          ]
+            .filter(Boolean)
+            .some(valore => String(valore).toLowerCase().includes(testo));
+        })
+        .slice(0, 8);
+    },
+
+    selezionaClienteEconomia(cliente) {
+      this.clienteEconomiaSelezionato = cliente;
+      this.venditaEconomicaForm.clienteId = cliente.id;
+      this.venditaEconomicaForm.clienteRicerca = cliente.nome || '';
+
+      this.venditaEconomicaForm.servizio =
+        cliente.nome_pacchetto || 'Servizio registrato';
+
+      this.venditaEconomicaForm.importoVendita =
+        Number(cliente.importo_abbonamento) || 0;
+
+      this.venditaEconomicaForm.importoIncassato =
+        Number(cliente.importo_abbonamento) || 0;
+
+      this.impostaCostiClienteEconomia(cliente);
+    },
+
+    cambiaClienteEconomia() {
+      this.clienteEconomiaSelezionato = null;
+      this.anagraficaEconomiaAperta = false;
+      this.venditaEconomicaForm.clienteId = null;
+      this.venditaEconomicaForm.clienteRicerca = '';
+      this.venditaEconomicaForm.servizio = '';
+      this.venditaEconomicaForm.importoVendita = null;
+      this.venditaEconomicaForm.importoIncassato = null;
+      this.venditaEconomicaForm.costi = [];
+    },
+
+    aggiungiCostoEconomia(descrizione = '', importo = null) {
+      const nome = (descrizione || '').trim();
+      const valore = Number(importo);
+
+      if (!nome || !Number.isFinite(valore) || valore < 0) return;
+
+      this.venditaEconomicaForm.costi.push({
+        id: `${Date.now()}-${Math.random()}`,
+        descrizione: nome,
+        importo: valore
+      });
+
+      this.venditaEconomicaForm.costoDescrizione = '';
+      this.venditaEconomicaForm.costoImporto = null;
+    },
+
+    aggiungiCostoManualeEconomia() {
+      this.aggiungiCostoEconomia(
+        this.venditaEconomicaForm.costoDescrizione,
+        this.venditaEconomicaForm.costoImporto
+      );
+    },
+
+    rimuoviCostoEconomia(id) {
+      this.venditaEconomicaForm.costi =
+        this.venditaEconomicaForm.costi.filter(costo => costo.id !== id);
+    },
+
+    totaleCostiEconomia() {
+      return this.venditaEconomicaForm.costi.reduce(
+        (totale, costo) => totale + (Number(costo.importo) || 0),
+        0
+      );
+    },
+
+    margineEconomia() {
+      const vendita = Number(this.venditaEconomicaForm.importoVendita) || 0;
+      return Math.max(0, vendita - this.totaleCostiEconomia());
+    },
+
+    formattaEuroEconomia(valore) {
+      return new Intl.NumberFormat('it-IT', {
+        style: 'currency',
+        currency: 'EUR'
+      }).format(Number(valore) || 0);
+    },
+
+    validaVenditaEconomica() {
+      if (!this.venditaEconomicaForm.clienteId) {
+        return 'Seleziona un cliente.';
+      }
+
+      if (!(Number(this.venditaEconomicaForm.importoVendita) > 0)) {
+        return 'L\'importo della vendita deve essere maggiore di zero.';
+      }
+
+      if (!this.venditaEconomicaForm.partecipanti.length) {
+        return 'Nessun partecipante disponibile.';
+      }
+
+      if (!this.venditaEconomicaForm.partecipanti.some(p => p.haVenduto)) {
+        return 'Indica chi ha effettuato la vendita.';
+      }
+
+      if (this.modalitaFatturazioneAdminEconomia() === 'mista') {
+        const fatturatoAdmin = this.importoFatturatoAdminEconomia();
+        const totaleVendita =
+          Number(this.venditaEconomicaForm.importoVendita) || 0;
+
+        if (!(fatturatoAdmin > 0 && fatturatoAdmin < totaleVendita)) {
+          return (
+            'La parte fatturata da Alessandro deve essere maggiore di 0 ' +
+            'e minore del totale vendita.'
+          );
+        }
+      }
+
+      for (const partecipante of this.venditaEconomicaForm.partecipanti) {
+        if (
+          partecipante.ruolo !== 'referente' &&
+          this.modalitaFatturazionePartecipanteEconomia(partecipante) ===
+            'mista'
+        ) {
+          const quota =
+            this.calcoloPartecipanteEconomia(partecipante).quotaTeorica;
+          const fatturato = Number(partecipante.importoFatturato) || 0;
+          if (!(fatturato > 0 && fatturato < quota)) {
+            return (
+              'Per ' + partecipante.nome +
+              ' la fattura mista deve essere maggiore di 0 e minore della quota.'
+            );
+          }
+        }
+      }
+
+      const incasso = Math.max(
+        0,
+        Number(this.venditaEconomicaForm.importoIncassato) || 0
+      );
+      const vendita = Number(this.venditaEconomicaForm.importoVendita) || 0;
+
+      if (this.venditaEconomicaForm.statoIncasso === 'incassato') {
+        if (!(incasso > 0 && incasso <= vendita)) {
+          return 'Inserisci un importo incassato valido.';
+        }
+      }
+
+      if (this.venditaEconomicaForm.statoIncasso === 'parziale') {
+        if (!(incasso > 0 && incasso < vendita)) {
+          return 'Il pagamento parziale deve essere maggiore di 0 e minore del totale.';
+        }
+      }
+
+      return '';
+    },
+
+    async salvaVenditaEconomica() {
+      if (this.salvandoVenditaEconomica) return;
+
+      this.erroreEconomia = this.validaVenditaEconomica();
+      this.successoEconomia = '';
+      if (this.erroreEconomia) return;
+
+      const venditore =
+        this.venditaEconomicaForm.partecipanti.find(p => p.haVenduto);
+      const referente =
+        this.venditaEconomicaForm.partecipanti.find(p => p.ruolo === 'referente');
+
+      if (!venditore || !referente) {
+        this.erroreEconomia = 'Venditore o referente economico non disponibile.';
+        return;
+      }
+
+      const partecipanti = this.venditaEconomicaForm.partecipanti.map(p => {
+        const calcolo = this.calcoloPartecipanteEconomia(p);
+        const modalita = p.ruolo === 'referente'
+          ? this.modalitaFatturazioneAdminEconomia()
+          : this.modalitaFatturazionePartecipanteEconomia(p);
+
+        return {
+          profilo_id: p.id,
+          ruolo: p.ruolo,
+          fa_fattura: modalita === 'totale',
+          quota_base: calcolo.quotaBase,
+          percentuale_tasse: calcolo.percentualeTasseEffettiva,
+          importo_tasse: calcolo.importoTasse,
+          percentuale_riduzione:
+            p.ruolo === 'referente' ? 0 : calcolo.percentualeRiduzione,
+          importo_riduzione: calcolo.riduzioneNoFattura,
+          importo_trasferito_admin:
+            p.ruolo === 'referente' ? 0 : calcolo.riduzioneNoFattura,
+          quota_finale: calcolo.quotaFinale,
+          modalita_fatturazione: modalita,
+          importo_fatturato: calcolo.importoFatturato,
+          quota_calcolata: calcolo.quotaCalcolata,
+          quota_effettiva: calcolo.quotaEffettiva,
+          quota_override: !!p.quotaOverride,
+          note_quota: (p.noteQuota || '').trim() || null,
+          saldato: !!p.saldato,
+          data_saldo: p.saldato
+            ? (p.dataSaldo || this.dataISOOggi())
+            : null
+        };
+      });
+
+      const statoIncasso = this.venditaEconomicaForm.statoIncasso;
+      let pagamento = null;
+
+      if (statoIncasso !== 'previsto') {
+        pagamento = {
+          importo: Math.max(
+            0,
+            Number(this.venditaEconomicaForm.importoIncassato) || 0
+          ),
+          stato: 'incassato',
+          data_pagamento: this.venditaEconomicaForm.dataPagamento || null,
+          metodo:
+            (this.venditaEconomicaForm.metodoPagamento || '').trim() || null,
+          note:
+            (this.venditaEconomicaForm.notePagamento || '').trim() || null
+        };
+      }
+
+      const payloadVendita = {
+        cliente_id: this.venditaEconomicaForm.clienteId,
+        venditore_id: venditore.id,
+        admin_id: referente.id,
+        servizio:
+          this.venditaEconomicaForm.servizio || 'Servizio registrato',
+        descrizione: null,
+        importo_vendita:
+          Number(this.venditaEconomicaForm.importoVendita) || 0,
+        data_vendita: this.dataISOOggi(),
+        modalita_fatturazione_admin:
+          this.modalitaFatturazioneAdminEconomia(),
+        importo_fatturato_admin: this.importoFatturatoAdminEconomia(),
+        percentuale_tasse_admin:
+          Number(this.venditaEconomicaForm.percentualeTasseFattura) || 0
+      };
+
+      const costi = this.venditaEconomicaForm.costi.map(c => ({
+        descrizione: c.descrizione,
+        importo: Number(c.importo) || 0
+      }));
+
+      this.salvandoVenditaEconomica = true;
+
+      try {
+        const { data, error } = await window.supabaseClient.rpc(
+          'registra_vendita_economica',
+          {
+            p_vendita: payloadVendita,
+            p_costi: costi,
+            p_partecipanti: partecipanti,
+            p_pagamento: pagamento
+          }
+        );
+
+        if (error) {
+          this.erroreEconomia =
+            'Vendita non salvata: ' + error.message;
+          return;
+        }
+
+        this.successoEconomia = 'Vendita registrata correttamente.';
+
+        const clienteId = this.venditaEconomicaForm.clienteId;
+        await this.caricaClienti();
+
+        if (clienteId) {
+          this.clienteSelezionatoId = clienteId;
+          await this.caricaPagamentiCliente(clienteId);
+        }
+
+        window.setTimeout(() => {
+          if (this.successoEconomia) this.vaiHome();
+        }, 700);
+      } finally {
+        this.salvandoVenditaEconomica = false;
+      }
+    },
+
     navVisibile() {
       return !!this.sessione && [
         'lista',
@@ -271,7 +1087,8 @@ function appState() {
         'profilo',
         'agenda',
         'pipeline',
-        'ricerca'
+        'ricerca',
+        'economia'
       ].includes(this.view);
     },
 
@@ -1436,6 +2253,45 @@ function appState() {
       return this.clienti.find(c => c.id === this.clienteSelezionatoId) || {};
     },
 
+    async caricaPagamentiCliente(clienteId) {
+      this.pagamentiCliente = [];
+      this.errorePagamentiCliente = '';
+      if (!clienteId) return;
+
+      this.caricandoPagamentiCliente = true;
+      try {
+        const { data: vendite, error: errVendite } = await window.supabaseClient
+          .from('vendite')
+          .select('id')
+          .eq('cliente_id', clienteId)
+          .eq('stato', 'attiva');
+
+        if (errVendite) {
+          this.errorePagamentiCliente = errVendite.message;
+          return;
+        }
+
+        const ids = (vendite || []).map(v => v.id);
+        if (!ids.length) return;
+
+        const { data, error } = await window.supabaseClient
+          .from('pagamenti')
+          .select('*')
+          .in('vendita_id', ids)
+          .order('data_pagamento', { ascending: false, nullsFirst: false })
+          .order('creato_il', { ascending: false });
+
+        if (error) {
+          this.errorePagamentiCliente = error.message;
+          return;
+        }
+
+        this.pagamentiCliente = data || [];
+      } finally {
+        this.caricandoPagamentiCliente = false;
+      }
+    },
+
     async apriScheda(clienteId) {
       this.clienteSelezionatoId = clienteId;
       this.view = 'scheda';
@@ -1453,6 +2309,7 @@ function appState() {
         .order('creata_il', { ascending: false });
       if (error) { this.erroreScheda = 'Errore nel caricare le note: ' + error.message; return; }
       this.note = data;
+      await this.caricaPagamentiCliente(clienteId);
     },
 
     toggleAccordion(sezione) {

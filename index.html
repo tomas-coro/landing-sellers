@@ -21,6 +21,148 @@
 <script src="js/app.js" defer></script>
 <!-- TODO: aggiungere integrity SRI per Alpine.js@3, vedi https://www.jsdelivr.com/package/npm/alpinejs -->
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+
+<style>
+/* V5.4 - fatturazione mista: riga essenziale */
+.economy-mixed-field{
+  padding:10px 0 8px;
+  border-bottom:1px solid #ececec;
+}
+.economy-mixed-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 165px;
+  gap:14px;
+  align-items:center;
+}
+.economy-mixed-label{
+  display:block;
+  margin:0;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.25;
+  color:#707070;
+}
+.economy-mixed-input{
+  width:100%;
+  height:42px;
+  min-height:42px;
+  padding:0 13px;
+  border:1px solid #d9d9d9;
+  border-radius:13px;
+  background:#fafafa;
+  font:inherit;
+  font-size:14px;
+  color:#111;
+  box-sizing:border-box;
+}
+.economy-mixed-input::placeholder{
+  color:#a0a0a0;
+  opacity:1;
+}
+.economy-mixed-input::-webkit-outer-spin-button,
+.economy-mixed-input::-webkit-inner-spin-button{
+  -webkit-appearance:none;
+  margin:0;
+}
+.economy-mixed-input[type=number]{
+  -moz-appearance:textfield;
+  appearance:textfield;
+}
+.economy-mixed-residual-line{
+  display:flex;
+  justify-content:flex-end;
+  align-items:baseline;
+  gap:6px;
+  margin-top:5px;
+  font-size:11.5px;
+  line-height:1.2;
+  color:#8d8d8d;
+}
+.economy-mixed-residual-line strong{
+  color:#111;
+  font-size:12px;
+}
+@media (max-width:520px){
+  .economy-mixed-row{
+    grid-template-columns:minmax(0,1fr) 145px;
+    gap:10px;
+  }
+  .economy-mixed-label{
+    font-size:12.5px;
+  }
+  .economy-mixed-input{
+    height:40px;
+    min-height:40px;
+    padding:0 12px;
+    font-size:13.5px;
+  }
+}
+
+
+/* V5.5 - override storico più discreto */
+.economy-history-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:10px 0;
+  border-top:1px solid #ececec;
+}
+.economy-history-row > span{
+  font-size:12.5px;
+  font-weight:700;
+  color:#707070;
+}
+.economy-history-edit{
+  border:1px solid #d9d9d9;
+  border-radius:12px;
+  background:#f7f7f7;
+  color:#111;
+  padding:8px 12px;
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.economy-history-edit.active{
+  background:#111;
+  color:#c7ff27;
+  border-color:#111;
+}
+.economy-history-editor{
+  display:flex;
+  justify-content:flex-end;
+  padding:0 0 10px;
+}
+.economy-history-editor input{
+  width:150px;
+  margin-left:auto;
+  height:40px;
+  min-height:40px;
+  padding:0 12px;
+  border:1px solid #d9d9d9;
+  border-radius:12px;
+  background:#fafafa;
+  font:inherit;
+  font-size:13.5px;
+  box-sizing:border-box;
+}
+.economy-history-editor input::-webkit-outer-spin-button,
+.economy-history-editor input::-webkit-inner-spin-button{
+  -webkit-appearance:none;
+  margin:0;
+}
+.economy-history-editor input[type=number]{
+  -moz-appearance:textfield;
+  appearance:textfield;
+}
+@media (max-width:520px){
+  .economy-history-editor input{
+    width:135px;
+  }
+}
+
+</style>
 </head>
 <body>
   <div id="app" x-data="appState()" x-init="init()"
@@ -104,7 +246,9 @@
 
         <div class="home-dashboard home-dashboard-v2" x-show="!isAdmin && clienti.length > 0">
 
-          <section class="home-today">
+          <section
+              class="home-today"
+              :class="{ 'is-empty': eventiOggiHome().length === 0 }">
             <div class="home-section-title">
               <div>
                 <span>OGGI</span>
@@ -147,6 +291,7 @@
               <span>Rinnovi</span>
             </button>
           </section>
+
 
           <section class="home-attention" x-show="clientiDaGestireHome().length > 0">
             <div class="home-section-title">
@@ -197,7 +342,7 @@
         <div class="search-row" x-show="clienti.length > 0">
           <input type="search" placeholder="Cerca nella lista..." aria-label="Cerca clienti per nome o referente" x-model="filtroTesto">
         </div>
-        <div class="filtro-stati" x-show="clienti.length > 0">
+        <div class="filtro-stati home-filter-scroll" x-show="clienti.length > 0">
           <button type="button" class="chip-stato" :class="{ on: filtroStato === '' }" @click="filtroStato = ''">Tutti · <span x-text="clienti.length"></span></button>
           <template x-for="s in ['contattato','brief_mandato','in_lavorazione','pubblicato']" :key="s">
             <button type="button" class="chip-stato" :class="{ on: filtroStato === s }" @click="filtroStato = filtroStato === s ? '' : s">
@@ -206,7 +351,7 @@
           </template>
         </div>
 
-        <div class="filtro-stati" x-show="clienti.length > 0">
+        <div class="filtro-stati home-filter-scroll" x-show="clienti.length > 0">
           <template x-for="opz in [
             { campo: 'nome', etichetta: 'Nome' },
             { campo: 'importo', etichetta: 'Importo' },
@@ -416,6 +561,686 @@
           <div class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
           <p>Nessun venditore trovato.</p>
         </div>
+      </div>
+    </div>
+
+
+    <!-- CRM ECONOMICO / VENDITE -->
+    <div
+      x-show="view === 'economia'"
+      x-cloak
+      x-transition.opacity.duration.160ms
+      class="app-main-view">
+
+      <div class="topbar">
+        <button type="button" class="linkback" @click="vaiHome()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M11 18l-6-6 6-6"/>
+          </svg>
+          Home
+        </button>
+
+        <div>
+          <span class="economy-eyebrow">CRM ECONOMICO</span>
+          <h1>Registra pagamento</h1>
+        </div>
+      </div>
+
+      <div class="content economy-content">
+
+        <p
+          x-show="erroreEconomia"
+          x-text="erroreEconomia"
+          class="err"
+          style="margin-bottom:14px">
+        </p>
+
+        <p
+          x-show="successoEconomia"
+          x-text="successoEconomia"
+          class="economy-preview-note"
+          style="margin-bottom:14px">
+        </p>
+
+        <!-- CLIENTE -->
+        <section class="economy-card">
+          <div class="economy-section-head">
+            <span>1</span>
+            <div>
+              <strong>Cliente</strong>
+              <small>Seleziona dall'anagrafica</small>
+            </div>
+          </div>
+
+          <div x-show="!clienteEconomiaSelezionato">
+            <input
+              type="search"
+              class="economy-search"
+              placeholder="Nome, referente, telefono, email..."
+              x-model="venditaEconomicaForm.clienteRicerca">
+
+            <div
+              class="economy-client-results"
+              x-show="clientiEconomiaFiltrati().length">
+
+              <template
+                x-for="cliente in clientiEconomiaFiltrati()"
+                :key="'economy-client-' + cliente.id">
+
+                <button
+                  type="button"
+                  @click="selezionaClienteEconomia(cliente)">
+                  <strong x-text="cliente.nome"></strong>
+                  <small
+                    x-text="[
+                      cliente.referente,
+                      cliente.telefono,
+                      cliente.email
+                    ].filter(Boolean).join(' · ')">
+                  </small>
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <div
+            class="economy-selected-client"
+            x-show="clienteEconomiaSelezionato">
+
+            <div>
+              <strong x-text="clienteEconomiaSelezionato?.nome"></strong>
+
+              <span x-show="clienteEconomiaSelezionato?.telefono">
+                <span x-text="clienteEconomiaSelezionato?.telefono"></span>
+              </span>
+
+              <span x-show="clienteEconomiaSelezionato?.email">
+                <span x-text="clienteEconomiaSelezionato?.email"></span>
+              </span>
+            </div>
+
+            <div class="economy-client-actions">
+              <button type="button" @click="apriAnagraficaEconomia()">
+                Anagrafica
+              </button>
+
+              <button type="button" @click="cambiaClienteEconomia()">
+                Cambia
+              </button>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ACQUISTO -->
+        <section
+          class="economy-card"
+          x-show="clienteEconomiaSelezionato">
+
+          <div class="economy-section-head">
+            <span>2</span>
+            <div>
+              <strong>Acquisto</strong>
+              <small>Preso automaticamente dall'anagrafica</small>
+            </div>
+          </div>
+
+          <div class="economy-purchase">
+            <div>
+              <span>Pacchetto / servizio</span>
+              <strong
+                x-text="clienteEconomiaSelezionato?.nome_pacchetto || '-'">
+              </strong>
+            </div>
+
+            <div>
+              <span>Importo registrato</span>
+              <strong
+                class="economy-purchase-price"
+                x-text="formattaEuroEconomia(
+                  clienteEconomiaSelezionato?.importo_abbonamento
+                )">
+              </strong>
+            </div>
+
+            <div x-show="clienteEconomiaSelezionato?.periodicita_contratto">
+              <span>Periodicità</span>
+              <strong
+                x-text="clienteEconomiaSelezionato?.periodicita_contratto">
+              </strong>
+            </div>
+
+            <div x-show="clienteEconomiaSelezionato?.durata_contratto_anni">
+              <span>Durata</span>
+              <strong
+                x-text="
+                  clienteEconomiaSelezionato?.durata_contratto_anni +
+                  (Number(clienteEconomiaSelezionato?.durata_contratto_anni) === 1
+                    ? ' anno'
+                    : ' anni')
+                ">
+              </strong>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- COSTI -->
+        <section
+          class="economy-card"
+          x-show="clienteEconomiaSelezionato">
+
+          <div class="economy-section-head">
+            <span>3</span>
+            <div>
+              <strong>Costi</strong>
+              <small>Precompilati dai dati del cliente</small>
+            </div>
+          </div>
+
+          <template
+            x-for="costo in venditaEconomicaForm.costi"
+            :key="costo.id">
+
+            <div class="economy-cost-row">
+              <span x-text="costo.descrizione"></span>
+              <strong x-text="formattaEuroEconomia(costo.importo)"></strong>
+
+              <button
+                type="button"
+                @click="rimuoviCostoEconomia(costo.id)">
+                ×
+              </button>
+            </div>
+          </template>
+
+          <div class="economy-custom-cost">
+            <input
+              type="text"
+              placeholder="Altro costo"
+              x-model="venditaEconomicaForm.costoDescrizione">
+
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              inputmode="decimal"
+              placeholder="€"
+              x-model.number="venditaEconomicaForm.costoImporto">
+
+            <button
+              type="button"
+              @click="aggiungiCostoManualeEconomia()">
+              +
+            </button>
+          </div>
+        </section>
+
+
+        <!-- PERSONE -->
+        <section
+          class="economy-card"
+          x-show="clienteEconomiaSelezionato">
+
+          <div class="economy-section-head">
+            <span>4</span>
+            <div>
+              <strong>Ripartizione</strong>
+              <small>Chi partecipa e chi fattura</small>
+            </div>
+          </div>
+
+          <div class="economy-participants">
+            <template
+              x-for="partecipante in venditaEconomicaForm.partecipanti"
+              :key="partecipante.id">
+
+              <div class="economy-participant">
+
+                <div class="economy-participant-top">
+                  <div>
+                    <strong x-text="partecipante.nome"></strong>
+                    <small
+                      x-text="etichettaRuoloEconomia(partecipante.ruolo)">
+                    </small>
+                  </div>
+                </div>
+
+                <div class="economy-invoice-choice">
+                  <span>Venditore</span>
+                  <div>
+                    <button
+                      type="button"
+                      :class="{ active: partecipante.haVenduto }"
+                      @click="impostaVenditoreEconomia(partecipante)">
+                      <span x-text="partecipante.haVenduto ? 'Selezionato' : 'Imposta'"></span>
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  class="economy-invoice-choice"
+                  x-show="partecipante.ruolo === 'referente'">
+                  <span>Fattura al cliente</span>
+
+                  <div>
+                    <button
+                      type="button"
+                      :class="{ active: modalitaFatturazioneAdminEconomia() === 'totale' }"
+                      @click="
+                        venditaEconomicaForm.modalitaFatturazioneAdmin = 'totale';
+                        venditaEconomicaForm.importoFatturatoAdmin =
+                          venditaEconomicaForm.importoVendita;
+                      ">
+                      Tutto
+                    </button>
+
+                    <button
+                      type="button"
+                      :class="{ active: modalitaFatturazioneAdminEconomia() === 'mista' }"
+                      @click="venditaEconomicaForm.modalitaFatturazioneAdmin = 'mista'">
+                      Misto
+                    </button>
+
+                    <button
+                      type="button"
+                      :class="{ active: modalitaFatturazioneAdminEconomia() === 'nessuna' }"
+                      @click="
+                        venditaEconomicaForm.modalitaFatturazioneAdmin = 'nessuna';
+                        venditaEconomicaForm.importoFatturatoAdmin = 0;
+                      ">
+                      No
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  class="economy-mixed-field"
+                  x-show="
+                    partecipante.ruolo === 'referente' &&
+                    modalitaFatturazioneAdminEconomia() === 'mista'
+                  ">
+                  <div class="economy-mixed-row">
+                    <label class="economy-mixed-label">Parte fatturata al cliente</label>
+
+                    <input
+                      class="economy-mixed-input"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      inputmode="decimal"
+                      placeholder="Importo €"
+                      x-model.number="venditaEconomicaForm.importoFatturatoAdmin">
+                  </div>
+
+                  <div class="economy-mixed-residual-line">
+                    <span>Non fatturato:</span>
+                    <strong
+                      x-text="formattaEuroEconomia(
+                        Math.max(
+                          0,
+                          Number(venditaEconomicaForm.importoVendita || 0) -
+                          Number(venditaEconomicaForm.importoFatturatoAdmin || 0)
+                        )
+                      )">
+                    </strong>
+                  </div>
+                </div>
+
+                <div
+                  class="economy-invoice-choice"
+                  x-show="partecipante.ruolo !== 'referente'">
+                  <span>Fattura ad Alessandro</span>
+
+                  <div>
+                    <button
+                      type="button"
+                      :class="{ active: modalitaFatturazionePartecipanteEconomia(partecipante) === 'totale' }"
+                      @click="
+                        partecipante.modalitaFatturazione = 'totale';
+                        partecipante.faFattura = true;
+                      ">
+                      Tutto
+                    </button>
+
+                    <button
+                      type="button"
+                      :class="{ active: modalitaFatturazionePartecipanteEconomia(partecipante) === 'mista' }"
+                      @click="
+                        partecipante.modalitaFatturazione = 'mista';
+                        partecipante.faFattura = false;
+                      ">
+                      Misto
+                    </button>
+
+                    <button
+                      type="button"
+                      :class="{ active: modalitaFatturazionePartecipanteEconomia(partecipante) === 'nessuna' }"
+                      @click="
+                        partecipante.modalitaFatturazione = 'nessuna';
+                        partecipante.importoFatturato = 0;
+                        partecipante.faFattura = false;
+                      ">
+                      No
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  class="economy-mixed-field"
+                  x-show="
+                    partecipante.ruolo !== 'referente' &&
+                    modalitaFatturazionePartecipanteEconomia(partecipante) === 'mista'
+                  ">
+                  <div class="economy-mixed-row">
+                    <label class="economy-mixed-label">Parte fatturata ad Alessandro</label>
+
+                    <input
+                      class="economy-mixed-input"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      inputmode="decimal"
+                      placeholder="Importo €"
+                      x-model.number="partecipante.importoFatturato">
+                  </div>
+
+                  <div class="economy-mixed-residual-line">
+                    <span>Non fatturato:</span>
+                    <strong
+                      x-text="formattaEuroEconomia(
+                        Math.max(
+                          0,
+                          calcoloPartecipanteEconomia(partecipante).quotaTeorica -
+                          Number(partecipante.importoFatturato || 0)
+                        )
+                      )">
+                    </strong>
+                  </div>
+                </div>
+
+                <div class="economy-person-calc">
+
+                  <div>
+                    <span>Quota base</span>
+                    <strong
+                      x-text="formattaEuroEconomia(
+                        calcoloPartecipanteEconomia(partecipante).quotaBase
+                      )">
+                    </strong>
+                  </div>
+
+                  <div
+                    x-show="
+                      partecipante.haVenduto &&
+                      venditaEconomicaForm.partecipanti.length === 2
+                    ">
+                    <span>Bonus vendita +12%</span>
+                    <strong class="economy-positive">
+                      +
+                      <span
+                        x-text="formattaEuroEconomia(
+                          calcoloPartecipanteEconomia(partecipante).bonusVendita
+                        )">
+                      </span>
+                    </strong>
+                  </div>
+
+                  <div
+                    x-show="
+                      !partecipante.haVenduto &&
+                      venditaEconomicaForm.partecipanti.length === 2 &&
+                      bonusVenditoreEconomia() > 0
+                    ">
+                    <span>Quota ceduta al venditore</span>
+                    <strong>
+                      -
+                      <span
+                        x-text="formattaEuroEconomia(
+                          bonusVenditoreEconomia()
+                        )">
+                      </span>
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Quota teorica</span>
+                    <strong
+                      x-text="formattaEuroEconomia(
+                        calcoloPartecipanteEconomia(partecipante).quotaTeorica
+                      )">
+                    </strong>
+                  </div>
+
+                  <div
+                    x-show="
+                      calcoloPartecipanteEconomia(partecipante).riduzioneNoFattura > 0
+                    ">
+                    <span
+                      x-text="
+                        'Riduzione no fattura ' +
+                        calcoloPartecipanteEconomia(partecipante).percentualeRiduzione +
+                        '%'
+                      ">
+                    </span>
+
+                    <strong>
+                      -
+                      <span
+                        x-text="formattaEuroEconomia(
+                          calcoloPartecipanteEconomia(partecipante).riduzioneNoFattura
+                        )">
+                      </span>
+                    </strong>
+                  </div>
+
+                  <div
+                    x-show="
+                      partecipante.ruolo === 'referente' &&
+                      calcoloPartecipanteEconomia(partecipante).bonusAdmin > 0
+                    ">
+                    <span>Quote no-fattura collaboratori</span>
+
+                    <strong class="economy-positive">
+                      +
+                      <span
+                        x-text="formattaEuroEconomia(
+                          calcoloPartecipanteEconomia(partecipante).bonusAdmin
+                        )">
+                      </span>
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Quota calcolata</span>
+                    <strong
+                      x-text="formattaEuroEconomia(
+                        calcoloPartecipanteEconomia(partecipante).quotaCalcolata
+                      )">
+                    </strong>
+                  </div>
+
+                  <div class="economy-history-row">
+                    <span>Importo storico</span>
+                    <button
+                      type="button"
+                      class="economy-history-edit"
+                      :class="{ active: partecipante.quotaOverride }"
+                      @click="
+                        partecipante.quotaOverride = !partecipante.quotaOverride;
+                        if (partecipante.quotaOverride && partecipante.quotaEffettiva == null) {
+                          partecipante.quotaEffettiva =
+                            calcoloPartecipanteEconomia(partecipante).quotaCalcolata;
+                        }
+                      ">
+                      <span x-text="partecipante.quotaOverride ? 'Ripristina auto' : 'Modifica'"></span>
+                    </button>
+                  </div>
+
+                  <div
+                    class="economy-history-editor"
+                    x-show="partecipante.quotaOverride">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      inputmode="decimal"
+                      placeholder="Quota reale €"
+                      x-model.number="partecipante.quotaEffettiva">
+                  </div>
+
+                  <div class="economy-person-total">
+                    <span>Quota finale</span>
+                    <strong
+                      x-text="formattaEuroEconomia(
+                        calcoloPartecipanteEconomia(partecipante).quotaFinale
+                      )">
+                    </strong>
+                  </div>
+
+                </div>
+
+              </div>
+            </template>
+          </div>
+        </section>
+
+
+        <!-- INCASSO CLIENTE -->
+        <section
+          class="economy-card"
+          x-show="clienteEconomiaSelezionato">
+
+          <div class="economy-section-head">
+            <span>5</span>
+            <div>
+              <strong>Incasso cliente</strong>
+              <small>Registra quanto è stato realmente ricevuto</small>
+            </div>
+          </div>
+
+          <div class="economy-invoice-choice">
+            <span>Stato</span>
+            <div>
+              <button
+                type="button"
+                :class="{ active: venditaEconomicaForm.statoIncasso === 'incassato' }"
+                @click="
+                  venditaEconomicaForm.statoIncasso = 'incassato';
+                  venditaEconomicaForm.importoIncassato =
+                    venditaEconomicaForm.importoVendita;
+                ">
+                Tutto incassato
+              </button>
+
+              <button
+                type="button"
+                :class="{ active: venditaEconomicaForm.statoIncasso === 'parziale' }"
+                @click="venditaEconomicaForm.statoIncasso = 'parziale'">
+                Parziale
+              </button>
+
+              <button
+                type="button"
+                :class="{ active: venditaEconomicaForm.statoIncasso === 'previsto' }"
+                @click="
+                  venditaEconomicaForm.statoIncasso = 'previsto';
+                  venditaEconomicaForm.importoIncassato = 0;
+                ">
+                Non ancora
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="economy-custom-cost"
+            x-show="venditaEconomicaForm.statoIncasso !== 'previsto'">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              inputmode="decimal"
+              placeholder="Importo incassato €"
+              x-model.number="venditaEconomicaForm.importoIncassato">
+
+            <input
+              type="date"
+              x-model="venditaEconomicaForm.dataPagamento">
+          </div>
+
+          <div
+            class="economy-custom-cost"
+            x-show="venditaEconomicaForm.statoIncasso !== 'previsto'">
+            <input
+              type="text"
+              placeholder="Metodo (bonifico, contanti...)"
+              x-model="venditaEconomicaForm.metodoPagamento">
+
+            <input
+              type="text"
+              placeholder="Note pagamento"
+              x-model="venditaEconomicaForm.notePagamento">
+          </div>
+        </section>
+
+
+        <!-- TOTALI -->
+        <section
+          class="economy-summary"
+          x-show="clienteEconomiaSelezionato">
+
+          <div>
+            <span>Importo</span>
+            <strong
+              x-text="formattaEuroEconomia(
+                venditaEconomicaForm.importoVendita
+              )">
+            </strong>
+          </div>
+
+          <div>
+            <span>Costi</span>
+            <strong
+              x-text="formattaEuroEconomia(totaleCostiEconomia())">
+            </strong>
+          </div>
+
+          <div>
+            <span>Netto distribuibile</span>
+            <strong
+              x-text="formattaEuroEconomia(
+                nettoDistribuibileEconomia()
+              )">
+            </strong>
+          </div>
+
+          <div class="economy-summary-profit">
+            <span>Margine</span>
+            <strong
+              x-text="formattaEuroEconomia(margineEconomia())">
+            </strong>
+          </div>
+        </section>
+
+        <div x-show="clienteEconomiaSelezionato">
+          <button
+            type="button"
+            class="btn btn-primary"
+            :disabled="salvandoVenditaEconomica"
+            @click="salvaVenditaEconomica()">
+            <span
+              x-text="salvandoVenditaEconomica
+                ? 'Registrazione...'
+                : 'Registra vendita e pagamento'">
+            </span>
+          </button>
+
+          <p class="economy-preview-note">
+            Le quote vengono salvate come snapshot storico.
+          </p>
+        </div>
+
       </div>
     </div>
 
@@ -905,24 +1730,147 @@
         </div>
 
         <div class="accordion-section">
-          <button type="button" class="accordion-header" :class="{ open: schedaAperture.pacchetto }" @click="toggleAccordion('pacchetto')">
+          <button
+            type="button"
+            class="accordion-header"
+            :class="{ open: schedaAperture.pacchetto }"
+            @click="toggleAccordion('pacchetto')">
+
             <span>Pacchetto e pagamento</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+
+            <div class="client-payment-head-right">
+              <span
+                class="client-payment-status"
+                :class="classeStatoPagamentoCliente()"
+                x-text="etichettaStatoPagamentoCliente()">
+              </span>
+
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </div>
           </button>
+
           <div class="accordion-body" x-show="schedaAperture.pacchetto">
-            <dl>
-              <dt>Importo</dt><dd x-text="formattaEuro(clienteSelezionato().importo_abbonamento)"></dd>
-              <dt>Pacchetto</dt><dd x-text="clienteSelezionato().nome_pacchetto || '-'"></dd>
-              <dt>Note prezzo</dt><dd x-text="clienteSelezionato().note_prezzo || '-'"></dd>
-              <dt>Attivazione</dt><dd x-text="clienteSelezionato().data_attivazione ? formattaData(clienteSelezionato().data_attivazione) : '-'"></dd>
-              <dt>Rinnovo</dt><dd x-text="clienteSelezionato().data_rinnovo ? formattaData(clienteSelezionato().data_rinnovo) : '-'"></dd>
-              <dt>Preavviso</dt><dd x-text="clienteSelezionato().giorni_preavviso_notifica ? etichettaPreavviso(clienteSelezionato().giorni_preavviso_notifica) : '-'"></dd>
+
+            <div class="client-payment-summary">
+
+              <div>
+                <span>Totale</span>
+                <strong
+                  x-text="formattaEuro(clienteSelezionato().importo_abbonamento)">
+                </strong>
+              </div>
+
+              <div>
+                <span>Incassato</span>
+                <strong
+                  x-text="formattaEuro(totaleIncassatoCliente())">
+                </strong>
+              </div>
+
+              <div>
+                <span>Residuo</span>
+                <strong
+                  x-text="formattaEuro(residuoCliente())">
+                </strong>
+              </div>
+
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-primary client-payment-action"
+              @click="apriPagamentoCliente()">
+              Registra pagamento
+            </button>
+
+            <div class="client-payment-history"
+              x-show="pagamentiCliente.length > 0">
+
+              <span class="client-payment-history-title">
+                Storico pagamenti
+              </span>
+
+              <template x-for="p in pagamentiCliente" :key="p.id">
+                <div class="client-payment-row">
+
+                  <div>
+                    <strong x-text="formattaEuro(p.importo)"></strong>
+
+                    <small
+                      x-text="
+                        p.data_pagamento
+                          ? formattaData(p.data_pagamento)
+                          : 'Data non registrata'
+                      ">
+                    </small>
+                  </div>
+
+                  <span
+                    x-text="
+                      p.stato === 'incassato'
+                        ? 'Incassato'
+                        : p.stato === 'previsto'
+                          ? 'Previsto'
+                          : 'Annullato'
+                    ">
+                  </span>
+
+                </div>
+              </template>
+            </div>
+
+            <div
+              class="client-payment-empty"
+              x-show="pagamentiCliente.length === 0">
+
+              Nessun pagamento registrato.
+            </div>
+
+            <dl class="client-payment-contract-data">
+              <dt>Pacchetto</dt>
+              <dd x-text="clienteSelezionato().nome_pacchetto || '-'"></dd>
+
+              <dt>Note prezzo</dt>
+              <dd x-text="clienteSelezionato().note_prezzo || '-'"></dd>
+
+              <dt>Attivazione</dt>
+              <dd
+                x-text="
+                  clienteSelezionato().data_attivazione
+                    ? formattaData(clienteSelezionato().data_attivazione)
+                    : '-'
+                ">
+              </dd>
+
+              <dt>Rinnovo</dt>
+              <dd
+                x-text="
+                  clienteSelezionato().data_rinnovo
+                    ? formattaData(clienteSelezionato().data_rinnovo)
+                    : '-'
+                ">
+              </dd>
+
+              <dt>Preavviso</dt>
+              <dd
+                x-text="
+                  clienteSelezionato().giorni_preavviso_notifica
+                    ? etichettaPreavviso(
+                        clienteSelezionato().giorni_preavviso_notifica
+                      )
+                    : '-'
+                ">
+              </dd>
             </dl>
+
           </div>
         </div>
 
         <div class="accordion-section">
-          <button type="button" class="accordion-header" :class="{ open: schedaAperture.contatti }" @click="toggleAccordion('contatti')">
+          <button type="button" class="accordion-header" :class="{ open: schedaAperture.contatti }"  @click="toggleAccordion('contatti')">
             <span>Contatti</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
           </button>
@@ -1168,6 +2116,209 @@
     </div>
 
 
+
+    <!-- ANAGRAFICA COMPLETA CLIENTE -->
+    <div
+      x-show="anagraficaEconomiaAperta && clienteEconomiaSelezionato"
+      x-cloak
+      class="economy-modal-overlay"
+      @click.self="chiudiAnagraficaEconomia()">
+
+      <div class="economy-modal">
+        <div class="economy-modal-head">
+          <div>
+            <span>ANAGRAFICA CLIENTE</span>
+            <h2 x-text="clienteEconomiaSelezionato?.nome"></h2>
+          </div>
+
+          <button
+            type="button"
+            @click="chiudiAnagraficaEconomia()">
+            ×
+          </button>
+        </div>
+
+        <div class="economy-anagrafica-grid">
+
+          <div>
+            <span>Referente</span>
+            <strong x-text="clienteEconomiaSelezionato?.referente || '-'"></strong>
+          </div>
+
+          <div>
+            <span>Telefono</span>
+            <strong x-text="clienteEconomiaSelezionato?.telefono || '-'"></strong>
+          </div>
+
+          <div>
+            <span>Email</span>
+            <strong x-text="clienteEconomiaSelezionato?.email || '-'"></strong>
+          </div>
+
+          <div>
+            <span>P.IVA</span>
+            <strong x-text="clienteEconomiaSelezionato?.piva || '-'"></strong>
+          </div>
+
+          <div>
+            <span>IBAN</span>
+            <strong x-text="clienteEconomiaSelezionato?.iban || '-'"></strong>
+          </div>
+
+          <div>
+            <span>Sito</span>
+            <strong x-text="clienteEconomiaSelezionato?.sito_url || '-'"></strong>
+          </div>
+
+          <div>
+            <span>Pacchetto</span>
+            <strong x-text="clienteEconomiaSelezionato?.nome_pacchetto || '-'"></strong>
+          </div>
+
+          <div>
+            <span>Importo</span>
+            <strong
+              x-text="formattaEuroEconomia(
+                clienteEconomiaSelezionato?.importo_abbonamento
+              )">
+            </strong>
+          </div>
+
+          <div>
+            <span>Periodicità</span>
+            <strong
+              x-text="clienteEconomiaSelezionato?.periodicita_contratto || '-'">
+            </strong>
+          </div>
+
+          <div>
+            <span>Durata contratto</span>
+            <strong
+              x-text="
+                clienteEconomiaSelezionato?.durata_contratto_anni
+                  ? clienteEconomiaSelezionato.durata_contratto_anni + ' anni'
+                  : '-'
+              ">
+            </strong>
+          </div>
+
+          <div>
+            <span>Attivazione</span>
+            <strong
+              x-text="
+                clienteEconomiaSelezionato?.data_attivazione
+                  ? formattaData(clienteEconomiaSelezionato.data_attivazione)
+                  : '-'
+              ">
+            </strong>
+          </div>
+
+          <div>
+            <span>Rinnovo</span>
+            <strong
+              x-text="
+                clienteEconomiaSelezionato?.data_rinnovo
+                  ? formattaData(clienteEconomiaSelezionato.data_rinnovo)
+                  : '-'
+              ">
+            </strong>
+          </div>
+
+          <div>
+            <span>Pagine extra</span>
+            <strong x-text="clienteEconomiaSelezionato?.pagine_extra || 0"></strong>
+          </div>
+
+          <div>
+            <span>Lingue extra</span>
+            <strong x-text="clienteEconomiaSelezionato?.lingue_extra || 0"></strong>
+          </div>
+
+          <div>
+            <span>Dominio .it</span>
+            <strong x-text="clienteEconomiaSelezionato?.dominio_it ? 'Sì' : 'No'"></strong>
+          </div>
+
+          <div>
+            <span>Dominio .com</span>
+            <strong x-text="clienteEconomiaSelezionato?.dominio_com ? 'Sì' : 'No'"></strong>
+          </div>
+
+          <div>
+            <span>Email</span>
+            <strong x-text="clienteEconomiaSelezionato?.email_5_caselle ? 'Sì' : 'No'"></strong>
+          </div>
+
+          <div>
+            <span>Sicurezza</span>
+            <strong x-text="clienteEconomiaSelezionato?.pacchetto_sicurezza ? 'Sì' : 'No'"></strong>
+          </div>
+
+        </div>
+
+        <div
+          class="economy-anagrafica-note"
+          x-show="clienteEconomiaSelezionato?.note_prezzo">
+
+          <span>Note prezzo</span>
+          <p x-text="clienteEconomiaSelezionato?.note_prezzo"></p>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- AZIONI RAPIDE + -->
+    <div
+      x-show="menuAzioneAperto"
+      x-cloak
+      class="quick-action-overlay"
+      @click.self="menuAzioneAperto = false">
+
+      <div class="quick-action-sheet">
+
+        <div class="quick-action-handle"></div>
+
+        <span class="quick-action-title">Cosa vuoi aggiungere?</span>
+
+        <button
+          type="button"
+          @click="
+            menuAzioneAperto = false;
+            vaiNuovoCliente();
+          ">
+          <span class="quick-action-icon">+</span>
+
+          <div>
+            <strong>Nuovo cliente</strong>
+            <small>Aggiungi una nuova anagrafica</small>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          @click="
+            menuAzioneAperto = false;
+            apriEconomia();
+          ">
+          <span class="quick-action-icon">€</span>
+
+          <div>
+            <strong>Registra pagamento</strong>
+            <small>Cliente esistente, importo e quote</small>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          class="quick-action-cancel"
+          @click="menuAzioneAperto = false">
+          Annulla
+        </button>
+
+      </div>
+    </div>
+
+
     <!-- NAVIGAZIONE MOBILE -->
     <nav x-show="navVisibile()" x-cloak class="mobile-tabbar crm-tabbar" aria-label="Navigazione principale">
 
@@ -1191,14 +2342,14 @@
         x-show="!isAdmin"
         type="button"
         class="mobile-tabbar-add"
-        :class="{ on: view === 'nuovo' }"
-        @click="vaiNuovoCliente()">
+        :class="{ on: view === 'nuovo' || view === 'economia' }"
+        @click="menuAzioneAperto = true">
         <span class="mobile-add-circle">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M12 5v14M5 12h14"/>
           </svg>
         </span>
-        <span>Cliente</span>
+        <span>Nuovo</span>
       </button>
 
       <button x-show="!isAdmin" type="button" :class="{ on: view === 'pipeline' }" @click="apriPipeline()">
