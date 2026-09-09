@@ -13,6 +13,10 @@ function formModuloVuoto() {
     pacchetto_sicurezza: false };
 }
 
+function filtroVenditoreClienti(isAdmin, venditoreId) {
+  return isAdmin ? venditoreId : '';
+}
+
 function normalizzaClientePerSalvataggio(form) {
   return { ...form, sconto_tipo: form.sconto_tipo || null };
 }
@@ -1417,11 +1421,11 @@ function appState() {
         .is('cancellato_il', null)
         .order('prossimo_contatto', { ascending: true, nullsFirst: false })
         .order('creato_il', { ascending: false });
-      if (this.isAdmin && this.filtroVenditoreId) {
-        query = query.eq('venditore_id', this.filtroVenditoreId);
-      } else if (!this.isAdmin) {
-        query = query.eq('venditore_id', this.sessione.user.id);
-      }
+      const venditoreId = filtroVenditoreClienti(
+        this.isAdmin,
+        this.filtroVenditoreId
+      );
+      if (venditoreId) query = query.eq('venditore_id', venditoreId);
       const { data, error } = await query;
       if (error) { this.erroreClienti = 'Errore nel caricare i clienti: ' + error.message; return; }
       this.clienti = data;
@@ -2478,6 +2482,7 @@ function appState() {
 
 if (typeof module !== 'undefined') {
   module.exports = {
+    filtroVenditoreClienti,
     normalizzaClientePerSalvataggio,
     prezzoRicorrenteDaForm,
     etichettaDurataScontoForm
