@@ -13,6 +13,28 @@ function formModuloVuoto() {
     pacchetto_sicurezza: false };
 }
 
+function normalizzaClientePerSalvataggio(form) {
+  return { ...form, sconto_tipo: form.sconto_tipo || null };
+}
+
+function prezzoRicorrenteDaForm(prezzoCatalogo, form) {
+  const lordo = Math.max(0, Number(prezzoCatalogo) || 0);
+  const valore = Math.max(0, Number(form.sconto_valore) || 0);
+
+  if (form.sconto_tipo === 'prezzo_fisso') return valore;
+  if (form.sconto_tipo === 'percentuale') {
+    return lordo * (1 - Math.min(valore, 100) / 100);
+  }
+  if (form.sconto_tipo === 'fisso') return Math.max(0, lordo - valore);
+  return lordo;
+}
+
+function etichettaDurataScontoForm(form) {
+  if (form.sconto_durata_anni == null) return 'Per sempre';
+  const anni = Number(form.sconto_durata_anni) || 1;
+  return anni === 1 ? 'Per il primo anno' : `Per i primi ${anni} anni`;
+}
+
 function formVenditaEconomicaVuoto() {
   return {
     clienteRicerca: '',
@@ -1796,9 +1818,9 @@ function appState() {
     },
 
     prezzoRicorrenteScontato() {
-      return Math.max(
-        0,
-        this.prezzoLordoRicorrente() - this.scontoRicorrente(this.prezzoLordoRicorrente())
+      return prezzoRicorrenteDaForm(
+        this.prezzoLordoRicorrente(),
+        this.nuovoClienteForm
       );
     },
 
@@ -1963,11 +1985,10 @@ function appState() {
     },
 
     scontoRicorrente(importo) {
-      const tipo = this.nuovoClienteForm.sconto_tipo;
-      const valore = Math.max(0, Number(this.nuovoClienteForm.sconto_valore) || 0);
-      if (!tipo || valore <= 0) return 0;
-      if (tipo === 'percentuale') return Math.min(importo, importo * Math.min(valore,100) / 100);
-      return Math.min(importo, valore);
+      return Math.max(
+        0,
+        Number(importo) - prezzoRicorrenteDaForm(importo, this.nuovoClienteForm)
+      );
     },
 
     setDurataContratto(anni) {
@@ -2014,11 +2035,7 @@ function appState() {
     },
 
     etichettaDurataSconto() {
-      const anni = this.anniScontoEffettivi();
-      const durata = Number(this.nuovoClienteForm.durata_contratto_anni) || 1;
-      if (!anni) return '';
-      if (anni >= durata) return 'per tutto il contratto';
-      return anni === 1 ? 'per il primo anno' : `per i primi ${anni} anni`;
+      return etichettaDurataScontoForm(this.nuovoClienteForm);
     },
 
     valoreCanoneContratto() {
@@ -2027,8 +2044,10 @@ function appState() {
         Math.min(4, Number(this.nuovoClienteForm.durata_contratto_anni) || 1)
       );
       const lordoPeriodo = this.prezzoLordoRicorrente();
-      const scontoPeriodo = this.scontoRicorrente(lordoPeriodo);
-      const nettoPeriodo = Math.max(0, lordoPeriodo - scontoPeriodo);
+      const nettoPeriodo = prezzoRicorrenteDaForm(
+        lordoPeriodo,
+        this.nuovoClienteForm
+      );
       const anniScontati = this.anniScontoEffettivi();
       const periodiPerAnno = this.nuovoClienteForm.periodicita_contratto === 'annuale' ? 1 : 12;
 
@@ -2066,8 +2085,8 @@ function appState() {
       if (f.id === 'annuale') this.nuovoClienteForm.pacchetto_sicurezza = false;
 
       const lordo = this.prezzoLordoRicorrente();
-      const sconto = this.scontoRicorrente(lordo);
-      this.nuovoClienteForm.importo_abbonamento = Math.max(0, lordo - sconto);
+      this.nuovoClienteForm.importo_abbonamento =
+        prezzoRicorrenteDaForm(lordo, this.nuovoClienteForm);
       this.nuovoClienteForm.nome_pacchetto = f.nome;
 
       const d = c.upgrade.filter(u => this.selezionePrezzo.upgrade.includes(u.id)).map(u => `${u.nome} (+${u.prezzoMensile} €/mese)`);
@@ -2076,9 +2095,12 @@ function appState() {
       if (pagine > 0) d.push(`${pagine} pagine extra (+${pagine * c.paginaExtra.prezzoMensile} €/mese)`);
       if (lingue > 0) d.push(`${lingue} lingue extra (+${lingue * c.multilingua.prezzoMensilePerLingua} €/mese)`);
       if (this.nuovoClienteForm.sconto_tipo && Number(this.nuovoClienteForm.sconto_valore) > 0) {
-        const descrizioneSconto = this.nuovoClienteForm.sconto_tipo === 'percentuale'
-          ? `Sconto ${Number(this.nuovoClienteForm.sconto_valore)}%`
-          : `Sconto ${this.formattaNumeroEuro(this.nuovoClienteForm.sconto_valore)}`;
+        const descrizioneSconto =
+          this.nuovoClienteForm.sconto_tipo === 'prezzo_fisso'
+            ? `Prezzo fisso ${this.formattaNumeroEuro(this.nuovoClienteForm.sconto_valore)}`
+            : this.nuovoClienteForm.sconto_tipo === 'percentuale'
+              ? `Sconto ${Number(this.nuovoClienteForm.sconto_valore)}%`
+              : `Sconto ${this.formattaNumeroEuro(this.nuovoClienteForm.sconto_valore)}`;
         d.push(`${descrizioneSconto} ${this.etichettaDurataSconto()}`);
       }
 
@@ -2224,15 +2246,16 @@ function appState() {
       this.erroriNuovoCliente = check.errori;
       if (!check.valido) return;
 
+      const cliente = normalizzaClientePerSalvataggio(this.nuovoClienteForm);
       this.salvandoCliente = true;
       try {
         if (this.clienteInModificaId) {
           const { error } = await window.supabaseClient.from('clienti')
-            .update({ ...this.nuovoClienteForm }).eq('id', this.clienteInModificaId);
+            .update(cliente).eq('id', this.clienteInModificaId);
           if (error) { this.erroriNuovoCliente.generale = 'Salvataggio fallito: ' + error.message; return; }
         } else {
           const { error } = await window.supabaseClient.from('clienti').insert({
-            ...this.nuovoClienteForm,
+            ...cliente,
             venditore_id: this.sessione.user.id
           });
           if (error) { this.erroriNuovoCliente.generale = 'Salvataggio fallito: ' + error.message; return; }
@@ -2450,5 +2473,13 @@ function appState() {
       this.filtroTestoAdmin = '';
       this.view = 'admin';
     }
+  };
+}
+
+if (typeof module !== 'undefined') {
+  module.exports = {
+    normalizzaClientePerSalvataggio,
+    prezzoRicorrenteDaForm,
+    etichettaDurataScontoForm
   };
 }

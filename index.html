@@ -1313,7 +1313,16 @@
               <span>Questo cliente usa un prezzo precedente o personalizzato. Verrà mantenuto finché non scegli di passare al catalogo attuale.</span>
             </div>
             <dl>
-              <dt>Importo</dt><dd x-text="formattaEuro(nuovoClienteForm.importo_abbonamento)"></dd>
+              <dt>Importo</dt>
+              <dd>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputmode="decimal"
+                  x-model.number="nuovoClienteForm.importo_abbonamento"
+                  aria-label="Prezzo contratto personalizzato">
+              </dd>
               <dt>Pacchetto</dt><dd x-text="nuovoClienteForm.nome_pacchetto || '-'"></dd>
               <dt>Note prezzo</dt><dd x-text="nuovoClienteForm.note_prezzo || '-'"></dd>
             </dl>
@@ -1378,8 +1387,9 @@
                     x-model="nuovoClienteForm.sconto_tipo"
                     @change="aggiornaPrezzoCliente()">
                     <option value="">Nessuno</option>
-                    <option value="percentuale">Percentuale %</option>
-                    <option value="fisso">Importo fisso €</option>
+                    <option value="percentuale">Sconto percentuale %</option>
+                    <option value="fisso">Sconto fisso €</option>
+                    <option value="prezzo_fisso">Prezzo finale concordato €</option>
                   </select>
 
                   <input
@@ -1390,7 +1400,11 @@
                     step="0.01"
                     x-model.number="nuovoClienteForm.sconto_valore"
                     @input="aggiornaPrezzoCliente()"
-                    :placeholder="nuovoClienteForm.sconto_tipo === 'percentuale' ? '10' : '5.00'">
+                    :placeholder="nuovoClienteForm.sconto_tipo === 'percentuale'
+                      ? '10'
+                      : nuovoClienteForm.sconto_tipo === 'prezzo_fisso'
+                        ? '300.00'
+                        : '5.00'">
                 </div>
               </div>
 
@@ -1402,7 +1416,7 @@
                   class="discount-duration-all"
                   :class="{ on: nuovoClienteForm.sconto_durata_anni == null }"
                   @click="setDurataSconto(null)">
-                  Tutto il contratto
+                  Per sempre
                 </button>
 
                 <div class="discount-duration-grid">
@@ -1466,25 +1480,27 @@
                   <strong x-text="riepilogoUpgradePrezzo()"></strong>
                 </div>
 
-                <div x-show="scontoRicorrente(prezzoLordoRicorrente()) > 0">
-                  <span>Sconto</span>
+                <div x-show="nuovoClienteForm.sconto_tipo && Number(nuovoClienteForm.sconto_valore) > 0">
+                  <span x-text="nuovoClienteForm.sconto_tipo === 'prezzo_fisso' ? 'Prezzo concordato' : 'Sconto'"></span>
                   <strong>
                     <span x-text="nuovoClienteForm.sconto_tipo === 'percentuale'
                       ? Number(nuovoClienteForm.sconto_valore) + '%'
-                      : '-' + formattaEuro(nuovoClienteForm.sconto_valore)"></span>
+                      : nuovoClienteForm.sconto_tipo === 'prezzo_fisso'
+                        ? formattaEuro(nuovoClienteForm.sconto_valore)
+                        : '-' + formattaEuro(nuovoClienteForm.sconto_valore)"></span>
                     <small x-text="etichettaDurataSconto()"></small>
                   </strong>
                 </div>
 
-                <div x-show="scontoRicorrente(prezzoLordoRicorrente()) > 0">
-                  <span>Canone durante lo sconto</span>
+                <div x-show="nuovoClienteForm.sconto_tipo && Number(nuovoClienteForm.sconto_valore) > 0">
+                  <span x-text="nuovoClienteForm.sconto_tipo === 'prezzo_fisso' ? 'Canone concordato' : 'Canone durante lo sconto'"></span>
                   <strong>
                     <span x-text="formattaEuro(prezzoRicorrenteScontato())"></span>
                     <small x-text="selezionePrezzo.formula === 'annuale' ? '/anno' : '/mese'"></small>
                   </strong>
                 </div>
 
-                <div x-show="scontoRicorrente(prezzoLordoRicorrente()) > 0 && anniScontoEffettivi() < Number(nuovoClienteForm.durata_contratto_anni)">
+                <div x-show="nuovoClienteForm.sconto_tipo && Number(nuovoClienteForm.sconto_valore) > 0 && anniScontoEffettivi() < Number(nuovoClienteForm.durata_contratto_anni)">
                   <span>Canone dopo lo sconto</span>
                   <strong>
                     <span x-text="formattaEuro(prezzoLordoRicorrente())"></span>
