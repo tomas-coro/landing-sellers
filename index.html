@@ -237,8 +237,8 @@
             </svg>
           </button>
 
-          <button type="button" class="profile-trigger" @click="apriProfilo()" aria-label="Profilo">
-            <img x-show="isAdmin || (profilo.avatar_url && !avatarErrore)" :src="isAdmin ? 'assets/landing-evolution-logo.svg' : profilo.avatar_url" :style="isAdmin ? '' : avatarStile()" @error="avatarErrore = true" @load="avatarErrore = false" alt="">
+          <button type="button" class="profile-trigger" :style="isAdmin ? '' : avatarCustomProps()" @click="apriProfilo()" aria-label="Profilo">
+            <img x-show="isAdmin || (profilo.avatar_url && !avatarErrore)" :src="isAdmin ? 'assets/landing-evolution-logo.svg' : profilo.avatar_url" @error="avatarErrore = true" @load="avatarErrore = false" alt="">
             <span x-show="!isAdmin && (!profilo.avatar_url || avatarErrore)" x-text="inizialeProfilo()"></span>
           </button>
         </div>
@@ -358,7 +358,6 @@
           <div class="search-row">
             <input type="search" placeholder="Cerca per nome o referente..." aria-label="Cerca clienti per nome o referente" x-model="filtroTesto" @input="paginaClienti = 1">
           </div>
-          <button x-show="!isAdmin" type="button" class="advanced-search-button" @click="apriRicerca()">Ricerca</button>
         </div>
         <div class="filtro-stati home-filter-scroll" x-show="(isAdmin || view === 'clienti') && clienti.length > 0">
           <button type="button" class="chip-stato" :class="{ on: filtroStato === '' }" @click="filtroStato = ''; paginaClienti = 1">Tutti · <span x-text="clienti.length"></span></button>
@@ -502,11 +501,10 @@
           x-show="!isAdmin"
           class="profile-hero-card">
 
-          <label class="profile-avatar-edit">
+          <label class="profile-avatar-edit" :style="avatarCustomProps()">
             <img
               x-show="profilo.avatar_url"
               :src="profilo.avatar_url"
-              :style="avatarStile()"
               alt="Foto profilo">
 
             <span
@@ -550,13 +548,22 @@
             <small>Nome visualizzato</small>
           </div>
 
-          <button
-            type="button"
-            class="avatar-crop-reset"
-            x-show="!isAdmin && profilo.avatar_url && !modificaInquadraturaAperta"
-            @click="modificaInquadraturaAperta = true">
-            Modifica inquadratura foto
-          </button>
+          <div
+            class="profile-photo-actions"
+            x-show="!isAdmin && profilo.avatar_url && !modificaInquadraturaAperta">
+            <button
+              type="button"
+              @click="modificaInquadraturaAperta = true">
+              Modifica inquadratura
+            </button>
+            <button
+              type="button"
+              class="danger"
+              :disabled="profiloSalvando"
+              @click="rimuoviAvatar()">
+              Rimuovi foto
+            </button>
+          </div>
 
           <div
             class="avatar-position-controls"
@@ -602,9 +609,10 @@
 
               <button
                 type="button"
-                class="avatar-crop-reset"
-                @click="modificaInquadraturaAperta = false">
-                Chiudi
+                class="avatar-crop-save"
+                :disabled="profiloSalvando"
+                @click="salvaProfilo()"
+                x-text="profiloSalvando ? 'Salvataggio...' : 'Salva inquadratura'">
               </button>
             </div>
           </div>
@@ -938,19 +946,18 @@
             :disabled="accountSwitchInCorso || !personaleSessioneDisponibile"
             @click="cambiaAccountRapido('personale')">
 
-            <span class="account-switch-avatar personal">
+            <span class="account-switch-avatar personal" :style="avatarPersonaleCustomProps()">
 
               <img
-                x-show="accountSlot === 'personale' && profilo.avatar_url"
-                :src="profilo.avatar_url"
-                :style="avatarStile()"
+                x-show="profiloPersonale.avatar_url && !avatarPersonaleErrore"
+                :src="profiloPersonale.avatar_url"
+                @error="avatarPersonaleErrore = true"
+                @load="avatarPersonaleErrore = false"
                 alt="">
 
               <span
-                x-show="accountSlot !== 'personale' || !profilo.avatar_url"
-                x-text="accountSlot === 'personale'
-                  ? inizialeProfilo()
-                  : 'P'">
+                x-show="!profiloPersonale.avatar_url || avatarPersonaleErrore"
+                x-text="inizialeProfiloPersonale()">
               </span>
 
             </span>
@@ -959,19 +966,13 @@
 
               <span class="account-switch-name">
                 <strong
-                  x-text="accountSlot === 'personale'
-                    ? (profilo.username || profilo.nome || 'Account personale')
-                    : 'Account personale'">
+                  x-text="profiloPersonale.username || profiloPersonale.nome || 'Account personale'">
                 </strong>
 
                 <em>Personale</em>
               </span>
 
-              <small
-                x-text="accountSlot === 'personale'
-                  ? (sessione?.user?.email || '')
-                  : 'Profilo venditore personale'">
-              </small>
+              <small x-text="profiloPersonale.email || 'Profilo venditore personale'"></small>
 
             </span>
 
@@ -2800,7 +2801,7 @@
               </div>
               <div>
                 <strong x-text="evento.clienteNome"></strong>
-                <small x-text="isAdmin && evento.venditoreNome ? evento.venditoreNome + ' — ' + evento.titolo : evento.titolo"></small>
+                <small x-text="isAdmin && evento.venditoreNome ? evento.venditoreNome + ' - ' + evento.titolo : evento.titolo"></small>
               </div>
               <span>›</span>
             </button>

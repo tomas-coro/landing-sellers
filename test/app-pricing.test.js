@@ -149,6 +149,12 @@ test('inquadratura e zoom avatar vengono salvati nell’URL e riletti', () => {
   assert.strictEqual(url, 'https://example.com/avatar.png?v=1#crop=25,80,1.5');
   assert.deepStrictEqual(posizioneAvatarDaUrl(url), { x: 25, y: 80, zoom: 1.5 });
   assert.deepStrictEqual(posizioneAvatarDaUrl('https://example.com/avatar.png#pos=40,60'), { x: 40, y: 60, zoom: 1 });
+
+  const stato = appState();
+  stato.avatarPosizione = { x: 0, y: 0, zoom: 1.5 };
+  assert.match(stato.avatarStile(), /object-position:0% 0%/);
+  stato.profiloPersonale.avatar_url = url;
+  assert.match(stato.avatarPersonaleStile(), /object-position:25% 80%/);
 });
 
 test('il calendario admin riunisce le scadenze di tutti i venditori', () => {

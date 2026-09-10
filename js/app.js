@@ -296,6 +296,7 @@ function appState() {
     filtroTestoAdmin: '',
 
     profilo: { nome: '', username: '', avatar_url: '', ruolo: '' },
+    profiloPersonale: { nome: '', username: '', avatar_url: '', ruolo: '', email: '' },
     profiloForm: { username: '' },
     avatarPosizione: { x: 50, y: 50, zoom: 1 },
     avatarTrascinamento: null,
@@ -304,6 +305,7 @@ function appState() {
     profiloSalvando: false,
     avatarCaricando: false,
     avatarErrore: false,
+    avatarPersonaleErrore: false,
     pressioneProfiloTimer: null,
     pressioneProfiloLunga: false,
 
@@ -399,6 +401,9 @@ function appState() {
         username: profilo?.username || '',
         avatar_url: profilo?.avatar_url || ''
       };
+      if (this.accountSlot === 'personale') {
+        this.profiloPersonale = { ...this.profilo, email: this.sessione.user.email || '' };
+      }
       this.profiloForm.username = this.profilo.username;
       this.avatarPosizione = posizioneAvatarDaUrl(this.profilo.avatar_url);
       this.avatarErrore = false;
@@ -1532,10 +1537,10 @@ function appState() {
       return s.trim().charAt(0).toUpperCase();
     },
 
-    avatarStile() {
-      const x = Number(this.avatarPosizione.x) || 50;
-      const y = Number(this.avatarPosizione.y) || 50;
-      const zoom = Number(this.avatarPosizione.zoom) || 1;
+    avatarStile(posizione = this.avatarPosizione) {
+      const x = Number.isFinite(Number(posizione.x)) ? Number(posizione.x) : 50;
+      const y = Number.isFinite(Number(posizione.y)) ? Number(posizione.y) : 50;
+      const zoom = Number(posizione.zoom) || 1;
 
       return [
         'width:100%',
@@ -1543,9 +1548,28 @@ function appState() {
         'object-fit:cover',
         `object-position:${x}% ${y}%`,
         `transform:scale(${zoom})`,
-        `transform-origin:${x}% ${y}%`,
-        'display:block'
+        `transform-origin:${x}% ${y}%`
       ].join(';');
+    },
+
+    avatarPersonaleStile() {
+      return this.avatarStile(posizioneAvatarDaUrl(this.profiloPersonale.avatar_url));
+    },
+
+    avatarCustomProps(posizione = this.avatarPosizione) {
+      const x = Number.isFinite(Number(posizione.x)) ? Number(posizione.x) : 50;
+      const y = Number.isFinite(Number(posizione.y)) ? Number(posizione.y) : 50;
+      const zoom = Number(posizione.zoom) || 1;
+      return `--avatar-x:${x}%;--avatar-y:${y}%;--avatar-zoom:${zoom}`;
+    },
+
+    avatarPersonaleCustomProps() {
+      return this.avatarCustomProps(posizioneAvatarDaUrl(this.profiloPersonale.avatar_url));
+    },
+
+    inizialeProfiloPersonale() {
+      const s = this.profiloPersonale.username || this.profiloPersonale.nome || 'Personale';
+      return s.trim().charAt(0).toUpperCase();
     },
 
     iniziaRitaglioAvatar(event) {
@@ -1597,6 +1621,7 @@ function appState() {
         }
         this.profilo.username = username;
         this.profilo.avatar_url = avatarUrl;
+        this.profiloPersonale = { ...this.profilo, email: this.sessione.user.email || '' };
         this.modificaInquadraturaAperta = false;
       } finally {
         this.profiloSalvando = false;
@@ -1640,11 +1665,35 @@ function appState() {
         }
         this.profilo.avatar_url = avatarUrl;
         this.profilo.username = (this.profiloForm.username || '').trim();
+        this.profiloPersonale = { ...this.profilo, email: this.sessione.user.email || '' };
         this.avatarErrore = false;
         this.modificaInquadraturaAperta = true;
       } finally {
         this.avatarCaricando = false;
         event.target.value = '';
+      }
+    },
+
+    async rimuoviAvatar() {
+      if (!this.profilo.avatar_url || this.profiloSalvando) return;
+      this.profiloSalvando = true;
+      this.profiloErrore = '';
+      try {
+        const { error } = await window.supabaseClient.rpc('update_my_profile', {
+          p_username: (this.profiloForm.username || '').trim() || null,
+          p_avatar_url: null
+        });
+        if (error) {
+          this.profiloErrore = 'Foto non rimossa: ' + error.message;
+          return;
+        }
+        this.profilo.avatar_url = '';
+        this.profiloPersonale = { ...this.profilo, email: this.sessione.user.email || '' };
+        this.avatarPosizione = { x: 50, y: 50, zoom: 1 };
+        this.modificaInquadraturaAperta = false;
+        this.avatarErrore = false;
+      } finally {
+        this.profiloSalvando = false;
       }
     },
 
@@ -1656,6 +1705,15 @@ function appState() {
 
       this.personaleSessioneDisponibile = Boolean(personale);
       this.adminSessioneDisponibile = Boolean(admin);
+
+      if (personale) {
+        const { data } = await window.AccountSessions.getClient('personale')
+          .from('profili')
+          .select('nome,ruolo,username,avatar_url')
+          .eq('id', personale.user.id)
+          .single();
+        if (data) this.profiloPersonale = { ...data, email: personale.user.email || '' };
+      }
     },
 
     async apriAccountSwitcher() {
