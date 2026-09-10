@@ -272,6 +272,9 @@ function appState() {
 
     aggiornamentoDisponibile: false,
     aggiornamentoStato: 'controllo', // controllo | aggiornato | disponibile | errore
+
+    temaPreferenza: globalThis.localStorage?.getItem?.('le-theme') || 'system',
+
     accedendo: false,
 
     // notifiche push (Web Push standard)
@@ -319,6 +322,16 @@ function appState() {
     swipeElement: null,
 
     async init() {
+      this.applicaTema(this.temaPreferenza);
+
+      this._temaMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      this._temaMediaHandler = () => {
+        if (this.temaPreferenza === 'system') {
+          this.applicaTema('system');
+        }
+      };
+      this._temaMediaQuery.addEventListener?.('change', this._temaMediaHandler);
+
       window.setTimeout(() => { this.avvioVisibile = false; }, 700);
 
       window.addEventListener('le:aggiornamento-pronto', () => {
@@ -348,6 +361,42 @@ function appState() {
 
     aggiornaApp() {
       window.leAggiornaApp();
+    },
+
+    temaRisolto(preferenza = this.temaPreferenza) {
+      if (preferenza === 'dark') return 'dark';
+      if (preferenza === 'light') return 'light';
+
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+    },
+
+    applicaTema(preferenza = this.temaPreferenza) {
+      const valore = ['system', 'light', 'dark'].includes(preferenza)
+        ? preferenza
+        : 'system';
+
+      this.temaPreferenza = valore;
+      globalThis.localStorage?.setItem?.('le-theme', valore);
+
+      const tema = this.temaRisolto(valore);
+
+      document.documentElement.dataset.theme = tema;
+      document.documentElement.dataset.themePreference = valore;
+      document.documentElement.style.colorScheme = tema;
+
+      const meta = document.getElementById('app-theme-color');
+      if (meta) {
+        meta.setAttribute(
+          'content',
+          tema === 'dark' ? '#111310' : '#F4F1EA'
+        );
+      }
+    },
+
+    impostaTema(preferenza) {
+      this.applicaTema(preferenza);
     },
 
     async controllaAggiornamenti() {
