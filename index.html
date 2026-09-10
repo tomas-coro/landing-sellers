@@ -166,6 +166,7 @@
 </head>
 <body>
   <div id="app" x-data="appState()" x-init="init()"
+    :style="{ '--avatar-x': avatarPosizione.x + '%', '--avatar-y': avatarPosizione.y + '%' }"
     @touchstart.passive="swipeStart($event)"
     @touchmove="swipeMove($event)"
     @touchend.passive="swipeEnd($event)"
@@ -261,12 +262,12 @@
 
             <div class="home-money-grid">
               <div>
-                <span>Hai prodotto</span>
-                <strong x-text="formattaEuro(statisticheVenditore.prodotto)"></strong>
+                <span>Totale generato</span>
+                <strong x-text="formattaEuro(statisticheVenditore.generato)"></strong>
               </div>
               <div>
-                <span>Hai guadagnato</span>
-                <strong x-text="formattaEuro(statisticheVenditore.guadagnato)"></strong>
+                <span>Totale incassato</span>
+                <strong x-text="formattaEuro(statisticheVenditore.incassato)"></strong>
               </div>
             </div>
           </section>
@@ -429,6 +430,18 @@
         </div>
 
         <div class="stack-card">
+          <div class="avatar-position-controls" x-show="profilo.avatar_url">
+            <strong>Posizione foto</strong>
+            <small>Regola l'inquadratura e poi salva il profilo.</small>
+            <label>
+              <span>Orizzontale</span>
+              <input type="range" min="0" max="100" x-model.number="avatarPosizione.x">
+            </label>
+            <label>
+              <span>Verticale</span>
+              <input type="range" min="0" max="100" x-model.number="avatarPosizione.y">
+            </label>
+          </div>
           <div class="field">
             <label>Username</label>
             <input maxlength="30" x-model="profiloForm.username" placeholder="Es. marco.rossi">

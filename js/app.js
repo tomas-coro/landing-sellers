@@ -45,14 +45,26 @@ function etichettaDurataScontoForm(form) {
   return anni === 1 ? 'Per il primo anno' : `Per i primi ${anni} anni`;
 }
 
-function calcolaStatisticheVenditore(vendite = [], quote = []) {
+function posizioneAvatarDaUrl(url = '') {
+  const match = String(url).match(/#pos=(\d{1,3}),(\d{1,3})$/);
+  return match
+    ? { x: Math.min(100, Number(match[1])), y: Math.min(100, Number(match[2])) }
+    : { x: 50, y: 50 };
+}
+
+function avatarUrlConPosizione(url = '', x = 50, y = 50) {
+  const base = String(url).split('#')[0];
+  return base ? `${base}#pos=${Math.max(0, Math.min(100, Number(x) || 0))},${Math.max(0, Math.min(100, Number(y) || 0))}` : '';
+}
+
+function calcolaStatisticheVenditore(vendite = [], pagamenti = []) {
   const venditeAttive = vendite.filter(v => v.stato === 'attiva');
   const ids = new Set(venditeAttive.map(v => v.id));
   return {
-    prodotto: venditeAttive.reduce((totale, v) => totale + (Number(v.importo_vendita) || 0), 0),
-    guadagnato: quote
-      .filter(q => ids.has(q.vendita_id))
-      .reduce((totale, q) => totale + (Number(q.quota_finale) || 0), 0)
+    generato: venditeAttive.reduce((totale, v) => totale + (Number(v.importo_vendita) || 0), 0),
+    incassato: pagamenti
+      .filter(p => p.stato === 'incassato' && ids.has(p.vendita_id))
+      .reduce((totale, p) => totale + (Number(p.importo) || 0), 0)
   };
 }
 
@@ -110,7 +122,7 @@ function appState() {
     agendaDataSelezionata: new Date().toISOString().slice(0, 10),
 
     pipelineIndice: 0,
-    statisticheVenditore: { prodotto: 0, guadagnato: 0 },
+    statisticheVenditore: { generato: 0, incassato: 0 },
 
     ricercaGlobale: '',
     indiceNoteRicerca: [],
@@ -166,6 +178,7 @@ function appState() {
 
     profilo: { nome: '', username: '', avatar_url: '', ruolo: '' },
     profiloForm: { username: '' },
+    avatarPosizione: { x: 50, y: 50 },
     profiloErrore: '',
     profiloSalvando: false,
     avatarCaricando: false,
@@ -256,6 +269,7 @@ function appState() {
         avatar_url: profilo?.avatar_url || ''
       };
       this.profiloForm.username = this.profilo.username;
+      this.avatarPosizione = posizioneAvatarDaUrl(this.profilo.avatar_url);
       this.isAdmin = profilo?.ruolo === 'admin';
       this.filtroTesto = '';
       this.filtroStato = '';
@@ -323,8 +337,11 @@ function appState() {
       return 'Attiva notifiche';
     },
 
-    vaiHome() {
+    async vaiHome() {
       this.view = this.isAdmin ? 'admin' : 'lista';
+      if (!this.isAdmin) {
+        await Promise.all([this.caricaClienti(), this.caricaStatisticheVenditore()]);
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
@@ -1145,7 +1162,7 @@ function appState() {
 
       const target = event.target;
       if (target.closest(
-        'input, textarea, select, button, label, a, [role="button"], [contenteditable="true"]'
+        '.economy-content, .client-form, input, textarea, select, button, label, a, [role="button"], [contenteditable="true"]'
       )) return;
 
       const touch = event.touches[0];
@@ -1357,6 +1374,10 @@ function appState() {
       return s.trim().charAt(0).toUpperCase();
     },
 
+    avatarStile() {
+      return `object-position:${this.avatarPosizione.x}% ${this.avatarPosizione.y}%`;
+    },
+
     async salvaProfilo() {
       if (this.profiloSalvando) return;
       this.profiloSalvando = true;
@@ -1367,15 +1388,21 @@ function appState() {
           this.profiloErrore = "L'username deve avere almeno 3 caratteri.";
           return;
         }
+        const avatarUrl = avatarUrlConPosizione(
+          this.profilo.avatar_url,
+          this.avatarPosizione.x,
+          this.avatarPosizione.y
+        );
         const { error } = await window.supabaseClient.rpc('update_my_profile', {
           p_username: username || null,
-          p_avatar_url: this.profilo.avatar_url || null
+          p_avatar_url: avatarUrl || null
         });
         if (error) {
           this.profiloErrore = error.message.includes('duplicate') ? 'Username gia utilizzato.' : 'Profilo non salvato: ' + error.message;
           return;
         }
         this.profilo.username = username;
+        this.profilo.avatar_url = avatarUrl;
       } finally {
         this.profiloSalvando = false;
       }
@@ -1406,7 +1433,8 @@ function appState() {
           return;
         }
         const { data } = window.supabaseClient.storage.from('profile-avatars').getPublicUrl(path);
-        const avatarUrl = `${data.publicUrl}?v=${Date.now()}`;
+        this.avatarPosizione = { x: 50, y: 50 };
+        const avatarUrl = avatarUrlConPosizione(`${data.publicUrl}?v=${Date.now()}`);
         const { error: saveError } = await window.supabaseClient.rpc('update_my_profile', {
           p_username: (this.profiloForm.username || '').trim() || null,
           p_avatar_url: avatarUrl
@@ -1489,35 +1517,38 @@ function appState() {
     },
 
     async caricaStatisticheVenditore() {
-      this.statisticheVenditore = { prodotto: 0, guadagnato: 0 };
+      this.statisticheVenditore = { generato: 0, incassato: 0 };
 
-      const { data: vendite, error } = await window.supabaseClient
-        .from('vendite')
-        .select('id,importo_vendita,stato')
-        .eq('venditore_id', this.sessione.user.id)
-        .eq('stato', 'attiva');
+      const partecipazioni = await window.supabaseClient
+        .from('vendita_partecipanti')
+        .select('vendita_id')
+        .eq('profilo_id', this.sessione.user.id);
 
-      if (error) {
-        console.warn('Statistiche economiche non disponibili:', error.message);
+      if (partecipazioni.error) {
+        console.warn('Statistiche economiche non disponibili:', partecipazioni.error.message);
         return;
       }
 
-      const ids = (vendite || []).map(v => v.id);
-      let quote = [];
-      if (ids.length) {
-        const risultato = await window.supabaseClient
-          .from('vendita_partecipanti')
-          .select('vendita_id,quota_finale')
-          .eq('profilo_id', this.sessione.user.id)
-          .in('vendita_id', ids);
-        if (risultato.error) {
-          console.warn('Guadagno venditore non disponibile:', risultato.error.message);
-        } else {
-          quote = risultato.data || [];
-        }
+      const ids = [...new Set((partecipazioni.data || []).map(p => p.vendita_id))];
+      if (!ids.length) return;
+
+      const [vendite, pagamenti] = await Promise.all([
+        window.supabaseClient
+          .from('vendite')
+          .select('id,importo_vendita,stato')
+          .in('id', ids),
+        window.supabaseClient
+          .from('pagamenti')
+          .select('vendita_id,importo,stato')
+          .in('vendita_id', ids)
+      ]);
+
+      if (vendite.error || pagamenti.error) {
+        console.warn('Statistiche economiche non disponibili:', (vendite.error || pagamenti.error).message);
+        return;
       }
 
-      this.statisticheVenditore = calcolaStatisticheVenditore(vendite || [], quote);
+      this.statisticheVenditore = calcolaStatisticheVenditore(vendite.data || [], pagamenti.data || []);
     },
 
     eventiOggiHome() {
@@ -2268,7 +2299,7 @@ function appState() {
         const idModificato = this.clienteInModificaId;
         this.clienteInModificaId = null;
         this.nuovoClienteForm = formModuloVuoto();
-        await this.caricaClienti();
+        await Promise.all([this.caricaClienti(), this.caricaStatisticheVenditore()]);
         this.view = idModificato ? 'scheda' : 'lista';
         if (idModificato) { this.clienteSelezionatoId = idModificato; }
       } finally {
@@ -2487,6 +2518,8 @@ if (typeof module !== 'undefined') {
     prezzoRicorrenteDaForm,
     etichettaDurataScontoForm,
     totaleContrattoDaForm,
-    calcolaStatisticheVenditore
+    calcolaStatisticheVenditore,
+    posizioneAvatarDaUrl,
+    avatarUrlConPosizione
   };
 }

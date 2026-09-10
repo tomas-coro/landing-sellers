@@ -5,7 +5,9 @@ const {
   prezzoRicorrenteDaForm,
   etichettaDurataScontoForm,
   totaleContrattoDaForm,
-  calcolaStatisticheVenditore
+  calcolaStatisticheVenditore,
+  posizioneAvatarDaUrl,
+  avatarUrlConPosizione
 } = require('../js/app.js');
 
 test('il salvataggio converte lo sconto vuoto in null', () => {
@@ -49,12 +51,19 @@ test('il prezzo finale concordato include setup, dominio e altri extra', () => {
   }), 480);
 });
 
-test('le statistiche sommano solo vendite attive e relative quote', () => {
+test('la posizione avatar viene salvata nell’URL e riletta', () => {
+  const url = avatarUrlConPosizione('https://example.com/avatar.png?v=1#vecchio', 25, 80);
+  assert.strictEqual(url, 'https://example.com/avatar.png?v=1#pos=25,80');
+  assert.deepStrictEqual(posizioneAvatarDaUrl(url), { x: 25, y: 80 });
+});
+
+test('le statistiche sommano vendite attive e pagamenti incassati', () => {
   assert.deepStrictEqual(calcolaStatisticheVenditore([
     { id: 'a', stato: 'attiva', importo_vendita: '1000' },
     { id: 'b', stato: 'annullata', importo_vendita: '500' }
   ], [
-    { vendita_id: 'a', quota_finale: '240' },
-    { vendita_id: 'b', quota_finale: '100' }
-  ]), { prodotto: 1000, guadagnato: 240 });
+    { vendita_id: 'a', stato: 'incassato', importo: '240' },
+    { vendita_id: 'a', stato: 'previsto', importo: '300' },
+    { vendita_id: 'b', stato: 'incassato', importo: '100' }
+  ]), { generato: 1000, incassato: 240 });
 });
