@@ -1414,7 +1414,19 @@ function appState() {
     },
 
     avatarStile() {
-      return `object-position:${this.avatarPosizione.x}% ${this.avatarPosizione.y}%;transform:scale(${this.avatarPosizione.zoom})`;
+      const x = Number(this.avatarPosizione.x) || 50;
+      const y = Number(this.avatarPosizione.y) || 50;
+      const zoom = Number(this.avatarPosizione.zoom) || 1;
+
+      return [
+        'width:100%',
+        'height:100%',
+        'object-fit:cover',
+        `object-position:${x}% ${y}%`,
+        `transform:scale(${zoom})`,
+        'transform-origin:center center',
+        'display:block'
+      ].join(';');
     },
 
     iniziaRitaglioAvatar(event) {
