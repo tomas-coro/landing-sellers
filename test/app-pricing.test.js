@@ -4,7 +4,8 @@ const {
   normalizzaClientePerSalvataggio,
   prezzoRicorrenteDaForm,
   etichettaDurataScontoForm,
-  totaleContrattoDaForm
+  totaleContrattoDaForm,
+  calcolaStatisticheVenditore
 } = require('../js/app.js');
 
 test('il salvataggio converte lo sconto vuoto in null', () => {
@@ -46,4 +47,14 @@ test('il prezzo finale concordato include setup, dominio e altri extra', () => {
   assert.strictEqual(totaleContrattoDaForm(300, 180, {
     sconto_tipo: 'percentuale'
   }), 480);
+});
+
+test('le statistiche sommano solo vendite attive e relative quote', () => {
+  assert.deepStrictEqual(calcolaStatisticheVenditore([
+    { id: 'a', stato: 'attiva', importo_vendita: '1000' },
+    { id: 'b', stato: 'annullata', importo_vendita: '500' }
+  ], [
+    { vendita_id: 'a', quota_finale: '240' },
+    { vendita_id: 'b', quota_finale: '100' }
+  ]), { prodotto: 1000, guadagnato: 240 });
 });

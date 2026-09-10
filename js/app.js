@@ -45,6 +45,17 @@ function etichettaDurataScontoForm(form) {
   return anni === 1 ? 'Per il primo anno' : `Per i primi ${anni} anni`;
 }
 
+function calcolaStatisticheVenditore(vendite = [], quote = []) {
+  const venditeAttive = vendite.filter(v => v.stato === 'attiva');
+  const ids = new Set(venditeAttive.map(v => v.id));
+  return {
+    prodotto: venditeAttive.reduce((totale, v) => totale + (Number(v.importo_vendita) || 0), 0),
+    guadagnato: quote
+      .filter(q => ids.has(q.vendita_id))
+      .reduce((totale, q) => totale + (Number(q.quota_finale) || 0), 0)
+  };
+}
+
 function formVenditaEconomicaVuoto() {
   return {
     clienteRicerca: '',
@@ -99,6 +110,7 @@ function appState() {
     agendaDataSelezionata: new Date().toISOString().slice(0, 10),
 
     pipelineIndice: 0,
+    statisticheVenditore: { prodotto: 0, guadagnato: 0 },
 
     ricercaGlobale: '',
     indiceNoteRicerca: [],
@@ -250,7 +262,10 @@ function appState() {
       this.filtroSoloRitardo = false;
 
       if (this.isAdmin) { await this.caricaDashboardAdmin(); this.view = 'admin'; }
-      else { await this.caricaClienti(); this.view = 'lista'; }
+      else {
+        await Promise.all([this.caricaClienti(), this.caricaStatisticheVenditore()]);
+        this.view = 'lista';
+      }
 
       // se il browser ha gia' una subscription da un login precedente sullo
       // stesso device, aggiornaStatoPush() la ritrova subito (getSubscription)
@@ -328,6 +343,7 @@ function appState() {
     },
 
     apriPipeline() {
+      this.pipelineIndice = 0;
       this.view = 'pipeline';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
@@ -1096,7 +1112,7 @@ function appState() {
         this.successoEconomia = 'Vendita registrata correttamente.';
 
         const clienteId = this.venditaEconomicaForm.clienteId;
-        await this.caricaClienti();
+        await Promise.all([this.caricaClienti(), this.caricaStatisticheVenditore()]);
 
         if (clienteId) {
           this.clienteSelezionatoId = clienteId;
@@ -1472,6 +1488,38 @@ function appState() {
       return this.clienti.filter(c => classeUrgenza(c.prossimo_contatto) === 'ritardo');
     },
 
+    async caricaStatisticheVenditore() {
+      this.statisticheVenditore = { prodotto: 0, guadagnato: 0 };
+
+      const { data: vendite, error } = await window.supabaseClient
+        .from('vendite')
+        .select('id,importo_vendita,stato')
+        .eq('venditore_id', this.sessione.user.id)
+        .eq('stato', 'attiva');
+
+      if (error) {
+        console.warn('Statistiche economiche non disponibili:', error.message);
+        return;
+      }
+
+      const ids = (vendite || []).map(v => v.id);
+      let quote = [];
+      if (ids.length) {
+        const risultato = await window.supabaseClient
+          .from('vendita_partecipanti')
+          .select('vendita_id,quota_finale')
+          .eq('profilo_id', this.sessione.user.id)
+          .in('vendita_id', ids);
+        if (risultato.error) {
+          console.warn('Guadagno venditore non disponibile:', risultato.error.message);
+        } else {
+          quote = risultato.data || [];
+        }
+      }
+
+      this.statisticheVenditore = calcolaStatisticheVenditore(vendite || [], quote);
+    },
+
     eventiOggiHome() {
       const oggi = this.dataISOOggi();
 
@@ -1479,62 +1527,6 @@ function appState() {
         evento.data === oggi ||
         (evento.tipo === 'contatto' && evento.data < oggi)
       );
-    },
-
-    clientiInCorsoHome() {
-      const conteggi = this.conteggiPerStato();
-      return (conteggi.brief_mandato || 0) + (conteggi.in_lavorazione || 0);
-    },
-
-    clientiDaGestireHome() {
-      const oggi = this.dataISOOggi();
-      const limite = this.aggiungiGiorniISO(oggi, 7);
-      const perCliente = new Map();
-
-      const aggiungi = (cliente, priorita, motivo, tipo) => {
-        const corrente = perCliente.get(cliente.id);
-        if (corrente && corrente.priorita <= priorita) return;
-
-        perCliente.set(cliente.id, {
-          cliente,
-          priorita,
-          motivo,
-          tipo
-        });
-      };
-
-      this.clienti.forEach(cliente => {
-        const contatto = this.normalizzaDataAgenda(cliente.prossimo_contatto);
-
-        if (contatto && contatto < oggi) {
-          aggiungi(cliente, 0, 'Contatto in ritardo', 'ritardo');
-        } else if (contatto === oggi) {
-          aggiungi(cliente, 1, 'Da contattare oggi', 'oggi');
-        }
-
-        const rinnovo = this.normalizzaDataAgenda(cliente.data_rinnovo);
-
-        if (rinnovo && rinnovo >= oggi && rinnovo <= limite) {
-          let motivo = 'Rinnovo entro 7 giorni';
-
-          if (rinnovo === oggi) {
-            motivo = 'Rinnovo oggi';
-          } else {
-            const ms = Date.parse(rinnovo + 'T00:00:00Z') - Date.parse(oggi + 'T00:00:00Z');
-            const giorni = Math.round(ms / 86400000);
-            motivo = `Rinnovo tra ${giorni} ${giorni === 1 ? 'giorno' : 'giorni'}`;
-          }
-
-          aggiungi(cliente, 2, motivo, 'rinnovo');
-        }
-      });
-
-      return [...perCliente.values()]
-        .sort((a, b) =>
-          a.priorita - b.priorita ||
-          (a.cliente.nome || '').localeCompare(b.cliente.nome || '')
-        )
-        .slice(0, 4);
     },
 
     dataISOOggi() {
@@ -2494,6 +2486,7 @@ if (typeof module !== 'undefined') {
     normalizzaClientePerSalvataggio,
     prezzoRicorrenteDaForm,
     etichettaDurataScontoForm,
-    totaleContrattoDaForm
+    totaleContrattoDaForm,
+    calcolaStatisticheVenditore
   };
 }

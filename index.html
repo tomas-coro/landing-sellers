@@ -244,86 +244,73 @@
       <div class="content">
         <p x-show="erroreClienti" x-text="erroreClienti" class="err" style="margin-bottom:14px"></p>
 
-        <div class="home-dashboard home-dashboard-v2" x-show="!isAdmin && clienti.length > 0">
-
-          <section
-              class="home-today"
-              :class="{ 'is-empty': eventiOggiHome().length === 0 }">
-            <div class="home-section-title">
+        <div class="home-dashboard home-dashboard-v3" x-show="!isAdmin && clienti.length > 0">
+          <section class="home-performance">
+            <div class="home-performance-head">
               <div>
-                <span>OGGI</span>
-                <strong>Da tenere d'occhio</strong>
+                <span>Il tuo lavoro</span>
+                <strong x-text="profilo.username || profilo.nome || 'Venditore'"></strong>
               </div>
-
-              <button type="button" @click="apriAgenda()">
-                Agenda
-                <span>›</span>
-              </button>
+              <button type="button" @click="apriPipeline()">Apri pipeline</button>
             </div>
 
-            <div class="home-today-summary">
-              <div>
-                <strong x-text="eventiOggiHome().length"></strong>
-                <span x-text="eventiOggiHome().length === 1 ? 'attività' : 'attività'"></span>
-              </div>
+            <div class="home-active-sites">
+              <strong x-text="clientiPubblicati().length"></strong>
+              <span x-text="clientiPubblicati().length === 1 ? 'sito attivo' : 'siti attivi'"></span>
+            </div>
 
-              <p
-                x-text="eventiOggiHome().length
-                  ? 'Hai attività che richiedono attenzione.'
-                  : 'Nessuna attività urgente per oggi.'">
-              </p>
+            <div class="home-money-grid">
+              <div>
+                <span>Hai prodotto</span>
+                <strong x-text="formattaEuro(statisticheVenditore.prodotto)"></strong>
+              </div>
+              <div>
+                <span>Hai guadagnato</span>
+                <strong x-text="formattaEuro(statisticheVenditore.guadagnato)"></strong>
+              </div>
             </div>
           </section>
 
-          <section class="home-kpi-strip">
-            <button type="button">
-              <strong x-text="clienti.length"></strong>
-              <span>Clienti</span>
-            </button>
-
-            <button type="button" @click="apriPipeline()">
-              <strong x-text="clientiInCorsoHome()"></strong>
-              <span>In corso</span>
-            </button>
-
-            <button type="button" @click="apriAgenda()">
-              <strong x-text="clientiConRinnovoVicino().length"></strong>
-              <span>Rinnovi</span>
-            </button>
-          </section>
-
-
-          <section class="home-attention" x-show="clientiDaGestireHome().length > 0">
+          <section class="home-flow">
             <div class="home-section-title">
               <div>
-                <span>PRIORITÀ</span>
-                <strong>Da gestire</strong>
+                <span>PIPELINE</span>
+                <strong>Dove sono i clienti</strong>
               </div>
             </div>
-
-            <div class="home-attention-list">
-              <template x-for="item in clientiDaGestireHome()" :key="'attention-' + item.cliente.id">
-                <button
-                  type="button"
-                  class="home-attention-row"
-                  @click="apriScheda(item.cliente.id)">
-
-                  <span
-                    class="home-attention-dot"
-                    :class="'type-' + item.tipo">
-                  </span>
-
-                  <div>
-                    <strong x-text="item.cliente.nome"></strong>
-                    <small x-text="item.motivo"></small>
-                  </div>
-
-                  <span class="home-attention-arrow">›</span>
+            <div class="home-flow-stages">
+              <template x-for="stato in statiPipeline()" :key="'home-' + stato.valore">
+                <button type="button" @click="apriPipeline()">
+                  <strong x-text="clientiPipeline(stato.valore).length"></strong>
+                  <span x-text="stato.label"></span>
                 </button>
               </template>
             </div>
           </section>
 
+          <section class="home-attention">
+            <div class="home-section-title">
+              <div>
+                <span>AGENDA</span>
+                <strong x-text="eventiOggiHome().length ? 'Da fare oggi' : 'Oggi è tutto libero'"></strong>
+              </div>
+              <button type="button" @click="apriAgenda()">Vedi agenda <span>›</span></button>
+            </div>
+
+            <div class="home-attention-list" x-show="eventiOggiHome().length > 0">
+              <template x-for="evento in eventiOggiHome().slice(0, 3)" :key="'today-' + evento.id">
+                <button type="button" class="home-attention-row" @click="apriScheda(evento.clienteId)">
+                  <span class="home-attention-dot" :class="evento.scaduto ? 'type-ritardo' : 'type-oggi'"></span>
+                  <div>
+                    <strong x-text="evento.clienteNome"></strong>
+                    <small x-text="evento.titolo"></small>
+                  </div>
+                  <span class="home-attention-arrow">›</span>
+                </button>
+              </template>
+            </div>
+            <p class="home-agenda-clear" x-show="eventiOggiHome().length === 0">Nessun contatto o rinnovo in scadenza.</p>
+          </section>
         </div>
 
         <button type="button" class="alert-ritardo" :class="{ on: filtroSoloRitardo }" x-show="clientiInRitardo().length > 0" @click="toggleFiltroSoloRitardo()">
@@ -1954,17 +1941,21 @@
         <h1 style="font-size:19px">Agenda</h1>
       </div>
 
-      <div class="content crm-content">
-        <div class="agenda-switch">
-          <button type="button" :class="{ on: agendaVista === 'oggi' }" @click="agendaVista = 'oggi'">
-            Oggi
-          </button>
-          <button type="button" :class="{ on: agendaVista === '7giorni' }" @click="agendaVista = '7giorni'">
-            7 giorni
-          </button>
-          <button type="button" :class="{ on: agendaVista === 'mese' }" @click="agendaVista = 'mese'">
-            Mese
-          </button>
+      <div class="content crm-content agenda-content">
+        <section class="agenda-overview">
+          <div>
+            <span x-text="agendaVista === 'oggi' ? 'Da fare oggi' : agendaVista === '7giorni' ? 'Prossimi 7 giorni' : titoloMeseAgenda()"></span>
+            <strong x-text="eventiAgendaVisibili().length"></strong>
+            <small x-text="eventiAgendaVisibili().length === 1 ? 'attività' : 'attività'"></small>
+          </div>
+          <p x-show="clientiInRitardo().length > 0"><strong x-text="clientiInRitardo().length"></strong> contatti in ritardo inclusi</p>
+          <p x-show="clientiInRitardo().length === 0">Nessun contatto arretrato</p>
+        </section>
+
+        <div class="agenda-switch" aria-label="Periodo agenda">
+          <button type="button" :class="{ on: agendaVista === 'oggi' }" @click="agendaVista = 'oggi'">Oggi</button>
+          <button type="button" :class="{ on: agendaVista === '7giorni' }" @click="agendaVista = '7giorni'">7 giorni</button>
+          <button type="button" :class="{ on: agendaVista === 'mese' }" @click="agendaVista = 'mese'">Mese</button>
         </div>
 
         <div x-show="agendaVista === 'mese'" class="agenda-calendar">
@@ -2023,55 +2014,75 @@
     </div>
 
     <!-- PIPELINE -->
-    <div x-show="view === 'pipeline'" x-cloak class="app-main-view crm-view">
+    <div x-show="view === 'pipeline'" x-cloak class="app-main-view crm-view pipeline-view">
       <div class="brandbar">
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
 
-      <div class="topbar">
+      <div class="pipeline-topbar">
         <button type="button" class="linkback" @click="vaiHome()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M19 12H5M11 18l-6-6 6-6"/>
           </svg>
           Home
         </button>
-        <h1 style="font-size:19px">Pipeline</h1>
+        <div><span>CLIENTI</span><h1 x-text="clienti.length"></h1></div>
       </div>
 
-      <div class="pipeline-scroll">
-        <template
-          x-for="stato in ['contattato','brief_mandato','in_lavorazione','pubblicato']"
-          :key="stato">
-          <section class="pipeline-column">
-            <div class="pipeline-column-head">
-              <strong x-text="formattaStato(stato)"></strong>
-              <span x-text="clientiPipeline(stato).length"></span>
+      <div class="pipeline-stage-nav">
+        <div class="pipeline-stage-current">
+          <div>
+            <span>FASE CORRENTE</span>
+            <strong x-text="statiPipeline()[pipelineIndice].label"></strong>
+          </div>
+          <span class="pipeline-stage-counter" x-text="(pipelineIndice + 1) + ' di ' + statiPipeline().length"></span>
+        </div>
+        <div class="pipeline-dots">
+          <template x-for="(stato, indice) in statiPipeline()" :key="'dot-' + stato.valore">
+            <button type="button" :class="{ on: pipelineIndice === indice }" @click="vaiAStatoPipeline(indice)" :aria-label="'Vai a ' + stato.label"></button>
+          </template>
+        </div>
+      </div>
+
+      <div class="pipeline-scroll-v2" @scroll.passive="aggiornaPipelineIndice($event)">
+        <template x-for="stato in statiPipeline()" :key="stato.valore">
+          <section class="pipeline-slide">
+            <div class="pipeline-slide-header">
+              <div><span>Stato</span><strong x-text="stato.label"></strong></div>
+              <span class="pipeline-count" x-text="clientiPipeline(stato.valore).length"></span>
             </div>
 
-            <div class="pipeline-column-list">
-              <template x-for="cliente in clientiPipeline(stato)" :key="cliente.id">
-                <article class="pipeline-card" @click="apriScheda(cliente.id)">
-                  <strong x-text="cliente.nome"></strong>
-                  <small x-text="cliente.referente || cliente.nome_pacchetto || 'Nessun referente'"></small>
-
-                  <div class="pipeline-card-bottom">
-                    <span x-text="etichettaImportoCliente(cliente)"></span>
-
-                    <select
-                      :value="cliente.stato"
-                      @click.stop
-                      @change.stop="cambiaStatoDaPipeline(cliente.id, $event.target.value)">
-                      <option value="contattato">Contattato</option>
-                      <option value="brief_mandato">Brief mandato</option>
-                      <option value="in_lavorazione">In lavorazione</option>
-                      <option value="pubblicato">Pubblicato</option>
+            <div class="pipeline-cards-v2">
+              <template x-for="cliente in clientiPipeline(stato.valore)" :key="cliente.id">
+                <article class="pipeline-card-v2">
+                  <button type="button" class="pipeline-card-head" @click="apriScheda(cliente.id)">
+                    <div>
+                      <strong x-text="cliente.nome"></strong>
+                      <small x-text="cliente.referente || cliente.nome_pacchetto || 'Nessun referente'"></small>
+                    </div>
+                    <span class="pipeline-card-arrow">›</span>
+                  </button>
+                  <div class="pipeline-card-info">
+                    <div><span>Valore</span><strong x-text="etichettaImportoCliente(cliente)"></strong></div>
+                    <div><span>Prossimo contatto</span><strong x-text="cliente.prossimo_contatto ? formattaData(cliente.prossimo_contatto) : 'Da fissare'"></strong></div>
+                  </div>
+                  <div class="pipeline-card-footer">
+                    <span class="pipeline-status-pill" x-text="stato.label"></span>
+                    <select :value="cliente.stato" @change="cambiaStatoDaPipeline(cliente.id, $event.target.value)" aria-label="Cambia stato cliente">
+                      <template x-for="opzione in statiPipeline()" :key="opzione.valore">
+                        <option :value="opzione.valore" x-text="opzione.label"></option>
+                      </template>
                     </select>
                   </div>
                 </article>
               </template>
 
-              <div x-show="clientiPipeline(stato).length === 0" class="pipeline-empty">
-                Nessun cliente
+              <div x-show="clientiPipeline(stato.valore).length === 0" class="pipeline-empty-v2">
+                <div class="pipeline-empty-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h10M4 17h7"/></svg>
+                </div>
+                <strong>Nessun cliente qui</strong>
+                <p>Sposta un cliente in questa fase dalla sua scheda o dalla fase precedente.</p>
               </div>
             </div>
           </section>

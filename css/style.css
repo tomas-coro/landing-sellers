@@ -2328,14 +2328,20 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 }
 
 .pipeline-dots button{
-  height:4px;
+  position:relative;
+  height:32px;
   padding:0;
   border:0;
+  background:transparent;
+}
+.pipeline-dots button::after{
+  content:"";
+  position:absolute;
+  inset:14px 0;
   border-radius:3px;
   background:var(--line);
 }
-
-.pipeline-dots button.on{
+.pipeline-dots button.on::after{
   background:var(--lime);
 }
 
@@ -3573,4 +3579,136 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 
 .economy-person-calc > div{
   min-height:24px;
+}
+
+/* ==========================================================
+   HOME / AGENDA V3
+   ========================================================== */
+
+.home-dashboard-v3{
+  display:grid;
+  gap:12px;
+  margin-bottom:24px;
+}
+
+.home-performance{
+  overflow:hidden;
+  border-radius:22px;
+  padding:18px;
+  background:var(--ink);
+  color:var(--paper);
+}
+
+.home-performance .home-performance-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.home-performance-head span,
+.home-performance-head strong{display:block}
+.home-performance-head span{font-size:9px;color:#aaa;font-weight:700}
+.home-performance-head strong{margin-top:3px;font-size:13px}
+.home-performance-head button{
+  min-height:36px;
+  border:1px solid #3a3a3a;
+  border-radius:11px;
+  padding:0 11px;
+  background:#252525;
+  color:#fff;
+  font:inherit;
+  font-size:9px;
+  font-weight:750;
+}
+
+.home-active-sites{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  margin:24px 0 20px;
+}
+.home-active-sites strong{font-size:54px;line-height:.8;letter-spacing:-.06em}
+.home-active-sites span{max-width:80px;color:var(--lime);font-size:13px;font-weight:750;line-height:1.1}
+
+.home-performance .home-money-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  border-top:1px solid #363636;
+}
+.home-money-grid > div{padding:14px 12px 0 0;min-width:0}
+.home-money-grid > div + div{padding-left:14px;border-left:1px solid #363636}
+.home-money-grid span,.home-money-grid strong{display:block}
+.home-money-grid span{color:#999;font-size:9px;font-weight:650}
+.home-money-grid strong{margin-top:5px;font-size:17px;overflow-wrap:anywhere}
+
+.home-flow{
+  border:1px solid var(--line);
+  border-radius:19px;
+  background:var(--card);
+  padding:16px;
+}
+.home-flow .home-section-title{margin-bottom:13px}
+.home-flow .home-section-title > div > span,
+.home-attention .home-section-title > div > span{text-transform:none}
+.home-flow .home-section-title > div > strong{font-size:15px}
+.home-flow-stages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.home-flow-stages button{
+  min-width:0;
+  min-height:66px;
+  border:0;
+  border-radius:11px;
+  padding:9px 4px;
+  background:var(--surface);
+  color:var(--ink);
+  font:inherit;
+}
+.home-flow-stages button:first-child{background:#ece9e1}
+.home-flow-stages button:nth-child(2){background:#e7efd3}
+.home-flow-stages button:nth-child(3){background:#e4f3b7}
+.home-flow-stages button:last-child{background:var(--lime)}
+.home-flow-stages strong,.home-flow-stages span{display:block}
+.home-flow-stages strong{font-size:18px}
+.home-flow-stages span{margin-top:5px;font-size:7.5px;font-weight:750;line-height:1.15}
+
+.home-dashboard-v3 .home-attention{padding:16px}
+.home-dashboard-v3 .home-attention-list{margin-bottom:-6px}
+.home-agenda-clear{margin:14px 0 1px;color:var(--muted);font-size:11px}
+
+.agenda-overview{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:18px;
+  margin-bottom:12px;
+  border-radius:18px;
+  padding:17px;
+  background:var(--ink);
+  color:#fff;
+}
+.agenda-overview > div{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.agenda-overview span{width:100%;color:#aaa;font-size:9px;font-weight:700;text-transform:capitalize}
+.agenda-overview strong{font-size:31px;line-height:1}
+.agenda-overview small{font-size:10px;color:#bbb;font-weight:650}
+.agenda-overview p{max-width:110px;margin:0;color:#aaa;font-size:9px;line-height:1.35;text-align:right}
+.agenda-overview p strong{color:var(--lime);font-size:inherit}
+.agenda-content .agenda-switch{margin-bottom:12px}
+.agenda-content .agenda-list{gap:7px}
+.agenda-content .agenda-event{min-height:68px;border-radius:14px;box-shadow:none}
+.agenda-content .agenda-event.overdue{border-color:#cf5a51;background:#fff9f7}
+.agenda-content .agenda-event-date{padding-right:10px;border-right:1px solid var(--line)}
+
+.pipeline-card-head{
+  width:100%;
+  border:0;
+  padding:0;
+  background:transparent;
+  color:var(--ink);
+  text-align:left;
+  font:inherit;
+}
+
+@media(min-width:720px){
+  .agenda-content{max-width:720px;margin:0 auto}
+  .pipeline-slide{padding-left:max(18px,calc((100% - 620px)/2));padding-right:max(18px,calc((100% - 620px)/2))}
 }
