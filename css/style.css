@@ -6618,3 +6618,202 @@ html[data-theme="dark"] .home-flow-stages button span{
   color:inherit;
 }
 
+
+
+/* ==========================================================
+   HOME SELLER METRICS + PIPELINE CONTRAST
+   ========================================================== */
+
+.home-money-grid.home-money-grid-v2{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+
+.home-money-grid.home-money-grid-v2 > div{
+  padding:11px 10px 8px 0;
+}
+
+.home-money-grid.home-money-grid-v2 > div:nth-child(even){
+  padding-left:14px;
+  padding-right:0;
+  border-left:1px solid #363636;
+}
+
+.home-money-grid.home-money-grid-v2 > div:nth-child(n+3){
+  border-top:1px solid #363636;
+}
+
+.home-money-grid.home-money-grid-v2 span{
+  display:block;
+  margin-bottom:3px;
+}
+
+.home-money-grid.home-money-grid-v2 strong{
+  display:block;
+  font-size:15px;
+}
+
+/* In lavorazione: contrasto esplicito in dark mode */
+html[data-theme="dark"] .home-flow-stages button:nth-child(3),
+html[data-theme="dark"] .home-flow-stages button:nth-child(3) strong,
+html[data-theme="dark"] .home-flow-stages button:nth-child(3) span{
+  color:#fff !important;
+}
+
+html[data-theme="dark"] .home-money-grid.home-money-grid-v2 > div:nth-child(even){
+  border-left-color:#3d4138;
+}
+
+html[data-theme="dark"] .home-money-grid.home-money-grid-v2 > div:nth-child(n+3){
+  border-top-color:#3d4138;
+}
+
+/* Assistente: conversazione essenziale, alimentata solo da risposte approvate */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.assistant-view{min-height:100%;padding-bottom:calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom))}
+.assistant-view .topbar h1{font-size:19px}
+.assistant-content{display:flex;flex:1;flex-direction:column;gap:18px;padding:8px 18px 16px}
+.assistant-messages{display:flex;flex-direction:column;gap:10px}
+.assistant-message{max-width:88%;padding:12px 14px;border-radius:16px;font-size:13.5px;line-height:1.55;white-space:pre-line}
+.assistant-message.bot{align-self:flex-start;background:var(--card);border:1px solid var(--line);border-bottom-left-radius:5px}
+.assistant-message.utente{align-self:flex-end;background:var(--ink);color:var(--paper);border-bottom-right-radius:5px}
+.assistant-suggestions{display:flex;flex-wrap:wrap;gap:8px}
+.assistant-suggestions button{border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);padding:9px 12px;font:600 11px/1.35 var(--sans);text-align:left;cursor:pointer}
+.assistant-compose{position:sticky;z-index:25;bottom:calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom));display:flex;gap:8px;padding:10px 18px;background:var(--paper);border-top:1px solid var(--line)}
+.assistant-compose input{min-width:0;flex:1;border:1.5px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);padding:12px 14px;font:500 14px var(--sans)}
+.assistant-compose input:focus{outline:none;border-color:var(--ink)}
+.assistant-compose button{width:44px;height:44px;flex:none;display:grid;place-items:center;border:0;border-radius:14px;background:var(--lime);color:#111;cursor:pointer}
+.assistant-compose button:disabled{opacity:.45;cursor:default}
+.assistant-compose svg{width:19px;height:19px}
+
+/* ==========================================================
+   PROFILE / DEADLINES / ADMIN ECONOMY - 2026-09-10
+   ========================================================== */
+
+/* Il grid del profilo non deve dilatare le righe per riempire la viewport. */
+.profile-content{
+  align-content:start;
+  grid-auto-rows:max-content;
+}
+
+@media(max-width:720px){
+  .profile-view .content{
+    display:block;
+  }
+
+  .profile-content{
+    display:grid;
+    align-content:start;
+    grid-auto-rows:max-content;
+    gap:9px;
+  }
+
+  .profile-hero-card{
+    min-height:0;
+  }
+
+  .profile-content > .stack-card:not(.profile-menu){
+    min-height:0;
+    height:auto;
+  }
+
+  .profile-content .field{
+    margin-bottom:7px;
+  }
+
+  .profile-content .profile-menu{
+    margin-top:0;
+  }
+
+  .profile-theme-group{
+    margin-top:0;
+  }
+}
+
+/* La terza fase deve restare leggibile anche sopra regole legacy precedenti. */
+html[data-theme="dark"] .home-flow-stages button:nth-child(3),
+html[data-theme="dark"] .home-flow-stages button:nth-child(3) strong,
+html[data-theme="dark"] .home-flow-stages button:nth-child(3) span{
+  color:#fff !important;
+}
+
+/* Dashboard admin: incassi aziendali reali. */
+.admin-company-cashflow{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  border-top:1px solid rgba(255,255,255,.14);
+  border-bottom:1px solid rgba(255,255,255,.14);
+}
+
+.admin-company-cashflow>div{
+  min-width:0;
+  padding:14px 16px;
+  display:grid;
+  gap:3px;
+}
+
+.admin-company-cashflow>div+div{
+  border-left:1px solid rgba(255,255,255,.14);
+}
+
+.admin-company-cashflow span{
+  font-size:8.5px;
+  color:#aaa;
+  font-weight:700;
+}
+
+.admin-company-cashflow strong{
+  font-size:16px;
+  color:#fff;
+}
+
+.admin-person-role{
+  display:inline-flex;
+  width:max-content;
+  margin-top:2px;
+  padding:3px 6px;
+  border-radius:999px;
+  background:var(--lime);
+  color:#111;
+  font-size:7px;
+  line-height:1;
+  font-weight:850;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+.admin-seller-values{
+  gap:8px;
+}
+
+@media(max-width:520px){
+  .admin-seller-main{
+    align-items:flex-start;
+  }
+
+  .admin-seller-values{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:4px;
+  }
+
+  .admin-seller-value{
+    align-items:flex-end;
+  }
+
+  .admin-seller-value strong{
+    font-size:11px;
+  }
+
+  .admin-seller-value span{
+    font-size:6.8px;
+  }
+}
+
+html[data-theme="dark"] .admin-company-cashflow{
+  border-color:#34382f;
+}
+
+html[data-theme="dark"] .admin-company-cashflow>div+div{
+  border-left-color:#34382f;
+}
+

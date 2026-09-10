@@ -40,6 +40,7 @@
 <script src="js/validators.js" defer></script>
 <script src="js/web-push.js" defer></script>
 <script src="js/catalogo-prezzi.js" defer></script>
+<script src="js/assistente.js" defer></script>
 <script src="js/app.js" defer></script>
 <!-- TODO: aggiungere integrity SRI per Alpine.js@3, vedi https://www.jsdelivr.com/package/npm/alpinejs -->
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
@@ -247,6 +248,17 @@
 
         <div class="home-header-actions">
           <button
+            type="button"
+            class="home-search-trigger"
+            @click="apriAssistente()"
+            aria-label="Assistente app">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12a8 8 0 01-8 8H6l-4 2 1.4-4.2A8 8 0 1112 20"/>
+              <path d="M8 12h.01M12 12h.01M16 12h.01"/>
+            </svg>
+          </button>
+
+          <button
             x-show="!isAdmin"
             type="button"
             class="home-search-trigger"
@@ -300,11 +312,22 @@
               </div>
             </div>
 
-            <div class="home-money-grid">
+            <div class="home-money-grid home-money-grid-v2">
               <div>
                 <span>Totale generato</span>
                 <strong x-text="formattaEuro(statisticheVenditore.generato)"></strong>
               </div>
+
+              <div>
+                <span>Totale venduto</span>
+                <strong x-text="formattaEuro(statisticheVenditore.venduto)"></strong>
+              </div>
+
+              <div>
+                <span>Media vendita</span>
+                <strong x-text="formattaEuro(statisticheVenditore.mediaVendita)"></strong>
+              </div>
+
               <div>
                 <span>Totale incassato</span>
                 <strong x-text="formattaEuro(statisticheVenditore.incassato)"></strong>
@@ -417,8 +440,9 @@
 
             <div class="home-client-meta">
               <span x-text="etichettaImportoCliente(cliente)"></span>
-              <span x-show="cliente.data_rinnovo">
-                Rinnovo <strong x-text="formattaData(cliente.data_rinnovo)"></strong>
+              <span x-show="prossimaScadenzaCliente(cliente)">
+                <span x-text="prossimaScadenzaCliente(cliente)?.label"></span>
+                <strong x-text="formattaDataCompleta(prossimaScadenzaCliente(cliente)?.data)"></strong>
               </span>
             </div>
 
@@ -1278,13 +1302,23 @@
         <section class="admin-overview-card">
           <div class="admin-overview-top">
             <div>
-              <span>Portafoglio vendite attive</span>
+              <span>Venduto azienda</span>
               <strong x-text="formattaEuro(totaleGeneraleAdmin())"></strong>
               <small>
-                Valore medio
+                Media vendita
                 <b x-text="formattaEuro(mediaVenditaAdmin())"></b>
-                per vendita
               </small>
+            </div>
+          </div>
+
+          <div class="admin-company-cashflow">
+            <div>
+              <span>Incassato effettivo</span>
+              <strong x-text="formattaEuro(totaleIncassatoAdmin())"></strong>
+            </div>
+            <div>
+              <span>Da incassare</span>
+              <strong x-text="formattaEuro(residuoIncassoAdmin())"></strong>
             </div>
           </div>
 
@@ -1309,19 +1343,19 @@
         </section>
 
 
-        <!-- VENDITORI -->
+        <!-- PERSONE -->
         <section class="admin-sellers-section">
 
           <div class="admin-section-heading">
             <div>
-              <span>Rete commerciale</span>
-              <strong>Venditori</strong>
+              <span>Team economico</span>
+              <strong>Persone</strong>
             </div>
 
             <small
               x-text="venditori.length === 1
-                ? '1 venditore'
-                : venditori.length + ' venditori'">
+                ? '1 persona'
+                : venditori.length + ' persone'">
             </small>
           </div>
 
@@ -1342,8 +1376,8 @@
 
             <input
               type="search"
-              placeholder="Cerca venditore"
-              aria-label="Cerca venditore"
+              placeholder="Cerca persona"
+              aria-label="Cerca persona"
               x-model="filtroTestoAdmin">
           </div>
 
@@ -1370,10 +1404,11 @@
 
                   <div class="admin-seller-identity">
                     <strong x-text="v.nome"></strong>
+                    <span class="admin-person-role" x-text="v.ruolo"></span>
 
                     <small>
                       <span x-text="v.nVendite"></span>
-                      <span x-text="v.nVendite === 1 ? ' vendita' : ' vendite'"></span>
+                      <span x-text="v.nVendite === 1 ? ' vendita collegata' : ' vendite collegate'"></span>
                     </small>
                   </div>
 
@@ -1385,6 +1420,10 @@
                     <div class="admin-seller-value">
                       <strong x-text="formattaEuro(v.totaleIncassato)"></strong>
                       <span>quota incassata</span>
+                    </div>
+                    <div class="admin-seller-value">
+                      <strong x-text="formattaEuro(v.totaleResiduo)"></strong>
+                      <span>quota residua</span>
                     </div>
                   </div>
 
@@ -1421,8 +1460,8 @@
             x-show="venditori.length === 0 && !erroreAdmin"
             class="admin-empty-state">
 
-            <strong>Nessun venditore</strong>
-            <span>Non ci sono ancora account venditore.</span>
+            <strong>Nessuna persona</strong>
+            <span>Non ci sono ancora profili economici collegati.</span>
           </div>
 
           <div
@@ -3231,6 +3270,44 @@
         </button>
 
       </div>
+    </div>
+
+
+    <!-- ASSISTENTE CON RISPOSTE APPROVATE -->
+    <div x-show="view === 'assistente'" x-cloak class="app-main-view assistant-view">
+      <div class="brandbar">
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+      </div>
+
+      <div class="topbar">
+        <button type="button" class="linkback" @click="vaiHome()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+          Home
+        </button>
+        <h1>Assistente</h1>
+      </div>
+
+      <div class="assistant-content">
+        <div class="assistant-messages" aria-live="polite">
+          <template x-for="(messaggio, indice) in assistenteMessaggi" :key="indice">
+            <p class="assistant-message" :class="messaggio.ruolo" x-text="messaggio.testo"></p>
+          </template>
+        </div>
+
+        <div class="assistant-suggestions" x-show="assistenteMessaggi.length === 1">
+          <template x-for="voce in domandeAssistente()" :key="voce.domanda">
+            <button type="button" @click="inviaDomandaAssistente(voce.domanda)" x-text="voce.domanda"></button>
+          </template>
+        </div>
+      </div>
+
+      <form class="assistant-compose" @submit.prevent="inviaDomandaAssistente()">
+        <label class="sr-only" for="assistant-question">Chiedi come usare l'app</label>
+        <input id="assistant-question" type="text" x-model="assistenteDomanda" placeholder="Come faccio a…" autocomplete="off" maxlength="200">
+        <button type="submit" :disabled="!assistenteDomanda.trim()" aria-label="Invia domanda">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+        </button>
+      </form>
     </div>
 
 

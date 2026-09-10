@@ -131,7 +131,12 @@ function clientiDelVenditoreRiferimento(profiloId, clienti = [], vendite = []) {
   );
 }
 
-function calcolaStatisticheVenditore(vendite = [], pagamenti = [], quotePerVendita = {}) {
+function calcolaStatisticheVenditore(
+  vendite = [],
+  pagamenti = [],
+  quotePerVendita = {},
+  profiloId = ''
+) {
   const venditeAttive = vendite.filter(v => v.stato === 'attiva');
 
   const incassatoTotalePerVendita = {};
@@ -142,7 +147,7 @@ function calcolaStatisticheVenditore(vendite = [], pagamenti = [], quotePerVendi
         (incassatoTotalePerVendita[p.vendita_id] || 0) + (Number(p.importo) || 0);
     });
 
-  return venditeAttive.reduce((totali, v) => {
+  const totali = venditeAttive.reduce((totali, v) => {
     // Vendita condivisa nel team: ognuno vede solo la propria quota (quota_finale),
     // mai l'importo pieno della vendita degli altri partecipanti.
     const quota = Number(quotePerVendita[v.id]) || 0;
@@ -157,8 +162,28 @@ function calcolaStatisticheVenditore(vendite = [], pagamenti = [], quotePerVendi
 
     totali.generato += quota;
     totali.incassato += quota * proporzione;
+
+    // Valore commerciale: conta l'importo pieno solo quando questo profilo
+    // risulta essere il venditore effettivo della vendita.
+    if (v.venditore_id === profiloId) {
+      totali.venduto += importoVendita;
+      totali.numeroVendite += 1;
+    }
+
     return totali;
-  }, { generato: 0, incassato: 0 });
+  }, {
+    generato: 0,
+    incassato: 0,
+    venduto: 0,
+    mediaVendita: 0,
+    numeroVendite: 0
+  });
+
+  totali.mediaVendita = totali.numeroVendite > 0
+    ? totali.venduto / totali.numeroVendite
+    : 0;
+
+  return totali;
 }
 
 function formVenditaEconomicaVuoto() {
@@ -230,11 +255,24 @@ function appState() {
     agendaDataSelezionata: new Date().toISOString().slice(0, 10),
 
     pipelineIndice: 0,
-    statisticheVenditore: { generato: 0, incassato: 0 },
+    statisticheVenditore: {
+      generato: 0,
+      incassato: 0,
+      venduto: 0,
+      mediaVendita: 0,
+      numeroVendite: 0
+    },
 
     ricercaGlobale: '',
     indiceNoteRicerca: [],
     erroreRicerca: '',
+
+    assistenteDomanda: '',
+    assistenteMessaggi: [{
+      ruolo: 'bot',
+      testo: 'Ciao! Chiedimi come usare l’app. Ti risponderò solo con indicazioni già verificate.'
+    }],
+
     nuovoClienteForm: formModuloVuoto(),
 
     // CRM economico / vendite
@@ -267,6 +305,7 @@ function appState() {
     pagamentiCliente: [],
     caricandoPagamentiCliente: false,
     errorePagamentiCliente: '',
+    scadenzePagamentoPerCliente: {},
 
     schedaAperture: { stato: true, pacchetto: false, contatti: false, note: true },
 
@@ -289,6 +328,8 @@ function appState() {
     adminClientiPerVenditore: {},
     adminStats: {
       volumeVendite: 0,
+      incassatoEffettivo: 0,
+      residuoIncasso: 0,
       venditeAttive: 0,
       clienti: 0,
       pubblicati: 0,
@@ -573,6 +614,27 @@ function appState() {
 
     tornaDaRicerca() {
       this.view = this.viewPrecedenteRicerca === 'clienti' ? 'clienti' : 'lista';
+    },
+
+    apriAssistente() {
+      this.assistenteDomanda = '';
+      this.view = 'assistente';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    domandeAssistente() {
+      return (globalThis.AssistenteLanding?.faq || []).slice(0, 4);
+    },
+
+    inviaDomandaAssistente(domanda = this.assistenteDomanda) {
+      const testo = domanda.trim();
+      if (!testo) return;
+
+      this.assistenteMessaggi.push(
+        { ruolo: 'utente', testo },
+        { ruolo: 'bot', testo: globalThis.AssistenteLanding.rispondi(testo) }
+      );
+      this.assistenteDomanda = '';
     },
 
     totaleIncassatoCliente() {
@@ -1309,7 +1371,15 @@ function appState() {
         this.successoEconomia = 'Vendita registrata correttamente.';
 
         const clienteId = this.venditaEconomicaForm.clienteId;
-        await Promise.all([this.caricaClienti(), this.caricaStatisticheVenditore()]);
+
+        if (this.isAdmin) {
+          await this.caricaDashboardAdmin();
+        } else {
+          await Promise.all([
+            this.caricaClienti(),
+            this.caricaStatisticheVenditore()
+          ]);
+        }
 
         if (clienteId) {
           this.clienteSelezionatoId = clienteId;
@@ -1334,6 +1404,7 @@ function appState() {
         'agenda',
         'pipeline',
         'ricerca',
+        'assistente',
         'economia'
       ].includes(this.view);
     },
@@ -1495,7 +1566,7 @@ function appState() {
     vistaSupportaSwipeIndietro() {
       return [
         'profilo', 'cestino', 'scheda', 'nuovo', 'agenda',
-        'pipeline', 'ricerca', 'clienti', 'economia'
+        'pipeline', 'ricerca', 'assistente', 'clienti', 'economia'
       ].includes(this.view) || (
         this.view === 'lista' && this.isAdmin && this.filtroVenditoreId
       );
@@ -1523,6 +1594,8 @@ function appState() {
         this.vaiHome();
       } else if (this.view === 'ricerca') {
         this.tornaDaRicerca();
+      } else if (this.view === 'assistente') {
+        this.vaiHome();
       } else if (this.view === 'scheda') {
         this.tornaDaScheda();
       } else if (this.view === 'nuovo') {
@@ -1786,6 +1859,7 @@ function appState() {
       this.cestino = [];
       this.note = [];
       this.pagamentiCliente = [];
+      this.scadenzePagamentoPerCliente = {};
       this.venditori = [];
       this.indiceNoteRicerca = [];
       this.clienteSelezionatoId = null;
@@ -1963,7 +2037,10 @@ function appState() {
       this.clienti = usaAttribuzioneCondivisa
         ? data.filter(cliente => idsAttribuiti.has(cliente.id))
         : data;
-      await this.caricaIndiceNoteRicerca();
+      await Promise.all([
+        this.caricaIndiceNoteRicerca(),
+        this.caricaScadenzePagamentoClienti()
+      ]);
     },
 
     async caricaIndiceNoteRicerca() {
@@ -1982,6 +2059,95 @@ function appState() {
       }
 
       this.indiceNoteRicerca = data || [];
+    },
+
+    async caricaScadenzePagamentoClienti() {
+      this.scadenzePagamentoPerCliente = {};
+
+      const clienteIds = this.clienti.map(cliente => cliente.id).filter(Boolean);
+      if (!clienteIds.length) return;
+
+      const { data: vendite, error: venditeError } = await window.supabaseClient
+        .from('vendite')
+        .select('id,cliente_id')
+        .in('cliente_id', clienteIds)
+        .eq('stato', 'attiva');
+
+      if (venditeError) {
+        console.warn('Scadenze pagamento non disponibili:', venditeError.message);
+        return;
+      }
+
+      const venditePerId = Object.fromEntries(
+        (vendite || []).map(vendita => [vendita.id, vendita])
+      );
+      const venditaIds = Object.keys(venditePerId);
+      if (!venditaIds.length) return;
+
+      const { data: pagamenti, error: pagamentiError } = await window.supabaseClient
+        .from('pagamenti')
+        .select('vendita_id,importo,stato,data_scadenza')
+        .in('vendita_id', venditaIds)
+        .eq('stato', 'previsto')
+        .not('data_scadenza', 'is', null)
+        .order('data_scadenza', { ascending: true });
+
+      if (pagamentiError) {
+        console.warn('Scadenze pagamento non disponibili:', pagamentiError.message);
+        return;
+      }
+
+      const prossime = {};
+      (pagamenti || []).forEach(pagamento => {
+        const vendita = venditePerId[pagamento.vendita_id];
+        const clienteId = vendita?.cliente_id;
+        const data = this.normalizzaDataAgenda(pagamento.data_scadenza);
+        if (!clienteId || !data) return;
+
+        if (!prossime[clienteId] || data < prossime[clienteId].data) {
+          prossime[clienteId] = {
+            tipo: 'rata',
+            label: 'Rata',
+            data,
+            importo: Number(pagamento.importo) || 0
+          };
+        }
+      });
+
+      this.scadenzePagamentoPerCliente = prossime;
+    },
+
+    prossimaScadenzaCliente(cliente) {
+      if (!cliente?.id) return null;
+
+      const scadenze = [];
+      const rinnovo = this.normalizzaDataAgenda(cliente.data_rinnovo);
+      if (rinnovo) {
+        scadenze.push({
+          tipo: 'rinnovo',
+          label: 'Rinnovo',
+          data: rinnovo,
+          importo: null
+        });
+      }
+
+      const rata = this.scadenzePagamentoPerCliente[cliente.id];
+      if (rata?.data) scadenze.push(rata);
+
+      if (!scadenze.length) return null;
+      return scadenze.sort((a, b) => a.data.localeCompare(b.data))[0];
+    },
+
+    formattaDataCompleta(value) {
+      const iso = this.normalizzaDataAgenda(value);
+      if (!iso) return '-';
+
+      const [anno, mese, giorno] = iso.split('-').map(Number);
+      return new Intl.DateTimeFormat('it-IT', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      }).format(new Date(Date.UTC(anno, mese - 1, giorno)));
     },
 
     clientiRecenti() {
@@ -2019,7 +2185,13 @@ function appState() {
     },
 
     async caricaStatisticheVenditore() {
-      this.statisticheVenditore = { generato: 0, incassato: 0 };
+      this.statisticheVenditore = {
+        generato: 0,
+        incassato: 0,
+        venduto: 0,
+        mediaVendita: 0,
+        numeroVendite: 0
+      };
 
       const partecipazioni = await window.supabaseClient
         .from('vendita_partecipanti')
@@ -2042,7 +2214,7 @@ function appState() {
       const [vendite, pagamenti] = await Promise.all([
         window.supabaseClient
           .from('vendite')
-          .select('id,importo_vendita,stato')
+          .select('id,importo_vendita,stato,venditore_id')
           .in('id', ids),
         window.supabaseClient
           .from('pagamenti')
@@ -2055,7 +2227,12 @@ function appState() {
         return;
       }
 
-      this.statisticheVenditore = calcolaStatisticheVenditore(vendite.data || [], pagamenti.data || [], quotePerVendita);
+      this.statisticheVenditore = calcolaStatisticheVenditore(
+        vendite.data || [],
+        pagamenti.data || [],
+        quotePerVendita,
+        this.sessione.user.id
+      );
     },
 
     eventiOggiHome() {
@@ -2121,7 +2298,24 @@ function appState() {
             titolo: cliente.periodicita_contratto === 'annuale'
               ? 'Rinnovo annuale'
               : 'Rinnovo contratto',
-            scaduto: false
+            scaduto: rinnovo < oggi
+          });
+        }
+
+        const rata = this.scadenzePagamentoPerCliente[cliente.id];
+        if (rata?.data) {
+          eventi.push({
+            id: `rata-${cliente.id}-${rata.data}`,
+            clienteId: cliente.id,
+            clienteNome: cliente.nome,
+            venditoreId: cliente.venditore_id,
+            venditoreNome: this.adminVenditoriPerId[cliente.venditore_id] || '',
+            data: rata.data,
+            tipo: 'rata',
+            titolo: rata.importo > 0
+              ? `Rata prevista · ${this.formattaNumeroEuro(rata.importo)}`
+              : 'Rata prevista',
+            scaduto: rata.data < oggi
           });
         }
       });
@@ -2357,9 +2551,18 @@ function appState() {
 
     etichettaImportoCliente(cliente) {
       if (cliente.importo_abbonamento == null) return '-';
+
       const importo = this.formattaNumeroEuro(cliente.importo_abbonamento);
+      const durata = Number(cliente.durata_contratto_anni) || 0;
+
       if (cliente.periodicita_contratto === 'mensile') return `${importo}/mese`;
       if (cliente.periodicita_contratto === 'annuale') return `${importo}/anno`;
+
+      // Contratti legacy/custom senza periodicità esplicita:
+      // se la durata è nota, mostra il valore sull'intero periodo.
+      if (durata > 1) return `${importo}/${durata} anni`;
+      if (durata === 1) return `${importo}/anno`;
+
       return importo;
     },
 
@@ -2991,7 +3194,7 @@ function appState() {
 
         window.supabaseClient
           .from('clienti')
-          .select('id,nome,venditore_id,stato,pubblicato_il,prossimo_contatto,data_rinnovo,periodicita_contratto')
+          .select('id,nome,venditore_id,stato,pubblicato_il,prossimo_contatto,data_rinnovo,periodicita_contratto,durata_contratto_anni,importo_abbonamento,nome_pacchetto')
           .is('cancellato_il', null),
 
         window.supabaseClient
@@ -3004,7 +3207,7 @@ function appState() {
 
         window.supabaseClient
           .from('pagamenti')
-          .select('vendita_id,importo,stato')
+          .select('vendita_id,importo,stato,data_scadenza,data_pagamento')
       ]);
 
       const errore =
@@ -3026,29 +3229,76 @@ function appState() {
       const partecipanti = partecipantiResult.data || [];
       const pagamenti = pagamentiResult.data || [];
       const venditeAttive = vendite.filter(v => v.stato === 'attiva');
+      const venditeAttiveIds = new Set(venditeAttive.map(v => v.id));
 
       const venditorePerCliente = Object.fromEntries(
         venditeAttive.map(vendita => [vendita.cliente_id, vendita.venditore_id])
       );
-      const idsVenditoriAttivi = new Set([
-        ...venditeAttive.map(vendita => vendita.venditore_id),
-        ...clienti.map(cliente => venditorePerCliente[cliente.id] || cliente.venditore_id)
-      ]);
-      const profiliVisibili = profili.filter(profilo =>
-        profilo.ruolo === 'venditore' &&
-        profilo.ruolo_economico !== 'produzione' &&
-        (profilo.ruolo_economico === 'referente' || idsVenditoriAttivi.has(profilo.id))
-      );
+
       this.adminClienti = clienti.map(cliente => ({
         ...cliente,
         venditore_id: venditorePerCliente[cliente.id] || cliente.venditore_id
       }));
-      this.adminVenditoriPerId = Object.fromEntries(
-        profiliVisibili.map(profilo => [
-          profilo.id,
-          profilo.ruolo_economico === 'referente' ? 'Alessandro' : profilo.nome
-        ])
+
+      const profiliConPartecipazioni = new Set(
+        partecipanti
+          .filter(p => venditeAttiveIds.has(p.vendita_id))
+          .map(p => p.profilo_id)
       );
+
+      const idsVenditoriAttivi = new Set([
+        ...venditeAttive.map(vendita => vendita.venditore_id),
+        ...clienti.map(cliente => venditorePerCliente[cliente.id] || cliente.venditore_id)
+      ]);
+
+      // Mostra tutte le persone economicamente coinvolte:
+      // referente, venditori attivi e produzione/developer con partecipazioni.
+      const profiliVisibili = profili.filter(profilo =>
+        profilo.ruolo !== 'admin' && (
+          profilo.ruolo_economico === 'referente' ||
+          profiliConPartecipazioni.has(profilo.id) ||
+          idsVenditoriAttivi.has(profilo.id)
+        )
+      );
+
+      const nomeProfiloAdmin = profilo => {
+        if (profilo.ruolo_economico === 'referente') return 'Alessandro';
+        if (profilo.ruolo_economico === 'produzione') return 'Tomas';
+        return profilo.nome;
+      };
+
+      const ruoloProfiloAdmin = profilo => {
+        if (profilo.ruolo_economico === 'produzione' || profilo.ruolo === 'developer') {
+          return 'Developer';
+        }
+        if (profilo.ruolo_economico === 'referente') return 'Referente';
+        return 'Venditore';
+      };
+
+      this.adminVenditoriPerId = Object.fromEntries(
+        profiliVisibili.map(profilo => [profilo.id, nomeProfiloAdmin(profilo)])
+      );
+
+      // Popola le prossime rate anche nella vista admin.
+      const venditaPerId = Object.fromEntries(
+        venditeAttive.map(vendita => [vendita.id, vendita])
+      );
+      const prossimeRate = {};
+      pagamenti
+        .filter(p => p.stato === 'previsto' && p.data_scadenza && venditaPerId[p.vendita_id])
+        .sort((a, b) => String(a.data_scadenza).localeCompare(String(b.data_scadenza)))
+        .forEach(pagamento => {
+          const clienteId = venditaPerId[pagamento.vendita_id]?.cliente_id;
+          const data = this.normalizzaDataAgenda(pagamento.data_scadenza);
+          if (!clienteId || !data || prossimeRate[clienteId]) return;
+          prossimeRate[clienteId] = {
+            tipo: 'rata',
+            label: 'Rata',
+            data,
+            importo: Number(pagamento.importo) || 0
+          };
+        });
+      this.scadenzePagamentoPerCliente = prossimeRate;
 
       const chiaveMese = (() => {
         const d = new Date();
@@ -3063,9 +3313,7 @@ function appState() {
 
       const pubblicatiQuestoMese = pubblicati.filter(c => {
         if (!c.pubblicato_il) return false;
-
         const d = new Date(c.pubblicato_il);
-
         return (
           d.getFullYear() +
           '-' +
@@ -3073,12 +3321,19 @@ function appState() {
         ) === chiaveMese;
       });
 
+      const volumeVendite = venditeAttive.reduce(
+        (totale, vendita) => totale + (Number(vendita.importo_vendita) || 0),
+        0
+      );
+
+      const incassatoEffettivo = pagamenti
+        .filter(p => p.stato === 'incassato' && venditeAttiveIds.has(p.vendita_id))
+        .reduce((totale, pagamento) => totale + (Number(pagamento.importo) || 0), 0);
+
       this.adminStats = {
-        volumeVendite: venditeAttive.reduce(
-          (totale, vendita) =>
-            totale + (Number(vendita.importo_vendita) || 0),
-          0
-        ),
+        volumeVendite,
+        incassatoEffettivo,
+        residuoIncasso: Math.max(0, volumeVendite - incassatoEffettivo),
         venditeAttive: venditeAttive.length,
         clienti: clienti.length,
         pubblicati: pubblicati.length,
@@ -3087,34 +3342,42 @@ function appState() {
       };
 
       this.adminClientiPerVenditore = {};
+
       this.venditori = profiliVisibili.map(profilo => {
-        const venditeProfilo = new Set(
-          venditeAttive
-            .filter(vendita => vendita.venditore_id === profilo.id)
-            .map(vendita => vendita.id)
-        );
-        const partecipazioni = partecipanti.filter(partecipazione =>
-          partecipazione.profilo_id === profilo.id &&
-          venditeProfilo.has(partecipazione.vendita_id)
+        const idsVenditePartecipate = new Set(
+          partecipanti
+            .filter(partecipazione =>
+              partecipazione.profilo_id === profilo.id &&
+              venditeAttiveIds.has(partecipazione.vendita_id)
+            )
+            .map(partecipazione => partecipazione.vendita_id)
         );
 
-        const suoiClienti = clientiDelVenditoreRiferimento(
+        venditeAttive
+          .filter(vendita => vendita.venditore_id === profilo.id)
+          .forEach(vendita => idsVenditePartecipate.add(vendita.id));
+
+        const partecipazioniProfilo = partecipanti.filter(partecipazione =>
+          partecipazione.profilo_id === profilo.id &&
+          idsVenditePartecipate.has(partecipazione.vendita_id)
+        );
+
+        const suoiClienti = clientiAttribuitiAlProfilo(
           profilo.id,
           this.adminClienti,
-          venditeAttive
+          venditeAttive,
+          partecipanti
         );
 
-        this.adminClientiPerVenditore[profilo.id] = suoiClienti.map(cliente => cliente.id);
+        this.adminClientiPerVenditore[profilo.id] =
+          suoiClienti.map(cliente => cliente.id);
 
-        const suoiPubblicati = suoiClienti.filter(
-          cliente => cliente.stato === 'pubblicato'
-        );
+        const suoiPubblicati =
+          suoiClienti.filter(cliente => cliente.stato === 'pubblicato');
 
         const suoiPubblicatiMese = suoiPubblicati.filter(cliente => {
           if (!cliente.pubblicato_il) return false;
-
           const d = new Date(cliente.pubblicato_il);
-
           return (
             d.getFullYear() +
             '-' +
@@ -3122,25 +3385,34 @@ function appState() {
           ) === chiaveMese;
         });
 
-        const quotePerVendita = Object.fromEntries(
-          partecipazioni.map(partecipazione => [
-            partecipazione.vendita_id,
-            partecipazione.quota_finale
-          ])
+        const quotePerVendita = {};
+        partecipazioniProfilo.forEach(partecipazione => {
+          quotePerVendita[partecipazione.vendita_id] =
+            (quotePerVendita[partecipazione.vendita_id] || 0) +
+            (Number(partecipazione.quota_finale) || 0);
+        });
+
+        const venditeProfilo = venditeAttive.filter(
+          vendita => idsVenditePartecipate.has(vendita.id)
         );
+
         const statistiche = calcolaStatisticheVenditore(
-          venditeAttive.filter(vendita => venditeProfilo.has(vendita.id)),
+          venditeProfilo,
           pagamenti,
-          quotePerVendita
+          quotePerVendita,
+          profilo.id
         );
 
         return {
           id: profilo.id,
-          nome: profilo.ruolo_economico === 'referente' ? 'Alessandro' : profilo.nome,
+          nome: nomeProfiloAdmin(profilo),
+          ruolo: ruoloProfiloAdmin(profilo),
           totaleGenerato: statistiche.generato,
           totaleIncassato: statistiche.incassato,
-
-          nVendite: venditeProfilo.size,
+          totaleResiduo: Math.max(0, statistiche.generato - statistiche.incassato),
+          totaleVenduto: statistiche.venduto,
+          mediaVendita: statistiche.mediaVendita,
+          nVendite: idsVenditePartecipate.size,
           nClientiTotali: suoiClienti.length,
           nInLavorazione: suoiClienti.filter(cliente => cliente.stato === 'in_lavorazione').length,
           nPubblicati: suoiPubblicati.length,
@@ -3151,6 +3423,14 @@ function appState() {
 
     totaleGeneraleAdmin() {
       return Number(this.adminStats.volumeVendite) || 0;
+    },
+
+    totaleIncassatoAdmin() {
+      return Number(this.adminStats.incassatoEffettivo) || 0;
+    },
+
+    residuoIncassoAdmin() {
+      return Number(this.adminStats.residuoIncasso) || 0;
     },
 
     totaleClientiAdmin() {
