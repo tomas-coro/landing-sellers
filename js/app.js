@@ -131,11 +131,35 @@ function clientiDelVenditoreRiferimento(profiloId, clienti = [], vendite = []) {
   );
 }
 
+function moltiplicatoreContrattoVendita(vendita, clientiPerId = {}) {
+  const cliente = clientiPerId[vendita?.cliente_id];
+  if (!cliente) return 1;
+
+  const anni = Math.max(
+    1,
+    Math.min(4, Number(cliente.durata_contratto_anni) || 1)
+  );
+
+  if (cliente.periodicita_contratto === 'mensile') return 12 * anni;
+  if (cliente.periodicita_contratto === 'annuale') return anni;
+
+  // Legacy/custom: importo_vendita è già il valore contrattuale registrato.
+  return 1;
+}
+
+function valoreContrattoVendita(vendita, clientiPerId = {}) {
+  return (
+    (Number(vendita?.importo_vendita) || 0)
+    * moltiplicatoreContrattoVendita(vendita, clientiPerId)
+  );
+}
+
 function calcolaStatisticheVenditore(
   vendite = [],
   pagamenti = [],
   quotePerVendita = {},
-  profiloId = ''
+  profiloId = '',
+  clientiPerId = {}
 ) {
   const venditeAttive = vendite.filter(v => v.stato === 'attiva');
 
@@ -150,8 +174,9 @@ function calcolaStatisticheVenditore(
   const totali = venditeAttive.reduce((totali, v) => {
     // Vendita condivisa nel team: ognuno vede solo la propria quota (quota_finale),
     // mai l'importo pieno della vendita degli altri partecipanti.
-    const quota = Number(quotePerVendita[v.id]) || 0;
-    const importoVendita = Number(v.importo_vendita) || 0;
+    const moltiplicatore = moltiplicatoreContrattoVendita(v, clientiPerId);
+    const quota = (Number(quotePerVendita[v.id]) || 0) * moltiplicatore;
+    const importoVendita = valoreContrattoVendita(v, clientiPerId);
     const incassatoVendita = incassatoTotalePerVendita[v.id] || 0;
 
     // L'incasso reale è per l'intera vendita, non per partecipante: la quota
@@ -623,7 +648,19 @@ function appState() {
     },
 
     domandeAssistente() {
-      return (globalThis.AssistenteLanding?.faq || []).slice(0, 4);
+      return globalThis.AssistenteLanding?.faq || [];
+    },
+
+    categorieAssistente() {
+      return this.domandeAssistente().reduce((categorie, voce) => {
+        let categoria = categorie.find(gruppo => gruppo.nome === voce.categoria);
+        if (!categoria) {
+          categoria = { nome: voce.categoria, voci: [] };
+          categorie.push(categoria);
+        }
+        categoria.voci.push(voce);
+        return categorie;
+      }, []);
     },
 
     inviaDomandaAssistente(domanda = this.assistenteDomanda) {
@@ -2214,7 +2251,7 @@ function appState() {
       const [vendite, pagamenti] = await Promise.all([
         window.supabaseClient
           .from('vendite')
-          .select('id,importo_vendita,stato,venditore_id')
+          .select('id,cliente_id,importo_vendita,stato,venditore_id')
           .in('id', ids),
         window.supabaseClient
           .from('pagamenti')
@@ -2231,7 +2268,8 @@ function appState() {
         vendite.data || [],
         pagamenti.data || [],
         quotePerVendita,
-        this.sessione.user.id
+        this.sessione.user.id,
+        Object.fromEntries(this.clienti.map(cliente => [cliente.id, cliente]))
       );
     },
 
@@ -3321,8 +3359,13 @@ function appState() {
         ) === chiaveMese;
       });
 
+      const clientiPerId = Object.fromEntries(
+        clienti.map(cliente => [cliente.id, cliente])
+      );
+
       const volumeVendite = venditeAttive.reduce(
-        (totale, vendita) => totale + (Number(vendita.importo_vendita) || 0),
+        (totale, vendita) =>
+          totale + valoreContrattoVendita(vendita, clientiPerId),
         0
       );
 
@@ -3400,7 +3443,8 @@ function appState() {
           venditeProfilo,
           pagamenti,
           quotePerVendita,
-          profilo.id
+          profilo.id,
+          clientiPerId
         );
 
         return {
@@ -3497,6 +3541,8 @@ if (typeof module !== 'undefined') {
     percentualeTasseEconomia,
     appState,
     calcolaStatisticheVenditore,
+    moltiplicatoreContrattoVendita,
+    valoreContrattoVendita,
     clientiAttribuitiAlProfilo,
     clientiDelVenditoreRiferimento,
     posizioneAvatarDaUrl,

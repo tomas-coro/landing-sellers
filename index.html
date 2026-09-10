@@ -290,47 +290,62 @@
         <p x-show="erroreClienti" x-text="erroreClienti" class="err" style="margin-bottom:14px"></p>
 
         <div class="home-dashboard home-dashboard-v3" x-show="!isAdmin && view === 'lista' && clienti.length > 0">
-          <section class="home-performance">
+          <section class="home-performance home-performance-v4">
             <div class="home-performance-head">
               <div>
-                <span>Il tuo lavoro</span>
+                <span>IL TUO LAVORO</span>
                 <strong x-text="profilo.username || profilo.nome || 'Venditore'"></strong>
               </div>
-              <button type="button" @click="apriPipeline()">Apri pipeline</button>
+
+              <button type="button" @click="apriPipeline()">
+                Pipeline <span aria-hidden="true">›</span>
+              </button>
             </div>
 
-            <div class="home-active-sites">
-              <div class="home-active-sites-hero">
+            <div class="home-work-summary">
+              <div class="home-work-count">
                 <strong x-text="clienti.length"></strong>
-                <b x-text="clienti.length === 1 ? 'sito totale' : 'siti totali'"></b>
-              </div>
-              <div class="home-active-sites-ratio">
-                <small x-text="clientiPubblicati().length + (clientiPubblicati().length === 1 ? ' attivo' : ' attivi')"></small>
-                <div class="home-active-sites-bar">
-                  <div class="home-active-sites-bar-fill" :style="{ width: (clienti.length ? clientiPubblicati().length / clienti.length * 100 : 0) + '%' }"></div>
+                <div>
+                  <b x-text="clienti.length === 1 ? 'cliente gestito' : 'clienti gestiti'"></b>
+                  <small>
+                    <span x-text="clientiPubblicati().length"></span>
+                    pubblicati ·
+                    <span x-text="clientiPipeline('in_lavorazione').length"></span>
+                    in lavorazione
+                  </small>
                 </div>
               </div>
+
+              <div class="home-work-progress">
+                <span
+                  :style="{ width: (clienti.length ? clientiPubblicati().length / clienti.length * 100 : 0) + '%' }">
+                </span>
+              </div>
             </div>
 
-            <div class="home-money-grid home-money-grid-v2">
-              <div>
-                <span>Totale generato</span>
-                <strong x-text="formattaEuro(statisticheVenditore.generato)"></strong>
+            <div class="home-contract-metrics">
+              <div class="home-contract-metric home-contract-metric-primary">
+                <span>Venduto</span>
+                <strong x-text="formattaEuro(statisticheVenditore.venduto)"></strong>
+                <small>Valore contratti</small>
               </div>
 
+              <div class="home-contract-metric home-contract-metric-primary">
+                <span>Generato</span>
+                <strong x-text="formattaEuro(statisticheVenditore.generato)"></strong>
+                <small>La tua quota</small>
+              </div>
+            </div>
+
+            <div class="home-contract-secondary">
               <div>
-                <span>Totale venduto</span>
-                <strong x-text="formattaEuro(statisticheVenditore.venduto)"></strong>
+                <span>Incassato</span>
+                <strong x-text="formattaEuro(statisticheVenditore.incassato)"></strong>
               </div>
 
               <div>
                 <span>Media vendita</span>
                 <strong x-text="formattaEuro(statisticheVenditore.mediaVendita)"></strong>
-              </div>
-
-              <div>
-                <span>Totale incassato</span>
-                <strong x-text="formattaEuro(statisticheVenditore.incassato)"></strong>
               </div>
             </div>
           </section>
@@ -344,7 +359,10 @@
             </div>
             <div class="home-flow-stages">
               <template x-for="stato in statiPipeline()" :key="'home-' + stato.valore">
-                <button type="button" @click="apriPipeline()">
+                <button
+                  type="button"
+                  :class="'stage-' + stato.valore"
+                  @click="apriPipeline()">
                   <strong x-text="clientiPipeline(stato.valore).length"></strong>
                   <span x-text="stato.label"></span>
                 </button>
@@ -3275,11 +3293,12 @@
 
     <!-- ASSISTENTE CON RISPOSTE APPROVATE -->
     <div x-show="view === 'assistente'" x-cloak class="app-main-view assistant-view">
-      <div class="brandbar">
+      <div class="brandbar assistant-brandbar">
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+        <span class="assistant-verified"><i></i>Guide verificate</span>
       </div>
 
-      <div class="topbar">
+      <div class="topbar assistant-topbar">
         <button type="button" class="linkback" @click="vaiHome()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
           Home
@@ -3288,22 +3307,42 @@
       </div>
 
       <div class="assistant-content">
+        <header class="assistant-hero" x-show="assistenteMessaggi.length === 1">
+          <div class="assistant-orbit" aria-hidden="true"><span>LE</span><i></i><i></i><i></i></div>
+          <div>
+            <h2>Come posso aiutarti?</h2>
+            <p>Conosco ogni funzione dell’app e rispondo solo con istruzioni verificate.</p>
+          </div>
+          <strong><span x-text="domandeAssistente().length"></span> risposte pronte</strong>
+        </header>
+
         <div class="assistant-messages" aria-live="polite">
           <template x-for="(messaggio, indice) in assistenteMessaggi" :key="indice">
-            <p class="assistant-message" :class="messaggio.ruolo" x-text="messaggio.testo"></p>
+            <div class="assistant-message-row" :class="messaggio.ruolo">
+              <span class="assistant-avatar" x-show="messaggio.ruolo === 'bot'">LE</span>
+              <p class="assistant-message" :class="messaggio.ruolo" x-text="messaggio.testo"></p>
+            </div>
           </template>
         </div>
 
-        <div class="assistant-suggestions" x-show="assistenteMessaggi.length === 1">
-          <template x-for="voce in domandeAssistente()" :key="voce.domanda">
-            <button type="button" @click="inviaDomandaAssistente(voce.domanda)" x-text="voce.domanda"></button>
+        <section class="assistant-catalog" x-show="assistenteMessaggi.length === 1">
+          <div class="assistant-catalog-head"><h2>Scegli un argomento</h2><span>oppure scrivi sotto</span></div>
+          <template x-for="categoria in categorieAssistente()" :key="categoria.nome">
+            <details class="assistant-category" :open="categoria.nome === 'Orientamento'">
+              <summary><span x-text="categoria.nome"></span><small x-text="categoria.voci.length"></small></summary>
+              <div class="assistant-suggestions">
+                <template x-for="voce in categoria.voci" :key="voce.domanda">
+                  <button type="button" @click="inviaDomandaAssistente(voce.domanda)"><span x-text="voce.domanda"></span><i>›</i></button>
+                </template>
+              </div>
+            </details>
           </template>
-        </div>
+        </section>
       </div>
 
       <form class="assistant-compose" @submit.prevent="inviaDomandaAssistente()">
         <label class="sr-only" for="assistant-question">Chiedi come usare l'app</label>
-        <input id="assistant-question" type="text" x-model="assistenteDomanda" placeholder="Come faccio a…" autocomplete="off" maxlength="200">
+        <input id="assistant-question" type="text" x-model="assistenteDomanda" placeholder="Chiedi come usare l’app…" autocomplete="off" maxlength="200">
         <button type="submit" :disabled="!assistenteDomanda.trim()" aria-label="Invia domanda">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
         </button>
