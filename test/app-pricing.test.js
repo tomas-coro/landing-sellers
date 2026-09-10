@@ -5,6 +5,9 @@ const {
   prezzoRicorrenteDaForm,
   etichettaDurataScontoForm,
   totaleContrattoDaForm,
+  costiGestioneCliente,
+  percentualeTasseEconomia,
+  appState,
   calcolaStatisticheVenditore,
   posizioneAvatarDaUrl,
   avatarUrlConPosizione
@@ -49,6 +52,73 @@ test('il prezzo finale concordato include setup, dominio e altri extra', () => {
   assert.strictEqual(totaleContrattoDaForm(300, 180, {
     sconto_tipo: 'percentuale'
   }), 480);
+});
+
+test('i costi del primo anno sono 30 euro più 10 per il dominio acquistato', () => {
+  assert.strictEqual(typeof costiGestioneCliente, 'function');
+  assert.deepStrictEqual(costiGestioneCliente({
+    cliente_ha_dominio: false,
+    dominio_it: true,
+    dominio_com: false
+  }), [
+    { descrizione: 'Gestione sito', importo: 30 },
+    { descrizione: 'Dominio - primo anno', importo: 10 }
+  ]);
+  assert.deepStrictEqual(costiGestioneCliente({ cliente_ha_dominio: true }), [
+    { descrizione: 'Gestione sito', importo: 30 }
+  ]);
+});
+
+test('il dominio costa 15 euro dai rinnovi successivi', () => {
+  assert.deepStrictEqual(costiGestioneCliente({
+    cliente_ha_dominio: false,
+    dominio_it: true
+  }, true), [
+    { descrizione: 'Gestione sito', importo: 30 },
+    { descrizione: 'Dominio - rinnovo', importo: 15 }
+  ]);
+});
+
+test('le tasse sono 60% se nessun collaboratore fattura, altrimenti 40%', () => {
+  assert.strictEqual(typeof percentualeTasseEconomia, 'function');
+  const referente = { ruolo: 'referente' };
+  const tomas = { ruolo: 'produzione', modalitaFatturazione: 'nessuna' };
+  const venditore = { ruolo: 'venditore', modalitaFatturazione: 'nessuna' };
+
+  assert.strictEqual(percentualeTasseEconomia([referente, tomas, venditore]), 60);
+  assert.strictEqual(percentualeTasseEconomia([
+    referente,
+    { ...tomas, modalitaFatturazione: 'totale' },
+    venditore
+  ]), 40);
+  assert.strictEqual(percentualeTasseEconomia([
+    referente,
+    tomas,
+    { ...venditore, modalitaFatturazione: 'mista' }
+  ]), 40);
+});
+
+test('la ripartizione applica il 60% oppure la riduzione no-fattura del 20%', () => {
+  assert.strictEqual(typeof appState, 'function');
+  const stato = appState();
+  const alessandro = { ruolo: 'referente', modalitaFatturazione: 'nessuna', haVenduto: false };
+  const tomas = { ruolo: 'produzione', modalitaFatturazione: 'nessuna', haVenduto: false };
+  const venditore = { ruolo: 'venditore', modalitaFatturazione: 'nessuna', haVenduto: true };
+  stato.venditaEconomicaForm.importoVendita = 300;
+  stato.venditaEconomicaForm.costi = [{ importo: 40 }];
+  stato.venditaEconomicaForm.modalitaFatturazioneAdmin = 'totale';
+  stato.venditaEconomicaForm.partecipanti = [alessandro, tomas, venditore];
+
+  assert.strictEqual(stato.nettoDistribuibileEconomia(), 104);
+  for (const partecipante of stato.venditaEconomicaForm.partecipanti) {
+    assert.ok(Math.abs(stato.calcoloPartecipanteEconomia(partecipante).quotaCalcolata - 104 / 3) < 0.001);
+  }
+
+  tomas.modalitaFatturazione = 'totale';
+  assert.strictEqual(stato.nettoDistribuibileEconomia(), 156);
+  assert.strictEqual(stato.calcoloPartecipanteEconomia(tomas).quotaCalcolata, 52);
+  assert.strictEqual(stato.calcoloPartecipanteEconomia(venditore).quotaCalcolata, 41.6);
+  assert.strictEqual(stato.calcoloPartecipanteEconomia(alessandro).quotaCalcolata, 62.4);
 });
 
 test('inquadratura e zoom avatar vengono salvati nell’URL e riletti', () => {

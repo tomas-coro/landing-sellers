@@ -39,6 +39,24 @@ function totaleContrattoDaForm(canone, extra, form) {
   );
 }
 
+function costiGestioneCliente(cliente, rinnovo = false) {
+  const costi = [{ descrizione: 'Gestione sito', importo: 30 }];
+  if (cliente.cliente_ha_dominio === false && (cliente.dominio_it || cliente.dominio_com)) {
+    costi.push({
+      descrizione: rinnovo ? 'Dominio - rinnovo' : 'Dominio - primo anno',
+      importo: rinnovo ? 15 : 10
+    });
+  }
+  return costi;
+}
+
+function percentualeTasseEconomia(partecipanti) {
+  const collaboratori = partecipanti.filter(p => p.ruolo !== 'referente');
+  return collaboratori.length && collaboratori.every(
+    p => (p.modalitaFatturazione || 'nessuna') === 'nessuna'
+  ) ? 60 : 40;
+}
+
 function etichettaDurataScontoForm(form) {
   if (form.sconto_durata_anni == null) return 'Per sempre';
   const anni = Number(form.sconto_durata_anni) || 1;
@@ -83,7 +101,6 @@ function formVenditaEconomicaVuoto() {
     costoImporto: null,
 
     // Regole economiche attualmente definite.
-    percentualeTasseFattura: 40,
     percentualeRiduzioneNoFattura: 20,
 
     modalitaFatturazioneAdmin: 'nessuna',
@@ -574,17 +591,12 @@ function appState() {
 
     nettoDistribuibileEconomia() {
       const margine = this.margineEconomia();
-      const tasse = Math.max(
-        0,
-        Math.min(
-          100,
-          Number(this.venditaEconomicaForm.percentualeTasseFattura) || 0
-        )
+      const tasse = percentualeTasseEconomia(
+        this.venditaEconomicaForm.partecipanti
       );
 
       // Se Alessandro non fattura, il margine non viene ridotto.
-      // Se fattura solo una parte, il 40% incide solo in proporzione
-      // alla parte fatturata al cliente.
+      // Se fattura solo una parte, le tasse incidono in proporzione.
       const incidenzaTasse =
         (tasse / 100) * this.percentualeFatturataAdminEconomia();
 
@@ -669,7 +681,10 @@ function appState() {
     },
 
     riduzioneNoFatturaPartecipanteEconomia(partecipante) {
-      if (partecipante.ruolo === 'referente') return 0;
+      if (
+        partecipante.ruolo === 'referente' ||
+        percentualeTasseEconomia(this.venditaEconomicaForm.partecipanti) === 60
+      ) return 0;
 
       const quotaTeorica =
         this.quotaTeoricaPartecipanteEconomia(partecipante);
@@ -747,7 +762,7 @@ function appState() {
         : quotaCalcolata;
 
       const percentualeTasseEffettiva =
-        (Number(this.venditaEconomicaForm.percentualeTasseFattura) || 0) *
+        percentualeTasseEconomia(this.venditaEconomicaForm.partecipanti) *
         this.percentualeFatturataAdminEconomia();
 
       const importoTasse = Math.max(
@@ -831,30 +846,8 @@ function appState() {
     },
 
     impostaCostiClienteEconomia(cliente) {
-      const costi = [];
-
-      const multipagina = Number(cliente.pagine_extra || 0) > 0;
-
-      costi.push(
-        this.creaCostoEconomia(
-          multipagina ? 'Hosting Multipagina' : 'Hosting Landing',
-          multipagina ? 25 : 20
-        )
-      );
-
-      if (cliente.dominio_it || cliente.dominio_com) {
-        costi.push(this.creaCostoEconomia('Dominio', 20));
-      }
-
-      if (cliente.email_5_caselle) {
-        costi.push(this.creaCostoEconomia('Mail', 10));
-      }
-
-      costi.push(
-        this.creaCostoEconomia('Claude - Creazione e Skill', 20)
-      );
-
-      this.venditaEconomicaForm.costi = costi;
+      this.venditaEconomicaForm.costi = costiGestioneCliente(cliente)
+        .map(costo => this.creaCostoEconomia(costo.descrizione, costo.importo));
     },
 
     clientiEconomiaFiltrati() {
@@ -1103,8 +1096,9 @@ function appState() {
         modalita_fatturazione_admin:
           this.modalitaFatturazioneAdminEconomia(),
         importo_fatturato_admin: this.importoFatturatoAdminEconomia(),
-        percentuale_tasse_admin:
-          Number(this.venditaEconomicaForm.percentualeTasseFattura) || 0
+        percentuale_tasse_admin: percentualeTasseEconomia(
+          this.venditaEconomicaForm.partecipanti
+        )
       };
 
       const costi = this.venditaEconomicaForm.costi.map(c => ({
@@ -2547,6 +2541,9 @@ if (typeof module !== 'undefined') {
     prezzoRicorrenteDaForm,
     etichettaDurataScontoForm,
     totaleContrattoDaForm,
+    costiGestioneCliente,
+    percentualeTasseEconomia,
+    appState,
     calcolaStatisticheVenditore,
     posizioneAvatarDaUrl,
     avatarUrlConPosizione
