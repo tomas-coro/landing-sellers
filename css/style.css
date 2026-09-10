@@ -3637,13 +3637,17 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 
 .home-active-sites{
   display:flex;
-  align-items:baseline;
-  gap:14px;
-  margin:14px 0 16px;
+  align-items:center;
+  gap:18px;
+  margin:16px 0 18px;
 }
-.home-active-sites strong{font-size:44px;line-height:.8;letter-spacing:-.06em}
-.home-active-sites span{display:grid;gap:3px;color:var(--lime);line-height:1.1}
-.home-active-sites b{font-size:13px}.home-active-sites small{color:#aaa;font-size:10px;font-weight:650}
+.home-active-sites-hero{display:flex;align-items:baseline;gap:8px;flex:0 0 auto}
+.home-active-sites-hero strong{font-size:44px;line-height:.8;letter-spacing:-.06em}
+.home-active-sites-hero b{font-size:13px;font-weight:700;color:#ccc}
+.home-active-sites-ratio{flex:1 1 auto;min-width:0;display:grid;gap:7px}
+.home-active-sites-ratio small{color:var(--lime);font-size:12px;font-weight:750;line-height:1}
+.home-active-sites-bar{height:7px;border-radius:99px;background:#363636;overflow:hidden}
+.home-active-sites-bar-fill{height:100%;border-radius:inherit;background:var(--lime)}
 
 .home-performance .home-money-grid{
   display:grid;

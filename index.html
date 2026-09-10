@@ -231,7 +231,7 @@
           </button>
 
           <button type="button" class="profile-trigger" @click="apriProfilo()" aria-label="Profilo">
-            <img x-show="profilo.avatar_url" :src="profilo.avatar_url" alt="">
+            <img x-show="profilo.avatar_url" :src="profilo.avatar_url" :style="avatarStile()" alt="">
             <span x-show="!profilo.avatar_url" x-text="inizialeProfilo()"></span>
           </button>
         </div>
@@ -257,11 +257,16 @@
             </div>
 
             <div class="home-active-sites">
-              <strong x-text="clienti.length"></strong>
-              <span>
+              <div class="home-active-sites-hero">
+                <strong x-text="clienti.length"></strong>
                 <b x-text="clienti.length === 1 ? 'sito totale' : 'siti totali'"></b>
-                <small x-text="'di cui ' + clientiPubblicati().length + (clientiPubblicati().length === 1 ? ' attivo' : ' attivi')"></small>
-              </span>
+              </div>
+              <div class="home-active-sites-ratio">
+                <small x-text="clientiPubblicati().length + (clientiPubblicati().length === 1 ? ' attivo' : ' attivi')"></small>
+                <div class="home-active-sites-bar">
+                  <div class="home-active-sites-bar-fill" :style="{ width: (clienti.length ? clientiPubblicati().length / clienti.length * 100 : 0) + '%' }"></div>
+                </div>
+              </div>
             </div>
 
             <div class="home-money-grid">
@@ -421,7 +426,7 @@
       <div class="content profile-content">
         <div class="profile-hero-card">
           <label class="profile-avatar-edit">
-            <img x-show="profilo.avatar_url" :src="profilo.avatar_url" alt="Foto profilo">
+            <img x-show="profilo.avatar_url" :src="profilo.avatar_url" :style="avatarStile()" alt="Foto profilo">
             <span x-show="!profilo.avatar_url" x-text="inizialeProfilo()"></span>
             <input type="file" accept="image/jpeg,image/png,image/webp" @change="caricaAvatar($event)">
             <i x-text="avatarCaricando ? '...' : '+'"></i>
@@ -538,7 +543,7 @@
           </button>
 
           <button type="button" class="profile-trigger" @click="apriProfilo()" aria-label="Profilo">
-            <img x-show="profilo.avatar_url" :src="profilo.avatar_url" alt="">
+            <img x-show="profilo.avatar_url" :src="profilo.avatar_url" :style="avatarStile()" alt="">
             <span x-show="!profilo.avatar_url" x-text="inizialeProfilo()"></span>
           </button>
         </div>
@@ -2423,7 +2428,7 @@
 
       <button type="button" :class="{ on: view === 'profilo' }" @click="apriProfilo()">
         <span class="mobile-nav-avatar">
-          <img x-show="profilo.avatar_url" :src="profilo.avatar_url" alt="">
+          <img x-show="profilo.avatar_url" :src="profilo.avatar_url" :style="avatarStile()" alt="">
           <span x-show="!profilo.avatar_url" x-text="inizialeProfilo()"></span>
         </span>
         <span>Profilo</span>
