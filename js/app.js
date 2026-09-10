@@ -46,15 +46,19 @@ function etichettaDurataScontoForm(form) {
 }
 
 function posizioneAvatarDaUrl(url = '') {
-  const match = String(url).match(/#pos=(\d{1,3}),(\d{1,3})$/);
-  return match
-    ? { x: Math.min(100, Number(match[1])), y: Math.min(100, Number(match[2])) }
-    : { x: 50, y: 50 };
+  const match = String(url).match(/#(?:pos|crop)=(\d{1,3}),(\d{1,3})(?:,([\d.]+))?$/);
+  return match ? {
+    x: Math.min(100, Number(match[1])),
+    y: Math.min(100, Number(match[2])),
+    zoom: Math.max(1, Math.min(2, Number(match[3]) || 1))
+  } : { x: 50, y: 50, zoom: 1 };
 }
 
-function avatarUrlConPosizione(url = '', x = 50, y = 50) {
+function avatarUrlConPosizione(url = '', x = 50, y = 50, zoom = 1) {
   const base = String(url).split('#')[0];
-  return base ? `${base}#pos=${Math.max(0, Math.min(100, Number(x) || 0))},${Math.max(0, Math.min(100, Number(y) || 0))}` : '';
+  const limita = valore => Math.max(0, Math.min(100, Number(valore) || 0));
+  const scala = Math.max(1, Math.min(2, Number(zoom) || 1));
+  return base ? `${base}#crop=${limita(x)},${limita(y)},${scala}` : '';
 }
 
 function calcolaStatisticheVenditore(vendite = [], pagamenti = []) {
@@ -178,7 +182,8 @@ function appState() {
 
     profilo: { nome: '', username: '', avatar_url: '', ruolo: '' },
     profiloForm: { username: '' },
-    avatarPosizione: { x: 50, y: 50 },
+    avatarPosizione: { x: 50, y: 50, zoom: 1 },
+    avatarTrascinamento: null,
     profiloErrore: '',
     profiloSalvando: false,
     avatarCaricando: false,
@@ -1375,7 +1380,30 @@ function appState() {
     },
 
     avatarStile() {
-      return `object-position:${this.avatarPosizione.x}% ${this.avatarPosizione.y}%`;
+      return `object-position:${this.avatarPosizione.x}% ${this.avatarPosizione.y}%;transform:scale(${this.avatarPosizione.zoom})`;
+    },
+
+    iniziaRitaglioAvatar(event) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+      this.avatarTrascinamento = {
+        pointerId: event.pointerId,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        x: this.avatarPosizione.x,
+        y: this.avatarPosizione.y
+      };
+    },
+
+    spostaRitaglioAvatar(event) {
+      const start = this.avatarTrascinamento;
+      if (!start || start.pointerId !== event.pointerId) return;
+      const rect = event.currentTarget.getBoundingClientRect();
+      this.avatarPosizione.x = Math.max(0, Math.min(100, start.x - ((event.clientX - start.clientX) / rect.width * 100)));
+      this.avatarPosizione.y = Math.max(0, Math.min(100, start.y - ((event.clientY - start.clientY) / rect.height * 100)));
+    },
+
+    terminaRitaglioAvatar() {
+      this.avatarTrascinamento = null;
     },
 
     async salvaProfilo() {
@@ -1391,7 +1419,8 @@ function appState() {
         const avatarUrl = avatarUrlConPosizione(
           this.profilo.avatar_url,
           this.avatarPosizione.x,
-          this.avatarPosizione.y
+          this.avatarPosizione.y,
+          this.avatarPosizione.zoom
         );
         const { error } = await window.supabaseClient.rpc('update_my_profile', {
           p_username: username || null,
@@ -1433,7 +1462,7 @@ function appState() {
           return;
         }
         const { data } = window.supabaseClient.storage.from('profile-avatars').getPublicUrl(path);
-        this.avatarPosizione = { x: 50, y: 50 };
+        this.avatarPosizione = { x: 50, y: 50, zoom: 1 };
         const avatarUrl = avatarUrlConPosizione(`${data.publicUrl}?v=${Date.now()}`);
         const { error: saveError } = await window.supabaseClient.rpc('update_my_profile', {
           p_username: (this.profiloForm.username || '').trim() || null,

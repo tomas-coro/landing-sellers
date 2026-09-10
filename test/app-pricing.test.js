@@ -51,10 +51,11 @@ test('il prezzo finale concordato include setup, dominio e altri extra', () => {
   }), 480);
 });
 
-test('la posizione avatar viene salvata nell’URL e riletta', () => {
-  const url = avatarUrlConPosizione('https://example.com/avatar.png?v=1#vecchio', 25, 80);
-  assert.strictEqual(url, 'https://example.com/avatar.png?v=1#pos=25,80');
-  assert.deepStrictEqual(posizioneAvatarDaUrl(url), { x: 25, y: 80 });
+test('inquadratura e zoom avatar vengono salvati nell’URL e riletti', () => {
+  const url = avatarUrlConPosizione('https://example.com/avatar.png?v=1#vecchio', 25, 80, 1.5);
+  assert.strictEqual(url, 'https://example.com/avatar.png?v=1#crop=25,80,1.5');
+  assert.deepStrictEqual(posizioneAvatarDaUrl(url), { x: 25, y: 80, zoom: 1.5 });
+  assert.deepStrictEqual(posizioneAvatarDaUrl('https://example.com/avatar.png#pos=40,60'), { x: 40, y: 60, zoom: 1 });
 });
 
 test('le statistiche sommano vendite attive e pagamenti incassati', () => {
