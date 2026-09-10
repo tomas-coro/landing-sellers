@@ -191,6 +191,7 @@ function formVenditaEconomicaVuoto() {
 function appState() {
   return {
     view: '',
+    avvioVisibile: true,
     sessione: null,
     clienteSelezionatoId: null,
     erroreLogin: '',
@@ -316,6 +317,8 @@ function appState() {
     swipeElement: null,
 
     async init() {
+      window.setTimeout(() => { this.avvioVisibile = false; }, 700);
+
       window.addEventListener('le:aggiornamento-pronto', () => {
         this.aggiornamentoDisponibile = true;
         this.aggiornamentoStato = 'disponibile';

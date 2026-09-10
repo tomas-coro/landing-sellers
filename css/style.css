@@ -26,6 +26,21 @@ body{
 :focus-visible{outline:2.5px solid var(--ink);outline-offset:2px;border-radius:4px}
 [x-cloak]{display:none!important}
 
+.app-launch{position:fixed;inset:0;z-index:999;background:var(--ink);display:grid;place-items:center}
+.app-launch-brand{display:flex;align-items:center;gap:11px;color:var(--paper);font-size:15px;font-weight:800;letter-spacing:.04em}
+.app-launch-dot{width:12px;height:12px;border-radius:50%;background:var(--lime);animation:launchDot .68s var(--ease) both}
+.app-launch-name{animation:launchName .5s .12s var(--ease) both}
+@keyframes launchDot{
+  0%{transform:scale(0);box-shadow:0 0 0 0 rgba(200,255,61,.45)}
+  55%{transform:scale(1.7);box-shadow:0 0 0 18px rgba(200,255,61,0)}
+  100%{transform:scale(1)}
+}
+@keyframes launchName{
+  from{opacity:0;clip-path:inset(0 100% 0 0)}
+  to{opacity:1;clip-path:inset(0)}
+}
+@media (prefers-reduced-motion:reduce){.app-launch-dot,.app-launch-name{animation:none}}
+
 .update-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;
   padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:var(--ink);color:var(--paper)}
 .update-bar span{font-size:12.5px;font-weight:700}
