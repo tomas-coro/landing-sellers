@@ -190,7 +190,7 @@ function formVenditaEconomicaVuoto() {
 
 function appState() {
   return {
-    view: 'login',
+    view: '',
     sessione: null,
     clienteSelezionatoId: null,
     erroreLogin: '',
