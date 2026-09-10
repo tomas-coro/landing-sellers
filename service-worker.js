@@ -1,10 +1,11 @@
 // service-worker.js
-const CACHE_NAME = 'venditori-le-shell-v47';
+const CACHE_NAME = 'venditori-le-shell-v48';
 
 const APP_SHELL = [
   './',
   './index.html',
   './css/style.css',
+  './assets/landing-evolution-logo.svg',
   './js/config.js',
   './js/supabase-client.js',
   './js/auth-logic.js',

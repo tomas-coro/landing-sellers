@@ -149,6 +149,21 @@ test('inquadratura e zoom avatar vengono salvati nell’URL e riletti', () => {
   assert.deepStrictEqual(posizioneAvatarDaUrl('https://example.com/avatar.png#pos=40,60'), { x: 40, y: 60, zoom: 1 });
 });
 
+test('il calendario admin riunisce le scadenze di tutti i venditori', () => {
+  const stato = appState();
+  stato.isAdmin = true;
+  stato.adminVenditoriPerId = { v1: 'Alessandro', v2: 'Nicola' };
+  stato.adminClienti = [
+    { id: 'c1', nome: 'Cliente Uno', venditore_id: 'v1', prossimo_contatto: '2030-01-10' },
+    { id: 'c2', nome: 'Cliente Due', venditore_id: 'v2', data_rinnovo: '2030-01-11', periodicita_contratto: 'annuale' }
+  ];
+
+  assert.deepStrictEqual(stato.eventiAgenda().map(evento => [evento.clienteNome, evento.venditoreNome]), [
+    ['Cliente Uno', 'Alessandro'],
+    ['Cliente Due', 'Nicola']
+  ]);
+});
+
 test('le statistiche del venditore usano la sua quota, non l’importo pieno della vendita condivisa', () => {
   assert.deepStrictEqual(calcolaStatisticheVenditore([
     { id: 'a', stato: 'attiva', importo_vendita: '1000' },

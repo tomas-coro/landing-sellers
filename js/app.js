@@ -161,6 +161,17 @@ function appState() {
     emailInput: '',
     passwordInput: '',
 
+    accountSlot: globalThis.window?.AccountSessions?.getActiveSlot() || 'personale',
+    accountSwitcherAperto: false,
+    accountSwitchInCorso: false,
+    personaleSessioneDisponibile: false,
+    adminSessioneDisponibile: false,
+    adminEmail: 'info@landingevolution.it',
+    adminPasswordInput: '',
+    adminLoginInCorso: false,
+    adminLoginErrore: '',
+    mostraLoginAdmin: false,
+
     clienti: [],
     erroreClienti: '',
     isAdmin: false,
@@ -229,6 +240,15 @@ function appState() {
 
     // dashboard admin
     venditori: [],
+    adminClienti: [],
+    adminVenditoriPerId: {},
+    adminStats: {
+      volumeVendite: 0,
+      venditeAttive: 0,
+      clienti: 0,
+      pubblicati: 0,
+      pubblicatiMese: 0
+    },
     erroreAdmin: '',
     filtroTestoAdmin: '',
 
@@ -240,6 +260,7 @@ function appState() {
     profiloErrore: '',
     profiloSalvando: false,
     avatarCaricando: false,
+    avatarErrore: false,
 
     // navigazione mobile
     swipeStartX: null,
@@ -269,6 +290,9 @@ function appState() {
       });
 
       this.sessione = await getSessioneCorrente();
+      this.accountSlot = window.AccountSessions.getActiveSlot();
+      await this.aggiornaStatoAccountSwitcher();
+
       if (this.sessione) { await this.dopoLogin(); }
       else { this.view = 'login'; }
     },
@@ -318,6 +342,8 @@ function appState() {
     },
 
     async dopoLogin() {
+      this.accountSlot = window.AccountSessions.getActiveSlot();
+
       const { data: profilo } = await window.supabaseClient
         .from('profili').select('nome,ruolo,username,avatar_url').eq('id', this.sessione.user.id).single();
       this.profilo = {
@@ -328,6 +354,7 @@ function appState() {
       };
       this.profiloForm.username = this.profilo.username;
       this.avatarPosizione = posizioneAvatarDaUrl(this.profilo.avatar_url);
+      this.avatarErrore = false;
       this.isAdmin = profilo?.ruolo === 'admin';
       this.filtroTesto = '';
       this.filtroStato = '';
@@ -342,6 +369,7 @@ function appState() {
       // se il browser ha gia' una subscription da un login precedente sullo
       // stesso device, aggiornaStatoPush() la ritrova subito (getSubscription)
       // senza richiedere di nuovo il permesso.
+      await this.aggiornaStatoAccountSwitcher();
       await this.aggiornaStatoPush();
     },
 
@@ -1424,7 +1452,7 @@ function appState() {
         'object-fit:cover',
         `object-position:${x}% ${y}%`,
         `transform:scale(${zoom})`,
-        'transform-origin:center center',
+        `transform-origin:${x}% ${y}%`,
         'display:block'
       ].join(';');
     },
@@ -1521,6 +1549,7 @@ function appState() {
         }
         this.profilo.avatar_url = avatarUrl;
         this.profilo.username = (this.profiloForm.username || '').trim();
+        this.avatarErrore = false;
         this.modificaInquadraturaAperta = true;
       } finally {
         this.avatarCaricando = false;
@@ -1528,17 +1557,190 @@ function appState() {
       }
     },
 
-    async fareLogout() {
-      try {
-        await window.WebPush.disattivaSottoscrizioneCorrente();
-      } catch (err) {
-        // il logout non deve mai bloccarsi per un problema sulla push:
-        // nel peggiore dei casi la subscription resta attiva sul server
-        // finche' non si ripete un logout riuscito.
-        console.warn('Disattivazione notifiche push fallita al logout:', err);
+    async aggiornaStatoAccountSwitcher() {
+      const [personale, admin] = await Promise.all([
+        sessioneAccount('personale'),
+        sessioneAccount('admin')
+      ]);
+
+      this.personaleSessioneDisponibile = Boolean(personale);
+      this.adminSessioneDisponibile = Boolean(admin);
+    },
+
+    async apriAccountSwitcher() {
+      this.adminLoginErrore = '';
+      this.adminPasswordInput = '';
+      this.mostraLoginAdmin = false;
+      await this.aggiornaStatoAccountSwitcher();
+      this.accountSwitcherAperto = true;
+    },
+
+    chiudiAccountSwitcher() {
+      if (this.accountSwitchInCorso || this.adminLoginInCorso) return;
+      this.accountSwitcherAperto = false;
+      this.adminPasswordInput = '';
+      this.adminLoginErrore = '';
+      this.mostraLoginAdmin = false;
+    },
+
+    resetStatoCambioAccount() {
+      this.clienti = [];
+      this.cestino = [];
+      this.note = [];
+      this.pagamentiCliente = [];
+      this.venditori = [];
+      this.indiceNoteRicerca = [];
+      this.clienteSelezionatoId = null;
+      this.filtroVenditoreId = '';
+      this.filtroVenditoreNome = '';
+      this.filtroTesto = '';
+      this.filtroStato = '';
+      this.filtroSoloRitardo = false;
+      this.erroreClienti = '';
+      this.erroreAdmin = '';
+      this.erroreScheda = '';
+      this.pushErrore = '';
+    },
+
+    async validaAccountAdmin(sessione) {
+      if (!sessione?.user) {
+        throw new Error('Sessione admin non valida.');
       }
-      await logout();
+
+      if (
+        String(sessione.user.email || '').toLowerCase()
+        !== this.adminEmail.toLowerCase()
+      ) {
+        throw new Error(
+          'Questo accesso non corrisponde all’account admin Landing Evolution.'
+        );
+      }
+
+      const clientAdmin = window.AccountSessions.getClient('admin');
+      const { data: profilo, error } = await clientAdmin
+        .from('profili')
+        .select('ruolo')
+        .eq('id', sessione.user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (profilo?.ruolo !== 'admin') {
+        throw new Error(
+          'L’account info@landingevolution.it non risulta configurato come admin.'
+        );
+      }
+    },
+
+    async collegaAccountAdmin() {
+      if (this.adminLoginInCorso) return;
+
+      this.adminLoginErrore = '';
+
+      if (!this.adminPasswordInput) {
+        this.adminLoginErrore = 'Inserisci la password dell’account admin.';
+        return;
+      }
+
+      this.adminLoginInCorso = true;
+
+      try {
+        const sessione = await loginAccount(
+          'admin',
+          this.adminEmail,
+          this.adminPasswordInput
+        );
+
+        try {
+          await this.validaAccountAdmin(sessione);
+        } catch (error) {
+          await logoutAccount('admin');
+          throw error;
+        }
+
+        this.adminSessioneDisponibile = true;
+        this.adminPasswordInput = '';
+
+        await this.cambiaAccountRapido('admin');
+      } catch (error) {
+        this.adminLoginErrore = error.message;
+      } finally {
+        this.adminLoginInCorso = false;
+      }
+    },
+
+    async cambiaAccountRapido(slot) {
+      if (this.accountSwitchInCorso) return;
+
+      if (slot === this.accountSlot) {
+        this.accountSwitcherAperto = false;
+        return;
+      }
+
+      this.accountSwitchInCorso = true;
+      this.adminLoginErrore = '';
+
+      try {
+        const sessione = await cambiaAccount(slot);
+
+        if (!sessione) {
+          this.adminLoginErrore =
+            slot === 'admin'
+              ? 'Accedi una volta all’account admin per abilitarne lo switch rapido.'
+              : 'La sessione personale non è più disponibile.';
+          return;
+        }
+
+        if (slot === 'admin') {
+          await this.validaAccountAdmin(sessione);
+        }
+
+        this.resetStatoCambioAccount();
+        this.sessione = sessione;
+        this.accountSlot = slot;
+        this.accountSwitcherAperto = false;
+
+        await this.dopoLogin();
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      } catch (error) {
+        this.adminLoginErrore = error.message;
+      } finally {
+        this.accountSwitchInCorso = false;
+        await this.aggiornaStatoAccountSwitcher();
+      }
+    },
+
+    async fareLogout() {
+      const slotUscente = this.accountSlot;
+
+      if (slotUscente === 'personale') {
+        try {
+          await window.WebPush.disattivaSottoscrizioneCorrente();
+        } catch (err) {
+          console.warn(
+            'Disattivazione notifiche push fallita al logout:',
+            err
+          );
+        }
+      }
+
+      await logoutAccount(slotUscente);
+      await this.aggiornaStatoAccountSwitcher();
+
+      const altroSlot = slotUscente === 'admin' ? 'personale' : 'admin';
+      const altraSessione = await cambiaAccount(altroSlot);
+
+      if (altraSessione) {
+        this.resetStatoCambioAccount();
+        this.sessione = altraSessione;
+        this.accountSlot = altroSlot;
+        await this.dopoLogin();
+        return;
+      }
+
       this.sessione = null;
+      this.accountSlot = 'personale';
+      window.AccountSessions.setActiveSlot('personale');
       this.view = 'login';
     },
 
@@ -1665,14 +1867,17 @@ function appState() {
     eventiAgenda() {
       const oggi = this.dataISOOggi();
       const eventi = [];
+      const clientiAgenda = this.isAdmin ? this.adminClienti : this.clienti;
 
-      this.clienti.forEach(cliente => {
+      clientiAgenda.forEach(cliente => {
         const contatto = this.normalizzaDataAgenda(cliente.prossimo_contatto);
         if (contatto) {
           eventi.push({
             id: `contatto-${cliente.id}-${contatto}`,
             clienteId: cliente.id,
             clienteNome: cliente.nome,
+            venditoreId: cliente.venditore_id,
+            venditoreNome: this.adminVenditoriPerId[cliente.venditore_id] || '',
             data: contatto,
             tipo: 'contatto',
             titolo: contatto < oggi ? 'Contatto in ritardo' : 'Contatto cliente',
@@ -1686,6 +1891,8 @@ function appState() {
             id: `rinnovo-${cliente.id}-${rinnovo}`,
             clienteId: cliente.id,
             clienteNome: cliente.nome,
+            venditoreId: cliente.venditore_id,
+            venditoreNome: this.adminVenditoriPerId[cliente.venditore_id] || '',
             data: rinnovo,
             tipo: 'rinnovo',
             titolo: cliente.periodicita_contratto === 'annuale'
@@ -1758,6 +1965,7 @@ function appState() {
       const d = new Date(Date.UTC(anno, mese - 1 + delta, 1));
       this.agendaMese = d.toISOString().slice(0, 7);
       this.agendaDataSelezionata = d.toISOString().slice(0, 10);
+      this.agendaVista = 'mese';
     },
 
     selezionaGiornoAgenda(iso) {
@@ -2536,42 +2744,176 @@ function appState() {
     // --- dashboard admin ---
     async caricaDashboardAdmin() {
       this.erroreAdmin = '';
-      const { data: profili, error: erroreProfili } = await window.supabaseClient
-        .from('profili').select('id, nome, ruolo').eq('ruolo', 'venditore').order('nome');
-      if (erroreProfili) { this.erroreAdmin = 'Errore nel caricare i venditori: ' + erroreProfili.message; return; }
 
-      const { data: clienti, error: erroreClienti } = await window.supabaseClient
-        .from('clienti').select('*').is('cancellato_il', null);
-      if (erroreClienti) { this.erroreAdmin = 'Errore nel caricare i clienti: ' + erroreClienti.message; return; }
+      const [
+        profiliResult,
+        clientiResult,
+        venditeResult,
+        partecipantiResult
+      ] = await Promise.all([
+        window.supabaseClient
+          .from('profili')
+          .select('id,nome,ruolo')
+          .order('nome'),
 
-      const oraChiaveMese = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
+        window.supabaseClient
+          .from('clienti')
+          .select('id,nome,venditore_id,stato,pubblicato_il,prossimo_contatto,data_rinnovo,periodicita_contratto')
+          .is('cancellato_il', null),
 
-      this.venditori = profili.map(v => {
-        const suoi = clienti.filter(c => c.venditore_id === v.id);
-        const pubblicati = suoi.filter(c => c.stato === 'pubblicato');
-        const pubblicatiQuestoMese = pubblicati.filter(c => {
-          if (!c.pubblicato_il) return false;
-          const d = new Date(c.pubblicato_il);
-          return (d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')) === oraChiaveMese;
+        window.supabaseClient
+          .from('vendite')
+          .select('id,importo_vendita,stato'),
+
+        window.supabaseClient
+          .from('vendita_partecipanti')
+          .select('vendita_id,profilo_id,quota_finale')
+      ]);
+
+      const errore =
+        profiliResult.error ||
+        clientiResult.error ||
+        venditeResult.error ||
+        partecipantiResult.error;
+
+      if (errore) {
+        this.erroreAdmin =
+          'Errore nel caricare la dashboard: ' + errore.message;
+        return;
+      }
+
+      const profili = profiliResult.data || [];
+      const clienti = clientiResult.data || [];
+      const vendite = venditeResult.data || [];
+      const partecipanti = partecipantiResult.data || [];
+
+      const profiliVisibili = profili.filter(profilo => profilo.ruolo === 'venditore');
+      this.adminClienti = clienti;
+      this.adminVenditoriPerId = Object.fromEntries(
+        profiliVisibili.map(profilo => [profilo.id, profilo.nome])
+      );
+
+      const venditeAttive = vendite.filter(v => v.stato === 'attiva');
+      const venditeAttiveIds = new Set(venditeAttive.map(v => v.id));
+
+      const chiaveMese = (() => {
+        const d = new Date();
+        return (
+          d.getFullYear() +
+          '-' +
+          String(d.getMonth() + 1).padStart(2, '0')
+        );
+      })();
+
+      const pubblicati = clienti.filter(c => c.stato === 'pubblicato');
+
+      const pubblicatiQuestoMese = pubblicati.filter(c => {
+        if (!c.pubblicato_il) return false;
+
+        const d = new Date(c.pubblicato_il);
+
+        return (
+          d.getFullYear() +
+          '-' +
+          String(d.getMonth() + 1).padStart(2, '0')
+        ) === chiaveMese;
+      });
+
+      this.adminStats = {
+        volumeVendite: venditeAttive.reduce(
+          (totale, vendita) =>
+            totale + (Number(vendita.importo_vendita) || 0),
+          0
+        ),
+        venditeAttive: venditeAttive.length,
+        clienti: clienti.length,
+        pubblicati: pubblicati.length,
+        pubblicatiMese: pubblicatiQuestoMese.length
+      };
+
+      this.venditori = profiliVisibili.map(profilo => {
+        const partecipazioni = partecipanti.filter(partecipazione =>
+          partecipazione.profilo_id === profilo.id &&
+          venditeAttiveIds.has(partecipazione.vendita_id)
+        );
+
+        const venditeProfilo = new Set(
+          partecipazioni.map(p => p.vendita_id)
+        );
+
+        const suoiClienti = clienti.filter(
+          cliente => cliente.venditore_id === profilo.id
+        );
+
+        const suoiPubblicati = suoiClienti.filter(
+          cliente => cliente.stato === 'pubblicato'
+        );
+
+        const suoiPubblicatiMese = suoiPubblicati.filter(cliente => {
+          if (!cliente.pubblicato_il) return false;
+
+          const d = new Date(cliente.pubblicato_il);
+
+          return (
+            d.getFullYear() +
+            '-' +
+            String(d.getMonth() + 1).padStart(2, '0')
+          ) === chiaveMese;
         });
+
         return {
-          id: v.id, nome: v.nome,
-          totaleGenerato: pubblicati.reduce((s, c) => s + (Number(c.importo_abbonamento) || 0), 0),
-          nPubblicati: pubblicati.length,
-          nPubblicatiMese: pubblicatiQuestoMese.length,
-          nClientiTotali: suoi.length
+          id: profilo.id,
+          nome: profilo.nome,
+
+          /*
+           * Qui non usiamo piu' importo_abbonamento del cliente.
+           * Il valore personale deriva dalla quota economica realmente
+           * registrata nella vendita.
+           */
+          totaleGenerato: partecipazioni.reduce(
+            (totale, partecipazione) =>
+              totale + (Number(partecipazione.quota_finale) || 0),
+            0
+          ),
+
+          nVendite: venditeProfilo.size,
+          nClientiTotali: suoiClienti.length,
+          nPubblicati: suoiPubblicati.length,
+          nPubblicatiMese: suoiPubblicatiMese.length
         };
       });
     },
 
     totaleGeneraleAdmin() {
-      return this.venditori.reduce((s, v) => s + v.totaleGenerato, 0);
+      return Number(this.adminStats.volumeVendite) || 0;
+    },
+
+    totaleClientiAdmin() {
+      return Number(this.adminStats.clienti) || 0;
+    },
+
+    totalePubblicatiAdmin() {
+      return Number(this.adminStats.pubblicati) || 0;
+    },
+
+    totalePubblicatiMeseAdmin() {
+      return Number(this.adminStats.pubblicatiMese) || 0;
+    },
+
+    inizialeVenditoreAdmin(venditore) {
+      const valore = venditore?.nome || '?';
+      return valore.trim().charAt(0).toUpperCase();
     },
 
     venditoriFiltrati() {
       const testo = this.filtroTestoAdmin.trim().toLowerCase();
       if (!testo) return this.venditori;
       return this.venditori.filter(v => (v.nome || '').toLowerCase().includes(testo));
+    },
+
+    async apriEventoAdmin(evento) {
+      await this.apriClientiVenditore(evento.venditoreId, evento.venditoreNome);
+      await this.apriScheda(evento.clienteId);
     },
 
     async apriClientiVenditore(venditoreId, nomeVenditore) {

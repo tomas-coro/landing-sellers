@@ -231,8 +231,8 @@
           </button>
 
           <button type="button" class="profile-trigger" @click="apriProfilo()" aria-label="Profilo">
-            <img x-show="profilo.avatar_url" :src="profilo.avatar_url" :style="avatarStile()" alt="">
-            <span x-show="!profilo.avatar_url" x-text="inizialeProfilo()"></span>
+            <img x-show="isAdmin || (profilo.avatar_url && !avatarErrore)" :src="isAdmin ? 'assets/landing-evolution-logo.svg' : profilo.avatar_url" :style="isAdmin ? '' : avatarStile()" @error="avatarErrore = true" @load="avatarErrore = false" alt="">
+            <span x-show="!isAdmin && (!profilo.avatar_url || avatarErrore)" x-text="inizialeProfilo()"></span>
           </button>
         </div>
       </div>
@@ -415,77 +415,393 @@
     <!-- PROFILO -->
     <div x-show="view === 'profilo'" x-transition.opacity.duration.160ms class="profile-view app-main-view">
       <div class="brandbar">
-        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+        <div class="brand">
+          <span class="bdot"></span>
+          <span>LANDING EVOLUTION</span>
+        </div>
       </div>
-      <div class="topbar">
-        <button type="button" class="linkback" @click="vaiHome()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Indietro
+
+      <div class="topbar profile-topbar">
+        <button type="button" class="linkback" @click="tornaDaProfilo()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M11 18l-6-6 6-6"/>
+          </svg>
+          Indietro
         </button>
-        <h1 style="font-size:19px">Profilo</h1>
+
+        <h1 x-text="isAdmin ? 'Area admin' : 'Profilo'"></h1>
       </div>
+
       <div class="content profile-content">
-        <div class="profile-hero-card">
+
+        <!-- HERO ADMIN -->
+        <section
+          x-show="isAdmin"
+          class="admin-profile-hero">
+
+          <div class="admin-profile-hero-top">
+            <div class="admin-profile-avatar">
+              <img src="assets/landing-evolution-logo.svg" alt="Logo Landing Evolution">
+            </div>
+
+            <div class="admin-profile-identity">
+              <span class="admin-profile-eyebrow">ACCOUNT AMMINISTRATORE</span>
+
+              <strong>Landing Evolution</strong>
+
+              <small x-text="sessione?.user?.email || ''"></small>
+
+              <span class="admin-profile-badge">
+                <i></i>
+                Admin
+              </span>
+            </div>
+          </div>
+
+          <div class="admin-profile-status">
+            <div>
+              <small>Sessione</small>
+              <strong>Amministrazione attiva</strong>
+            </div>
+
+            <span></span>
+          </div>
+        </section>
+
+
+        <!-- HERO PERSONALE -->
+        <div
+          x-show="!isAdmin"
+          class="profile-hero-card">
+
           <label class="profile-avatar-edit">
-            <img x-show="profilo.avatar_url" :src="profilo.avatar_url" :style="avatarStile()" alt="Foto profilo">
-            <span x-show="!profilo.avatar_url" x-text="inizialeProfilo()"></span>
-            <input type="file" accept="image/jpeg,image/png,image/webp" @change="caricaAvatar($event)">
+            <img
+              x-show="profilo.avatar_url"
+              :src="profilo.avatar_url"
+              :style="avatarStile()"
+              alt="Foto profilo">
+
+            <span
+              x-show="!profilo.avatar_url"
+              x-text="inizialeProfilo()">
+            </span>
+
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              @change="caricaAvatar($event)">
+
             <i x-text="avatarCaricando ? '...' : '+'"></i>
           </label>
+
           <div>
             <strong x-text="profilo.username || profilo.nome || 'Profilo'"></strong>
             <small x-text="sessione?.user?.email || ''"></small>
-            <span class="profile-role" x-text="isAdmin ? 'Admin' : 'Venditore'"></span>
+            <span class="profile-role">Venditore</span>
           </div>
         </div>
 
-        <div class="stack-card">
+
+        <!-- MODIFICA PROFILO -->
+        <section
+          class="stack-card"
+          :class="{ 'admin-profile-editor': isAdmin }">
+
+          <div
+            class="admin-profile-section-head"
+            x-show="isAdmin">
+
+            <div>
+              <span>PROFILO</span>
+              <strong>Identità account</strong>
+            </div>
+
+            <small>Nome visualizzato</small>
+          </div>
+
           <button
             type="button"
             class="avatar-crop-reset"
-            x-show="profilo.avatar_url && !modificaInquadraturaAperta"
+            x-show="!isAdmin && profilo.avatar_url && !modificaInquadraturaAperta"
             @click="modificaInquadraturaAperta = true">
             Modifica inquadratura foto
           </button>
-          <div class="avatar-position-controls" x-show="profilo.avatar_url && modificaInquadraturaAperta">
+
+          <div
+            class="avatar-position-controls"
+            x-show="!isAdmin && profilo.avatar_url && modificaInquadraturaAperta">
+
             <strong>Inquadratura foto</strong>
-            <small>Trascina la foto per spostarla, regola lo zoom e poi salva.</small>
+
+            <small>
+              Trascina la foto per spostarla, regola lo zoom e poi salva.
+            </small>
+
             <div
               class="avatar-crop-preview"
               @pointerdown.prevent="iniziaRitaglioAvatar($event)"
               @pointermove.prevent="spostaRitaglioAvatar($event)"
               @pointerup="terminaRitaglioAvatar()"
               @pointercancel="terminaRitaglioAvatar()">
-              <img :src="profilo.avatar_url" :style="avatarStile()" alt="Anteprima foto profilo" draggable="false">
+
+              <img
+                :src="profilo.avatar_url"
+                :style="avatarStile()"
+                alt="Anteprima foto profilo"
+                draggable="false">
             </div>
+
             <label>
               <span>Zoom</span>
-              <input type="range" min="1" max="2" step="0.05" x-model.number="avatarPosizione.zoom">
+              <input
+                type="range"
+                min="1"
+                max="2"
+                step="0.05"
+                x-model.number="avatarPosizione.zoom">
             </label>
+
             <div class="avatar-crop-actions">
-              <button type="button" class="avatar-crop-reset" @click="avatarPosizione = { x: 50, y: 50, zoom: 1 }">Reimposta inquadratura</button>
-              <button type="button" class="avatar-crop-reset" @click="modificaInquadraturaAperta = false">Chiudi</button>
+              <button
+                type="button"
+                class="avatar-crop-reset"
+                @click="avatarPosizione = { x: 50, y: 50, zoom: 1 }">
+                Reimposta inquadratura
+              </button>
+
+              <button
+                type="button"
+                class="avatar-crop-reset"
+                @click="modificaInquadraturaAperta = false">
+                Chiudi
+              </button>
             </div>
           </div>
+
           <div class="field">
             <label>Username</label>
-            <input maxlength="30" x-model="profiloForm.username" placeholder="Es. marco.rossi">
-          </div>
-          <button type="button" class="btn btn-primary" @click="salvaProfilo()" :disabled="profiloSalvando">
-            <span x-text="profiloSalvando ? 'Salvataggio...' : 'Salva profilo'"></span>
-          </button>
-          <p x-show="profiloErrore" x-text="profiloErrore" class="err"></p>
-        </div>
 
-        <div class="stack-card profile-menu">
+            <input
+              maxlength="30"
+              x-model="profiloForm.username"
+              placeholder="Es. landing.evolution">
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-primary"
+            @click="salvaProfilo()"
+            :disabled="profiloSalvando">
+
+            <span
+              x-text="profiloSalvando
+                ? 'Salvataggio...'
+                : 'Salva profilo'">
+            </span>
+          </button>
+
+          <p
+            x-show="profiloErrore"
+            x-text="profiloErrore"
+            class="err">
+          </p>
+        </section>
+
+
+        <!-- MENU ADMIN -->
+        <section
+          x-show="isAdmin"
+          class="admin-profile-group">
+
+          <div class="admin-profile-group-title">
+            <span>AMMINISTRAZIONE</span>
+            <strong>Gestione</strong>
+          </div>
+
+          <div class="admin-profile-menu">
+
+            <button
+              type="button"
+              @click="view = 'admin'">
+
+              <span class="admin-profile-menu-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="1.8">
+                  <rect x="3" y="3" width="7" height="7" rx="2"/>
+                  <rect x="14" y="3" width="7" height="7" rx="2"/>
+                  <rect x="3" y="14" width="7" height="7" rx="2"/>
+                  <rect x="14" y="14" width="7" height="7" rx="2"/>
+                </svg>
+              </span>
+
+              <span class="admin-profile-menu-copy">
+                <strong>Dashboard venditori</strong>
+                <small>Venditori, clienti e risultati</small>
+              </span>
+
+              <i>›</i>
+            </button>
+
+            <button
+              type="button"
+              @click="apriCestino()">
+
+              <span class="admin-profile-menu-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="1.8" stroke-linecap="round">
+                  <path d="M3 6h18"/>
+                  <path d="M8 6V4h8v2"/>
+                  <path d="M6 6l1 14h10l1-14"/>
+                </svg>
+              </span>
+
+              <span class="admin-profile-menu-copy">
+                <strong>Cestino</strong>
+                <small>Clienti eliminati e ripristino</small>
+              </span>
+
+              <i>›</i>
+            </button>
+
+          </div>
+        </section>
+
+
+        <!-- APP ADMIN -->
+        <section
+          x-show="isAdmin"
+          class="admin-profile-group">
+
+          <div class="admin-profile-group-title">
+            <span>APPLICAZIONE</span>
+            <strong>App e dispositivo</strong>
+          </div>
+
+          <div class="admin-profile-menu">
+
+            <button
+              type="button"
+              class="profile-update-row"
+              :class="{
+                'is-available': aggiornamentoDisponibile,
+                'is-ok': aggiornamentoStato === 'aggiornato' && !aggiornamentoDisponibile,
+                'is-error': aggiornamentoStato === 'errore'
+              }"
+              @click="controllaAggiornamenti()"
+              :disabled="aggiornamentoStato === 'controllo'">
+
+              <span class="admin-profile-menu-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="1.8" stroke-linecap="round">
+                  <path d="M20 12a8 8 0 10-2.3 5.7"/>
+                  <path d="M20 7v5h-5"/>
+                </svg>
+              </span>
+
+              <span class="admin-profile-menu-copy">
+                <strong>Aggiornamenti</strong>
+
+                <small>
+                  <span x-text="etichettaAggiornamento()"></span>
+                </small>
+              </span>
+
+              <span
+                class="admin-app-status"
+                :class="{
+                  available: aggiornamentoDisponibile,
+                  ok: aggiornamentoStato === 'aggiornato' && !aggiornamentoDisponibile,
+                  error: aggiornamentoStato === 'errore'
+                }">
+              </span>
+            </button>
+
+          </div>
+        </section>
+
+
+        <!-- ACCOUNT ADMIN -->
+        <section
+          x-show="isAdmin"
+          class="admin-profile-group">
+
+          <div class="admin-profile-group-title">
+            <span>ACCOUNT</span>
+            <strong>Sessione</strong>
+          </div>
+
+          <div class="admin-profile-menu">
+
+            <button
+              type="button"
+              @click="apriAccountSwitcher()">
+
+              <span class="admin-profile-menu-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="1.8" stroke-linecap="round">
+                  <path d="M17 3l4 4-4 4"/>
+                  <path d="M21 7H9"/>
+                  <path d="M7 21l-4-4 4-4"/>
+                  <path d="M3 17h12"/>
+                </svg>
+              </span>
+
+              <span class="admin-profile-menu-copy">
+                <strong>Cambia account</strong>
+                <small>Passa al profilo personale</small>
+              </span>
+
+              <i>›</i>
+            </button>
+
+            <button
+              type="button"
+              class="admin-profile-logout"
+              @click="fareLogout()">
+
+              <span class="admin-profile-menu-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="1.8" stroke-linecap="round">
+                  <path d="M10 17l5-5-5-5"/>
+                  <path d="M15 12H3"/>
+                  <path d="M14 4h5a2 2 0 012 2v12a2 2 0 01-2 2h-5"/>
+                </svg>
+              </span>
+
+              <span class="admin-profile-menu-copy">
+                <strong>Esci dall'account admin</strong>
+                <small x-text="sessione?.user?.email || ''"></small>
+              </span>
+
+              <i>›</i>
+            </button>
+
+          </div>
+        </section>
+
+
+        <!-- MENU PERSONALE -->
+        <div
+          x-show="!isAdmin"
+          class="stack-card profile-menu">
+
           <button
             type="button"
             class="profile-push-toggle"
             :class="{ 'is-active': pushStato === 'attivo' }"
             @click="togglePush()"
             :disabled="pushInCorso || pushStato === 'non-supportato'">
+
             <span>Notifiche</span>
-            <strong x-text="pushInCorso ? 'Attendi...' : etichettaPush()"></strong>
+
+            <strong
+              x-text="pushInCorso
+                ? 'Attendi...'
+                : etichettaPush()">
+            </strong>
           </button>
+
           <button
             type="button"
             class="profile-update-row"
@@ -506,79 +822,544 @@
                   available: aggiornamentoDisponibile,
                   ok: aggiornamentoStato === 'aggiornato' && !aggiornamentoDisponibile,
                   error: aggiornamentoStato === 'errore'
-                }"></i>
+                }">
+              </i>
 
               <span x-text="etichettaAggiornamento()"></span>
             </strong>
           </button>
-          <button type="button" @click="apriCestino()"><span>Cestino</span><strong>Apri</strong></button>
-          <button type="button" class="danger-row" @click="fareLogout()"><span>Account</span><strong>Esci</strong></button>
+
+          <button
+            type="button"
+            @click="apriCestino()">
+
+            <span>Cestino</span>
+            <strong>Apri</strong>
+          </button>
+
+          <button
+            type="button"
+            class="profile-account-row"
+            @click="apriAccountSwitcher()">
+
+            <span>Account</span>
+
+            <strong>
+              <span
+                x-text="profilo.username || profilo.nome || 'Personale'">
+              </span>
+              <i>›</i>
+            </strong>
+          </button>
         </div>
-        <p x-show="pushErrore" x-text="pushErrore" class="err"></p>
+
+        <p
+          x-show="pushErrore"
+          x-text="pushErrore"
+          class="err">
+        </p>
+
+      </div>
+    </div>
+
+
+    <!-- SWITCH ACCOUNT -->
+    <div
+      x-show="accountSwitcherAperto"
+      x-cloak
+      class="modal-overlay account-switch-overlay"
+      @click.self="chiudiAccountSwitcher()">
+
+      <div class="modal-card account-switch-modal">
+
+        <div class="account-switch-handle"></div>
+
+        <div class="account-switch-modal-head">
+          <div>
+            <span class="account-switch-eyebrow">ACCOUNT</span>
+            <h2>Cambia account</h2>
+            <p>Passa rapidamente tra il tuo profilo e l'area amministrativa.</p>
+          </div>
+
+          <button
+            type="button"
+            class="account-switch-close"
+            @click="chiudiAccountSwitcher()"
+            aria-label="Chiudi">
+
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round">
+              <path d="M6 6l12 12M18 6L6 18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="account-switch-list">
+
+          <!-- ACCOUNT PERSONALE -->
+          <button
+            type="button"
+            class="account-switch-row"
+            :class="{ active: accountSlot === 'personale' }"
+            :disabled="accountSwitchInCorso || !personaleSessioneDisponibile"
+            @click="cambiaAccountRapido('personale')">
+
+            <span class="account-switch-avatar personal">
+
+              <img
+                x-show="accountSlot === 'personale' && profilo.avatar_url"
+                :src="profilo.avatar_url"
+                :style="avatarStile()"
+                alt="">
+
+              <span
+                x-show="accountSlot !== 'personale' || !profilo.avatar_url"
+                x-text="accountSlot === 'personale'
+                  ? inizialeProfilo()
+                  : 'P'">
+              </span>
+
+            </span>
+
+            <span class="account-switch-copy">
+
+              <span class="account-switch-name">
+                <strong
+                  x-text="accountSlot === 'personale'
+                    ? (profilo.username || profilo.nome || 'Account personale')
+                    : 'Account personale'">
+                </strong>
+
+                <em>Personale</em>
+              </span>
+
+              <small
+                x-text="accountSlot === 'personale'
+                  ? (sessione?.user?.email || '')
+                  : 'Profilo venditore personale'">
+              </small>
+
+            </span>
+
+            <span
+              class="account-switch-current"
+              x-show="accountSlot === 'personale'">
+              <i></i>
+              Attivo
+            </span>
+
+            <span
+              class="account-switch-chevron"
+              x-show="accountSlot !== 'personale'">
+              ›
+            </span>
+
+          </button>
+
+
+          <!-- ACCOUNT ADMIN -->
+          <button
+            type="button"
+            class="account-switch-row"
+            :class="{ active: accountSlot === 'admin' }"
+            :disabled="accountSwitchInCorso"
+            @click="
+              adminSessioneDisponibile
+                ? cambiaAccountRapido('admin')
+                : mostraLoginAdmin = !mostraLoginAdmin
+            ">
+
+            <span class="account-switch-avatar admin">
+              <img src="assets/landing-evolution-logo.svg" alt="">
+            </span>
+
+            <span class="account-switch-copy">
+
+              <span class="account-switch-name">
+                <strong>Landing Evolution</strong>
+                <em>Admin</em>
+              </span>
+
+              <small>info@landingevolution.it</small>
+
+            </span>
+
+            <span
+              class="account-switch-current"
+              x-show="accountSlot === 'admin'">
+              <i></i>
+              Attivo
+            </span>
+
+            <span
+              class="account-switch-connect"
+              x-show="accountSlot !== 'admin' && !adminSessioneDisponibile">
+              Collega
+            </span>
+
+            <span
+              class="account-switch-chevron"
+              x-show="accountSlot !== 'admin' && adminSessioneDisponibile">
+              ›
+            </span>
+
+          </button>
+
+        </div>
+
+
+        <!-- LOGIN ADMIN -->
+        <div
+          class="account-admin-connect"
+          x-show="!adminSessioneDisponibile && mostraLoginAdmin"
+          x-transition.opacity.duration.150ms>
+
+          <div class="account-admin-connect-head">
+            <div>
+              <strong>Collega account admin</strong>
+              <small>
+                Devi accedere solo la prima volta su questo dispositivo.
+              </small>
+            </div>
+          </div>
+
+          <div class="account-admin-field">
+
+            <label>Password</label>
+
+            <div class="account-admin-input-row">
+
+              <input
+                type="password"
+                x-model="adminPasswordInput"
+                placeholder="Password di info@landingevolution.it"
+                autocomplete="current-password"
+                @keydown.enter.prevent="collegaAccountAdmin()">
+
+              <button
+                type="button"
+                :disabled="adminLoginInCorso || !adminPasswordInput"
+                @click="collegaAccountAdmin()">
+
+                <span
+                  x-text="adminLoginInCorso
+                    ? 'Accesso...'
+                    : 'Collega'">
+                </span>
+
+              </button>
+
+            </div>
+
+          </div>
+
+          <p
+            x-show="adminLoginErrore"
+            x-text="adminLoginErrore"
+            class="err account-admin-error">
+          </p>
+
+          <small class="account-admin-security">
+            La password non viene memorizzata dall'app.
+          </small>
+
+        </div>
+
+
+        <!-- USCITA -->
+        <div class="account-switch-footer">
+
+          <button
+            type="button"
+            class="account-switch-logout"
+            :disabled="accountSwitchInCorso || adminLoginInCorso"
+            @click="accountSwitcherAperto = false; fareLogout()">
+
+            <span class="account-switch-logout-icon">
+
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+
+                <path d="M10 17l5-5-5-5"/>
+                <path d="M15 12H3"/>
+                <path d="M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"/>
+
+              </svg>
+
+            </span>
+
+            <span class="account-switch-logout-copy">
+
+              <strong>Esci da questo account</strong>
+
+              <small
+                x-text="accountSlot === 'admin'
+                  ? 'Landing Evolution Admin'
+                  : (profilo.username || profilo.nome || 'Account personale')">
+              </small>
+
+            </span>
+
+            <span class="account-switch-chevron danger">
+              ›
+            </span>
+
+          </button>
+
+        </div>
+
       </div>
     </div>
 
     <!-- DASHBOARD ADMIN -->
-    <div x-show="view === 'admin'" x-transition.opacity.duration.160ms class="app-main-view">
+    <div
+      x-show="view === 'admin'"
+      x-transition.opacity.duration.160ms
+      class="app-main-view admin-home-view">
+
       <div class="brandbar">
-        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+        <div class="brand">
+          <span class="bdot"></span>
+          <span>LANDING EVOLUTION</span>
+        </div>
 
         <div class="home-header-actions">
           <button
-            x-show="!isAdmin"
             type="button"
-            class="home-search-trigger"
-            @click="apriRicerca()"
-            aria-label="Ricerca globale">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
-              <circle cx="11" cy="11" r="6.5"/>
-              <path d="M16 16l4.5 4.5"/>
-            </svg>
-          </button>
+            class="profile-trigger"
+            @click="apriProfilo()"
+            aria-label="Profilo">
 
-          <button type="button" class="profile-trigger" @click="apriProfilo()" aria-label="Profilo">
-            <img x-show="profilo.avatar_url" :src="profilo.avatar_url" :style="avatarStile()" alt="">
-            <span x-show="!profilo.avatar_url" x-text="inizialeProfilo()"></span>
+            <img src="assets/landing-evolution-logo.svg" alt="">
           </button>
         </div>
       </div>
-      <p x-show="pushErrore" x-text="pushErrore" class="err" style="margin:0 18px 10px"></p>
-      <div class="topbar"><h1 style="font-size:19px">Dashboard venditori</h1></div>
-      <div class="content">
-        <p x-show="erroreAdmin" x-text="erroreAdmin" class="err" style="margin-bottom:14px"></p>
 
-        <div class="stack-card" style="margin-bottom:16px">
-          <div class="stato-current" style="margin-bottom:0;border:none;padding:0">
-            <span class="lbl">Totale generato (tutti)</span>
-            <strong style="font-size:19px" x-text="formattaEuro(totaleGeneraleAdmin())"></strong>
-          </div>
-        </div>
+      <div class="content admin-home-content">
 
-        <div class="search-row" x-show="venditori.length > 0">
-          <input type="search" placeholder="Cerca venditore..." aria-label="Cerca venditore per nome" x-model="filtroTestoAdmin">
-        </div>
+        <header class="admin-home-heading">
+          <h1>Buongiorno, Landing Evolution.</h1>
+          <p>La rete commerciale, le vendite e le prossime scadenze in un solo colpo d’occhio.</p>
+        </header>
 
-        <template x-for="v in venditoriFiltrati()" :key="v.id">
-          <div class="card-cliente" @click="apriClientiVenditore(v.id, v.nome)">
-            <div class="cc-top">
-              <strong x-text="v.nome"></strong>
-              <span class="pill s-pubblicato"><i></i><span x-text="formattaEuro(v.totaleGenerato)"></span></span>
+        <p
+          x-show="erroreAdmin"
+          x-text="erroreAdmin"
+          class="err">
+        </p>
+
+        <!-- OVERVIEW -->
+        <section class="admin-overview-card">
+
+          <div class="admin-overview-top">
+            <div>
+              <span>Valore delle vendite attive</span>
+              <strong x-text="formattaEuro(totaleGeneraleAdmin())"></strong>
             </div>
-            <span class="cc-next">
-              <span x-text="v.nPubblicati"></span> pubblicati totali - <span x-text="v.nPubblicatiMese"></span> questo mese - <span x-text="v.nClientiTotali"></span> clienti in pipeline
-            </span>
+
+            <span class="admin-overview-mark"><img src="assets/landing-evolution-logo.svg" alt=""></span>
           </div>
-        </template>
 
-        <div x-show="venditori.length === 0 && !erroreAdmin" class="empty">
-          <div class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.7-3.4 3-5.2 5.5-5.2s4.8 1.8 5.5 5.2"/><path d="M16.5 4.8a3.2 3.2 0 0 1 0 6.2"/><path d="M17.5 14.9c2.2.5 3.8 2.2 4.3 5"/></svg></div>
-          <p>Nessun venditore ancora.</p>
-        </div>
+          <div class="admin-overview-grid">
 
-        <div x-show="venditori.length > 0 && venditoriFiltrati().length === 0" class="empty">
-          <div class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
-          <p>Nessun venditore trovato.</p>
-        </div>
+            <div>
+              <strong x-text="adminStats.venditeAttive"></strong>
+              <span>Vendite</span>
+            </div>
+
+            <div>
+              <strong x-text="totaleClientiAdmin()"></strong>
+              <span>Clienti</span>
+            </div>
+
+            <div>
+              <strong x-text="totalePubblicatiAdmin()"></strong>
+              <span>Pubblicati</span>
+            </div>
+
+            <div>
+              <strong x-text="totalePubblicatiMeseAdmin()"></strong>
+              <span>Questo mese</span>
+            </div>
+
+          </div>
+        </section>
+
+
+        <!-- SCADENZE DI TUTTA LA RETE -->
+        <section class="admin-calendar-section">
+          <div class="admin-section-heading">
+            <div>
+              <strong>Scadenze rete</strong>
+              <span x-text="agendaVista === 'mese' ? formattaData(agendaDataSelezionata) : 'Oggi e arretrati'"></span>
+            </div>
+            <small x-text="eventiAgenda().length + ' totali'"></small>
+          </div>
+
+          <div class="agenda-calendar admin-calendar">
+            <div class="agenda-month-head">
+              <button type="button" @click="cambiaMeseAgenda(-1)" aria-label="Mese precedente">‹</button>
+              <strong x-text="titoloMeseAgenda()"></strong>
+              <button type="button" @click="cambiaMeseAgenda(1)" aria-label="Mese successivo">›</button>
+            </div>
+            <div class="agenda-weekdays">
+              <span>L</span><span>M</span><span>M</span><span>G</span><span>V</span><span>S</span><span>D</span>
+            </div>
+            <div class="agenda-days">
+              <template x-for="giorno in giorniCalendarioAgenda()" :key="'admin-' + giorno.iso">
+                <button type="button"
+                  :class="{ muted: !giorno.nelMese, today: giorno.oggi, selected: agendaDataSelezionata === giorno.iso, busy: giorno.eventi > 0 }"
+                  @click="selezionaGiornoAgenda(giorno.iso)">
+                  <span x-text="giorno.giorno"></span>
+                  <i x-show="giorno.eventi > 0" x-text="giorno.eventi"></i>
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <div class="admin-deadline-list">
+            <template x-for="evento in eventiAgendaVisibili()" :key="'admin-event-' + evento.id">
+              <button type="button" class="admin-deadline" :class="{ overdue: evento.scaduto }" @click="apriEventoAdmin(evento)">
+                <span class="admin-deadline-type" x-text="evento.tipo === 'contatto' ? 'Contatto' : 'Rinnovo'"></span>
+                <span class="admin-deadline-copy">
+                  <strong x-text="evento.clienteNome"></strong>
+                  <small x-text="evento.venditoreNome || 'Venditore non assegnato'"></small>
+                </span>
+                <time x-text="formattaData(evento.data)"></time>
+                <i>›</i>
+              </button>
+            </template>
+            <div x-show="eventiAgendaVisibili().length === 0" class="admin-empty-state">
+              <strong>Nessuna scadenza</strong>
+              <span>La giornata selezionata è libera.</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- VENDITORI -->
+        <section class="admin-sellers-section">
+
+          <div class="admin-section-heading">
+            <div>
+              <span>RETE VENDITORI</span>
+              <strong>Venditori</strong>
+            </div>
+
+            <small
+              x-text="venditori.length === 1
+                ? '1 account'
+                : venditori.length + ' account'">
+            </small>
+          </div>
+
+          <div
+            class="admin-search"
+            x-show="venditori.length > 0">
+
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round">
+
+              <circle cx="11" cy="11" r="6.5"/>
+              <path d="M16 16l4.5 4.5"/>
+            </svg>
+
+            <input
+              type="search"
+              placeholder="Cerca venditore"
+              aria-label="Cerca venditore"
+              x-model="filtroTestoAdmin">
+          </div>
+
+
+          <div
+            class="admin-seller-list"
+            x-show="venditoriFiltrati().length > 0">
+
+            <template
+              x-for="v in venditoriFiltrati()"
+              :key="v.id">
+
+              <button
+                type="button"
+                class="admin-seller-card"
+                @click="apriClientiVenditore(v.id, v.nome)">
+
+                <div class="admin-seller-main">
+
+                  <span
+                    class="admin-seller-avatar"
+                    x-text="inizialeVenditoreAdmin(v)">
+                  </span>
+
+                  <div class="admin-seller-identity">
+                    <strong x-text="v.nome"></strong>
+
+                    <small>
+                      <span x-text="v.nVendite"></span>
+                      <span x-text="v.nVendite === 1 ? ' vendita' : ' vendite'"></span>
+                    </small>
+                  </div>
+
+                  <div class="admin-seller-value">
+                    <strong x-text="formattaEuro(v.totaleGenerato)"></strong>
+                    <span>quota</span>
+                  </div>
+
+                </div>
+
+                <div class="admin-seller-stats">
+
+                  <span>
+                    <strong x-text="v.nPubblicati"></strong>
+                    pubblicati
+                  </span>
+
+                  <span>
+                    <strong x-text="v.nPubblicatiMese"></strong>
+                    questo mese
+                  </span>
+
+                  <i>›</i>
+
+                </div>
+
+              </button>
+            </template>
+
+          </div>
+
+
+          <div
+            x-show="venditori.length === 0 && !erroreAdmin"
+            class="admin-empty-state">
+
+            <strong>Nessun venditore</strong>
+            <span>Non ci sono ancora account venditore.</span>
+          </div>
+
+          <div
+            x-show="venditori.length > 0 && venditoriFiltrati().length === 0"
+            class="admin-empty-state">
+
+            <strong>Nessun risultato</strong>
+            <span>Prova con un altro nome.</span>
+          </div>
+
+        </section>
+
       </div>
     </div>
 
@@ -2422,8 +3203,8 @@
 
       <button type="button" :class="{ on: view === 'profilo' }" @click="apriProfilo()">
         <span class="mobile-nav-avatar">
-          <img x-show="profilo.avatar_url" :src="profilo.avatar_url" :style="avatarStile()" alt="">
-          <span x-show="!profilo.avatar_url" x-text="inizialeProfilo()"></span>
+          <img x-show="isAdmin || (profilo.avatar_url && !avatarErrore)" :src="isAdmin ? 'assets/landing-evolution-logo.svg' : profilo.avatar_url" :style="isAdmin ? '' : avatarStile()" @error="avatarErrore = true" @load="avatarErrore = false" alt="">
+          <span x-show="!isAdmin && (!profilo.avatar_url || avatarErrore)" x-text="inizialeProfilo()"></span>
         </span>
         <span>Profilo</span>
       </button>
