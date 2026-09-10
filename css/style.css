@@ -5225,27 +5225,32 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 }
 
 
-/* Admin home: calendario operativo della rete */
+/* Admin home: riepilogo operativo, senza agenda duplicata. */
 .admin-home-content{width:min(100%,920px)}
 .admin-home-heading h1{font-size:clamp(26px,5vw,38px);max-width:18ch}
 .admin-home-heading p{max-width:58ch;font-size:11px}
-.admin-overview-top>div>span{letter-spacing:0;text-transform:none}
-.admin-overview-mark{overflow:hidden;background:transparent}
+.admin-overview-card{border:1px solid #252525;box-shadow:0 12px 30px rgba(17,17,17,.12)}
+.admin-overview-top{min-height:155px;align-items:flex-start;padding:24px 20px 21px}
+.admin-overview-top::after{content:"";position:absolute;right:-36px;bottom:-54px;width:160px;height:110px;border:22px solid rgba(200,255,61,.08);border-radius:50%;transform:rotate(-14deg)}
+.admin-overview-top>div{position:relative;z-index:1;gap:7px}
+.admin-overview-top>div>span{color:rgba(255,255,255,.58);font-size:9px;letter-spacing:0;text-transform:none}
+.admin-overview-top>div>strong{font-size:clamp(32px,9vw,43px);font-variant-numeric:tabular-nums}
+.admin-overview-top>div>small{color:rgba(255,255,255,.5);font-size:8.5px;font-weight:650}
+.admin-overview-top>div>small b{color:var(--lime);font-weight:800}
+.admin-overview-mark{z-index:1;overflow:hidden;background:transparent}
 .admin-overview-mark img,.admin-profile-avatar img{width:100%;height:100%;object-fit:cover}
 .admin-profile-avatar{cursor:default;box-shadow:0 0 0 2px rgba(244,241,234,.85)}
-.admin-calendar-section{display:grid;gap:10px;align-content:start}
-.admin-calendar{margin:0;border-radius:20px;padding:12px}
-.admin-calendar .agenda-days button{max-height:46px}
-.admin-deadline-list{display:grid;gap:7px}
-.admin-deadline{width:100%;display:grid;grid-template-columns:60px minmax(0,1fr) auto 12px;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);text-align:left;font:inherit}
-.admin-deadline.overdue{border-color:#d77b72;background:#fff9f7}
-.admin-deadline-type{color:var(--muted);font-size:8px;font-weight:800}
-.admin-deadline-copy{min-width:0;display:grid;gap:3px}
-.admin-deadline-copy strong,.admin-deadline-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.admin-deadline-copy strong{font-size:11px}
-.admin-deadline-copy small{color:var(--muted);font-size:8px}
-.admin-deadline time{font-size:8px;font-weight:750;white-space:nowrap}
-.admin-deadline>i{color:#aaa;font-size:17px;font-style:normal}
+.admin-overview-grid>div{align-items:flex-start;gap:5px;padding:15px 12px 16px;text-align:left}
+.admin-overview-grid strong{font-size:18px;font-variant-numeric:tabular-nums}
+.admin-overview-grid span{white-space:normal;font-size:7.5px;line-height:1.25}
+.admin-seller-stats{gap:10px}
+.admin-seller-stats>span{white-space:nowrap}
+@media(max-width:380px){
+  .admin-overview-grid{grid-template-columns:repeat(2,1fr)}
+  .admin-overview-grid>div:nth-child(2){border-right:0}
+  .admin-overview-grid>div:nth-child(-n+2){border-bottom:1px solid rgba(255,255,255,.09)}
+  .admin-seller-stats{display:grid;grid-template-columns:repeat(3,auto) 1fr;gap:7px}
+}
 
 /* Archivio clienti: la home resta breve, l'elenco completo è paginato. */
 .home-recent-head button{

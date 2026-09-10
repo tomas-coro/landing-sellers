@@ -101,6 +101,24 @@ function avatarUrlConPosizione(url = '', x = 50, y = 50, zoom = 1) {
   return base ? `${base}#crop=${limita(x)},${limita(y)},${scala}` : '';
 }
 
+function clientiAttribuitiAlProfilo(profiloId, clienti = [], vendite = [], partecipanti = []) {
+  const venditeDelProfilo = new Set(
+    partecipanti.filter(p => p.profilo_id === profiloId).map(p => p.vendita_id)
+  );
+  const venditeConPartecipanti = new Set(partecipanti.map(p => p.vendita_id));
+  const clientiDelProfilo = new Set(
+    vendite.filter(v => venditeDelProfilo.has(v.id)).map(v => v.cliente_id)
+  );
+  const clientiConPartecipanti = new Set(
+    vendite.filter(v => venditeConPartecipanti.has(v.id)).map(v => v.cliente_id)
+  );
+
+  return clienti.filter(cliente =>
+    clientiDelProfilo.has(cliente.id) ||
+    (!clientiConPartecipanti.has(cliente.id) && cliente.venditore_id === profiloId)
+  );
+}
+
 function calcolaStatisticheVenditore(vendite = [], pagamenti = [], quotePerVendita = {}) {
   const venditeAttive = vendite.filter(v => v.stato === 'attiva');
 
@@ -252,12 +270,14 @@ function appState() {
     venditori: [],
     adminClienti: [],
     adminVenditoriPerId: {},
+    adminClientiPerVenditore: {},
     adminStats: {
       volumeVendite: 0,
       venditeAttive: 0,
       clienti: 0,
       pubblicati: 0,
-      pubblicatiMese: 0
+      pubblicatiMese: 0,
+      inLavorazione: 0
     },
     erroreAdmin: '',
     filtroTestoAdmin: '',
@@ -1781,10 +1801,17 @@ function appState() {
         this.isAdmin,
         this.filtroVenditoreId
       );
-      if (venditoreId) query = query.eq('venditore_id', venditoreId);
+      const usaAttribuzioneCondivisa = venditoreId &&
+        Object.prototype.hasOwnProperty.call(this.adminClientiPerVenditore, venditoreId);
+      if (venditoreId && !usaAttribuzioneCondivisa) {
+        query = query.eq('venditore_id', venditoreId);
+      }
       const { data, error } = await query;
       if (error) { this.erroreClienti = 'Errore nel caricare i clienti: ' + error.message; return; }
-      this.clienti = data;
+      const idsAttribuiti = new Set(this.adminClientiPerVenditore[venditoreId] || []);
+      this.clienti = usaAttribuzioneCondivisa
+        ? data.filter(cliente => idsAttribuiti.has(cliente.id))
+        : data;
       await this.caricaIndiceNoteRicerca();
     },
 
@@ -2807,7 +2834,7 @@ function appState() {
       ] = await Promise.all([
         window.supabaseClient
           .from('profili')
-          .select('id,nome,ruolo')
+          .select('id,nome,ruolo,ruolo_economico')
           .order('nome'),
 
         window.supabaseClient
@@ -2817,7 +2844,7 @@ function appState() {
 
         window.supabaseClient
           .from('vendite')
-          .select('id,importo_vendita,stato'),
+          .select('id,cliente_id,importo_vendita,stato'),
 
         window.supabaseClient
           .from('vendita_partecipanti')
@@ -2841,7 +2868,11 @@ function appState() {
       const vendite = venditeResult.data || [];
       const partecipanti = partecipantiResult.data || [];
 
-      const profiliVisibili = profili.filter(profilo => profilo.ruolo === 'venditore');
+      // La rete commerciale mostra i referenti reali, non gli account tecnici
+      // o il profilo di produzione.
+      const profiliVisibili = profili.filter(
+        profilo => profilo.ruolo === 'venditore' && profilo.ruolo_economico === 'referente'
+      );
       this.adminClienti = clienti;
       this.adminVenditoriPerId = Object.fromEntries(
         profiliVisibili.map(profilo => [profilo.id, profilo.nome])
@@ -2882,9 +2913,11 @@ function appState() {
         venditeAttive: venditeAttive.length,
         clienti: clienti.length,
         pubblicati: pubblicati.length,
-        pubblicatiMese: pubblicatiQuestoMese.length
+        pubblicatiMese: pubblicatiQuestoMese.length,
+        inLavorazione: clienti.filter(c => c.stato === 'in_lavorazione').length
       };
 
+      this.adminClientiPerVenditore = {};
       this.venditori = profiliVisibili.map(profilo => {
         const partecipazioni = partecipanti.filter(partecipazione =>
           partecipazione.profilo_id === profilo.id &&
@@ -2895,9 +2928,14 @@ function appState() {
           partecipazioni.map(p => p.vendita_id)
         );
 
-        const suoiClienti = clienti.filter(
-          cliente => cliente.venditore_id === profilo.id
+        const suoiClienti = clientiAttribuitiAlProfilo(
+          profilo.id,
+          clienti,
+          vendite,
+          partecipanti
         );
+
+        this.adminClientiPerVenditore[profilo.id] = suoiClienti.map(cliente => cliente.id);
 
         const suoiPubblicati = suoiClienti.filter(
           cliente => cliente.stato === 'pubblicato'
@@ -2932,6 +2970,7 @@ function appState() {
 
           nVendite: venditeProfilo.size,
           nClientiTotali: suoiClienti.length,
+          nInLavorazione: suoiClienti.filter(cliente => cliente.stato === 'in_lavorazione').length,
           nPubblicati: suoiPubblicati.length,
           nPubblicatiMese: suoiPubblicatiMese.length
         };
@@ -2944,6 +2983,11 @@ function appState() {
 
     totaleClientiAdmin() {
       return Number(this.adminStats.clienti) || 0;
+    },
+
+    mediaVenditaAdmin() {
+      const vendite = Number(this.adminStats.venditeAttive) || 0;
+      return vendite ? this.totaleGeneraleAdmin() / vendite : 0;
     },
 
     totalePubblicatiAdmin() {
@@ -3001,6 +3045,7 @@ if (typeof module !== 'undefined') {
     percentualeTasseEconomia,
     appState,
     calcolaStatisticheVenditore,
+    clientiAttribuitiAlProfilo,
     posizioneAvatarDaUrl,
     avatarUrlConPosizione
   };

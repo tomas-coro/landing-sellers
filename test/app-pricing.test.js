@@ -9,6 +9,7 @@ const {
   percentualeTasseEconomia,
   appState,
   calcolaStatisticheVenditore,
+  clientiAttribuitiAlProfilo,
   posizioneAvatarDaUrl,
   avatarUrlConPosizione
 } = require('../js/app.js');
@@ -162,6 +163,27 @@ test('il calendario admin riunisce le scadenze di tutti i venditori', () => {
     ['Cliente Uno', 'Alessandro'],
     ['Cliente Due', 'Nicola']
   ]);
+});
+
+test('un cliente condiviso viene contato per ogni partecipante alla vendita', () => {
+  const clienti = [
+    { id: 'c1', venditore_id: 'tomas', stato: 'pubblicato' },
+    { id: 'c2', venditore_id: 'alessandro', stato: 'in_lavorazione' }
+  ];
+  const vendite = [{ id: 'v1', cliente_id: 'c1' }];
+  const partecipanti = [
+    { vendita_id: 'v1', profilo_id: 'alessandro' },
+    { vendita_id: 'v1', profilo_id: 'tomas' }
+  ];
+
+  assert.deepStrictEqual(
+    clientiAttribuitiAlProfilo('alessandro', clienti, vendite, partecipanti).map(c => c.id),
+    ['c1', 'c2']
+  );
+  assert.deepStrictEqual(
+    clientiAttribuitiAlProfilo('tomas', clienti, vendite, partecipanti).map(c => c.id),
+    ['c1']
+  );
 });
 
 test('le statistiche del venditore usano la sua quota, non l’importo pieno della vendita condivisa', () => {

@@ -1168,7 +1168,7 @@
 
         <header class="admin-home-heading">
           <h1>Buongiorno, Landing Evolution.</h1>
-          <p>La rete commerciale, le vendite e le prossime scadenze in un solo colpo d’occhio.</p>
+          <p>La rete commerciale, il portafoglio e il lavoro in corso in un solo colpo d’occhio.</p>
         </header>
 
         <p
@@ -1179,105 +1179,54 @@
 
         <!-- OVERVIEW -->
         <section class="admin-overview-card">
-
           <div class="admin-overview-top">
             <div>
-              <span>Valore delle vendite attive</span>
+              <span>Portafoglio vendite attive</span>
               <strong x-text="formattaEuro(totaleGeneraleAdmin())"></strong>
+              <small>
+                Valore medio
+                <b x-text="formattaEuro(mediaVenditaAdmin())"></b>
+                per vendita
+              </small>
             </div>
 
             <span class="admin-overview-mark"><img src="assets/landing-evolution-logo.svg" alt=""></span>
           </div>
 
           <div class="admin-overview-grid">
-
             <div>
               <strong x-text="adminStats.venditeAttive"></strong>
-              <span>Vendite</span>
+              <span>Vendite attive</span>
             </div>
-
             <div>
               <strong x-text="totaleClientiAdmin()"></strong>
-              <span>Clienti</span>
+              <span>Clienti totali</span>
             </div>
-
             <div>
-              <strong x-text="totalePubblicatiAdmin()"></strong>
-              <span>Pubblicati</span>
+              <strong x-text="adminStats.inLavorazione"></strong>
+              <span>In lavorazione</span>
             </div>
-
             <div>
               <strong x-text="totalePubblicatiMeseAdmin()"></strong>
-              <span>Questo mese</span>
-            </div>
-
-          </div>
-        </section>
-
-
-        <!-- SCADENZE DI TUTTA LA RETE -->
-        <section class="admin-calendar-section">
-          <div class="admin-section-heading">
-            <div>
-              <strong>Scadenze rete</strong>
-              <span x-text="agendaVista === 'mese' ? formattaData(agendaDataSelezionata) : 'Oggi e arretrati'"></span>
-            </div>
-            <small x-text="eventiAgenda().length + ' totali'"></small>
-          </div>
-
-          <div class="agenda-calendar admin-calendar">
-            <div class="agenda-month-head">
-              <button type="button" @click="cambiaMeseAgenda(-1)" aria-label="Mese precedente">‹</button>
-              <strong x-text="titoloMeseAgenda()"></strong>
-              <button type="button" @click="cambiaMeseAgenda(1)" aria-label="Mese successivo">›</button>
-            </div>
-            <div class="agenda-weekdays">
-              <span>L</span><span>M</span><span>M</span><span>G</span><span>V</span><span>S</span><span>D</span>
-            </div>
-            <div class="agenda-days">
-              <template x-for="giorno in giorniCalendarioAgenda()" :key="'admin-' + giorno.iso">
-                <button type="button"
-                  :class="{ muted: !giorno.nelMese, today: giorno.oggi, selected: agendaDataSelezionata === giorno.iso, busy: giorno.eventi > 0 }"
-                  @click="selezionaGiornoAgenda(giorno.iso)">
-                  <span x-text="giorno.giorno"></span>
-                  <i x-show="giorno.eventi > 0" x-text="giorno.eventi"></i>
-                </button>
-              </template>
-            </div>
-          </div>
-
-          <div class="admin-deadline-list">
-            <template x-for="evento in eventiAgendaVisibili()" :key="'admin-event-' + evento.id">
-              <button type="button" class="admin-deadline" :class="{ overdue: evento.scaduto }" @click="apriEventoAdmin(evento)">
-                <span class="admin-deadline-type" x-text="evento.tipo === 'contatto' ? 'Contatto' : 'Rinnovo'"></span>
-                <span class="admin-deadline-copy">
-                  <strong x-text="evento.clienteNome"></strong>
-                  <small x-text="evento.venditoreNome || 'Venditore non assegnato'"></small>
-                </span>
-                <time x-text="formattaData(evento.data)"></time>
-                <i>›</i>
-              </button>
-            </template>
-            <div x-show="eventiAgendaVisibili().length === 0" class="admin-empty-state">
-              <strong>Nessuna scadenza</strong>
-              <span>La giornata selezionata è libera.</span>
+              <span>Pubblicati nel mese</span>
             </div>
           </div>
         </section>
+
 
         <!-- VENDITORI -->
         <section class="admin-sellers-section">
 
           <div class="admin-section-heading">
             <div>
-              <span>RETE VENDITORI</span>
+              <span>Rete commerciale</span>
               <strong>Venditori</strong>
             </div>
 
             <small
               x-text="venditori.length === 1
-                ? '1 account'
-                : venditori.length + ' account'">
+                ? '1 venditore'
+                : venditori.length + ' venditori'">
             </small>
           </div>
 
@@ -1348,8 +1297,13 @@
                   </span>
 
                   <span>
+                    <strong x-text="v.nInLavorazione"></strong>
+                    in lavorazione
+                  </span>
+
+                  <span>
                     <strong x-text="v.nPubblicatiMese"></strong>
-                    questo mese
+                    pubblicati nel mese
                   </span>
 
                   <i>›</i>
@@ -2770,7 +2724,7 @@
           </svg>
           Home
         </button>
-        <h1 style="font-size:19px">Agenda</h1>
+        <h1 style="font-size:19px" x-text="isAdmin ? 'Agenda rete' : 'Agenda'"></h1>
       </div>
 
       <div class="content crm-content agenda-content">
@@ -2780,8 +2734,8 @@
             <strong x-text="eventiAgendaVisibili().length"></strong>
             <small x-text="eventiAgendaVisibili().length === 1 ? 'attività' : 'attività'"></small>
           </div>
-          <p x-show="clientiInRitardo().length > 0"><strong x-text="clientiInRitardo().length"></strong> contatti in ritardo inclusi</p>
-          <p x-show="clientiInRitardo().length === 0">Nessun contatto arretrato</p>
+          <p x-show="eventiAgenda().filter(evento => evento.tipo === 'contatto' && evento.scaduto).length > 0"><strong x-text="eventiAgenda().filter(evento => evento.tipo === 'contatto' && evento.scaduto).length"></strong> contatti in ritardo inclusi</p>
+          <p x-show="eventiAgenda().filter(evento => evento.tipo === 'contatto' && evento.scaduto).length === 0">Nessun contatto arretrato</p>
         </section>
 
         <div class="agenda-switch" aria-label="Periodo agenda">
@@ -2825,14 +2779,14 @@
               type="button"
               class="agenda-event"
               :class="{ overdue: evento.scaduto }"
-              @click="apriScheda(evento.clienteId)">
+              @click="isAdmin ? apriEventoAdmin(evento) : apriScheda(evento.clienteId)">
               <div class="agenda-event-date">
                 <strong x-text="formattaData(evento.data)"></strong>
                 <span x-text="evento.tipo === 'contatto' ? 'Contatto' : 'Rinnovo'"></span>
               </div>
               <div>
                 <strong x-text="evento.clienteNome"></strong>
-                <small x-text="evento.titolo"></small>
+                <small x-text="isAdmin && evento.venditoreNome ? evento.venditoreNome + ' — ' + evento.titolo : evento.titolo"></small>
               </div>
               <span>›</span>
             </button>
@@ -3190,7 +3144,7 @@
         <span>Home</span>
       </button>
 
-      <button x-show="!isAdmin" type="button" :class="{ on: view === 'agenda' }" @click="apriAgenda()">
+      <button type="button" :class="{ on: view === 'agenda' }" @click="apriAgenda()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
           <rect x="3" y="5" width="18" height="16" rx="2"/>
           <path d="M8 3v4M16 3v4M3 10h18"/>
