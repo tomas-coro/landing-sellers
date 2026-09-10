@@ -5252,6 +5252,104 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
   .admin-seller-stats{display:grid;grid-template-columns:repeat(3,auto) 1fr;gap:7px}
 }
 
+/* Admin: riepilogo compatto e leggibile, senza elementi decorativi. */
+.admin-home-content{
+  gap:26px;
+  padding-top:28px;
+}
+.admin-home-heading{
+  gap:8px;
+}
+.admin-home-heading h1{
+  font-size:clamp(30px,5vw,42px);
+  line-height:1.02;
+}
+.admin-home-heading p{
+  max-width:62ch;
+  font-size:13px;
+  line-height:1.55;
+}
+.admin-overview-card{
+  display:grid;
+  grid-template-columns:1fr;
+  border-radius:18px;
+  box-shadow:none;
+}
+.admin-overview-top{
+  min-height:0;
+  align-items:center;
+  padding:28px;
+}
+.admin-overview-top::after,
+.admin-overview-mark{
+  display:none;
+}
+.admin-overview-top>div{
+  gap:10px;
+}
+.admin-overview-top>div>span{
+  font-size:13px;
+  font-weight:700;
+}
+.admin-overview-top>div>strong{
+  font-size:clamp(38px,6vw,58px);
+}
+.admin-overview-top>div>small{
+  font-size:12px;
+  line-height:1.4;
+}
+.admin-overview-grid{
+  grid-template-columns:repeat(2,1fr);
+  border-top:1px solid rgba(255,255,255,.12);
+  border-left:0;
+}
+.admin-overview-grid>div{
+  justify-content:center;
+  gap:7px;
+  padding:22px;
+  border-bottom:1px solid rgba(255,255,255,.1);
+}
+.admin-overview-grid>div:nth-child(2n){
+  border-right:0;
+}
+.admin-overview-grid>div:nth-last-child(-n+2){
+  border-bottom:0;
+}
+.admin-overview-grid strong{
+  font-size:24px;
+}
+.admin-overview-grid span{
+  font-size:11px;
+  line-height:1.35;
+}
+.admin-section-heading>div>span,
+.admin-section-heading>small{
+  font-size:11px;
+}
+.admin-section-heading>div>strong{
+  font-size:20px;
+}
+.admin-seller-identity>strong,
+.admin-seller-value strong{
+  font-size:14px;
+}
+.admin-seller-identity>small,
+.admin-seller-stats>span,
+.admin-seller-value span{
+  font-size:10px;
+}
+.admin-seller-stats>span strong{
+  font-size:11px;
+}
+@media(max-width:700px){
+  .admin-overview-top{
+    padding:24px 20px;
+  }
+  .admin-overview-grid>div{
+    padding:17px 14px;
+  }
+}
+
 /* Archivio clienti: la home resta breve, l'elenco completo è paginato. */
 .home-recent-head button{
   border:0;

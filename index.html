@@ -518,7 +518,10 @@
           <div>
             <strong x-text="profilo.username || profilo.nome || 'Profilo'"></strong>
             <small x-text="sessione?.user?.email || ''"></small>
-            <span class="profile-role">Venditore</span>
+            <span
+              class="profile-role"
+              x-text="profilo.ruolo === 'developer' ? 'Developer' : 'Venditore'">
+            </span>
           </div>
         </div>
 
@@ -1189,8 +1192,6 @@
                 per vendita
               </small>
             </div>
-
-            <span class="admin-overview-mark"><img src="assets/landing-evolution-logo.svg" alt=""></span>
           </div>
 
           <div class="admin-overview-grid">

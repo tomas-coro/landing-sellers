@@ -119,6 +119,18 @@ function clientiAttribuitiAlProfilo(profiloId, clienti = [], vendite = [], parte
   );
 }
 
+function clientiDelVenditoreRiferimento(profiloId, clienti = [], vendite = []) {
+  const clientiConVendita = new Set(vendite.map(v => v.cliente_id));
+  const clientiDelVenditore = new Set(
+    vendite.filter(v => v.venditore_id === profiloId).map(v => v.cliente_id)
+  );
+
+  return clienti.filter(cliente =>
+    clientiDelVenditore.has(cliente.id) ||
+    (!clientiConVendita.has(cliente.id) && cliente.venditore_id === profiloId)
+  );
+}
+
 function calcolaStatisticheVenditore(vendite = [], pagamenti = [], quotePerVendita = {}) {
   const venditeAttive = vendite.filter(v => v.stato === 'attiva');
 
@@ -2844,7 +2856,7 @@ function appState() {
 
         window.supabaseClient
           .from('vendite')
-          .select('id,cliente_id,importo_vendita,stato'),
+          .select('id,cliente_id,venditore_id,importo_vendita,stato'),
 
         window.supabaseClient
           .from('vendita_partecipanti')
@@ -2867,19 +2879,30 @@ function appState() {
       const clienti = clientiResult.data || [];
       const vendite = venditeResult.data || [];
       const partecipanti = partecipantiResult.data || [];
-
-      // La rete commerciale mostra i referenti reali, non gli account tecnici
-      // o il profilo di produzione.
-      const profiliVisibili = profili.filter(
-        profilo => profilo.ruolo === 'venditore' && profilo.ruolo_economico === 'referente'
-      );
-      this.adminClienti = clienti;
-      this.adminVenditoriPerId = Object.fromEntries(
-        profiliVisibili.map(profilo => [profilo.id, profilo.nome])
-      );
-
       const venditeAttive = vendite.filter(v => v.stato === 'attiva');
-      const venditeAttiveIds = new Set(venditeAttive.map(v => v.id));
+
+      const venditorePerCliente = Object.fromEntries(
+        venditeAttive.map(vendita => [vendita.cliente_id, vendita.venditore_id])
+      );
+      const idsVenditoriAttivi = new Set([
+        ...venditeAttive.map(vendita => vendita.venditore_id),
+        ...clienti.map(cliente => venditorePerCliente[cliente.id] || cliente.venditore_id)
+      ]);
+      const profiliVisibili = profili.filter(profilo =>
+        profilo.ruolo === 'venditore' &&
+        profilo.ruolo_economico !== 'produzione' &&
+        (profilo.ruolo_economico === 'referente' || idsVenditoriAttivi.has(profilo.id))
+      );
+      this.adminClienti = clienti.map(cliente => ({
+        ...cliente,
+        venditore_id: venditorePerCliente[cliente.id] || cliente.venditore_id
+      }));
+      this.adminVenditoriPerId = Object.fromEntries(
+        profiliVisibili.map(profilo => [
+          profilo.id,
+          profilo.ruolo_economico === 'referente' ? 'Alessandro' : profilo.nome
+        ])
+      );
 
       const chiaveMese = (() => {
         const d = new Date();
@@ -2919,20 +2942,20 @@ function appState() {
 
       this.adminClientiPerVenditore = {};
       this.venditori = profiliVisibili.map(profilo => {
+        const venditeProfilo = new Set(
+          venditeAttive
+            .filter(vendita => vendita.venditore_id === profilo.id)
+            .map(vendita => vendita.id)
+        );
         const partecipazioni = partecipanti.filter(partecipazione =>
           partecipazione.profilo_id === profilo.id &&
-          venditeAttiveIds.has(partecipazione.vendita_id)
+          venditeProfilo.has(partecipazione.vendita_id)
         );
 
-        const venditeProfilo = new Set(
-          partecipazioni.map(p => p.vendita_id)
-        );
-
-        const suoiClienti = clientiAttribuitiAlProfilo(
+        const suoiClienti = clientiDelVenditoreRiferimento(
           profilo.id,
-          clienti,
-          vendite,
-          partecipanti
+          this.adminClienti,
+          venditeAttive
         );
 
         this.adminClientiPerVenditore[profilo.id] = suoiClienti.map(cliente => cliente.id);
@@ -2955,7 +2978,7 @@ function appState() {
 
         return {
           id: profilo.id,
-          nome: profilo.nome,
+          nome: profilo.ruolo_economico === 'referente' ? 'Alessandro' : profilo.nome,
 
           /*
            * Qui non usiamo piu' importo_abbonamento del cliente.
@@ -3046,6 +3069,7 @@ if (typeof module !== 'undefined') {
     appState,
     calcolaStatisticheVenditore,
     clientiAttribuitiAlProfilo,
+    clientiDelVenditoreRiferimento,
     posizioneAvatarDaUrl,
     avatarUrlConPosizione
   };

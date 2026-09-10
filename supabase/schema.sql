@@ -3,7 +3,7 @@
 create table public.profili (
   id uuid primary key references auth.users(id) on delete cascade,
   nome text not null default '',
-  ruolo text not null default 'venditore' check (ruolo in ('venditore', 'admin'))
+  ruolo text not null default 'venditore' check (ruolo in ('venditore', 'admin', 'developer'))
 );
 
 create table public.clienti (

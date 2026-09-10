@@ -10,6 +10,7 @@ const {
   appState,
   calcolaStatisticheVenditore,
   clientiAttribuitiAlProfilo,
+  clientiDelVenditoreRiferimento,
   posizioneAvatarDaUrl,
   avatarUrlConPosizione
 } = require('../js/app.js');
@@ -183,6 +184,26 @@ test('un cliente condiviso viene contato per ogni partecipante alla vendita', ()
   assert.deepStrictEqual(
     clientiAttribuitiAlProfilo('tomas', clienti, vendite, partecipanti).map(c => c.id),
     ['c1']
+  );
+});
+
+test('la dashboard attribuisce il cliente al venditore di riferimento, non a tutti i partecipanti', () => {
+  const clienti = [
+    { id: 'senza-terzo', venditore_id: 'alessandro' },
+    { id: 'con-terzo', venditore_id: 'tomas' }
+  ];
+  const vendite = [
+    { id: 'v1', cliente_id: 'senza-terzo', venditore_id: 'alessandro' },
+    { id: 'v2', cliente_id: 'con-terzo', venditore_id: 'nicola' }
+  ];
+
+  assert.deepStrictEqual(
+    clientiDelVenditoreRiferimento('alessandro', clienti, vendite).map(c => c.id),
+    ['senza-terzo']
+  );
+  assert.deepStrictEqual(
+    clientiDelVenditoreRiferimento('nicola', clienti, vendite).map(c => c.id),
+    ['con-terzo']
   );
 });
 
