@@ -5654,3 +5654,967 @@ html[data-theme="dark"] .economy-history-edit{
 html[data-theme="dark"] .economy-mixed-residual-line strong{
   color:var(--ink);
 }
+
+/* ==========================================================
+   DARK MODE COMPLETE PASS - V3
+   Revisione globale: superfici, controlli, popup, CRM, profilo
+   ========================================================== */
+
+html[data-theme="dark"]{
+  --paper:#111310;
+  --paper-2:#171a16;
+  --card:#1d201c;
+  --surface:#171a16;
+  --surface-2:#20231e;
+  --surface-3:#272b24;
+  --surface-input:#181b17;
+  --ink:#f7f5ef;
+  --ink-soft:#deddd6;
+  --muted:#a9aca2;
+  --line:#3d4138;
+  --danger:#ff8f80;
+  --danger-bg:#3b201c;
+  --warning:#e8cb69;
+  --warning-bg:#332d19;
+  --success:#c8ff3d;
+  --success-bg:#263118;
+  --surface-overlay:rgba(17,19,16,.97);
+}
+
+html[data-theme="dark"]{
+  color-scheme:dark;
+}
+
+html[data-theme="dark"],
+html[data-theme="dark"] body{
+  background:#0b0d0b;
+  color:var(--ink);
+}
+
+html[data-theme="dark"] #app,
+html[data-theme="dark"] .brandbar{
+  background:var(--paper);
+}
+
+html[data-theme="dark"] .brandbar{
+  border-color:var(--line);
+}
+
+/* Base controls */
+html[data-theme="dark"] button,
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select{
+  color:var(--ink);
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select,
+html[data-theme="dark"] .field input,
+html[data-theme="dark"] .field textarea,
+html[data-theme="dark"] .global-search input,
+html[data-theme="dark"] .search-row input,
+html[data-theme="dark"] .admin-search input{
+  background:var(--surface-input);
+  border-color:var(--line);
+  color:var(--ink);
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder{
+  color:#7f8379;
+  opacity:1;
+}
+
+html[data-theme="dark"] input:focus,
+html[data-theme="dark"] textarea:focus,
+html[data-theme="dark"] select:focus,
+html[data-theme="dark"] .field input:focus,
+html[data-theme="dark"] .field textarea:focus,
+html[data-theme="dark"] .search-row input:focus,
+html[data-theme="dark"] .admin-search input:focus{
+  border-color:#747a6b;
+  outline:none;
+}
+
+html[data-theme="dark"] input:disabled,
+html[data-theme="dark"] textarea:disabled,
+html[data-theme="dark"] select:disabled{
+  background:#252822;
+  color:#777b71;
+  opacity:1;
+}
+
+html[data-theme="dark"] .iconbtn{
+  background:var(--card);
+  border-color:var(--line);
+  color:var(--ink-soft);
+}
+
+html[data-theme="dark"] .btn-primary{
+  background:#f4f1ea;
+  color:#111;
+}
+
+html[data-theme="dark"] .btn-ghost{
+  border-color:var(--line);
+  color:var(--ink);
+  background:transparent;
+}
+
+/* Login */
+html[data-theme="dark"] .login-stage{
+  background:
+    radial-gradient(120% 46% at 50% 0%,rgba(200,255,61,.18) 0%,rgba(200,255,61,0) 60%),
+    var(--paper);
+}
+
+html[data-theme="dark"] .login-stage::before{
+  background-image:radial-gradient(rgba(255,255,255,.08) 1px,transparent 1px);
+}
+
+html[data-theme="dark"] .login-card{
+  background:var(--card);
+  border-color:var(--line);
+  box-shadow:0 30px 60px -26px rgba(0,0,0,.72);
+}
+
+/* Bottom navigation */
+html[data-theme="dark"] .mobile-tabbar{
+  background:rgba(13,15,13,.97);
+  border-top-color:#363a32;
+  box-shadow:0 -8px 28px rgba(0,0,0,.16);
+}
+
+html[data-theme="dark"] .mobile-tabbar>button{
+  color:#aeb1a7;
+}
+
+html[data-theme="dark"] .mobile-tabbar>button.on{
+  color:#f7f5ef;
+}
+
+html[data-theme="dark"] .mobile-tabbar>button>span:last-child{
+  color:inherit;
+}
+
+html[data-theme="dark"] .mobile-add-circle{
+  background:var(--lime);
+  color:#111;
+}
+
+/* Home */
+html[data-theme="dark"] .home-performance{
+  background:#171a16;
+  color:var(--ink);
+  border:1px solid #353930;
+}
+
+html[data-theme="dark"] .home-performance-head span,
+html[data-theme="dark"] .home-money-grid span{
+  color:var(--muted);
+}
+
+html[data-theme="dark"] .home-performance-head strong,
+html[data-theme="dark"] .home-active-sites-hero strong,
+html[data-theme="dark"] .home-money-grid strong{
+  color:var(--ink);
+}
+
+html[data-theme="dark"] .home-performance-head button{
+  background:#262a23;
+  border-color:#464b40;
+  color:var(--ink);
+}
+
+html[data-theme="dark"] .home-active-sites-hero b{
+  color:#b2b5ab;
+}
+
+html[data-theme="dark"] .home-active-sites-bar{
+  background:#353930;
+}
+
+html[data-theme="dark"] .home-money-grid{
+  border-top-color:#3d4138;
+}
+
+html[data-theme="dark"] .home-money-grid>div+div{
+  border-left-color:#3d4138;
+}
+
+html[data-theme="dark"] .home-flow,
+html[data-theme="dark"] .home-attention,
+html[data-theme="dark"] .home-today,
+html[data-theme="dark"] .home-kpi-strip,
+html[data-theme="dark"] .home-renewals,
+html[data-theme="dark"] .home-client-card,
+html[data-theme="dark"] .home-empty{
+  background:var(--card);
+  border-color:var(--line);
+}
+
+html[data-theme="dark"] .home-flow-stages button{
+  color:#111;
+}
+
+html[data-theme="dark"] .home-flow-stages button:first-child{background:#d8dad1}
+html[data-theme="dark"] .home-flow-stages button:nth-child(2){background:#d3dfae}
+html[data-theme="dark"] .home-flow-stages button:nth-child(3){background:#cee58b}
+html[data-theme="dark"] .home-flow-stages button:last-child{background:var(--lime)}
+
+html[data-theme="dark"] .home-kpi.attention{
+  background:#263118;
+  border-color:#56682b;
+}
+
+html[data-theme="dark"] .home-legacy-metric{
+  background:#171a16;
+  color:var(--ink);
+  border:1px solid var(--line);
+}
+
+/* Lista clienti / filtri / scheda */
+html[data-theme="dark"] .card-cliente,
+html[data-theme="dark"] .stack-card,
+html[data-theme="dark"] .accordion-section,
+html[data-theme="dark"] .stato-current,
+html[data-theme="dark"] .note-item,
+html[data-theme="dark"] .client-quick-action{
+  background:var(--card);
+  border-color:var(--line);
+  color:var(--ink);
+}
+
+html[data-theme="dark"] .chip-stato,
+html[data-theme="dark"] .stato-chip,
+html[data-theme="dark"] .client-copy-actions button{
+  background:#20231e;
+  color:var(--ink-soft);
+  border-color:#454940;
+}
+
+html[data-theme="dark"] .chip-stato.on,
+html[data-theme="dark"] .stato-chip.on{
+  background:#f4f1ea;
+  color:#111;
+  border-color:#f4f1ea;
+}
+
+html[data-theme="dark"] .pill.s-contattato{background:#18243a;color:#9dbdff}
+html[data-theme="dark"] .pill.s-brief{background:#332d19;color:#efd77d}
+html[data-theme="dark"] .pill.s-lavorazione{background:#2d203b;color:#caa9f5}
+html[data-theme="dark"] .pill.s-pubblicato{background:var(--lime);color:#111}
+html[data-theme="dark"] .pill.s-pubblicato i{background:#111}
+
+html[data-theme="dark"] .alert-ritardo{
+  background:var(--danger-bg);
+  border-color:var(--danger);
+  color:var(--danger);
+}
+
+html[data-theme="dark"] .agenda-content .agenda-event.overdue{
+  background:#321d1a;
+  border-color:#d86f63;
+}
+
+/* Agenda */
+html[data-theme="dark"] .agenda-overview{
+  background:#171a16;
+  color:var(--ink);
+  border:1px solid var(--line);
+}
+
+html[data-theme="dark"] .agenda-overview span,
+html[data-theme="dark"] .agenda-overview small,
+html[data-theme="dark"] .agenda-overview p{
+  color:var(--muted);
+}
+
+html[data-theme="dark"] .agenda-overview p strong{
+  color:var(--lime);
+}
+
+html[data-theme="dark"] .agenda-switch{
+  background:#191c18;
+  border:1px solid #34382f;
+}
+
+html[data-theme="dark"] .agenda-switch button{
+  color:#b0b3a9;
+}
+
+html[data-theme="dark"] .agenda-switch button.on{
+  background:#f4f1ea;
+  color:#111;
+}
+
+html[data-theme="dark"] .agenda-calendar,
+html[data-theme="dark"] .agenda-event{
+  background:var(--card);
+  color:var(--ink);
+  border-color:var(--line);
+}
+
+html[data-theme="dark"] .agenda-month-head button{
+  background:#272b24;
+  color:var(--ink);
+}
+
+html[data-theme="dark"] .agenda-days button.selected{
+  background:#f4f1ea;
+  color:#111;
+}
+
+html[data-theme="dark"] .agenda-days button.today{
+  outline-color:#7d8374;
+}
+
+/* Pipeline */
+html[data-theme="dark"] .pipeline-card,
+html[data-theme="dark"] .pipeline-card-v2,
+html[data-theme="dark"] .pipeline-empty-v2{
+  background:var(--card);
+  border-color:var(--line);
+  color:var(--ink);
+}
+
+html[data-theme="dark"] .pipeline-column-head span,
+html[data-theme="dark"] .pipeline-count,
+html[data-theme="dark"] .pipeline-card-info>div,
+html[data-theme="dark"] .pipeline-status-pill,
+html[data-theme="dark"] .pipeline-empty-icon{
+  background:#272b24;
+}
+
+html[data-theme="dark"] .pipeline-card-footer select{
+  background:#181b17;
+  border-color:#44493f;
+  color:var(--ink);
+}
+
+/* Nuovo cliente / configuratore */
+html[data-theme="dark"] .client-form-section{
+  background:#1b1e1a;
+  border-color:#44483f;
+}
+
+html[data-theme="dark"] .contract-discount-section{
+  background:#171a16;
+  border-color:#62685b;
+}
+
+html[data-theme="dark"] .price-choice,
+html[data-theme="dark"] .price-legacy,
+html[data-theme="dark"] .upgrade-compact-toggle,
+html[data-theme="dark"] .upgrade-qty-card,
+html[data-theme="dark"] .domain-choice-grid button,
+html[data-theme="dark"] .annual-extras label,
+html[data-theme="dark"] .renewal-preview,
+html[data-theme="dark"] .renewal-mode-grid button,
+html[data-theme="dark"] .renewal-notice-grid button,
+html[data-theme="dark"] .discount-duration-all,
+html[data-theme="dark"] .discount-duration-choice,
+html[data-theme="dark"] .duration-choice{
+  background:#20231e;
+  color:var(--ink);
+  border-color:#454a40;
+}
+
+html[data-theme="dark"] .price-choice.on,
+html[data-theme="dark"] .domain-choice-grid button.on{
+  border-color:var(--lime);
+  box-shadow:inset 0 0 0 1px var(--lime);
+}
+
+html[data-theme="dark"] .duration-choice.on,
+html[data-theme="dark"] .renewal-mode-grid button.on{
+  background:#f4f1ea;
+  color:#111;
+  border-color:#f4f1ea;
+}
+
+html[data-theme="dark"] .duration-choice.on small,
+html[data-theme="dark"] .renewal-mode-grid button.on small{
+  color:#65665f;
+}
+
+html[data-theme="dark"] .discount-duration-all.on,
+html[data-theme="dark"] .discount-duration-choice.on,
+html[data-theme="dark"] .renewal-notice-grid button.on{
+  background:var(--lime);
+  color:#111;
+  border-color:var(--lime);
+}
+
+html[data-theme="dark"] .client-form-section-head>span{
+  background:#f4f1ea;
+  color:#111;
+}
+
+html[data-theme="dark"] .security-section{
+  border-color:#657d28;
+  background:#182016;
+}
+
+html[data-theme="dark"] .contract-summary-full{
+  background:#20231e;
+  border-color:#454940;
+}
+
+html[data-theme="dark"] .contract-summary-title{
+  background:#111310;
+  color:#f4f1ea;
+}
+
+html[data-theme="dark"] .contract-summary-lines{
+  background:#20231e;
+}
+
+html[data-theme="dark"] .contract-summary-lines>div,
+html[data-theme="dark"] .contract-summary-total{
+  border-color:#454940;
+}
+
+html[data-theme="dark"] .contract-summary-grand-total{
+  color:#111;
+}
+
+/* CRM economico */
+html[data-theme="dark"] .economy-card{
+  background:#1d201c;
+  color:var(--ink);
+  border-color:#3d4138;
+}
+
+html[data-theme="dark"] .economy-section-head>span{
+  background:#111;
+  color:var(--lime);
+}
+
+html[data-theme="dark"] .economy-search,
+html[data-theme="dark"] .economy-field input,
+html[data-theme="dark"] .economy-custom-cost input,
+html[data-theme="dark"] .economy-add-person input,
+html[data-theme="dark"] .economy-history-editor input,
+html[data-theme="dark"] .economy-mixed-input{
+  background:#171a16;
+  color:var(--ink);
+  border-color:#44493f;
+}
+
+html[data-theme="dark"] .economy-search:focus,
+html[data-theme="dark"] .economy-field input:focus,
+html[data-theme="dark"] .economy-custom-cost input:focus,
+html[data-theme="dark"] .economy-add-person input:focus,
+html[data-theme="dark"] .economy-history-editor input:focus,
+html[data-theme="dark"] .economy-mixed-input:focus{
+  background:#1d201c;
+  border-color:#777d6d;
+}
+
+html[data-theme="dark"] .economy-client-results{
+  border-color:#3f433a;
+}
+
+html[data-theme="dark"] .economy-client-results button{
+  background:#1b1e1a;
+  color:var(--ink);
+  border-bottom-color:#353930;
+}
+
+html[data-theme="dark"] .economy-client-results button:active{
+  background:#252922;
+}
+
+html[data-theme="dark"] .economy-selected-client,
+html[data-theme="dark"] .economy-rule-box>div,
+html[data-theme="dark"] .economy-purchase>div,
+html[data-theme="dark"] .economy-distribution-summary,
+html[data-theme="dark"] .economy-anagrafica-grid>div,
+html[data-theme="dark"] .economy-anagrafica-note{
+  background:#252822;
+  color:var(--ink);
+}
+
+html[data-theme="dark"] .economy-presets button,
+html[data-theme="dark"] .economy-invoice-choice button,
+html[data-theme="dark"] .economy-history-edit{
+  background:#252822;
+  color:var(--ink);
+  border-color:#464b41;
+}
+
+html[data-theme="dark"] .economy-invoice-choice button.active,
+html[data-theme="dark"] .economy-history-edit.active{
+  background:#111;
+  color:var(--lime);
+  border-color:#686e60;
+}
+
+html[data-theme="dark"] .economy-cost-row,
+html[data-theme="dark"] .economy-invoice-choice,
+html[data-theme="dark"] .economy-person-total,
+html[data-theme="dark"] .economy-mixed-field,
+html[data-theme="dark"] .economy-history-row{
+  border-color:#3b3f36;
+}
+
+html[data-theme="dark"] .economy-participant{
+  border-color:#44483f;
+  background:#1b1e1a;
+}
+
+html[data-theme="dark"] .economy-summary{
+  background:#111310;
+  color:#f4f1ea;
+  border-color:#34382f;
+}
+
+html[data-theme="dark"] .economy-mixed-label,
+html[data-theme="dark"] .economy-history-row>span,
+html[data-theme="dark"] .economy-mixed-residual-line{
+  color:var(--muted);
+}
+
+html[data-theme="dark"] .economy-mixed-residual-line strong{
+  color:var(--ink);
+}
+
+/* Pagamenti scheda cliente */
+html[data-theme="dark"] .client-payment-summary>div,
+html[data-theme="dark"] .client-payment-row,
+html[data-theme="dark"] .client-payment-empty{
+  background:#232620;
+  color:var(--ink);
+}
+
+html[data-theme="dark"] .client-payment-contract-data{
+  color:var(--ink);
+  border-color:var(--line);
+}
+
+html[data-theme="dark"] .client-payment-contract-data dt{
+  color:var(--muted);
+}
+
+html[data-theme="dark"] .client-payment-status.payment-pagato{
+  background:#26381d;
+  color:#c8ef9e;
+}
+
+html[data-theme="dark"] .client-payment-status.payment-parziale{
+  background:#3b3218;
+  color:#f2d776;
+}
+
+html[data-theme="dark"] .client-payment-status.payment-da_pagare{
+  background:#30332d;
+  color:#d0d2cb;
+}
+
+/* Modali / bottom sheet / quick action */
+html[data-theme="dark"] .modal-overlay,
+html[data-theme="dark"] .economy-modal-overlay,
+html[data-theme="dark"] .quick-action-overlay,
+html[data-theme="dark"] .account-switch-overlay{
+  background:rgba(0,0,0,.64);
+}
+
+html[data-theme="dark"] .modal-card,
+html[data-theme="dark"] .economy-modal,
+html[data-theme="dark"] .quick-action-sheet{
+  background:#181b17;
+  color:var(--ink);
+  border-color:#383c33;
+}
+
+html[data-theme="dark"] .economy-modal-head button{
+  background:#292d26;
+  color:var(--ink);
+}
+
+html[data-theme="dark"] .quick-action-handle{
+  background:#5d6257;
+}
+
+html[data-theme="dark"] .quick-action-title{
+  color:var(--ink-soft);
+}
+
+html[data-theme="dark"] .quick-action-sheet>button:not(.quick-action-cancel){
+  background:#232620;
+  color:var(--ink);
+  border:1px solid #34382f;
+}
+
+html[data-theme="dark"] .quick-action-sheet>button:not(.quick-action-cancel):active{
+  background:#2b3028;
+}
+
+html[data-theme="dark"] .quick-action-sheet button strong{
+  color:var(--ink);
+}
+
+html[data-theme="dark"] .quick-action-sheet button small{
+  color:#a8aba1;
+  opacity:1;
+}
+
+html[data-theme="dark"] .quick-action-cancel{
+  color:var(--ink-soft);
+}
+
+/* Account switcher */
+html[data-theme="dark"] .account-switch-modal{
+  background:#181b17;
+  color:var(--ink);
+  border:1px solid #383c33;
+  box-shadow:0 28px 80px rgba(0,0,0,.55);
+}
+
+html[data-theme="dark"] .account-switch-eyebrow{color:#999d92}
+html[data-theme="dark"] .account-switch-modal-head h2{color:var(--ink)}
+html[data-theme="dark"] .account-switch-modal-head p{color:#a5a89e}
+html[data-theme="dark"] .account-switch-close{background:#292d26;color:var(--ink)}
+html[data-theme="dark"] .account-switch-handle{background:#5c6156}
+
+html[data-theme="dark"] .account-switch-row{
+  background:#20231e;
+  color:var(--ink);
+  border-color:#393d34;
+}
+
+html[data-theme="dark"] .account-switch-row.active{
+  background:#282c25;
+  border-color:#52574b;
+  box-shadow:none;
+}
+
+html[data-theme="dark"] .account-switch-avatar.personal{
+  background:#343830;
+  color:var(--ink);
+}
+
+html[data-theme="dark"] .account-switch-name em{
+  background:#30342d;
+  color:#afb2a8;
+}
+
+html[data-theme="dark"] .account-switch-copy small{color:#9da097}
+html[data-theme="dark"] .account-switch-current{background:#28351c;color:#cef36d}
+html[data-theme="dark"] .account-switch-chevron{color:#969a90}
+
+html[data-theme="dark"] .account-admin-connect{
+  background:#20231e;
+  border-color:#3d4138;
+}
+
+html[data-theme="dark"] .account-admin-connect-head strong{color:var(--ink)}
+
+html[data-theme="dark"] .account-admin-connect-head small,
+html[data-theme="dark"] .account-admin-field label,
+html[data-theme="dark"] .account-admin-security{
+  color:#a3a69c;
+}
+
+html[data-theme="dark"] .account-admin-input-row input{
+  background:#171a16;
+  color:var(--ink);
+  border-color:#44493f;
+}
+
+html[data-theme="dark"] .account-admin-input-row input::placeholder{color:#74786f}
+html[data-theme="dark"] .account-admin-input-row input:focus{border-color:#777d6d}
+html[data-theme="dark"] .account-switch-footer{border-color:#383c33}
+html[data-theme="dark"] .account-switch-logout-icon{background:#3a201e}
+
+/* Admin */
+html[data-theme="dark"] .admin-overview-card,
+html[data-theme="dark"] .admin-profile-hero{
+  background:#111;
+  color:#fff;
+}
+
+html[data-theme="dark"] .admin-seller-card{
+  background:var(--card);
+  color:var(--ink);
+  border-color:var(--line);
+}
+
+html[data-theme="dark"] .admin-seller-stats{
+  background:#20231e;
+  border-color:var(--line);
+}
+
+html[data-theme="dark"] .admin-seller-avatar,
+html[data-theme="dark"] .admin-home-view .profile-trigger{
+  background:#111;
+  color:var(--lime);
+  border-color:#34382f;
+}
+
+html[data-theme="dark"] .admin-empty-state{
+  border-color:var(--line);
+}
+
+html[data-theme="dark"] .admin-profile-menu,
+html[data-theme="dark"] .admin-profile-editor{
+  background:var(--card);
+  border-color:var(--line);
+}
+
+/* Profilo */
+html[data-theme="dark"] .profile-hero-card,
+html[data-theme="dark"] .profile-menu{
+  background:#1d201c;
+  border-color:#3d4138;
+}
+
+html[data-theme="dark"] .profile-menu button{
+  color:var(--ink);
+  border-color:#3d4138;
+}
+
+html[data-theme="dark"] .profile-menu button strong{
+  color:#aeb1a7;
+}
+
+html[data-theme="dark"] .theme-selector>button{
+  background:#20231e;
+  border-color:#42473d;
+  color:var(--ink);
+}
+
+html[data-theme="dark"] .theme-selector>button.on{
+  border-color:var(--lime);
+  box-shadow:inset 0 0 0 1px var(--lime);
+}
+
+html[data-theme="dark"] .theme-selector-icon{
+  background:#2a2e27;
+}
+
+html[data-theme="dark"] .theme-selector>button.on .theme-selector-icon{
+  background:var(--lime);
+  color:#111;
+}
+
+/* Avatar */
+.profile-avatar-edit{
+  overflow:visible;
+}
+
+.profile-avatar-edit img{
+  clip-path:circle(50%);
+}
+
+.profile-avatar-edit i{
+  right:-6px;
+  bottom:-5px;
+  width:27px;
+  height:27px;
+  border:3px solid var(--card);
+  box-shadow:0 2px 7px rgba(0,0,0,.28);
+}
+
+html[data-theme="dark"] .profile-avatar-edit i{
+  border-color:#1d201c;
+}
+
+/* Profilo mobile: schermata fissa */
+@media(max-width:720px){
+  .profile-view{
+    height:100%;
+    min-height:0;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .profile-view .brandbar{
+    min-height:0;
+    padding-top:calc(13px + env(safe-area-inset-top));
+    padding-bottom:8px;
+  }
+
+  .profile-view .topbar{
+    padding:8px 18px 6px;
+  }
+
+  .profile-view .topbar h1,
+  .profile-topbar h1{
+    font-size:17px;
+  }
+
+  .profile-view .content{
+    min-height:0;
+    overflow:hidden;
+    padding-top:1px;
+    padding-bottom:calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom) + 4px);
+  }
+
+  .profile-content{
+    gap:7px;
+  }
+
+  .profile-hero-card{
+    padding:10px 13px;
+    gap:11px;
+    border-radius:17px;
+  }
+
+  .profile-avatar-edit{
+    width:56px;
+    height:56px;
+    font-size:21px;
+  }
+
+  .profile-avatar-edit i{
+    width:24px;
+    height:24px;
+    right:-5px;
+    bottom:-4px;
+    font-size:14px;
+  }
+
+  .profile-hero-card strong{font-size:15px}
+  .profile-hero-card small{font-size:10px}
+  .profile-role{font-size:8px;padding:3px 7px}
+
+  .profile-content .stack-card{
+    padding:11px 13px;
+    margin-bottom:0;
+    border-radius:17px;
+  }
+
+  .profile-content .field{
+    margin-bottom:6px;
+  }
+
+  .profile-content .field label{
+    margin-bottom:4px;
+    font-size:10px;
+  }
+
+  .profile-content .field input{
+    min-height:38px;
+    padding:7px 10px;
+    font-size:12.5px;
+  }
+
+  .profile-content .btn{
+    min-height:38px;
+    padding:7px 12px;
+    font-size:11.5px;
+  }
+
+  .profile-theme-group{
+    margin-top:1px;
+    gap:4px;
+  }
+
+  .profile-theme-group .admin-profile-group-title{
+    margin-bottom:0;
+  }
+
+  .theme-selector{
+    gap:6px;
+  }
+
+  .theme-selector>button{
+    min-height:51px;
+    padding:4px;
+    gap:1px;
+    border-radius:12px;
+  }
+
+  .theme-selector-icon{
+    width:20px;
+    height:20px;
+    margin-bottom:0;
+  }
+
+  .theme-selector-icon svg{
+    width:12px;
+    height:12px;
+  }
+
+  .theme-selector strong{font-size:8.5px}
+  .theme-selector small{font-size:6.5px}
+
+  .profile-menu button{
+    min-height:37px;
+    padding:6px 12px;
+  }
+
+  .profile-menu button span{font-size:10.5px}
+  .profile-menu button strong{font-size:8.5px}
+}
+
+@media(max-width:720px) and (max-height:700px){
+  .profile-view .brandbar{
+    padding-top:calc(9px + env(safe-area-inset-top));
+    padding-bottom:6px;
+  }
+
+  .profile-view .topbar{
+    padding-top:6px;
+    padding-bottom:4px;
+  }
+
+  .profile-content{
+    gap:5px;
+  }
+
+  .profile-hero-card{
+    padding:8px 12px;
+  }
+
+  .profile-avatar-edit{
+    width:52px;
+    height:52px;
+  }
+
+  .theme-selector>button{
+    min-height:47px;
+  }
+
+  .profile-menu button{
+    min-height:34px;
+    padding-top:5px;
+    padding-bottom:5px;
+  }
+}
+
+/* ==========================================================
+   DARK MODE - HOME PIPELINE CONTRAST FIX
+   ========================================================== */
+
+html[data-theme="dark"] .home-flow-stages button:first-child{
+  background:#d7dfbf;
+  color:#111;
+}
+
+html[data-theme="dark"] .home-flow-stages button:nth-child(2){
+  background:#bfd77f;
+  color:#111;
+}
+
+html[data-theme="dark"] .home-flow-stages button:nth-child(3){
+  background:#3a254f;
+  border:1px solid #6d4ea0;
+  color:#f7f1ff;
+}
+
+html[data-theme="dark"] .home-flow-stages button:last-child{
+  background:#c8ff27;
+  color:#111;
+}
+
+html[data-theme="dark"] .home-flow-stages button strong,
+html[data-theme="dark"] .home-flow-stages button span{
+  color:inherit;
+}
+
