@@ -41,7 +41,14 @@ window.WebPush = (function () {
     return bytes;
   }
 
+  function accountPersonaleAttivo() {
+    return !window.AccountSessions
+      || window.AccountSessions.getActiveSlot() === 'personale';
+  }
+
   async function registraSottoscrizione(subscription) {
+    if (!accountPersonaleAttivo()) return;
+
     const json = subscription.toJSON();
     const { error } = await window.supabaseClient.rpc('register_web_push_subscription', {
       p_endpoint: json.endpoint,
@@ -72,6 +79,12 @@ window.WebPush = (function () {
   // su Supabase. Va chiamata SOLO da un click esplicito dell'utente, mai al
   // caricamento della pagina.
   async function attiva() {
+    if (!accountPersonaleAttivo()) {
+      throw new Error(
+        'Le notifiche si gestiscono dall\'account personale.'
+      );
+    }
+
     if (!isSupported()) {
       throw new Error('Le notifiche push non sono supportate da questo browser.');
     }
@@ -107,6 +120,7 @@ window.WebPush = (function () {
   // Il permesso Notification resta invariato; una futura riattivazione
   // potra' creare una nuova subscription senza modificare i permessi browser.
   async function disattivaSottoscrizioneCorrente() {
+    if (!accountPersonaleAttivo()) return;
     if (!isSupported()) return;
     const reg = await navigator.serviceWorker.getRegistration();
     if (!reg) return;
