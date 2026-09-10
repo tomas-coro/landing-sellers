@@ -41,11 +41,25 @@ function totaleContrattoDaForm(canone, extra, form) {
 
 function costiGestioneCliente(cliente, rinnovo = false) {
   const costi = [{ descrizione: 'Gestione sito', importo: 30 }];
-  if (cliente.cliente_ha_dominio === false && (cliente.dominio_it || cliente.dominio_com)) {
-    costi.push({
-      descrizione: rinnovo ? 'Dominio - rinnovo' : 'Dominio - primo anno',
-      importo: rinnovo ? 15 : 10
-    });
+  if (cliente.cliente_ha_dominio === false) {
+    if (cliente.dominio_it) {
+      costi.push({
+        descrizione: rinnovo ? 'Dominio .it - rinnovo' : 'Dominio .it - primo anno',
+        importo: rinnovo ? 15 : 10
+      });
+    }
+    if (cliente.dominio_com) {
+      costi.push({
+        descrizione: rinnovo ? 'Dominio .com - rinnovo' : 'Dominio .com - primo anno',
+        importo: rinnovo ? 20 : 15
+      });
+    }
+    if (cliente.email_5_caselle) {
+      costi.push({
+        descrizione: rinnovo ? 'Email 5 caselle - rinnovo' : 'Email 5 caselle - primo anno',
+        importo: rinnovo ? 10 : 5
+      });
+    }
   }
   return costi;
 }
@@ -79,15 +93,34 @@ function avatarUrlConPosizione(url = '', x = 50, y = 50, zoom = 1) {
   return base ? `${base}#crop=${limita(x)},${limita(y)},${scala}` : '';
 }
 
-function calcolaStatisticheVenditore(vendite = [], pagamenti = []) {
+function calcolaStatisticheVenditore(vendite = [], pagamenti = [], quotePerVendita = {}) {
   const venditeAttive = vendite.filter(v => v.stato === 'attiva');
-  const ids = new Set(venditeAttive.map(v => v.id));
-  return {
-    generato: venditeAttive.reduce((totale, v) => totale + (Number(v.importo_vendita) || 0), 0),
-    incassato: pagamenti
-      .filter(p => p.stato === 'incassato' && ids.has(p.vendita_id))
-      .reduce((totale, p) => totale + (Number(p.importo) || 0), 0)
-  };
+
+  const incassatoTotalePerVendita = {};
+  pagamenti
+    .filter(p => p.stato === 'incassato')
+    .forEach(p => {
+      incassatoTotalePerVendita[p.vendita_id] =
+        (incassatoTotalePerVendita[p.vendita_id] || 0) + (Number(p.importo) || 0);
+    });
+
+  return venditeAttive.reduce((totali, v) => {
+    // Vendita condivisa nel team: ognuno vede solo la propria quota (quota_finale),
+    // mai l'importo pieno della vendita degli altri partecipanti.
+    const quota = Number(quotePerVendita[v.id]) || 0;
+    const importoVendita = Number(v.importo_vendita) || 0;
+    const incassatoVendita = incassatoTotalePerVendita[v.id] || 0;
+
+    // L'incasso reale è per l'intera vendita, non per partecipante: la quota
+    // personale scala in proporzione a quanto è stato effettivamente versato.
+    const proporzione = importoVendita > 0
+      ? Math.min(1, incassatoVendita / importoVendita)
+      : 0;
+
+    totali.generato += quota;
+    totali.incassato += quota * proporzione;
+    return totali;
+  }, { generato: 0, incassato: 0 });
 }
 
 function formVenditaEconomicaVuoto() {
@@ -1159,9 +1192,13 @@ function appState() {
     swipeStart(event) {
       if (event.touches?.length !== 1) return;
 
+      // Con un popup aperto (anagrafica cliente, azioni rapide +, conferma eliminazione)
+      // lo swipe-back non deve intercettare il tocco: bloccava scroll, tap e chiusura del popup.
+      if (this.anagraficaEconomiaAperta || this.menuAzioneAperto || this.confermaEliminazione) return;
+
       const target = event.target;
       if (target.closest(
-        '.economy-content, .client-form, input, textarea, select, button, label, a, [role="button"], [contenteditable="true"]'
+        '.economy-content, .economy-modal-overlay, .quick-action-overlay, .modal-overlay, .client-form, input, textarea, select, button, label, a, [role="button"], [contenteditable="true"]'
       )) return;
 
       const touch = event.touches[0];
@@ -1544,7 +1581,7 @@ function appState() {
 
       const partecipazioni = await window.supabaseClient
         .from('vendita_partecipanti')
-        .select('vendita_id')
+        .select('vendita_id,quota_finale')
         .eq('profilo_id', this.sessione.user.id);
 
       if (partecipazioni.error) {
@@ -1552,7 +1589,12 @@ function appState() {
         return;
       }
 
-      const ids = [...new Set((partecipazioni.data || []).map(p => p.vendita_id))];
+      const quotePerVendita = {};
+      (partecipazioni.data || []).forEach(p => {
+        quotePerVendita[p.vendita_id] = (quotePerVendita[p.vendita_id] || 0) + (Number(p.quota_finale) || 0);
+      });
+
+      const ids = Object.keys(quotePerVendita);
       if (!ids.length) return;
 
       const [vendite, pagamenti] = await Promise.all([
@@ -1571,7 +1613,7 @@ function appState() {
         return;
       }
 
-      this.statisticheVenditore = calcolaStatisticheVenditore(vendite.data || [], pagamenti.data || []);
+      this.statisticheVenditore = calcolaStatisticheVenditore(vendite.data || [], pagamenti.data || [], quotePerVendita);
     },
 
     eventiOggiHome() {
