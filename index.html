@@ -1283,9 +1283,15 @@
                     </small>
                   </div>
 
-                  <div class="admin-seller-value">
-                    <strong x-text="formattaEuro(v.totaleGenerato)"></strong>
-                    <span>quota</span>
+                  <div class="admin-seller-values">
+                    <div class="admin-seller-value">
+                      <strong x-text="formattaEuro(v.totaleGenerato)"></strong>
+                      <span>quota prodotta</span>
+                    </div>
+                    <div class="admin-seller-value">
+                      <strong x-text="formattaEuro(v.totaleIncassato)"></strong>
+                      <span>quota incassata</span>
+                    </div>
                   </div>
 
                 </div>
@@ -3176,7 +3182,16 @@
         <span>Pipeline</span>
       </button>
 
-      <button type="button" :class="{ on: view === 'profilo' }" @click="apriProfilo()">
+      <button
+        type="button"
+        class="mobile-profile-tab"
+        :class="{ on: view === 'profilo' }"
+        @pointerdown="iniziaPressioneProfilo()"
+        @pointerup="terminaPressioneProfilo()"
+        @pointercancel="terminaPressioneProfilo()"
+        @pointerleave="terminaPressioneProfilo()"
+        @contextmenu.prevent
+        @click="apriProfiloDaNav()">
         <span class="mobile-nav-avatar">
           <img x-show="isAdmin || (profilo.avatar_url && !avatarErrore)" :src="isAdmin ? 'assets/landing-evolution-logo.svg' : profilo.avatar_url" :style="isAdmin ? '' : avatarStile()" @error="avatarErrore = true" @load="avatarErrore = false" alt="">
           <span x-show="!isAdmin && (!profilo.avatar_url || avatarErrore)" x-text="inizialeProfilo()"></span>

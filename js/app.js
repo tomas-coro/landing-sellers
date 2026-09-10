@@ -303,6 +303,8 @@ function appState() {
     profiloSalvando: false,
     avatarCaricando: false,
     avatarErrore: false,
+    pressioneProfiloTimer: null,
+    pressioneProfiloLunga: false,
 
     // navigazione mobile
     swipeStartX: null,
@@ -1288,12 +1290,12 @@ function appState() {
 
       const target = event.target;
       if (target.closest(
-        '.economy-content, .economy-modal-overlay, .quick-action-overlay, .modal-overlay, .client-form, input, textarea, select, button, label, a, [role="button"], [contenteditable="true"]'
+        '.economy-modal-overlay, .quick-action-overlay, .modal-overlay, .mobile-tabbar, input, textarea, select, [contenteditable="true"]'
       )) return;
 
       const touch = event.touches[0];
-      const isBackView = ['profilo', 'cestino', 'scheda', 'nuovo', 'agenda', 'pipeline', 'ricerca'].includes(this.view);
-      const isForwardView = ['lista', 'admin'].includes(this.view);
+      const isBackView = this.vistaSupportaSwipeIndietro();
+      const isForwardView = this.vistaSupportaSwipeAvanti();
 
       // Lo swipe-back parte dal bordo sinistro, come nelle app native.
       if (isBackView && touch.clientX > 42) return;
@@ -1332,8 +1334,8 @@ function appState() {
 
         this.swipeDirection = dx >= 0 ? 'right' : 'left';
 
-        const allowedRight = ['profilo', 'cestino', 'scheda', 'nuovo', 'agenda', 'pipeline', 'ricerca'].includes(this.view);
-        const allowedLeft = ['lista', 'admin'].includes(this.view);
+        const allowedRight = this.vistaSupportaSwipeIndietro();
+        const allowedLeft = this.vistaSupportaSwipeAvanti();
 
         if (
           (this.swipeDirection === 'right' && !allowedRight) ||
@@ -1433,35 +1435,40 @@ function appState() {
       }, 170);
     },
 
+    vistaSupportaSwipeIndietro() {
+      return [
+        'profilo', 'cestino', 'scheda', 'nuovo', 'agenda',
+        'pipeline', 'ricerca', 'clienti', 'economia'
+      ].includes(this.view) || (
+        this.view === 'lista' && this.isAdmin && this.filtroVenditoreId
+      );
+    },
+
+    vistaSupportaSwipeAvanti() {
+      return this.view === 'admin' || (
+        this.view === 'lista' && !(this.isAdmin && this.filtroVenditoreId)
+      );
+    },
+
     eseguiNavigazioneGesture(direction) {
       if (direction === 'left') {
-        if (this.view === 'lista' || this.view === 'admin') {
-          this.apriProfilo();
-        }
-        return;
-      }
-
-      if (this.view === 'profilo') {
-        this.vaiHome();
-        return;
-      }
-
-      if (this.view === 'cestino') {
         this.apriProfilo();
         return;
       }
 
-      if (['agenda', 'pipeline', 'ricerca', 'clienti'].includes(this.view)) {
+      if (this.view === 'lista' && this.isAdmin && this.filtroVenditoreId) {
+        this.tornaAllaDashboard();
+      } else if (this.view === 'profilo' || this.view === 'economia') {
         this.vaiHome();
-        return;
-      }
-
-      if (this.view === 'scheda') {
+      } else if (this.view === 'cestino') {
+        this.apriProfilo();
+      } else if (['agenda', 'pipeline', 'clienti'].includes(this.view)) {
+        this.vaiHome();
+      } else if (this.view === 'ricerca') {
+        this.tornaDaRicerca();
+      } else if (this.view === 'scheda') {
         this.tornaDaScheda();
-        return;
-      }
-
-      if (this.view === 'nuovo') {
+      } else if (this.view === 'nuovo') {
         this.view = this.clienteInModificaId
           ? 'scheda'
           : (this.isAdmin ? 'admin' : 'lista');
@@ -1489,6 +1496,28 @@ function appState() {
       this.profiloErrore = '';
       this.profiloForm.username = this.profilo.username || '';
       this.view = 'profilo';
+    },
+
+    iniziaPressioneProfilo() {
+      this.pressioneProfiloLunga = false;
+      clearTimeout(this.pressioneProfiloTimer);
+      this.pressioneProfiloTimer = setTimeout(async () => {
+        this.pressioneProfiloLunga = true;
+        await this.apriAccountSwitcher();
+      }, 500);
+    },
+
+    terminaPressioneProfilo() {
+      clearTimeout(this.pressioneProfiloTimer);
+      this.pressioneProfiloTimer = null;
+    },
+
+    apriProfiloDaNav() {
+      if (this.pressioneProfiloLunga) {
+        this.pressioneProfiloLunga = false;
+        return;
+      }
+      this.apriProfilo();
     },
 
     tornaDaProfilo() {
@@ -2842,7 +2871,8 @@ function appState() {
         profiliResult,
         clientiResult,
         venditeResult,
-        partecipantiResult
+        partecipantiResult,
+        pagamentiResult
       ] = await Promise.all([
         window.supabaseClient
           .from('profili')
@@ -2860,14 +2890,19 @@ function appState() {
 
         window.supabaseClient
           .from('vendita_partecipanti')
-          .select('vendita_id,profilo_id,quota_finale')
+          .select('vendita_id,profilo_id,quota_finale'),
+
+        window.supabaseClient
+          .from('pagamenti')
+          .select('vendita_id,importo,stato')
       ]);
 
       const errore =
         profiliResult.error ||
         clientiResult.error ||
         venditeResult.error ||
-        partecipantiResult.error;
+        partecipantiResult.error ||
+        pagamentiResult.error;
 
       if (errore) {
         this.erroreAdmin =
@@ -2879,6 +2914,7 @@ function appState() {
       const clienti = clientiResult.data || [];
       const vendite = venditeResult.data || [];
       const partecipanti = partecipantiResult.data || [];
+      const pagamenti = pagamentiResult.data || [];
       const venditeAttive = vendite.filter(v => v.stato === 'attiva');
 
       const venditorePerCliente = Object.fromEntries(
@@ -2976,20 +3012,23 @@ function appState() {
           ) === chiaveMese;
         });
 
+        const quotePerVendita = Object.fromEntries(
+          partecipazioni.map(partecipazione => [
+            partecipazione.vendita_id,
+            partecipazione.quota_finale
+          ])
+        );
+        const statistiche = calcolaStatisticheVenditore(
+          venditeAttive.filter(vendita => venditeProfilo.has(vendita.id)),
+          pagamenti,
+          quotePerVendita
+        );
+
         return {
           id: profilo.id,
           nome: profilo.ruolo_economico === 'referente' ? 'Alessandro' : profilo.nome,
-
-          /*
-           * Qui non usiamo piu' importo_abbonamento del cliente.
-           * Il valore personale deriva dalla quota economica realmente
-           * registrata nella vendita.
-           */
-          totaleGenerato: partecipazioni.reduce(
-            (totale, partecipazione) =>
-              totale + (Number(partecipazione.quota_finale) || 0),
-            0
-          ),
+          totaleGenerato: statistiche.generato,
+          totaleIncassato: statistiche.incassato,
 
           nVendite: venditeProfilo.size,
           nClientiTotali: suoiClienti.length,

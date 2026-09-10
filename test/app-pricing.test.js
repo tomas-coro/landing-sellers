@@ -220,3 +220,23 @@ test('le statistiche del venditore usano la sua quota, non l’importo pieno del
     b: 500
   }), { generato: 600, incassato: 144 }); // 600 * (240 / 1000) incassato reale
 });
+
+test('le gesture tornano correttamente dalle viste admin e secondarie', () => {
+  const stato = appState();
+  const chiamate = [];
+  stato.isAdmin = true;
+  stato.filtroVenditoreId = 'nicola';
+  stato.view = 'lista';
+  stato.tornaAllaDashboard = () => chiamate.push('admin');
+  stato.eseguiNavigazioneGesture('right');
+
+  stato.view = 'ricerca';
+  stato.tornaDaRicerca = () => chiamate.push('ricerca');
+  stato.eseguiNavigazioneGesture('right');
+
+  assert.deepStrictEqual(chiamate, ['admin', 'ricerca']);
+  assert.strictEqual(stato.vistaSupportaSwipeIndietro(), true);
+
+  stato.view = 'admin';
+  assert.strictEqual(stato.vistaSupportaSwipeAvanti(), true);
+});

@@ -4937,8 +4937,13 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
   font-weight:650;
 }
 
-.admin-seller-value{
+.admin-seller-values{
   flex:0 0 auto;
+  display:flex;
+  gap:12px;
+}
+
+.admin-seller-value{
   display:flex;
   flex-direction:column;
   align-items:flex-end;
@@ -5393,4 +5398,17 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 @media(max-width:420px){
   .client-search-tools{grid-template-columns:1fr}
   .advanced-search-button{min-height:38px}
+}
+
+/* Pressione prolungata sull'avatar: evita il menu nativo di copia immagine. */
+.mobile-profile-tab,
+.mobile-profile-tab img{
+  -webkit-touch-callout:none;
+  -webkit-user-select:none;
+  user-select:none;
+}
+
+@media(max-width:380px){
+  .admin-seller-values{gap:7px}
+  .admin-seller-value strong{font-size:12px}
 }
