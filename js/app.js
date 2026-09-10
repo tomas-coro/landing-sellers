@@ -78,7 +78,9 @@ function etichettaDurataScontoForm(form) {
 }
 
 function posizioneAvatarDaUrl(url = '') {
-  const match = String(url).match(/#(?:pos|crop)=(\d{1,3}),(\d{1,3})(?:,([\d.]+))?$/);
+  const match = String(url).match(
+  /#(?:pos|crop)=(\d{1,3}(?:\.\d+)?),(\d{1,3}(?:\.\d+)?)(?:,([\d.]+))?$/
+);
   return match ? {
     x: Math.min(100, Number(match[1])),
     y: Math.min(100, Number(match[2])),
