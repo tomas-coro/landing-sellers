@@ -234,6 +234,7 @@ function appState() {
     profiloForm: { username: '' },
     avatarPosizione: { x: 50, y: 50, zoom: 1 },
     avatarTrascinamento: null,
+    modificaInquadraturaAperta: false,
     profiloErrore: '',
     profiloSalvando: false,
     avatarCaricando: false,
@@ -1463,6 +1464,7 @@ function appState() {
         }
         this.profilo.username = username;
         this.profilo.avatar_url = avatarUrl;
+        this.modificaInquadraturaAperta = false;
       } finally {
         this.profiloSalvando = false;
       }
@@ -1505,6 +1507,7 @@ function appState() {
         }
         this.profilo.avatar_url = avatarUrl;
         this.profilo.username = (this.profiloForm.username || '').trim();
+        this.modificaInquadraturaAperta = true;
       } finally {
         this.avatarCaricando = false;
         event.target.value = '';

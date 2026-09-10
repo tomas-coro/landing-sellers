@@ -54,7 +54,7 @@ test('il prezzo finale concordato include setup, dominio e altri extra', () => {
   }), 480);
 });
 
-test('i costi del primo anno sono 30 euro più 10 per il dominio acquistato', () => {
+test('i costi del primo anno sono 30 euro più 10 per il dominio .it acquistato', () => {
   assert.strictEqual(typeof costiGestioneCliente, 'function');
   assert.deepStrictEqual(costiGestioneCliente({
     cliente_ha_dominio: false,
@@ -62,20 +62,41 @@ test('i costi del primo anno sono 30 euro più 10 per il dominio acquistato', ()
     dominio_com: false
   }), [
     { descrizione: 'Gestione sito', importo: 30 },
-    { descrizione: 'Dominio - primo anno', importo: 10 }
+    { descrizione: 'Dominio .it - primo anno', importo: 10 }
   ]);
   assert.deepStrictEqual(costiGestioneCliente({ cliente_ha_dominio: true }), [
     { descrizione: 'Gestione sito', importo: 30 }
   ]);
 });
 
-test('il dominio costa 15 euro dai rinnovi successivi', () => {
+test('il dominio .it costa 15 euro dai rinnovi successivi', () => {
   assert.deepStrictEqual(costiGestioneCliente({
     cliente_ha_dominio: false,
     dominio_it: true
   }, true), [
     { descrizione: 'Gestione sito', importo: 30 },
-    { descrizione: 'Dominio - rinnovo', importo: 15 }
+    { descrizione: 'Dominio .it - rinnovo', importo: 15 }
+  ]);
+});
+
+test('il dominio .com costa 15 euro il primo anno e 20 dai rinnovi, l’email 5 il primo anno e 10 dai rinnovi', () => {
+  assert.deepStrictEqual(costiGestioneCliente({
+    cliente_ha_dominio: false,
+    dominio_com: true,
+    email_5_caselle: true
+  }), [
+    { descrizione: 'Gestione sito', importo: 30 },
+    { descrizione: 'Dominio .com - primo anno', importo: 15 },
+    { descrizione: 'Email 5 caselle - primo anno', importo: 5 }
+  ]);
+  assert.deepStrictEqual(costiGestioneCliente({
+    cliente_ha_dominio: false,
+    dominio_com: true,
+    email_5_caselle: true
+  }, true), [
+    { descrizione: 'Gestione sito', importo: 30 },
+    { descrizione: 'Dominio .com - rinnovo', importo: 20 },
+    { descrizione: 'Email 5 caselle - rinnovo', importo: 10 }
   ]);
 });
 
@@ -128,7 +149,7 @@ test('inquadratura e zoom avatar vengono salvati nell’URL e riletti', () => {
   assert.deepStrictEqual(posizioneAvatarDaUrl('https://example.com/avatar.png#pos=40,60'), { x: 40, y: 60, zoom: 1 });
 });
 
-test('le statistiche sommano vendite attive e pagamenti incassati', () => {
+test('le statistiche del venditore usano la sua quota, non l’importo pieno della vendita condivisa', () => {
   assert.deepStrictEqual(calcolaStatisticheVenditore([
     { id: 'a', stato: 'attiva', importo_vendita: '1000' },
     { id: 'b', stato: 'annullata', importo_vendita: '500' }
@@ -136,5 +157,8 @@ test('le statistiche sommano vendite attive e pagamenti incassati', () => {
     { vendita_id: 'a', stato: 'incassato', importo: '240' },
     { vendita_id: 'a', stato: 'previsto', importo: '300' },
     { vendita_id: 'b', stato: 'incassato', importo: '100' }
-  ]), { generato: 1000, incassato: 240 });
+  ], {
+    a: 600, // quota_finale del venditore su una vendita da 1000 condivisa col team
+    b: 500
+  }), { generato: 600, incassato: 144 }); // 600 * (240 / 1000) incassato reale
 });

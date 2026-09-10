@@ -434,7 +434,14 @@
         </div>
 
         <div class="stack-card">
-          <div class="avatar-position-controls" x-show="profilo.avatar_url">
+          <button
+            type="button"
+            class="avatar-crop-reset"
+            x-show="profilo.avatar_url && !modificaInquadraturaAperta"
+            @click="modificaInquadraturaAperta = true">
+            Modifica inquadratura foto
+          </button>
+          <div class="avatar-position-controls" x-show="profilo.avatar_url && modificaInquadraturaAperta">
             <strong>Inquadratura foto</strong>
             <small>Trascina la foto per spostarla, regola lo zoom e poi salva.</small>
             <div
@@ -449,7 +456,10 @@
               <span>Zoom</span>
               <input type="range" min="1" max="2" step="0.05" x-model.number="avatarPosizione.zoom">
             </label>
-            <button type="button" class="avatar-crop-reset" @click="avatarPosizione = { x: 50, y: 50, zoom: 1 }">Reimposta inquadratura</button>
+            <div class="avatar-crop-actions">
+              <button type="button" class="avatar-crop-reset" @click="avatarPosizione = { x: 50, y: 50, zoom: 1 }">Reimposta inquadratura</button>
+              <button type="button" class="avatar-crop-reset" @click="modificaInquadraturaAperta = false">Chiudi</button>
+            </div>
           </div>
           <div class="field">
             <label>Username</label>

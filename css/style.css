@@ -259,6 +259,7 @@ h2{font-size:14px;font-weight:800;letter-spacing:-.005em;margin:22px 0 10px}
 .avatar-crop-preview{width:min(210px,70vw);aspect-ratio:1;margin:8px auto;border-radius:50%;overflow:hidden;background:var(--paper-2);touch-action:none;cursor:grab;box-shadow:inset 0 0 0 2px var(--line)}
 .avatar-crop-preview:active{cursor:grabbing}.avatar-crop-preview img{width:100%;height:100%;object-fit:cover;user-select:none;pointer-events:none}
 .avatar-crop-reset{justify-self:center;border:0;background:none;color:var(--muted);font:inherit;font-size:11px;font-weight:700;text-decoration:underline;cursor:pointer}
+.avatar-crop-actions{display:flex;justify-content:center;gap:16px}
 .profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .profile-stats>div{border:1px solid var(--line);border-radius:16px;padding:13px 10px;background:var(--card,#fff);display:grid;gap:3px;text-align:center}
 .profile-stats strong{font-size:15px}.profile-stats span{font-size:10px;color:var(--muted);font-weight:700}
@@ -3637,10 +3638,10 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 .home-active-sites{
   display:flex;
   align-items:baseline;
-  gap:10px;
-  margin:24px 0 20px;
+  gap:14px;
+  margin:14px 0 16px;
 }
-.home-active-sites strong{font-size:54px;line-height:.8;letter-spacing:-.06em}
+.home-active-sites strong{font-size:44px;line-height:.8;letter-spacing:-.06em}
 .home-active-sites span{display:grid;gap:3px;color:var(--lime);line-height:1.1}
 .home-active-sites b{font-size:13px}.home-active-sites small{color:#aaa;font-size:10px;font-weight:650}
 
@@ -3649,11 +3650,11 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
   grid-template-columns:repeat(2,minmax(0,1fr));
   border-top:1px solid #363636;
 }
-.home-money-grid > div{padding:14px 12px 0 0;min-width:0}
+.home-money-grid > div{padding:12px 12px 2px 0;min-width:0}
 .home-money-grid > div + div{padding-left:14px;border-left:1px solid #363636}
 .home-money-grid span,.home-money-grid strong{display:block}
 .home-money-grid span{color:#999;font-size:9px;font-weight:650}
-.home-money-grid strong{margin-top:5px;font-size:17px;overflow-wrap:anywhere}
+.home-money-grid strong{margin-top:4px;font-size:19px;overflow-wrap:anywhere}
 
 .home-flow{
   border:1px solid var(--line);
