@@ -312,6 +312,16 @@ function appState() {
     clienteEconomiaSelezionato: null,
     anagraficaEconomiaAperta: false,
     menuAzioneAperto: false,
+
+    // Azioni rapide cliente
+    clienteAzioniRapideId: null,
+    clienteAzioniStatoAperto: false,
+    clienteAzioniContattoAperto: false,
+    clienteAzioniNotaAperta: false,
+    clienteProssimoContattoData: '',
+    clienteNotaRapidaTesto: '',
+    salvandoProssimoContattoRapido: false,
+    salvandoNotaRapida: false,
     salvandoVenditaEconomica: false,
     erroreEconomia: '',
     successoEconomia: '',
@@ -1463,7 +1473,12 @@ function appState() {
 
       // Con un popup aperto (anagrafica cliente, azioni rapide +, conferma eliminazione)
       // lo swipe-back non deve intercettare il tocco: bloccava scroll, tap e chiusura del popup.
-      if (this.anagraficaEconomiaAperta || this.menuAzioneAperto || this.confermaEliminazione) return;
+      if (
+        this.anagraficaEconomiaAperta ||
+        this.menuAzioneAperto ||
+        this.clienteAzioniRapideId ||
+        this.confermaEliminazione
+      ) return;
 
       const target = event.target;
       if (target.closest(
@@ -2567,6 +2582,121 @@ function appState() {
       }
 
       await this.caricaClienti();
+    },
+
+    clienteAzioniRapide() {
+      return this.clienti.find(
+        cliente => cliente.id === this.clienteAzioniRapideId
+      ) || {};
+    },
+
+    apriAzioniCliente(clienteId) {
+      const cliente = this.clienti.find(c => c.id === clienteId);
+      if (!cliente) return;
+
+      this.clienteAzioniRapideId = clienteId;
+      this.clienteAzioniStatoAperto = false;
+      this.clienteAzioniContattoAperto = false;
+      this.clienteAzioniNotaAperta = false;
+      this.clienteNotaRapidaTesto = '';
+      this.clienteProssimoContattoData =
+        this.normalizzaDataAgenda(cliente.prossimo_contatto) || '';
+    },
+
+    chiudiAzioniCliente() {
+      this.clienteAzioniRapideId = null;
+      this.clienteAzioniStatoAperto = false;
+      this.clienteAzioniContattoAperto = false;
+      this.clienteAzioniNotaAperta = false;
+      this.clienteProssimoContattoData = '';
+      this.clienteNotaRapidaTesto = '';
+    },
+
+    async apriSchedaDaAzioni(sezione = null) {
+      const clienteId = this.clienteAzioniRapideId;
+      if (!clienteId) return;
+
+      this.chiudiAzioniCliente();
+      await this.apriScheda(clienteId);
+
+      if (sezione && Object.prototype.hasOwnProperty.call(this.schedaAperture, sezione)) {
+        this.schedaAperture[sezione] = true;
+      }
+
+      if (sezione === 'note') {
+        setTimeout(() => {
+          document.querySelector('textarea[x-model="nuovaNotaTesto"]')?.focus();
+        }, 80);
+      }
+    },
+
+    async cambiaStatoDaAzioni(stato) {
+      const clienteId = this.clienteAzioniRapideId;
+      if (!clienteId) return;
+
+      this.erroreClienti = '';
+      await this.cambiaStatoDaPipeline(clienteId, stato);
+
+      if (!this.erroreClienti) {
+        this.chiudiAzioniCliente();
+      }
+    },
+
+    async salvaNotaRapida() {
+      const clienteId = this.clienteAzioniRapideId;
+      const testo = this.clienteNotaRapidaTesto.trim();
+
+      if (!clienteId || !testo || this.salvandoNotaRapida) return;
+
+      this.salvandoNotaRapida = true;
+      this.erroreClienti = '';
+
+      try {
+        const { error } = await window.supabaseClient
+          .from('note')
+          .insert({
+            cliente_id: clienteId,
+            venditore_id: this.sessione.user.id,
+            testo
+          });
+
+        if (error) {
+          this.erroreClienti = 'Nota non salvata: ' + error.message;
+          return;
+        }
+
+        this.chiudiAzioniCliente();
+      } finally {
+        this.salvandoNotaRapida = false;
+      }
+    },
+
+    async salvaProssimoContattoRapido() {
+      const clienteId = this.clienteAzioniRapideId;
+      if (!clienteId || this.salvandoProssimoContattoRapido) return;
+
+      this.salvandoProssimoContattoRapido = true;
+      this.erroreClienti = '';
+
+      try {
+        const { error } = await window.supabaseClient
+          .from('clienti')
+          .update({
+            prossimo_contatto: this.clienteProssimoContattoData || null
+          })
+          .eq('id', clienteId);
+
+        if (error) {
+          this.erroreClienti =
+            'Prossimo contatto non aggiornato: ' + error.message;
+          return;
+        }
+
+        await this.caricaClienti();
+        this.chiudiAzioniCliente();
+      } finally {
+        this.salvandoProssimoContattoRapido = false;
+      }
     },
 
     risultatiRicercaGlobale() {

@@ -486,10 +486,21 @@
                 <strong x-text="cliente.nome"></strong>
                 <small x-text="cliente.nome_pacchetto || 'Pacchetto non specificato'"></small>
               </div>
-              <span class="pill" :class="'s-' + classeStato(cliente.stato)">
-                <i></i>
-                <span x-text="formattaStato(cliente.stato)"></span>
-              </span>
+
+              <div class="home-client-card-actions">
+                <span class="pill" :class="'s-' + classeStato(cliente.stato)">
+                  <i></i>
+                  <span x-text="formattaStato(cliente.stato)"></span>
+                </span>
+
+                <button
+                  type="button"
+                  class="client-card-more"
+                  :aria-label="'Azioni rapide per ' + cliente.nome"
+                  @click.stop="apriAzioniCliente(cliente.id)">
+                  •••
+                </button>
+              </div>
             </div>
 
             <div class="home-client-meta">
@@ -3274,6 +3285,167 @@
           type="button"
           class="quick-action-cancel"
           @click="menuAzioneAperto = false">
+          Annulla
+        </button>
+
+      </div>
+    </div>
+
+
+    <!-- AZIONI RAPIDE CLIENTE -->
+    <div
+      x-show="clienteAzioniRapideId"
+      x-cloak
+      class="quick-action-overlay client-action-overlay"
+      @click.self="chiudiAzioniCliente()">
+
+      <div
+        class="quick-action-sheet client-action-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Azioni rapide cliente">
+
+        <div class="quick-action-handle"></div>
+
+        <div class="client-action-heading">
+          <span>AZIONI RAPIDE</span>
+          <strong x-text="clienteAzioniRapide().nome || 'Cliente'"></strong>
+          <small x-text="clienteAzioniRapide().referente || clienteAzioniRapide().nome_pacchetto || ''"></small>
+        </div>
+
+        <div class="client-action-grid">
+          <button
+            type="button"
+            :disabled="!whatsappCliente(clienteAzioniRapide())"
+            @click="window.open(whatsappCliente(clienteAzioniRapide()), '_blank')">
+            <span class="client-action-symbol">WA</span>
+            <strong>WhatsApp</strong>
+          </button>
+
+          <button
+            type="button"
+            :disabled="!telefonoPulito(clienteAzioniRapide())"
+            @click="document.location.href = 'tel:' + telefonoPulito(clienteAzioniRapide())">
+            <span class="client-action-symbol">☎</span>
+            <strong>Chiama</strong>
+          </button>
+
+          <button
+            type="button"
+            :class="{ on: clienteAzioniNotaAperta }"
+            @click="
+              clienteAzioniNotaAperta = !clienteAzioniNotaAperta;
+              clienteAzioniContattoAperto = false;
+              clienteAzioniStatoAperto = false;
+            ">
+            <span class="client-action-symbol">＋</span>
+            <strong>Nota rapida</strong>
+          </button>
+
+          <button
+            type="button"
+            :class="{ on: clienteAzioniContattoAperto }"
+            @click="
+              clienteAzioniContattoAperto = !clienteAzioniContattoAperto;
+              clienteAzioniNotaAperta = false;
+              clienteAzioniStatoAperto = false;
+            ">
+            <span class="client-action-symbol">◷</span>
+            <strong>Prossimo contatto</strong>
+          </button>
+        </div>
+
+        <div
+          class="client-action-subpanel"
+          x-show="clienteAzioniNotaAperta">
+
+          <span class="client-action-subtitle">Nota rapida</span>
+
+          <textarea
+            class="client-action-note"
+            rows="3"
+            maxlength="1000"
+            placeholder="Scrivi una nota..."
+            x-model="clienteNotaRapidaTesto">
+          </textarea>
+
+          <button
+            type="button"
+            class="client-action-save client-action-save-full"
+            :disabled="!clienteNotaRapidaTesto.trim() || salvandoNotaRapida"
+            @click="salvaNotaRapida()"
+            x-text="salvandoNotaRapida ? 'Salvataggio...' : 'Salva nota'">
+          </button>
+        </div>
+
+        <div
+          class="client-action-subpanel"
+          x-show="clienteAzioniContattoAperto">
+
+          <span class="client-action-subtitle">Prossimo contatto</span>
+
+          <div class="client-action-date-row">
+            <input
+              type="date"
+              x-model="clienteProssimoContattoData">
+
+            <button
+              type="button"
+              class="client-action-save"
+              :disabled="salvandoProssimoContattoRapido"
+              @click="salvaProssimoContattoRapido()"
+              x-text="salvandoProssimoContattoRapido ? 'Salvataggio...' : 'Salva'">
+            </button>
+          </div>
+
+          <small>
+            Lascia la data vuota e salva per rimuovere il prossimo contatto.
+          </small>
+        </div>
+
+        <button
+          type="button"
+          class="client-action-secondary"
+          :class="{ on: clienteAzioniStatoAperto }"
+          @click="
+            clienteAzioniStatoAperto = !clienteAzioniStatoAperto;
+            clienteAzioniNotaAperta = false;
+            clienteAzioniContattoAperto = false;
+          ">
+          <span>
+            <strong>Cambia stato</strong>
+            <small x-text="formattaStato(clienteAzioniRapide().stato)"></small>
+          </span>
+          <b>›</b>
+        </button>
+
+        <div
+          class="client-action-subpanel"
+          x-show="clienteAzioniStatoAperto">
+
+          <span class="client-action-subtitle">Stato cliente</span>
+
+          <div class="client-action-status-grid">
+            <template
+              x-for="stato in statiPipeline()"
+              :key="'quick-' + stato.valore">
+
+              <button
+                type="button"
+                :class="{
+                  on: clienteAzioniRapide().stato === stato.valore
+                }"
+                @click="cambiaStatoDaAzioni(stato.valore)">
+                <span x-text="stato.label"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="quick-action-cancel"
+          @click="chiudiAzioniCliente()">
           Annulla
         </button>
 

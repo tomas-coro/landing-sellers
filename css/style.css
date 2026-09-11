@@ -7395,3 +7395,181 @@ html[data-theme="dark"] .home-today-clear{
 html[data-theme="dark"] .home-today-clear{
   background:rgba(255,255,255,.045);
 }
+
+/* Quick actions cliente */
+.home-client-card-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:7px;
+  flex:none;
+}
+
+.client-card-more{
+  width:34px;
+  height:34px;
+  flex:none;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:rgba(17,17,17,.035);
+  color:var(--ink);
+  font:800 11px/1 inherit;
+  letter-spacing:1px;
+  cursor:pointer;
+}
+
+.client-card-more:active{
+  transform:scale(.96);
+}
+
+.client-action-sheet{
+  max-height:min(84vh,680px);
+  overflow-y:auto;
+}
+
+.client-action-heading{
+  display:flex;
+  flex-direction:column;
+  padding:2px 2px 10px;
+}
+
+.client-action-heading > span,
+.client-action-subtitle{
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.08em;
+  opacity:.45;
+}
+
+.client-action-heading strong{
+  margin-top:3px;
+  font-size:18px;
+  line-height:1.2;
+}
+
+.client-action-heading small{
+  margin-top:3px;
+  font-size:10px;
+  opacity:.5;
+}
+
+.client-action-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  margin:4px 0 10px;
+}
+
+.client-action-grid > button{
+  min-height:72px;
+  padding:12px 10px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--paper);
+  color:var(--ink);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:flex-start;
+  gap:7px;
+  text-align:left;
+  font:inherit;
+}
+
+.client-action-grid > button.on{
+  border-color:var(--lime);
+  box-shadow:inset 0 0 0 1px var(--lime);
+}
+
+.client-action-grid > button:disabled{
+  opacity:.32;
+}
+
+.client-action-grid > button strong{
+  font-size:11px;
+}
+
+.client-action-symbol{
+  min-width:24px;
+  height:24px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:8px;
+  background:rgba(17,17,17,.06);
+  font-size:10px;
+  font-weight:800;
+}
+
+.client-action-subpanel{
+  margin:8px 0 12px;
+  padding:13px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:rgba(17,17,17,.025);
+}
+
+.client-action-date-row{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  margin-top:9px;
+}
+
+.client-action-date-row input{
+  min-width:0;
+}
+
+.client-action-save{
+  min-width:72px;
+  border:0;
+  border-radius:11px;
+  padding:0 14px;
+  background:var(--lime);
+  color:#111;
+  font:800 11px/1 inherit;
+}
+
+.client-action-subpanel > small{
+  display:block;
+  margin-top:8px;
+  font-size:9px;
+  line-height:1.4;
+  opacity:.48;
+}
+
+.client-action-status-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+  margin-top:9px;
+}
+
+.client-action-status-grid button{
+  min-height:38px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--paper);
+  color:var(--ink);
+  font:700 10px/1.2 inherit;
+}
+
+.client-action-status-grid button.on{
+  border-color:var(--lime);
+  background:rgba(174,232,55,.12);
+}
+
+html[data-theme="dark"] .client-card-more{
+  background:rgba(255,255,255,.055);
+  color:var(--ink);
+}
+
+html[data-theme="dark"] .client-action-grid > button,
+html[data-theme="dark"] .client-action-status-grid button{
+  background:var(--surface);
+}
+
+html[data-theme="dark"] .client-action-symbol,
+html[data-theme="dark"] .client-action-subpanel{
+  background:rgba(255,255,255,.045);
+}
