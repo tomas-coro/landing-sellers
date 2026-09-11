@@ -672,6 +672,10 @@ function appState() {
         { ruolo: 'bot', testo: globalThis.AssistenteLanding.rispondi(testo) }
       );
       this.assistenteDomanda = '';
+      this.$nextTick(() => {
+        const container = document.getElementById('app');
+        container.scrollTop = container.scrollHeight;
+      });
     },
 
     totaleIncassatoCliente() {
