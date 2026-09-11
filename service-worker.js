@@ -1,13 +1,12 @@
 // service-worker.js
-const CACHE_NAME = 'venditori-le-shell-v67';
+const CACHE_NAME = 'venditori-le-shell-v68';
 
 const APP_SHELL = [
   './',
   './index.html',
   './css/style.css',
   './assets/landing-evolution-logo.svg',
-  './assets/landing-sellers-logo.svg',
-  './assets/landing-sellers-mark.svg',
+  './assets/landing-sellers-icon.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',
