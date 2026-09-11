@@ -26,8 +26,10 @@ body{
 :focus-visible{outline:2.5px solid var(--ink);outline-offset:2px;border-radius:4px}
 [x-cloak]{display:none!important}
 
-.app-launch{position:fixed;inset:0;z-index:999;background:var(--ink);display:grid;place-items:center}
-.app-launch-brand{display:flex;align-items:center;gap:11px;color:var(--paper);font-size:15px;font-weight:800;letter-spacing:.04em}
+.app-launch{position:fixed;inset:0;z-index:999;background:#F4F1EA;display:grid;place-items:center}
+.app-launch-brand{display:flex;align-items:center;gap:11px;color:#111;font-size:15px;font-weight:800;letter-spacing:.04em}
+html[data-theme="dark"] .app-launch{background:#000}
+html[data-theme="dark"] .app-launch-brand{color:#fff}
 .app-launch-dot{width:12px;height:12px;border-radius:50%;background:var(--lime);animation:launchDot .68s var(--ease) both}
 .app-launch-name{animation:launchName .5s .12s var(--ease) both}
 @keyframes launchDot{
@@ -7096,4 +7098,48 @@ html[data-theme="dark"] .home-flow-stages .stage-pubblicato{
   .home-contract-metric > strong{
     font-size:20px;
   }
+}
+
+/* Home ordinata + classifica venditori */
+.home-dashboard-v3{gap:14px}
+.home-performance-v4{padding:0;border-radius:20px}
+.home-performance-v4 .home-performance-head{padding:17px 18px;border-bottom:1px solid #303030}
+.home-work-summary{margin:0;padding:22px 18px 20px}
+.home-work-progress{height:4px;margin-top:16px}
+.home-contract-metrics{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  margin:0;
+  border-top:1px solid #363636;
+}
+.home-contract-metric{padding:16px 18px!important;border:0!important;min-height:92px}
+.home-contract-metric:nth-child(even){border-left:1px solid #363636!important}
+.home-contract-metric:nth-child(n+3){border-top:1px solid #363636!important}
+.home-contract-metric>span{font-size:9px}
+.home-contract-metric>strong{margin-top:6px;font-size:20px;font-variant-numeric:tabular-nums}
+.home-contract-metric>small{margin-top:7px;font-size:8px;color:#858585}
+.home-contract-metrics.is-developer .home-contract-metric{min-height:104px;display:flex;flex-direction:column;justify-content:center}
+.home-contract-metrics.is-developer .home-contract-metric:nth-child(3){border-top:0!important;border-left:1px solid #363636!important}
+.home-flow,.home-dashboard-v3 .home-attention{border-radius:17px;padding:17px}
+.home-flow-stages{gap:7px}
+.home-flow-stages button{min-height:72px;border-radius:10px}
+
+.admin-ranking{display:grid;gap:10px}
+.admin-ranking-list{overflow:hidden;border:1px solid var(--line);border-radius:17px;background:var(--card)}
+.admin-ranking-list button{
+  width:100%;min-height:62px;padding:10px 14px;border:0;border-bottom:1px solid var(--line);
+  display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:11px;
+  background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer;
+}
+.admin-ranking-list button:last-child{border-bottom:0}
+.admin-ranking-position{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:var(--paper-2);font-size:11px;font-weight:850}
+.admin-ranking-list button:first-child .admin-ranking-position{background:var(--lime);color:#111}
+.admin-ranking-name{display:grid;gap:2px;min-width:0}
+.admin-ranking-name strong{overflow:hidden;text-overflow:ellipsis;font-size:12px;white-space:nowrap}
+.admin-ranking-name small{color:var(--muted);font-size:8.5px;font-weight:650}
+.admin-ranking-total{font-size:14px;font-variant-numeric:tabular-nums}
+
+@media(max-width:380px){
+  .home-contract-metric{padding:14px!important}
+  .home-contract-metric>strong{font-size:18px}
 }

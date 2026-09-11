@@ -11,6 +11,7 @@ const {
   calcolaStatisticheVenditore,
   clientiAttribuitiAlProfilo,
   clientiDelVenditoreRiferimento,
+  ordinaClassificaVenditori,
   posizioneAvatarDaUrl,
   avatarUrlConPosizione
 } = require('../js/app.js');
@@ -213,6 +214,20 @@ test('la dashboard attribuisce il cliente al venditore di riferimento, non a tut
   );
 });
 
+test('la classifica ordina i venditori per venduto ed esclude il developer', () => {
+  const venditori = [
+    { nome: 'Tomas', ruolo: 'Developer', totaleVenduto: 9000 },
+    { nome: 'Alessandro', ruolo: 'Referente', totaleVenduto: 1200 },
+    { nome: 'Nicola', ruolo: 'Venditore', totaleVenduto: 1800 }
+  ];
+
+  assert.deepStrictEqual(
+    ordinaClassificaVenditori(venditori).map(v => v.nome),
+    ['Nicola', 'Alessandro']
+  );
+  assert.deepStrictEqual(venditori.map(v => v.nome), ['Tomas', 'Alessandro', 'Nicola']);
+});
+
 test('le statistiche del venditore usano la sua quota, non l’importo pieno della vendita condivisa', () => {
   assert.deepStrictEqual(calcolaStatisticheVenditore([
     { id: 'a', stato: 'attiva', importo_vendita: '1000' },
@@ -224,7 +239,13 @@ test('le statistiche del venditore usano la sua quota, non l’importo pieno del
   ], {
     a: 600, // quota_finale del venditore su una vendita da 1000 condivisa col team
     b: 500
-  }), { generato: 600, incassato: 144 }); // 600 * (240 / 1000) incassato reale
+  }), {
+    generato: 600,
+    incassato: 144,
+    venduto: 0,
+    mediaVendita: 0,
+    numeroVendite: 0
+  }); // 600 * (240 / 1000) incassato reale
 });
 
 test('le gesture tornano correttamente dalle viste admin e secondarie', () => {

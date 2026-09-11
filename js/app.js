@@ -119,6 +119,16 @@ function clientiAttribuitiAlProfilo(profiloId, clienti = [], vendite = [], parte
   );
 }
 
+function ordinaClassificaVenditori(venditori = []) {
+  return venditori
+    .filter(v => v.ruolo !== 'Developer')
+    .sort((a, b) =>
+      (Number(b.totaleVenduto) || 0) - (Number(a.totaleVenduto) || 0) ||
+      (Number(b.totaleGenerato) || 0) - (Number(a.totaleGenerato) || 0) ||
+      String(a.nome || '').localeCompare(String(b.nome || ''), 'it')
+    );
+}
+
 function clientiDelVenditoreRiferimento(profiloId, clienti = [], vendite = []) {
   const clientiConVendita = new Set(vendite.map(v => v.cliente_id));
   const clientiDelVenditore = new Set(
@@ -3509,6 +3519,10 @@ function appState() {
       return this.venditori.filter(v => (v.nome || '').toLowerCase().includes(testo));
     },
 
+    classificaVenditori() {
+      return ordinaClassificaVenditori(this.venditori);
+    },
+
     async apriEventoAdmin(evento) {
       await this.apriClientiVenditore(evento.venditoreId, evento.venditoreNome);
       await this.apriScheda(evento.clienteId);
@@ -3549,6 +3563,7 @@ if (typeof module !== 'undefined') {
     valoreContrattoVendita,
     clientiAttribuitiAlProfilo,
     clientiDelVenditoreRiferimento,
+    ordinaClassificaVenditori,
     posizioneAvatarDaUrl,
     avatarUrlConPosizione
   };

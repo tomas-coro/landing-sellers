@@ -323,29 +323,29 @@
               </div>
             </div>
 
-            <div class="home-contract-metrics">
-              <div class="home-contract-metric home-contract-metric-primary">
+            <div class="home-contract-metrics" :class="{ 'is-developer': profilo.ruolo === 'developer' }">
+              <div class="home-contract-metric" x-show="profilo.ruolo !== 'developer'">
                 <span>Venduto</span>
                 <strong x-text="formattaEuro(statisticheVenditore.venduto)"></strong>
                 <small>Valore contratti</small>
               </div>
 
-              <div class="home-contract-metric home-contract-metric-primary">
-                <span>Generato</span>
+              <div class="home-contract-metric">
+                <span x-text="profilo.ruolo === 'developer' ? 'La tua parte' : 'Generato'"></span>
                 <strong x-text="formattaEuro(statisticheVenditore.generato)"></strong>
-                <small>La tua quota</small>
+                <small>Quota maturata</small>
               </div>
-            </div>
 
-            <div class="home-contract-secondary">
-              <div>
+              <div class="home-contract-metric">
                 <span>Incassato</span>
                 <strong x-text="formattaEuro(statisticheVenditore.incassato)"></strong>
+                <small>Quota già ricevuta</small>
               </div>
 
-              <div>
+              <div class="home-contract-metric" x-show="profilo.ruolo !== 'developer'">
                 <span>Media vendita</span>
                 <strong x-text="formattaEuro(statisticheVenditore.mediaVendita)"></strong>
+                <small>Per contratto</small>
               </div>
             </div>
           </section>
@@ -874,7 +874,7 @@
               <span class="theme-selector-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20.4 15.4A8.5 8.5 0 018.6 3.6 8.5 8.5 0 10120.4z"/>
+                  <path d="M20.4 15.4A8.5 8.5 0 018.6 3.6a8.5 8.5 0 0011.8 11.8z"/>
                 </svg>
               </span>
 
@@ -1360,6 +1360,30 @@
           </div>
         </section>
 
+
+        <!-- CLASSIFICA VENDITORI -->
+        <section class="admin-ranking" x-show="classificaVenditori().length > 0">
+          <div class="admin-section-heading">
+            <div>
+              <span>Risultati commerciali</span>
+              <strong>Classifica venditori</strong>
+            </div>
+            <small>Per valore venduto</small>
+          </div>
+
+          <div class="admin-ranking-list">
+            <template x-for="(v, indice) in classificaVenditori()" :key="'rank-' + v.id">
+              <button type="button" @click="apriClientiVenditore(v.id, v.nome)">
+                <span class="admin-ranking-position" x-text="indice + 1"></span>
+                <span class="admin-ranking-name">
+                  <strong x-text="v.nome"></strong>
+                  <small x-text="v.nVendite === 1 ? '1 vendita' : v.nVendite + ' vendite'"></small>
+                </span>
+                <strong class="admin-ranking-total" x-text="formattaEuro(v.totaleVenduto)"></strong>
+              </button>
+            </template>
+          </div>
+        </section>
 
         <!-- PERSONE -->
         <section class="admin-sellers-section">
