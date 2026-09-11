@@ -7,7 +7,6 @@ const APP_SHELL = [
   './css/style.css',
   './assets/landing-evolution-logo.svg',
   './assets/landing-sellers-logo.svg',
-  './assets/landing-sellers-mark.svg',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',

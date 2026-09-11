@@ -2288,11 +2288,76 @@ function appState() {
 
     eventiOggiHome() {
       const oggi = this.dataISOOggi();
+      const limite = this.aggiungiGiorniISO(oggi, 7);
 
-      return this.eventiAgenda().filter(evento =>
-        evento.data === oggi ||
-        (evento.tipo === 'contatto' && evento.data < oggi)
+      return this.eventiAgenda()
+        .filter(evento => {
+          if (evento.tipo === 'contatto') {
+            return evento.data <= oggi;
+          }
+
+          if (evento.tipo === 'rinnovo' || evento.tipo === 'rata') {
+            return evento.data >= oggi && evento.data <= limite;
+          }
+
+          return false;
+        })
+        .map(evento => {
+          let priorita = 4;
+
+          if (evento.tipo === 'contatto' && evento.data < oggi) priorita = 1;
+          else if (evento.data === oggi) priorita = 2;
+          else if (evento.tipo === 'rinnovo') priorita = 3;
+          else if (evento.tipo === 'rata') priorita = 3;
+
+          return { ...evento, priorita };
+        })
+        .sort((a, b) =>
+          a.priorita - b.priorita ||
+          a.data.localeCompare(b.data) ||
+          a.clienteNome.localeCompare(b.clienteNome)
+        );
+    },
+
+    descrizioneEventoHome(evento) {
+      const oggi = this.dataISOOggi();
+
+      if (evento.tipo === 'contatto') {
+        if (evento.data < oggi) return 'Contatto in ritardo';
+        return 'Da contattare oggi';
+      }
+
+      const giorni = Math.max(
+        0,
+        Math.round(
+          (
+            Date.parse(evento.data + 'T00:00:00Z') -
+            Date.parse(oggi + 'T00:00:00Z')
+          ) / 86400000
+        )
       );
+
+      if (evento.tipo === 'rinnovo') {
+        if (giorni === 0) return 'Rinnovo oggi';
+        if (giorni === 1) return 'Rinnovo domani';
+        return `Rinnovo tra ${giorni} giorni`;
+      }
+
+      if (evento.tipo === 'rata') {
+        const importo = evento.titolo.includes('·')
+          ? evento.titolo.split('·').slice(1).join('·').trim()
+          : '';
+
+        let testo = 'Rata prevista';
+
+        if (giorni === 0) testo = 'Rata oggi';
+        else if (giorni === 1) testo = 'Rata domani';
+        else testo = `Rata tra ${giorni} giorni`;
+
+        return importo ? `${testo} · ${importo}` : testo;
+      }
+
+      return evento.titolo;
     },
 
     dataISOOggi() {

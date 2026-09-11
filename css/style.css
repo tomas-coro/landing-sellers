@@ -7314,3 +7314,84 @@ html[data-theme="dark"] .profile-name-save{background:var(--lime);color:#111}
   display:block;
   object-fit:contain;
 }
+/* Home v3 - centro operativo Oggi */
+.home-today-v3{
+  position:relative;
+}
+
+.home-today-v3 .home-attention-row{
+  min-height:54px;
+}
+
+.home-attention-dot.type-rinnovo{
+  background:var(--lime);
+}
+
+.home-attention-dot.type-rata{
+  background:#d2a33a;
+}
+
+.home-today-clear{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  margin-top:12px;
+  padding:14px 15px;
+  border-radius:14px;
+  background:rgba(17,17,17,.035);
+}
+
+.home-today-clear strong{
+  font-size:12px;
+}
+
+.home-today-clear small{
+  font-size:10px;
+  line-height:1.45;
+  opacity:.55;
+}
+
+html[data-theme="dark"] .home-today-clear{
+  background:rgba(255,255,255,.045);
+}
+
+/* Home v3 - centro operativo Oggi */
+.home-today-v3{
+  position:relative;
+}
+
+.home-today-v3 .home-attention-row{
+  min-height:54px;
+}
+
+.home-attention-dot.type-rinnovo{
+  background:var(--lime);
+}
+
+.home-attention-dot.type-rata{
+  background:#d2a33a;
+}
+
+.home-today-clear{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  margin-top:12px;
+  padding:14px 15px;
+  border-radius:14px;
+  background:rgba(17,17,17,.035);
+}
+
+.home-today-clear strong{
+  font-size:12px;
+}
+
+.home-today-clear small{
+  font-size:10px;
+  line-height:1.45;
+  opacity:.55;
+}
+
+html[data-theme="dark"] .home-today-clear{
+  background:rgba(255,255,255,.045);
+}
