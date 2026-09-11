@@ -502,7 +502,7 @@
 
 
     <!-- PROFILO -->
-    <div x-show="view === 'profilo'" x-transition.opacity.duration.160ms class="profile-view app-main-view">
+    <div x-show="view === 'profilo'" x-transition.opacity.duration.160ms class="profile-view app-main-view" :class="{ 'is-personal-profile': !isAdmin }">
       <div class="brandbar">
         <div class="brand">
           <span class="bdot"></span>
@@ -599,13 +599,10 @@
           class="stack-card"
           :class="{ 'admin-profile-editor': isAdmin }">
 
-          <div
-            class="admin-profile-section-head"
-            x-show="isAdmin">
-
+          <div class="admin-profile-section-head">
             <div>
-              <span>PROFILO</span>
-              <strong>Identità account</strong>
+              <span x-text="isAdmin ? 'PROFILO' : 'PROFILO PERSONALE'"></span>
+              <strong x-text="isAdmin ? 'Identità account' : 'Come vuoi apparire'"></strong>
             </div>
 
             <small>Nome visualizzato</small>

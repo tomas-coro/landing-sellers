@@ -141,35 +141,15 @@ function clientiDelVenditoreRiferimento(profiloId, clienti = [], vendite = []) {
   );
 }
 
-function moltiplicatoreContrattoVendita(vendita, clientiPerId = {}) {
-  const cliente = clientiPerId[vendita?.cliente_id];
-  if (!cliente) return 1;
-
-  const anni = Math.max(
-    1,
-    Math.min(4, Number(cliente.durata_contratto_anni) || 1)
-  );
-
-  if (cliente.periodicita_contratto === 'mensile') return 12 * anni;
-  if (cliente.periodicita_contratto === 'annuale') return anni;
-
-  // Legacy/custom: importo_vendita è già il valore contrattuale registrato.
-  return 1;
-}
-
-function valoreContrattoVendita(vendita, clientiPerId = {}) {
-  return (
-    (Number(vendita?.importo_vendita) || 0)
-    * moltiplicatoreContrattoVendita(vendita, clientiPerId)
-  );
+function valoreContrattoVendita(vendita) {
+  return Number(vendita?.importo_vendita) || 0;
 }
 
 function calcolaStatisticheVenditore(
   vendite = [],
   pagamenti = [],
   quotePerVendita = {},
-  profiloId = '',
-  clientiPerId = {}
+  profiloId = ''
 ) {
   const venditeAttive = vendite.filter(v => v.stato === 'attiva');
 
@@ -184,9 +164,8 @@ function calcolaStatisticheVenditore(
   const totali = venditeAttive.reduce((totali, v) => {
     // Vendita condivisa nel team: ognuno vede solo la propria quota (quota_finale),
     // mai l'importo pieno della vendita degli altri partecipanti.
-    const moltiplicatore = moltiplicatoreContrattoVendita(v, clientiPerId);
-    const quota = (Number(quotePerVendita[v.id]) || 0) * moltiplicatore;
-    const importoVendita = valoreContrattoVendita(v, clientiPerId);
+    const quota = Number(quotePerVendita[v.id]) || 0;
+    const importoVendita = valoreContrattoVendita(v);
     const incassatoVendita = incassatoTotalePerVendita[v.id] || 0;
 
     // L'incasso reale è per l'intera vendita, non per partecipante: la quota
@@ -2265,7 +2244,7 @@ function appState() {
       const [vendite, pagamenti] = await Promise.all([
         window.supabaseClient
           .from('vendite')
-          .select('id,cliente_id,importo_vendita,stato,venditore_id')
+          .select('id,importo_vendita,stato,venditore_id')
           .in('id', ids),
         window.supabaseClient
           .from('pagamenti')
@@ -2282,8 +2261,7 @@ function appState() {
         vendite.data || [],
         pagamenti.data || [],
         quotePerVendita,
-        this.sessione.user.id,
-        Object.fromEntries(this.clienti.map(cliente => [cliente.id, cliente]))
+        this.sessione.user.id
       );
     },
 
@@ -3373,13 +3351,8 @@ function appState() {
         ) === chiaveMese;
       });
 
-      const clientiPerId = Object.fromEntries(
-        clienti.map(cliente => [cliente.id, cliente])
-      );
-
       const volumeVendite = venditeAttive.reduce(
-        (totale, vendita) =>
-          totale + valoreContrattoVendita(vendita, clientiPerId),
+        (totale, vendita) => totale + valoreContrattoVendita(vendita),
         0
       );
 
@@ -3457,8 +3430,7 @@ function appState() {
           venditeProfilo,
           pagamenti,
           quotePerVendita,
-          profilo.id,
-          clientiPerId
+          profilo.id
         );
 
         return {
@@ -3559,7 +3531,6 @@ if (typeof module !== 'undefined') {
     percentualeTasseEconomia,
     appState,
     calcolaStatisticheVenditore,
-    moltiplicatoreContrattoVendita,
     valoreContrattoVendita,
     clientiAttribuitiAlProfilo,
     clientiDelVenditoreRiferimento,

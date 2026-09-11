@@ -9,6 +9,7 @@ const {
   percentualeTasseEconomia,
   appState,
   calcolaStatisticheVenditore,
+  valoreContrattoVendita,
   clientiAttribuitiAlProfilo,
   clientiDelVenditoreRiferimento,
   ordinaClassificaVenditori,
@@ -212,6 +213,24 @@ test('la dashboard attribuisce il cliente al venditore di riferimento, non a tut
     clientiDelVenditoreRiferimento('nicola', clienti, vendite).map(c => c.id),
     ['con-terzo']
   );
+});
+
+test('il venduto usa l’importo registrato senza moltiplicarlo per durata o periodicità', () => {
+  assert.strictEqual(valoreContrattoVendita({
+    importo_vendita: '400',
+    periodicita_contratto: 'mensile',
+    durata_contratto_anni: 4
+  }), 400);
+
+  const vendite = Array.from({ length: 7 }, (_, indice) => ({
+    id: String(indice),
+    stato: 'attiva',
+    venditore_id: 'seller',
+    importo_vendita: indice % 2 ? 400 : 300
+  }));
+  const statistiche = calcolaStatisticheVenditore(vendite, [], {}, 'seller');
+  assert.strictEqual(statistiche.venduto, 2400);
+  assert.strictEqual(statistiche.mediaVendita, 2400 / 7);
 });
 
 test('la classifica ordina i venditori per venduto ed esclude il developer', () => {
