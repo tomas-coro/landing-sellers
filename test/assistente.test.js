@@ -12,13 +12,13 @@ test('trova risposte anche con parole diverse', () => {
 });
 
 test('copre tutte le aree reali dell’app', () => {
-  assert.strictEqual(FAQ_ASSISTENTE.length, 58);
+  assert.strictEqual(FAQ_ASSISTENTE.length, 62);
   assert.deepStrictEqual([...new Set(FAQ_ASSISTENTE.map(voce => voce.categoria))], [
     'Orientamento', 'Clienti', 'Offerte e rinnovi', 'Agenda e pipeline',
     'Vendite e pagamenti', 'Profilo e app', 'Area admin'
   ]);
   for (const voce of FAQ_ASSISTENTE) assert.strictEqual(trovaRisposta(voce.domanda), voce);
-  assert.deepStrictEqual(appState().categorieAssistente().map(gruppo => gruppo.voci.length), [4, 15, 12, 6, 10, 7, 4]);
+  assert.deepStrictEqual(appState().categorieAssistente().map(gruppo => gruppo.voci.length), [6, 15, 12, 6, 11, 7, 5]);
 });
 
 test('invia la domanda, svuota il campo e porta la risposta in vista', () => {
