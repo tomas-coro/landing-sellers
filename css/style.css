@@ -7306,7 +7306,6 @@ html[data-theme="dark"] .profile-name-save{background:var(--lime);color:#111}
   height:76px;
   display:block;
   object-fit:contain;
-  border-radius:18px;
   animation:launchMark .68s var(--ease) both;
 }
 
