@@ -7222,3 +7222,95 @@ html[data-theme="dark"] .home-flow-stages .stage-pubblicato{
   .profile-view.is-personal-profile .profile-menu button span{font-size:13px}
   .profile-view.is-personal-profile .profile-menu button strong{font-size:11px}
 }
+
+/* Profili utili: modifica compatta nel nome, niente pannello username fisso. */
+.profile-name-row{max-width:100%;display:flex;align-items:center;gap:8px}
+.profile-name-row>strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profile-name-row>button{
+  width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;
+  border:1px solid currentColor;border-radius:9px;background:transparent;color:inherit;opacity:.72;cursor:pointer;
+}
+.profile-name-row>button svg{width:14px;height:14px}
+.admin-profile-identity .profile-name-row>strong{font-size:20px;line-height:1.1;letter-spacing:-.035em;white-space:normal}
+.profile-personal-identity{min-width:0;display:grid;gap:6px}
+.profile-name-editor,.profile-crop-panel{
+  display:grid;gap:10px;padding:17px;border:1px solid var(--line);border-radius:18px;background:var(--card);
+}
+.profile-name-editor>label{font-size:11px;font-weight:750;color:var(--muted)}
+.profile-name-editor>div{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:7px}
+.profile-name-editor input{
+  min-width:0;height:44px;padding:0 12px;border:1px solid var(--line);border-radius:12px;
+  background:var(--paper);color:var(--ink);font:600 13px var(--sans);
+}
+.profile-name-editor button{height:44px;padding:0 12px;border-radius:12px;font:750 11px var(--sans);cursor:pointer}
+.profile-name-cancel{border:1px solid var(--line);background:transparent;color:var(--ink)}
+.profile-name-save{border:0;background:var(--ink);color:var(--paper)}
+html[data-theme="dark"] .profile-name-save{background:var(--lime);color:#111}
+.profile-name-editor .err{margin:0}
+.profile-crop-panel .avatar-position-controls{margin:0;padding:0;border:0}
+.profile-personal-identity .profile-photo-actions{justify-content:flex-start;gap:11px;margin:3px 0 0}
+.profile-personal-identity .profile-photo-actions button{font-size:9px}
+
+@media(max-width:720px){
+  .profile-view{
+    height:auto;
+    min-height:100%;
+    overflow:visible;
+    display:block;
+  }
+  .profile-view .brandbar{padding-top:calc(18px + env(safe-area-inset-top));padding-bottom:12px}
+  .profile-view .topbar{padding:15px 18px 11px}
+  .profile-view .topbar h1{font-size:21px}
+  .profile-view .content{
+    display:grid;min-height:0;overflow:visible;gap:15px;padding-top:6px;
+    padding-bottom:calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom) + 28px);
+  }
+  .admin-profile-hero{padding:21px;border-radius:22px}
+  .admin-profile-avatar{width:68px;height:68px;flex-basis:68px}
+  .admin-profile-identity .profile-name-row>strong{font-size:20px}
+  .admin-profile-identity>small{font-size:11px}
+  .admin-profile-eyebrow{font-size:9px}
+  .admin-profile-badge{font-size:9px}
+  .admin-profile-status strong{font-size:11px}
+  .admin-profile-status small{font-size:9px}
+  .admin-profile-group{gap:10px}
+  .admin-profile-group-title>span{font-size:10px}
+  .admin-profile-group-title>strong{font-size:11px}
+  .admin-profile-menu>button{min-height:66px;padding:12px 14px}
+  .admin-profile-menu-copy>strong{font-size:13px}
+  .admin-profile-menu-copy>small{font-size:10px}
+  .profile-theme-group{margin-top:0;gap:10px}
+  .theme-selector{gap:8px}
+  .theme-selector>button{min-height:82px;padding:9px 6px;gap:4px}
+  .theme-selector-icon{width:29px;height:29px}
+  .theme-selector strong{font-size:11px}
+  .theme-selector small{font-size:8.5px}
+}
+
+@media(max-width:390px){
+  .profile-name-editor>div{grid-template-columns:1fr 1fr}
+  .profile-name-editor input{grid-column:1/-1}
+}
+
+/* Landing Sellers brand */
+.brand-app-mark{
+  width:27px;
+  height:27px;
+  display:block;
+  object-fit:contain;
+  flex:none;
+}
+
+.launch-app-mark{
+  width:58px;
+  height:58px;
+  display:block;
+  object-fit:contain;
+}
+
+.login-app-mark{
+  width:68px;
+  height:68px;
+  display:block;
+  object-fit:contain;
+}

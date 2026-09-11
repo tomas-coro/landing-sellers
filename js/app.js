@@ -119,6 +119,17 @@ function clientiAttribuitiAlProfilo(profiloId, clienti = [], vendite = [], parte
   );
 }
 
+function ordinaTeamEconomico(venditori = []) {
+  const ordine = ['alessandro', 'tomas', 'nicola'];
+  return [...venditori].sort((a, b) => {
+    const nomeA = String(a.nome || '').trim().toLowerCase();
+    const nomeB = String(b.nome || '').trim().toLowerCase();
+    const prioritaA = ordine.includes(nomeA) ? ordine.indexOf(nomeA) : ordine.length;
+    const prioritaB = ordine.includes(nomeB) ? ordine.indexOf(nomeB) : ordine.length;
+    return prioritaA - prioritaB || nomeA.localeCompare(nomeB, 'it');
+  });
+}
+
 function ordinaClassificaVenditori(venditori = []) {
   return venditori
     .filter(v => v.ruolo !== 'Developer')
@@ -141,15 +152,18 @@ function clientiDelVenditoreRiferimento(profiloId, clienti = [], vendite = []) {
   );
 }
 
-function valoreContrattoVendita(vendita) {
-  return Number(vendita?.importo_vendita) || 0;
+function valoreContrattoVendita(vendita, clientiPerId = {}) {
+  const cliente = clientiPerId[vendita?.cliente_id];
+  const importo = Number(cliente?.importo_abbonamento ?? vendita?.importo_vendita) || 0;
+  return cliente?.periodicita_contratto === 'mensile' ? importo * 12 : importo;
 }
 
 function calcolaStatisticheVenditore(
   vendite = [],
   pagamenti = [],
   quotePerVendita = {},
-  profiloId = ''
+  profiloId = '',
+  clientiPerId = {}
 ) {
   const venditeAttive = vendite.filter(v => v.stato === 'attiva');
 
@@ -161,17 +175,19 @@ function calcolaStatisticheVenditore(
         (incassatoTotalePerVendita[p.vendita_id] || 0) + (Number(p.importo) || 0);
     });
 
+  const clientiVenduti = new Set();
   const totali = venditeAttive.reduce((totali, v) => {
     // Vendita condivisa nel team: ognuno vede solo la propria quota (quota_finale),
     // mai l'importo pieno della vendita degli altri partecipanti.
     const quota = Number(quotePerVendita[v.id]) || 0;
-    const importoVendita = valoreContrattoVendita(v);
+    const importoVendita = valoreContrattoVendita(v, clientiPerId);
+    const importoIncassabile = Number(v.importo_vendita) || 0;
     const incassatoVendita = incassatoTotalePerVendita[v.id] || 0;
 
     // L'incasso reale è per l'intera vendita, non per partecipante: la quota
     // personale scala in proporzione a quanto è stato effettivamente versato.
-    const proporzione = importoVendita > 0
-      ? Math.min(1, incassatoVendita / importoVendita)
+    const proporzione = importoIncassabile > 0
+      ? Math.min(1, incassatoVendita / importoIncassabile)
       : 0;
 
     totali.generato += quota;
@@ -179,7 +195,9 @@ function calcolaStatisticheVenditore(
 
     // Valore commerciale: conta l'importo pieno solo quando questo profilo
     // risulta essere il venditore effettivo della vendita.
-    if (v.venditore_id === profiloId) {
+    const chiaveCliente = v.cliente_id || v.id;
+    if (v.venditore_id === profiloId && !clientiVenduti.has(chiaveCliente)) {
+      clientiVenduti.add(chiaveCliente);
       totali.venduto += importoVendita;
       totali.numeroVendite += 1;
     }
@@ -359,6 +377,7 @@ function appState() {
     avatarPosizione: { x: 50, y: 50, zoom: 1 },
     avatarTrascinamento: null,
     modificaInquadraturaAperta: false,
+    modificaProfiloAperta: false,
     profiloErrore: '',
     profiloSalvando: false,
     avatarCaricando: false,
@@ -1775,6 +1794,7 @@ function appState() {
         this.profilo.avatar_url = avatarUrl;
         this.profiloPersonale = { ...this.profilo, email: this.sessione.user.email || '' };
         this.modificaInquadraturaAperta = false;
+        this.modificaProfiloAperta = false;
       } finally {
         this.profiloSalvando = false;
       }
@@ -2244,7 +2264,7 @@ function appState() {
       const [vendite, pagamenti] = await Promise.all([
         window.supabaseClient
           .from('vendite')
-          .select('id,importo_vendita,stato,venditore_id')
+          .select('id,cliente_id,importo_vendita,stato,venditore_id')
           .in('id', ids),
         window.supabaseClient
           .from('pagamenti')
@@ -2261,7 +2281,8 @@ function appState() {
         vendite.data || [],
         pagamenti.data || [],
         quotePerVendita,
-        this.sessione.user.id
+        this.sessione.user.id,
+        Object.fromEntries(this.clienti.map(cliente => [cliente.id, cliente]))
       );
     },
 
@@ -3351,8 +3372,14 @@ function appState() {
         ) === chiaveMese;
       });
 
-      const volumeVendite = venditeAttive.reduce(
-        (totale, vendita) => totale + valoreContrattoVendita(vendita),
+      const clientiPerId = Object.fromEntries(
+        clienti.map(cliente => [cliente.id, cliente])
+      );
+      const venditeUniche = new Map(
+        venditeAttive.map(vendita => [vendita.cliente_id || vendita.id, vendita])
+      );
+      const volumeVendite = [...venditeUniche.values()].reduce(
+        (totale, vendita) => totale + valoreContrattoVendita(vendita, clientiPerId),
         0
       );
 
@@ -3373,7 +3400,7 @@ function appState() {
 
       this.adminClientiPerVenditore = {};
 
-      this.venditori = profiliVisibili.map(profilo => {
+      this.venditori = ordinaTeamEconomico(profiliVisibili.map(profilo => {
         const idsVenditePartecipate = new Set(
           partecipanti
             .filter(partecipazione =>
@@ -3430,7 +3457,8 @@ function appState() {
           venditeProfilo,
           pagamenti,
           quotePerVendita,
-          profilo.id
+          profilo.id,
+          clientiPerId
         );
 
         return {
@@ -3442,13 +3470,15 @@ function appState() {
           totaleResiduo: Math.max(0, statistiche.generato - statistiche.incassato),
           totaleVenduto: statistiche.venduto,
           mediaVendita: statistiche.mediaVendita,
-          nVendite: idsVenditePartecipate.size,
+          nVendite: ruoloProfiloAdmin(profilo) === 'Developer'
+            ? idsVenditePartecipate.size
+            : statistiche.numeroVendite,
           nClientiTotali: suoiClienti.length,
           nInLavorazione: suoiClienti.filter(cliente => cliente.stato === 'in_lavorazione').length,
           nPubblicati: suoiPubblicati.length,
           nPubblicatiMese: suoiPubblicatiMese.length
         };
-      });
+      }));
     },
 
     totaleGeneraleAdmin() {
@@ -3535,6 +3565,7 @@ if (typeof module !== 'undefined') {
     clientiAttribuitiAlProfilo,
     clientiDelVenditoreRiferimento,
     ordinaClassificaVenditori,
+    ordinaTeamEconomico,
     posizioneAvatarDaUrl,
     avatarUrlConPosizione
   };

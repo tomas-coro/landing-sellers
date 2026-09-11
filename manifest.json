@@ -1,12 +1,12 @@
 {
-  "name": "Venditori Landing Evolution",
-  "short_name": "Venditori LE",
+  "name": "Landing Sellers",
+  "short_name": "Sellers",
   "id": "./index.html",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#F4F1EA",
-  "theme_color": "#111111",
+  "background_color": "#111310",
+  "theme_color": "#111310",
   "icons": [
     {
       "src": "icons/icon-192.png",

@@ -13,6 +13,7 @@ const {
   clientiAttribuitiAlProfilo,
   clientiDelVenditoreRiferimento,
   ordinaClassificaVenditori,
+  ordinaTeamEconomico,
   posizioneAvatarDaUrl,
   avatarUrlConPosizione
 } = require('../js/app.js');
@@ -215,22 +216,48 @@ test('la dashboard attribuisce il cliente al venditore di riferimento, non a tut
   );
 });
 
-test('il venduto usa l’importo registrato senza moltiplicarlo per durata o periodicità', () => {
-  assert.strictEqual(valoreContrattoVendita({
-    importo_vendita: '400',
-    periodicita_contratto: 'mensile',
-    durata_contratto_anni: 4
-  }), 400);
+test('il venduto annualizza i mensili ma non moltiplica per gli anni di contratto', () => {
+  const clienti = {
+    mensile: { id: 'mensile', importo_abbonamento: 20, periodicita_contratto: 'mensile', durata_contratto_anni: 2 },
+    biennale: { id: 'biennale', importo_abbonamento: 750, periodicita_contratto: 'annuale', durata_contratto_anni: 2 }
+  };
 
-  const vendite = Array.from({ length: 7 }, (_, indice) => ({
-    id: String(indice),
-    stato: 'attiva',
-    venditore_id: 'seller',
-    importo_vendita: indice % 2 ? 400 : 300
+  assert.strictEqual(valoreContrattoVendita({ cliente_id: 'mensile' }, clienti), 240);
+  assert.strictEqual(valoreContrattoVendita({ cliente_id: 'biennale' }, clienti), 750);
+});
+
+test('il venduto conta ogni cliente una volta e include quelli non pubblicati', () => {
+  const clienti = {
+    a: { id: 'a', importo_abbonamento: 20, periodicita_contratto: 'mensile', stato: 'pubblicato' },
+    b: { id: 'b', importo_abbonamento: 20, periodicita_contratto: 'mensile', stato: 'pubblicato' },
+    c: { id: 'c', importo_abbonamento: 300, periodicita_contratto: 'annuale', stato: 'pubblicato' },
+    d: { id: 'd', importo_abbonamento: 35, periodicita_contratto: 'mensile', stato: 'pubblicato' },
+    metrix: { id: 'metrix', importo_abbonamento: 360, stato: 'in_lavorazione' }
+  };
+  const vendite = ['a', 'b', 'c', 'd', 'metrix', 'metrix'].map((cliente_id, indice) => ({
+    id: String(indice), cliente_id, venditore_id: 'alessandro', stato: 'attiva', importo_vendita: clienti[cliente_id].importo_abbonamento
   }));
-  const statistiche = calcolaStatisticheVenditore(vendite, [], {}, 'seller');
-  assert.strictEqual(statistiche.venduto, 2400);
-  assert.strictEqual(statistiche.mediaVendita, 2400 / 7);
+
+  const statistiche = calcolaStatisticheVenditore(vendite, [], {}, 'alessandro', clienti);
+  assert.strictEqual(statistiche.venduto, 1560);
+  assert.strictEqual(statistiche.numeroVendite, 5);
+  assert.strictEqual(statistiche.mediaVendita, 312);
+});
+
+test('il team mostra Alessandro, Tomas, Nicola e poi i futuri venditori', () => {
+  const team = [
+    { nome: 'Zeno' },
+    { nome: 'Nicola' },
+    { nome: 'Tomas' },
+    { nome: 'Alessandro' },
+    { nome: 'Bruno' }
+  ];
+
+  assert.deepStrictEqual(
+    ordinaTeamEconomico(team).map(persona => persona.nome),
+    ['Alessandro', 'Tomas', 'Nicola', 'Bruno', 'Zeno']
+  );
+  assert.strictEqual(team[0].nome, 'Zeno');
 });
 
 test('la classifica ordina i venditori per venduto ed esclude il developer', () => {
