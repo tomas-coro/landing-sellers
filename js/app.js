@@ -320,8 +320,11 @@ function appState() {
     clienteAzioniNotaAperta: false,
     clienteProssimoContattoData: '',
     clienteNotaRapidaTesto: '',
+    completandoEventoAgendaId: null,
     salvandoProssimoContattoRapido: false,
     salvandoNotaRapida: false,
+    messaggioAzioneCliente: '',
+    erroreAzioneCliente: '',
     salvandoVenditaEconomica: false,
     erroreEconomia: '',
     successoEconomia: '',
@@ -343,13 +346,16 @@ function appState() {
     aggiungendoNota: false,
     erroreScheda: '',
 
+    attivitaCliente: [],
+    caricandoAttivitaCliente: false,
+
     // pagamenti cliente
     pagamentiCliente: [],
     caricandoPagamentiCliente: false,
     errorePagamentiCliente: '',
     scadenzePagamentoPerCliente: {},
 
-    schedaAperture: { stato: true, pacchetto: false, contatti: false, note: true },
+    schedaAperture: { stato: true, pacchetto: false, contatti: false, attivita: true, note: false },
 
     aggiornamentoDisponibile: false,
     aggiornamentoStato: 'controllo', // controllo | aggiornato | disponibile | errore
@@ -1442,7 +1448,10 @@ function appState() {
 
         if (clienteId) {
           this.clienteSelezionatoId = clienteId;
-          await this.caricaPagamentiCliente(clienteId);
+          await Promise.all([
+        this.caricaPagamentiCliente(clienteId),
+        this.caricaAttivitaCliente(clienteId)
+      ]);
         }
 
         window.setTimeout(() => {
@@ -2567,17 +2576,28 @@ function appState() {
       });
     },
 
-    async cambiaStatoDaPipeline(clienteId, stato) {
+    async impostaStatoCliente(clienteId, stato) {
       const consentiti = ['contattato', 'brief_mandato', 'in_lavorazione', 'pubblicato'];
-      if (!consentiti.includes(stato)) return;
+      if (!clienteId || !consentiti.includes(stato)) {
+        return 'Stato non valido';
+      }
 
       const { error } = await window.supabaseClient
-        .from('clienti')
-        .update({ stato })
-        .eq('id', clienteId);
+        .rpc('imposta_stato_cliente', {
+          p_cliente_id: clienteId,
+          p_stato: stato
+        });
 
-      if (error) {
-        this.erroreClienti = 'Stato non aggiornato: ' + error.message;
+      return error ? error.message : '';
+    },
+
+    async cambiaStatoDaPipeline(clienteId, stato) {
+      this.erroreClienti = '';
+
+      const errore = await this.impostaStatoCliente(clienteId, stato);
+
+      if (errore) {
+        this.erroreClienti = 'Stato non aggiornato: ' + errore;
         return;
       }
 
@@ -2599,6 +2619,8 @@ function appState() {
       this.clienteAzioniContattoAperto = false;
       this.clienteAzioniNotaAperta = false;
       this.clienteNotaRapidaTesto = '';
+      this.messaggioAzioneCliente = '';
+      this.erroreAzioneCliente = '';
       this.clienteProssimoContattoData =
         this.normalizzaDataAgenda(cliente.prossimo_contatto) || '';
     },
@@ -2610,6 +2632,8 @@ function appState() {
       this.clienteAzioniNotaAperta = false;
       this.clienteProssimoContattoData = '';
       this.clienteNotaRapidaTesto = '';
+      this.messaggioAzioneCliente = '';
+      this.erroreAzioneCliente = '';
     },
 
     async apriSchedaDaAzioni(sezione = null) {
@@ -2644,28 +2668,68 @@ function appState() {
 
     async salvaNotaRapida() {
       const clienteId = this.clienteAzioniRapideId;
-      const testo = this.clienteNotaRapidaTesto.trim();
+      const testo = (this.clienteNotaRapidaTesto || '').trim();
+      const venditoreId = this.sessione && this.sessione.user
+        ? this.sessione.user.id
+        : null;
 
-      if (!clienteId || !testo || this.salvandoNotaRapida) return;
+      this.messaggioAzioneCliente = '';
+      this.erroreAzioneCliente = '';
+
+      if (!clienteId) {
+        this.erroreAzioneCliente = 'Cliente non disponibile.';
+        return;
+      }
+
+      if (!testo) {
+        this.erroreAzioneCliente = 'Scrivi prima una nota.';
+        return;
+      }
+
+      if (!venditoreId) {
+        this.erroreAzioneCliente = 'Sessione non disponibile.';
+        return;
+      }
+
+      if (this.salvandoNotaRapida) return;
 
       this.salvandoNotaRapida = true;
-      this.erroreClienti = '';
 
       try {
-        const { error } = await window.supabaseClient
+        const { data, error } = await window.supabaseClient
           .from('note')
           .insert({
             cliente_id: clienteId,
-            venditore_id: this.sessione.user.id,
+            venditore_id: venditoreId,
             testo
-          });
+          })
+          .select()
+          .single();
 
         if (error) {
-          this.erroreClienti = 'Nota non salvata: ' + error.message;
+          console.error('Errore nota rapida:', error);
+          this.erroreAzioneCliente = 'Nota non salvata: ' + error.message;
           return;
         }
 
-        this.chiudiAzioniCliente();
+        this.clienteNotaRapidaTesto = '';
+        this.erroreAzioneCliente = '';
+        this.messaggioAzioneCliente = 'Nota salvata';
+
+        if (this.clienteSelezionatoId === clienteId && data) {
+          this.note = [data, ...this.note.filter(n => n.id !== data.id)];
+        }
+
+        window.setTimeout(() => {
+          if (this.messaggioAzioneCliente === 'Nota salvata') {
+            this.chiudiAzioniCliente();
+          }
+        }, 650);
+
+      } catch (err) {
+        console.error('Errore nota rapida:', err);
+        this.erroreAzioneCliente =
+          'Errore durante il salvataggio della nota.';
       } finally {
         this.salvandoNotaRapida = false;
       }
@@ -2673,29 +2737,85 @@ function appState() {
 
     async salvaProssimoContattoRapido() {
       const clienteId = this.clienteAzioniRapideId;
+
+      this.messaggioAzioneCliente = '';
+      this.erroreAzioneCliente = '';
+
       if (!clienteId || this.salvandoProssimoContattoRapido) return;
 
       this.salvandoProssimoContattoRapido = true;
-      this.erroreClienti = '';
 
       try {
         const { error } = await window.supabaseClient
-          .from('clienti')
-          .update({
-            prossimo_contatto: this.clienteProssimoContattoData || null
-          })
-          .eq('id', clienteId);
+          .rpc('imposta_prossimo_contatto_cliente', {
+            p_cliente_id: clienteId,
+            p_data: this.clienteProssimoContattoData || null
+          });
 
         if (error) {
-          this.erroreClienti =
-            'Prossimo contatto non aggiornato: ' + error.message;
+          console.error('Errore prossimo contatto:', error);
+          this.erroreAzioneCliente =
+            'Data non salvata: ' + error.message;
           return;
         }
 
         await this.caricaClienti();
-        this.chiudiAzioniCliente();
+
+        this.messaggioAzioneCliente =
+          this.clienteProssimoContattoData
+            ? 'Prossimo contatto salvato'
+            : 'Prossimo contatto rimosso';
+
+        window.setTimeout(() => {
+          this.chiudiAzioniCliente();
+        }, 650);
+
+      } catch (err) {
+        console.error('Errore prossimo contatto:', err);
+        this.erroreAzioneCliente =
+          'Errore durante il salvataggio.';
       } finally {
         this.salvandoProssimoContattoRapido = false;
+      }
+    },
+
+    async completaContattoAgenda(evento) {
+      if (
+        !evento ||
+        evento.tipo !== 'contatto' ||
+        !evento.clienteId ||
+        this.completandoEventoAgendaId === evento.id
+      ) return;
+
+      this.completandoEventoAgendaId = evento.id;
+      this.erroreClienti = '';
+
+      try {
+        const { error } = await window.supabaseClient
+          .rpc('completa_contatto_cliente', {
+            p_cliente_id: evento.clienteId,
+            p_data: evento.data || null
+          });
+
+        if (error) {
+          console.error('Errore completamento contatto:', error);
+          this.erroreClienti =
+            'Contatto non completato: ' + error.message;
+          return;
+        }
+
+        if (this.isAdmin) {
+          await this.caricaDashboardAdmin();
+        } else {
+          await this.caricaClienti();
+        }
+
+        if (this.clienteSelezionatoId === evento.clienteId) {
+          await this.caricaAttivitaCliente(evento.clienteId);
+        }
+
+      } finally {
+        this.completandoEventoAgendaId = null;
       }
     },
 
@@ -3314,6 +3434,122 @@ function appState() {
       }
     },
 
+    async caricaAttivitaCliente(clienteId) {
+      this.attivitaCliente = [];
+      if (!clienteId) return;
+
+      this.caricandoAttivitaCliente = true;
+
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('attivita_clienti')
+          .select('*')
+          .eq('cliente_id', clienteId)
+          .order('creata_il', { ascending: false });
+
+        if (error) {
+          this.erroreScheda =
+            'Timeline non disponibile: ' + error.message;
+          return;
+        }
+
+        this.attivitaCliente = data || [];
+      } finally {
+        this.caricandoAttivitaCliente = false;
+      }
+    },
+
+    timelineCliente() {
+      const cliente = this.clienteSelezionato();
+      const eventi = [];
+
+      if (cliente.creato_il) {
+        eventi.push({
+          id: 'cliente-creato-' + cliente.id,
+          data: cliente.creato_il,
+          tipo: 'cliente',
+          titolo: 'Cliente creato',
+          dettaglio: ''
+        });
+      }
+
+      this.note.forEach(nota => {
+        eventi.push({
+          id: 'nota-' + nota.id,
+          data: nota.creata_il,
+          tipo: 'nota',
+          titolo: 'Nota aggiunta',
+          dettaglio: nota.testo || ''
+        });
+      });
+
+      this.pagamentiCliente.forEach(pagamento => {
+        eventi.push({
+          id: 'pagamento-' + pagamento.id,
+          data: pagamento.creato_il ||
+            pagamento.data_pagamento ||
+            pagamento.data_scadenza,
+          tipo: 'pagamento',
+          titolo:
+            pagamento.stato === 'incassato'
+              ? 'Pagamento registrato'
+              : pagamento.stato === 'previsto'
+                ? 'Pagamento previsto'
+                : 'Pagamento annullato',
+          dettaglio: this.formattaEuro(pagamento.importo)
+        });
+      });
+
+      this.attivitaCliente.forEach(attivita => {
+        if (attivita.tipo === 'stato') {
+          eventi.push({
+            id: 'attivita-' + attivita.id,
+            data: attivita.creata_il,
+            tipo: 'stato',
+            titolo: 'Stato aggiornato',
+            dettaglio:
+              `${this.formattaStato(attivita.valore_precedente)} → ` +
+              `${this.formattaStato(attivita.valore_nuovo)}`
+          });
+        }
+
+        if (attivita.tipo === 'contatto_completato') {
+          eventi.push({
+            id: 'attivita-' + attivita.id,
+            data: attivita.creata_il,
+            tipo: 'completato',
+            titolo: 'Contatto completato',
+            dettaglio: attivita.valore_precedente
+              ? this.formattaData(attivita.valore_precedente)
+              : ''
+          });
+        }
+
+        if (attivita.tipo === 'prossimo_contatto') {
+          const nuovaData = attivita.valore_nuovo;
+
+          eventi.push({
+            id: 'attivita-' + attivita.id,
+            data: attivita.creata_il,
+            tipo: 'contatto',
+            titolo: nuovaData
+              ? 'Prossimo contatto impostato'
+              : 'Prossimo contatto rimosso',
+            dettaglio: nuovaData
+              ? this.formattaData(nuovaData)
+              : ''
+          });
+        }
+      });
+
+      return eventi
+        .filter(evento => evento.data)
+        .sort((a, b) =>
+          new Date(b.data).getTime() -
+          new Date(a.data).getTime()
+        );
+    },
+
     async apriScheda(clienteId) {
       if (this.view !== 'scheda') this.viewPrecedenteScheda = this.view;
       this.clienteSelezionatoId = clienteId;
@@ -3325,14 +3561,18 @@ function appState() {
         stato: true,
         pacchetto: !!(cliente.importo_abbonamento != null || cliente.nome_pacchetto),
         contatti: false,
-        note: true
+        attivita: true,
+        note: false
       };
       const { data, error } = await window.supabaseClient
         .from('note').select('*').eq('cliente_id', clienteId)
         .order('creata_il', { ascending: false });
       if (error) { this.erroreScheda = 'Errore nel caricare le note: ' + error.message; return; }
       this.note = data;
-      await this.caricaPagamentiCliente(clienteId);
+      await Promise.all([
+        this.caricaPagamentiCliente(clienteId),
+        this.caricaAttivitaCliente(clienteId)
+      ]);
     },
 
     tornaDaScheda() {
@@ -3363,9 +3603,18 @@ function appState() {
     },
 
     async cambiaStato(nuovoStato) {
-      const { error } = await window.supabaseClient
-        .from('clienti').update({ stato: nuovoStato }).eq('id', this.clienteSelezionatoId);
-      if (error) { this.erroreScheda = 'Stato non aggiornato: ' + error.message; return; }
+      this.erroreScheda = '';
+
+      const errore = await this.impostaStatoCliente(
+        this.clienteSelezionatoId,
+        nuovoStato
+      );
+
+      if (errore) {
+        this.erroreScheda = 'Stato non aggiornato: ' + errore;
+        return;
+      }
+
       await this.caricaClienti();
     },
 

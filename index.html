@@ -25,7 +25,7 @@
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no, date=no, email=no, address=no">
-<title>Landing Sellers</title>
+<title>Venditori | Landing Evolution</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -200,8 +200,8 @@
 
     <div x-show="avvioVisibile" x-transition.opacity.duration.160ms class="app-launch" aria-hidden="true">
       <div class="app-launch-brand">
-        <img src="assets/landing-sellers-logo.svg" alt="" class="launch-app-mark">
-        <span class="app-launch-name">Landing Sellers</span>
+        <span class="app-launch-dot"></span>
+        <span class="app-launch-name">Landing Evolution</span>
       </div>
     </div>
 
@@ -214,8 +214,8 @@
     <!-- LOGIN -->
     <div x-show="view === 'login'" x-cloak class="login-stage">
       <div class="login-brand">
-        <img src="assets/landing-sellers-logo.svg" alt="Landing Sellers" class="login-app-mark">
-        <span class="wordmark">Landing Sellers</span>
+        <div class="bdot-big"></div>
+        <span class="wordmark">Landing Evolution</span>
       </div>
       <div class="login-hero">
         <h1>Area <span class="hl">venditori</span></h1>
@@ -246,7 +246,7 @@
     <!-- LISTA CLIENTI -->
     <div x-show="view === 'lista' || view === 'clienti'" x-transition.opacity.duration.160ms class="app-main-view">
       <div class="brandbar">
-        <div class="brand"><img src="assets/landing-sellers-logo.svg" alt="" class="brand-app-mark"><span>LANDING SELLERS</span></div>
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
 
         <div class="home-header-actions">
           <button
@@ -416,7 +416,20 @@
                     <small x-text="descrizioneEventoHome(evento)"></small>
                   </div>
 
-                  <span class="home-attention-arrow">›</span>
+                  <span
+                    x-show="evento.tipo === 'contatto'"
+                    class="event-done-action"
+                    role="button"
+                    tabindex="0"
+                    @click.stop="completaContattoAgenda(evento)"
+                    @keydown.enter.stop="completaContattoAgenda(evento)"
+                    @keydown.space.prevent.stop="completaContattoAgenda(evento)"
+                    x-text="completandoEventoAgendaId === evento.id ? '...' : '✓ Fatto'">
+                  </span>
+
+                  <span
+                    x-show="evento.tipo !== 'contatto'"
+                    class="home-attention-arrow">›</span>
                 </button>
               </template>
             </div>
@@ -552,8 +565,8 @@
     <div x-show="view === 'profilo'" x-transition.opacity.duration.160ms class="profile-view app-main-view" :class="{ 'is-personal-profile': !isAdmin }">
       <div class="brandbar">
         <div class="brand">
-          <img src="assets/landing-sellers-logo.svg" alt="" class="brand-app-mark">
-          <span>LANDING SELLERS</span>
+          <span class="bdot"></span>
+          <span>LANDING EVOLUTION</span>
         </div>
       </div>
 
@@ -1264,8 +1277,8 @@
 
       <div class="brandbar">
         <div class="brand">
-          <img src="assets/landing-sellers-logo.svg" alt="" class="brand-app-mark">
-          <span>LANDING SELLERS</span>
+          <span class="bdot"></span>
+          <span>LANDING EVOLUTION</span>
         </div>
 
         <div class="home-header-actions">
@@ -2179,7 +2192,7 @@
     <!-- NUOVO CLIENTE -->
     <div x-show="view === 'nuovo'" x-transition.opacity.duration.160ms class="app-main-view">
       <div class="brandbar">
-        <div class="brand"><img src="assets/landing-sellers-logo.svg" alt="" class="brand-app-mark"><span>LANDING SELLERS</span></div>
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
       <div class="topbar">
         <button class="linkback" type="button" @click="view = clienteInModificaId ? 'scheda' : 'lista'">
@@ -2582,7 +2595,7 @@
     <!-- SCHEDA CLIENTE -->
     <div x-show="view === 'scheda'">
       <div class="brandbar">
-        <div class="brand"><img src="assets/landing-sellers-logo.svg" alt="" class="brand-app-mark"><span>LANDING SELLERS</span></div>
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
       <div class="topbar">
         <button class="linkback" type="button" @click="tornaDaScheda()">
@@ -2842,6 +2855,79 @@
           Manda a brief
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
         </a>
+        <div class="accordion-section client-timeline-section">
+
+          <button
+            type="button"
+            class="accordion-header"
+            :class="{ open: schedaAperture.attivita }"
+            @click="toggleAccordion('attivita')">
+
+            <span>Storico attività</span>
+
+            <div class="client-timeline-head">
+              <small x-text="timelineCliente().length"></small>
+
+              <svg viewBox="0 0 24 24" fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </div>
+          </button>
+
+          <div
+            class="accordion-body"
+            x-show="schedaAperture.attivita">
+
+            <div
+              class="client-timeline-loading"
+              x-show="caricandoAttivitaCliente">
+              Caricamento attività...
+            </div>
+
+            <div
+              class="client-timeline"
+              x-show="!caricandoAttivitaCliente && timelineCliente().length">
+
+              <template
+                x-for="evento in timelineCliente()"
+                :key="evento.id">
+
+                <div
+                  class="client-timeline-item"
+                  :class="'type-' + evento.tipo">
+
+                  <div class="client-timeline-marker">
+                    <span></span>
+                  </div>
+
+                  <div class="client-timeline-content">
+                    <time x-text="formattaData(evento.data)"></time>
+                    <strong x-text="evento.titolo"></strong>
+
+                    <p
+                      x-show="evento.dettaglio"
+                      x-text="evento.dettaglio">
+                    </p>
+                  </div>
+
+                </div>
+              </template>
+            </div>
+
+            <div
+              class="client-timeline-empty"
+              x-show="!caricandoAttivitaCliente && !timelineCliente().length">
+              Nessuna attività registrata.
+            </div>
+
+          </div>
+        </div>
+
+
 
         <div class="accordion-section">
           <button type="button" class="accordion-header" :class="{ open: schedaAperture.note }" @click="toggleAccordion('note')">
@@ -2873,7 +2959,7 @@
     <!-- AGENDA -->
     <div x-show="view === 'agenda'" x-cloak class="app-main-view crm-view">
       <div class="brandbar">
-        <div class="brand"><img src="assets/landing-sellers-logo.svg" alt="" class="brand-app-mark"><span>LANDING SELLERS</span></div>
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
 
       <div class="topbar">
@@ -2947,7 +3033,18 @@
                 <strong x-text="evento.clienteNome"></strong>
                 <small x-text="isAdmin && evento.venditoreNome ? evento.venditoreNome + ' - ' + evento.titolo : evento.titolo"></small>
               </div>
-              <span>›</span>
+              <span
+                x-show="evento.tipo === 'contatto'"
+                class="event-done-action agenda-event-done"
+                role="button"
+                tabindex="0"
+                @click.stop="completaContattoAgenda(evento)"
+                @keydown.enter.stop="completaContattoAgenda(evento)"
+                @keydown.space.prevent.stop="completaContattoAgenda(evento)"
+                x-text="completandoEventoAgendaId === evento.id ? '...' : '✓ Fatto'">
+              </span>
+
+              <span x-show="evento.tipo !== 'contatto'">›</span>
             </button>
           </template>
 
@@ -2961,7 +3058,7 @@
     <!-- PIPELINE -->
     <div x-show="view === 'pipeline'" x-cloak class="app-main-view crm-view pipeline-view">
       <div class="brandbar">
-        <div class="brand"><img src="assets/landing-sellers-logo.svg" alt="" class="brand-app-mark"><span>LANDING SELLERS</span></div>
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
 
       <div class="pipeline-topbar">
@@ -3038,7 +3135,7 @@
     <!-- RICERCA GLOBALE -->
     <div x-show="view === 'ricerca'" x-cloak class="app-main-view crm-view">
       <div class="brandbar">
-        <div class="brand"><img src="assets/landing-sellers-logo.svg" alt="" class="brand-app-mark"><span>LANDING SELLERS</span></div>
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
 
       <div class="topbar">
@@ -3357,9 +3454,15 @@
 
         <div
           class="client-action-subpanel"
-          x-show="clienteAzioniNotaAperta">
+          x-show="clienteAzioniNotaAperta"
+          x-cloak>
 
-          <span class="client-action-subtitle">Nota rapida</span>
+          <div class="client-action-panel-head">
+            <div>
+              <strong>Nota rapida</strong>
+              <small>Aggiungi un aggiornamento al cliente</small>
+            </div>
+          </div>
 
           <textarea
             class="client-action-note"
@@ -3369,25 +3472,71 @@
             x-model="clienteNotaRapidaTesto">
           </textarea>
 
+          <div class="client-action-feedback">
+            <span
+              class="client-action-success"
+              x-show="messaggioAzioneCliente"
+              x-text="messaggioAzioneCliente">
+            </span>
+
+            <span
+              class="client-action-error"
+              x-show="erroreAzioneCliente"
+              x-text="erroreAzioneCliente">
+            </span>
+          </div>
+
           <button
             type="button"
             class="client-action-save client-action-save-full"
             :disabled="!clienteNotaRapidaTesto.trim() || salvandoNotaRapida"
-            @click="salvaNotaRapida()"
-            x-text="salvandoNotaRapida ? 'Salvataggio...' : 'Salva nota'">
+            @click="salvaNotaRapida()">
+
+            <span
+              x-text="salvandoNotaRapida ? 'Salvataggio...' : 'Salva nota'">
+            </span>
           </button>
         </div>
 
         <div
           class="client-action-subpanel"
-          x-show="clienteAzioniContattoAperto">
+          x-show="clienteAzioniContattoAperto"
+          x-cloak>
 
-          <span class="client-action-subtitle">Prossimo contatto</span>
+          <div class="client-action-panel-head">
+            <div>
+              <strong>Prossimo contatto</strong>
+              <small>Quando vuoi ricontattare questo cliente?</small>
+            </div>
+          </div>
 
-          <div class="client-action-date-row">
-            <input
-              type="date"
-              x-model="clienteProssimoContattoData">
+          <input
+            class="client-action-date"
+            type="date"
+            x-model="clienteProssimoContattoData">
+
+          <div class="client-action-feedback">
+            <span
+              class="client-action-success"
+              x-show="messaggioAzioneCliente"
+              x-text="messaggioAzioneCliente">
+            </span>
+
+            <span
+              class="client-action-error"
+              x-show="erroreAzioneCliente"
+              x-text="erroreAzioneCliente">
+            </span>
+          </div>
+
+          <div class="client-action-date-actions">
+            <button
+              type="button"
+              class="client-action-clear"
+              x-show="clienteProssimoContattoData"
+              @click="clienteProssimoContattoData = ''">
+              Rimuovi data
+            </button>
 
             <button
               type="button"
@@ -3397,10 +3546,6 @@
               x-text="salvandoProssimoContattoRapido ? 'Salvataggio...' : 'Salva'">
             </button>
           </div>
-
-          <small>
-            Lascia la data vuota e salva per rimuovere il prossimo contatto.
-          </small>
         </div>
 
         <button
@@ -3456,7 +3601,7 @@
     <!-- ASSISTENTE CON RISPOSTE APPROVATE -->
     <div x-show="view === 'assistente'" x-cloak class="app-main-view assistant-view">
       <div class="brandbar assistant-brandbar">
-        <div class="brand"><img src="assets/landing-sellers-logo.svg" alt="" class="brand-app-mark"><span>LANDING SELLERS</span></div>
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
         <span class="assistant-verified"><i></i>Guide verificate</span>
       </div>
 
@@ -3576,7 +3721,7 @@
     <!-- CESTINO -->
     <div x-show="view === 'cestino'">
       <div class="brandbar">
-        <div class="brand"><img src="assets/landing-sellers-logo.svg" alt="" class="brand-app-mark"><span>LANDING SELLERS</span></div>
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
       <div class="topbar">
         <button type="button" class="linkback" @click="view = 'lista'">
