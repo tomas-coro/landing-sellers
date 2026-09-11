@@ -7963,3 +7963,217 @@ html[data-theme="dark"] .event-done-action{
     max-width:72px !important;
   }
 }
+/* ==========================================================
+   DESKTOP V1 — HOME
+   Mobile invariato sotto 1024px
+   ========================================================== */
+
+@media (min-width:1024px){
+
+  html,
+  body{
+    background:var(--paper);
+  }
+
+  #app{
+    width:100%;
+    max-width:none;
+    margin:0;
+    background:var(--paper);
+  }
+
+  .app-main-view{
+    width:100%;
+    min-height:100%;
+  }
+
+  /* HEADER */
+
+  .app-main-view .brandbar{
+    padding:
+      calc(20px + env(safe-area-inset-top))
+      clamp(32px,4vw,64px)
+      18px;
+  }
+
+  .app-main-view .topbar{
+    width:min(100%,1440px);
+    margin:0 auto;
+    padding:
+      28px
+      clamp(32px,4vw,64px)
+      18px;
+  }
+
+  .app-main-view .topbar h1{
+    font-size:28px !important;
+    letter-spacing:-.035em;
+  }
+
+  /* CONTENUTO */
+
+  .app-main-view > .content{
+    width:min(100%,1440px);
+    margin:0 auto;
+    padding:
+      12px
+      clamp(32px,4vw,64px)
+      56px;
+  }
+
+  /* HOME */
+
+  .home-dashboard-v3{
+    grid-template-columns:
+      minmax(0,1.45fr)
+      minmax(320px,.8fr);
+
+    grid-template-areas:
+      "performance today"
+      "pipeline today";
+
+    gap:18px;
+    align-items:stretch;
+    margin-bottom:32px;
+  }
+
+  .home-dashboard-v3 .home-performance{
+    grid-area:performance;
+  }
+
+  .home-dashboard-v3 .home-flow{
+    grid-area:pipeline;
+  }
+
+  .home-dashboard-v3 .home-attention{
+    grid-area:today;
+  }
+
+  /* IL TUO LAVORO */
+
+  .home-performance{
+    border-radius:24px;
+    padding:24px 26px;
+  }
+
+  .home-performance-head span{
+    font-size:10px;
+  }
+
+  .home-performance-head strong{
+    font-size:16px;
+  }
+
+  .home-performance-head button{
+    min-height:40px;
+    padding:0 14px;
+    font-size:10px;
+  }
+
+  .home-work-summary{
+    margin-top:24px;
+  }
+
+  .home-work-count > strong{
+    font-size:54px;
+  }
+
+  .home-work-count b{
+    font-size:15px;
+  }
+
+  .home-work-count small{
+    font-size:10px;
+  }
+
+  .home-contract-metrics{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+  }
+
+  .home-contract-metrics.is-developer{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .home-contract-metric{
+    min-width:0;
+  }
+
+  .home-contract-metric strong{
+    font-size:21px;
+  }
+
+  /* PIPELINE */
+
+  .home-flow{
+    padding:21px;
+    border-radius:21px;
+  }
+
+  .home-flow .home-section-title{
+    margin-bottom:16px;
+  }
+
+  .home-flow .home-section-title > div > strong{
+    font-size:17px;
+  }
+
+  .home-flow-stages{
+    gap:9px;
+  }
+
+  .home-flow-stages button{
+    min-height:88px;
+    padding:14px 8px;
+    border-radius:14px;
+    cursor:pointer;
+  }
+
+  .home-flow-stages strong{
+    font-size:24px;
+  }
+
+  .home-flow-stages span{
+    margin-top:7px;
+    font-size:9px;
+  }
+
+  /* OGGI */
+
+  .home-dashboard-v3 .home-attention{
+    padding:21px;
+    border-radius:21px;
+  }
+
+  .home-dashboard-v3 .home-attention-list{
+    margin-top:8px;
+  }
+
+  .home-attention-row{
+    min-height:62px;
+  }
+
+  /* CLIENTI */
+
+  .home-client-card{
+    transition:
+      border-color .15s ease,
+      transform .15s ease,
+      box-shadow .15s ease;
+  }
+
+  .home-client-card:hover{
+    border-color:rgba(17,17,17,.28);
+    box-shadow:0 8px 24px rgba(17,17,17,.055);
+    transform:translateY(-1px);
+  }
+
+  /* FILTRI DESKTOP */
+
+  .home-filter-scroll{
+    flex-wrap:wrap !important;
+    overflow:visible;
+    -webkit-mask-image:none;
+    mask-image:none;
+  }
+
+}
