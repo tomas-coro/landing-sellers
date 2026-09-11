@@ -14,6 +14,12 @@ const FAQ_ASSISTENTE = [
   },
   {
     "categoria": "Orientamento",
+    "domanda": "Perché la mia Home mostra “La tua parte” invece di Venduto e Media vendita?",
+    "cerca": "la tua parte ruolo developer home metriche nascoste sviluppatore",
+    "risposta": "Succede con il ruolo Developer: la card mostra “La tua parte” al posto di Generato, e nasconde Venduto e Media vendita."
+  },
+  {
+    "categoria": "Orientamento",
     "domanda": "Come apro l’elenco completo dei clienti?",
     "cerca": "aprire elenco completo archivio tutti clienti vedi",
     "risposta": "Dalla Home, nella sezione “Ultimi clienti”, premi “Vedi tutti”. Si apre l’archivio con ricerca, filtri, ordinamento e pagine."
@@ -23,6 +29,12 @@ const FAQ_ASSISTENTE = [
     "domanda": "Come torno alla schermata precedente?",
     "cerca": "tornare indietro schermata precedente swipe gesto",
     "risposta": "Usa “Indietro” o “Home” in alto. Su mobile puoi anche scorrere dal bordo sinistro verso destra nelle schermate supportate."
+  },
+  {
+    "categoria": "Orientamento",
+    "domanda": "Posso aprire il Profilo con uno swipe dalla Home?",
+    "cerca": "swipe bordo destro profilo gesto scorrere home",
+    "risposta": "Sì. Nelle schermate supportate, oltre allo swipe indietro dal bordo sinistro, scorrere dal bordo destro verso sinistra dalla Home apre il Profilo."
   },
   {
     "categoria": "Clienti",
@@ -266,6 +278,12 @@ const FAQ_ASSISTENTE = [
   },
   {
     "categoria": "Vendite e pagamenti",
+    "domanda": "Cosa sono il bonus del 12%, il Margine e il Netto distribuibile?",
+    "cerca": "bonus 12% dodici percento margine netto distribuibile quota ceduta venditore due partecipanti",
+    "risposta": "Con 2 partecipanti, chi ha venduto riceve in automatico un bonus del 12% sottratto come “quota ceduta” all’altro partecipante. Margine e Netto distribuibile, mostrati nel riepilogo finale, sono il guadagno al netto di costi e quote."
+  },
+  {
+    "categoria": "Vendite e pagamenti",
     "domanda": "Cosa significano Tutto, Misto e No nella fatturazione?",
     "cerca": "tutto misto no fatturazione fattura",
     "risposta": "Tutto è fatturazione completa, Misto permette di inserire la parte fatturata, No indica nessuna fattura."
@@ -292,7 +310,7 @@ const FAQ_ASSISTENTE = [
     "categoria": "Profilo e app",
     "domanda": "Come ritaglio o rimuovo la foto profilo?",
     "cerca": "ritagliare spostare zoom rimuovere foto profilo inquadratura",
-    "risposta": "In Profilo usa “Modifica inquadratura” per spostare e zoomare la foto, oppure “Rimuovi foto”."
+    "risposta": "In Profilo usa “Inquadratura” per spostare e zoomare la foto, oppure “Rimuovi foto”."
   },
   {
     "categoria": "Profilo e app",
@@ -347,6 +365,12 @@ const FAQ_ASSISTENTE = [
     "domanda": "A cosa serve Agenda rete?",
     "cerca": "agenda rete admin amministratore attivita venditori rinnovi contatti",
     "risposta": "Riunisce contatti e rinnovi di tutti i venditori visibili all’amministratore e indica il venditore associato."
+  },
+  {
+    "categoria": "Area admin",
+    "domanda": "Come funziona la classifica venditori?",
+    "cerca": "classifica venditori leaderboard risultati commerciali ordinamento totale venduto developer esclusi",
+    "risposta": "Nella dashboard admin ordina i venditori per totale venduto ed esclude i profili con ruolo Developer. Premi un venditore per aprire i suoi clienti."
   }
 ];
 
