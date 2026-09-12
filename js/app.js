@@ -803,6 +803,27 @@ function appState() {
       return this.apriEconomia('incasso');
     },
 
+    utenteCorrenteETomas() {
+      const valori = [
+        this.profilo.nome,
+        this.profilo.username,
+        this.sessione?.user?.email
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return valori.includes('tomas');
+    },
+
+    profiloEconomicoETomas(profilo) {
+      return [profilo?.nome, profilo?.username]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes('tomas');
+    },
+
     async inizializzaPartecipantiEconomia() {
       this.erroreEconomia = '';
 
@@ -818,6 +839,7 @@ function appState() {
 
       const profili = data || [];
       const referente = profili.find(p => p.ruolo_economico === 'referente');
+      const tomas = profili.find(p => p.ruolo_economico === 'produzione');
       const corrente = profili.find(p => p.id === this.sessione?.user?.id);
 
       if (!referente) {
@@ -826,11 +848,20 @@ function appState() {
         return;
       }
 
+      if (!tomas) {
+        this.erroreEconomia = 'Profilo economico di Tomas non trovato.';
+        this.venditaEconomicaForm.partecipanti = [];
+        return;
+      }
+
       const creaPartecipante = (profilo, ruolo) => ({
         id: profilo.id,
-        nome: ruolo === 'referente'
-          ? 'Alessandro'
-          : (profilo.username || profilo.nome || 'Venditore'),
+        nome:
+          ruolo === 'referente'
+            ? 'Alessandro'
+            : ruolo === 'produzione'
+              ? 'Tomas'
+              : (profilo.username || profilo.nome || 'Venditore'),
         ruolo,
         modalitaFatturazione: 'nessuna',
         importoFatturato: 0,
@@ -844,11 +875,19 @@ function appState() {
         bloccato: true
       });
 
-      const partecipanti = [creaPartecipante(referente, 'referente')];
+      const partecipanti = [
+        creaPartecipante(referente, 'referente')
+      ];
+
+      if (tomas.id !== referente.id) {
+        partecipanti.push(creaPartecipante(tomas, 'produzione'));
+      }
 
       if (
-        corrente?.ruolo === 'venditore' &&
-        corrente.id !== referente.id
+        corrente &&
+        corrente.ruolo !== 'admin' &&
+        corrente.id !== referente.id &&
+        corrente.id !== tomas.id
       ) {
         partecipanti.push(creaPartecipante(corrente, 'venditore'));
       }
@@ -3817,11 +3856,11 @@ function appState() {
         ...clienti.map(cliente => venditorePerCliente[cliente.id] || cliente.venditore_id)
       ]);
 
-      // Mostra referente, developer e venditori economicamente coinvolti.
+      // Mostra tutte le persone economicamente coinvolte:
+      // referente, venditori attivi e produzione/developer con partecipazioni.
       const profiliVisibili = profili.filter(profilo =>
         profilo.ruolo !== 'admin' && (
           profilo.ruolo_economico === 'referente' ||
-          profilo.ruolo === 'developer' ||
           profiliConPartecipazioni.has(profilo.id) ||
           idsVenditoriAttivi.has(profilo.id)
         )
@@ -3829,12 +3868,12 @@ function appState() {
 
       const nomeProfiloAdmin = profilo => {
         if (profilo.ruolo_economico === 'referente') return 'Alessandro';
-        if (profilo.ruolo === 'developer') return 'Tomas';
+        if (profilo.ruolo_economico === 'produzione') return 'Tomas';
         return profilo.nome;
       };
 
       const ruoloProfiloAdmin = profilo => {
-        if (profilo.ruolo === 'developer') {
+        if (profilo.ruolo_economico === 'produzione' || profilo.ruolo === 'developer') {
           return 'Developer';
         }
         if (profilo.ruolo_economico === 'referente') return 'Referente';
