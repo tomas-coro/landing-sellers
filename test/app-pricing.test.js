@@ -175,6 +175,41 @@ test('il calendario admin riunisce le scadenze di tutti i venditori', () => {
   ]);
 });
 
+test('agenda mostra tutte le rate e include quelle scadute nella vista oggi', () => {
+  const stato = appState();
+  const oggi = stato.dataISOOggi();
+  const ieri = stato.aggiungiGiorniISO(oggi, -1);
+  const domani = stato.aggiungiGiorniISO(oggi, 1);
+  stato.clienti = [{ id: 'c1', nome: 'Cliente Uno', venditore_id: 'v1' }];
+  stato.scadenzePagamentoPerCliente = {
+    c1: [
+      { id: 'p1', data: ieri, importo: 100 },
+      { id: 'p2', data: domani, importo: 200 }
+    ]
+  };
+
+  assert.deepStrictEqual(
+    stato.eventiAgenda().filter(e => e.tipo === 'rata').map(e => e.pagamentoId),
+    ['p1', 'p2']
+  );
+  assert.deepStrictEqual(
+    stato.eventiAgendaVisibili().filter(e => e.tipo === 'rata').map(e => e.pagamentoId),
+    ['p1']
+  );
+});
+
+test('totale e residuo cliente derivano dalla vendita attiva', () => {
+  const stato = appState();
+  stato.venditaClienteAttiva = { importo_vendita: 500 };
+  stato.pagamentiCliente = [
+    { stato: 'incassato', importo: 125 },
+    { stato: 'previsto', importo: 200 }
+  ];
+
+  assert.strictEqual(stato.totaleVenditaCliente(), 500);
+  assert.strictEqual(stato.residuoCliente(), 375);
+});
+
 test('un cliente condiviso viene contato per ogni partecipante alla vendita', () => {
   const clienti = [
     { id: 'c1', venditore_id: 'tomas', stato: 'pubblicato' },

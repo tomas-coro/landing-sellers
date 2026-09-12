@@ -237,6 +237,7 @@ function formVenditaEconomicaVuoto() {
     statoIncasso: 'incassato',
     importoIncassato: null,
     dataPagamento: '',
+    dataScadenza: '',
     metodoPagamento: '',
     notePagamento: '',
 
@@ -309,6 +310,9 @@ function appState() {
 
     // CRM economico / vendite
     venditaEconomicaForm: formVenditaEconomicaVuoto(),
+    modalitaEconomia: 'vendita',
+    venditaEconomicaAttiva: null,
+    pagamentoPrevistoId: null,
     clienteEconomiaSelezionato: null,
     anagraficaEconomiaAperta: false,
     menuAzioneAperto: false,
@@ -350,6 +354,7 @@ function appState() {
     caricandoAttivitaCliente: false,
 
     // pagamenti cliente
+    venditaClienteAttiva: null,
     pagamentiCliente: [],
     caricandoPagamentiCliente: false,
     errorePagamentiCliente: '',
@@ -708,19 +713,16 @@ function appState() {
         .reduce((totale, p) => totale + (Number(p.importo) || 0), 0);
     },
 
-    residuoCliente() {
-      const cliente = this.clienteSelezionato();
-      if (!cliente) return 0;
+    totaleVenditaCliente() {
+      return Number(this.venditaClienteAttiva?.importo_vendita) || 0;
+    },
 
-      const totale = Number(cliente.importo_abbonamento) || 0;
-      return Math.max(0, totale - this.totaleIncassatoCliente());
+    residuoCliente() {
+      return Math.max(0, this.totaleVenditaCliente() - this.totaleIncassatoCliente());
     },
 
     statoPagamentoCliente() {
-      const cliente = this.clienteSelezionato();
-      if (!cliente) return 'da_pagare';
-
-      const totale = Number(cliente.importo_abbonamento) || 0;
+      const totale = this.totaleVenditaCliente();
       const incassato = this.totaleIncassatoCliente();
 
       if (totale > 0 && incassato >= totale) return 'pagato';
@@ -740,23 +742,60 @@ function appState() {
       return 'payment-' + this.statoPagamentoCliente();
     },
 
-    async apriPagamentoCliente() {
-      const cliente = this.clienteSelezionato();
+    async apriPagamentoCliente(cliente = this.clienteSelezionato(), pagamentoPrevisto = null) {
       if (!cliente) return;
 
-      await this.apriEconomia();
-      this.selezionaClienteEconomia(cliente);
+      await this.apriEconomia('incasso');
+      this.pagamentoPrevistoId = pagamentoPrevisto?.id || null;
+      this.clienteEconomiaSelezionato = cliente;
+
+      const { data, error } = await window.supabaseClient
+        .from('vendite')
+        .select('id,cliente_id,servizio,importo_vendita,data_vendita')
+        .eq('cliente_id', cliente.id)
+        .eq('stato', 'attiva')
+        .order('data_vendita', { ascending: false })
+        .order('creato_il', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error || !data) {
+        this.erroreEconomia = error
+          ? 'Vendita non disponibile: ' + error.message
+          : 'Nessuna vendita attiva per questo cliente.';
+      } else {
+        this.venditaEconomicaAttiva = data;
+        this.venditaClienteAttiva = data;
+        this.venditaEconomicaForm.clienteId = cliente.id;
+        this.venditaEconomicaForm.clienteRicerca = cliente.nome || '';
+        this.venditaEconomicaForm.servizio = data.servizio || '';
+        this.venditaEconomicaForm.importoVendita = Number(data.importo_vendita) || 0;
+        this.venditaEconomicaForm.importoIncassato = pagamentoPrevisto
+          ? Number(pagamentoPrevisto.importo) || 0
+          : this.residuoCliente();
+        this.venditaEconomicaForm.dataPagamento = this.dataISOOggi();
+      }
+
+      this.view = 'economia';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
-    async apriEconomia() {
+    async apriEconomia(modalita = 'vendita') {
       this.venditaEconomicaForm = formVenditaEconomicaVuoto();
+      this.modalitaEconomia = modalita;
+      this.venditaEconomicaAttiva = null;
+      this.pagamentoPrevistoId = null;
       this.clienteEconomiaSelezionato = null;
       this.anagraficaEconomiaAperta = false;
       this.erroreEconomia = '';
       this.successoEconomia = '';
-      await this.inizializzaPartecipantiEconomia();
+      if (modalita === 'vendita') await this.inizializzaPartecipantiEconomia();
       this.view = 'economia';
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    apriIncasso() {
+      return this.apriEconomia('incasso');
     },
 
     utenteCorrenteETomas() {
@@ -1181,6 +1220,8 @@ function appState() {
     },
 
     selezionaClienteEconomia(cliente) {
+      if (this.modalitaEconomia === 'incasso') return this.apriPagamentoCliente(cliente);
+
       this.clienteEconomiaSelezionato = cliente;
       this.venditaEconomicaForm.clienteId = cliente.id;
       this.venditaEconomicaForm.clienteRicerca = cliente.nome || '';
@@ -1321,7 +1362,63 @@ function appState() {
         }
       }
 
+      if (this.venditaEconomicaForm.statoIncasso === 'previsto') {
+        if (!(incasso > 0 && incasso <= vendita)) return 'Inserisci un importo rata valido.';
+        if (!this.venditaEconomicaForm.dataScadenza) return 'Inserisci la scadenza della rata.';
+      }
+
       return '';
+    },
+
+    validaIncassoEconomia() {
+      if (!this.venditaEconomicaAttiva) return 'Nessuna vendita attiva disponibile.';
+      const importo = Number(this.venditaEconomicaForm.importoIncassato) || 0;
+      const massimo = this.residuoCliente();
+      if (!(importo > 0 && importo <= massimo)) return 'Inserisci un importo non superiore al residuo.';
+      if (this.venditaEconomicaForm.statoIncasso === 'previsto' && !this.venditaEconomicaForm.dataScadenza) {
+        return 'Inserisci la scadenza della rata.';
+      }
+      return '';
+    },
+
+    async salvaIncassoEconomia() {
+      if (this.salvandoVenditaEconomica) return;
+      this.erroreEconomia = this.validaIncassoEconomia();
+      this.successoEconomia = '';
+      if (this.erroreEconomia) return;
+
+      this.salvandoVenditaEconomica = true;
+      try {
+        const previsto = this.venditaEconomicaForm.statoIncasso === 'previsto';
+        const { error } = await window.supabaseClient.rpc('registra_pagamento_vendita', {
+          p_vendita_id: this.venditaEconomicaAttiva.id,
+          p_importo: Number(this.venditaEconomicaForm.importoIncassato),
+          p_stato: previsto ? 'previsto' : 'incassato',
+          p_data_scadenza: previsto ? this.venditaEconomicaForm.dataScadenza : null,
+          p_data_pagamento: previsto ? null : (this.venditaEconomicaForm.dataPagamento || this.dataISOOggi()),
+          p_metodo: (this.venditaEconomicaForm.metodoPagamento || '').trim() || null,
+          p_note: (this.venditaEconomicaForm.notePagamento || '').trim() || null,
+          p_pagamento_previsto_id: this.pagamentoPrevistoId
+        });
+
+        if (error) {
+          this.erroreEconomia = 'Pagamento non salvato: ' + error.message;
+          return;
+        }
+
+        this.successoEconomia = previsto ? 'Rata prevista registrata.' : 'Incasso registrato.';
+        await this.caricaPagamentiCliente(this.venditaEconomicaAttiva.cliente_id);
+        if (this.isAdmin) await this.caricaDashboardAdmin();
+        else await Promise.all([this.caricaClienti(), this.caricaStatisticheVenditore()]);
+      } finally {
+        this.salvandoVenditaEconomica = false;
+      }
+    },
+
+    salvaEconomia() {
+      return this.modalitaEconomia === 'incasso'
+        ? this.salvaIncassoEconomia()
+        : this.salvaVenditaEconomica();
     },
 
     async salvaVenditaEconomica() {
@@ -1376,18 +1473,18 @@ function appState() {
       const statoIncasso = this.venditaEconomicaForm.statoIncasso;
       let pagamento = null;
 
-      if (statoIncasso !== 'previsto') {
+      if (Number(this.venditaEconomicaForm.importoIncassato) > 0) {
         pagamento = {
-          importo: Math.max(
-            0,
-            Number(this.venditaEconomicaForm.importoIncassato) || 0
-          ),
-          stato: 'incassato',
-          data_pagamento: this.venditaEconomicaForm.dataPagamento || null,
-          metodo:
-            (this.venditaEconomicaForm.metodoPagamento || '').trim() || null,
-          note:
-            (this.venditaEconomicaForm.notePagamento || '').trim() || null
+          importo: Number(this.venditaEconomicaForm.importoIncassato),
+          stato: statoIncasso === 'previsto' ? 'previsto' : 'incassato',
+          data_scadenza: statoIncasso === 'previsto'
+            ? this.venditaEconomicaForm.dataScadenza
+            : null,
+          data_pagamento: statoIncasso === 'previsto'
+            ? null
+            : (this.venditaEconomicaForm.dataPagamento || null),
+          metodo: (this.venditaEconomicaForm.metodoPagamento || '').trim() || null,
+          note: (this.venditaEconomicaForm.notePagamento || '').trim() || null
         };
       }
 
@@ -1932,6 +2029,7 @@ function appState() {
       this.clienti = [];
       this.cestino = [];
       this.note = [];
+      this.venditaClienteAttiva = null;
       this.pagamentiCliente = [];
       this.scadenzePagamentoPerCliente = {};
       this.venditori = [];
@@ -2160,7 +2258,7 @@ function appState() {
 
       const { data: pagamenti, error: pagamentiError } = await window.supabaseClient
         .from('pagamenti')
-        .select('vendita_id,importo,stato,data_scadenza')
+        .select('id,vendita_id,importo,stato,data_scadenza')
         .in('vendita_id', venditaIds)
         .eq('stato', 'previsto')
         .not('data_scadenza', 'is', null)
@@ -2178,14 +2276,13 @@ function appState() {
         const data = this.normalizzaDataAgenda(pagamento.data_scadenza);
         if (!clienteId || !data) return;
 
-        if (!prossime[clienteId] || data < prossime[clienteId].data) {
-          prossime[clienteId] = {
-            tipo: 'rata',
-            label: 'Rata',
-            data,
-            importo: Number(pagamento.importo) || 0
-          };
-        }
+        (prossime[clienteId] ||= []).push({
+          id: pagamento.id,
+          tipo: 'rata',
+          label: 'Rata',
+          data,
+          importo: Number(pagamento.importo) || 0
+        });
       });
 
       this.scadenzePagamentoPerCliente = prossime;
@@ -2205,7 +2302,7 @@ function appState() {
         });
       }
 
-      const rata = this.scadenzePagamentoPerCliente[cliente.id];
+      const rata = this.scadenzePagamentoPerCliente[cliente.id]?.[0];
       if (rata?.data) scadenze.push(rata);
 
       if (!scadenze.length) return null;
@@ -2442,10 +2539,12 @@ function appState() {
           });
         }
 
-        const rata = this.scadenzePagamentoPerCliente[cliente.id];
-        if (rata?.data) {
+        (this.scadenzePagamentoPerCliente[cliente.id] || []).forEach(rata => {
+          if (!rata?.data) return;
           eventi.push({
-            id: `rata-${cliente.id}-${rata.data}`,
+            id: `rata-${rata.id || cliente.id + '-' + rata.data}`,
+            pagamentoId: rata.id || null,
+            importo: rata.importo,
             clienteId: cliente.id,
             clienteNome: cliente.nome,
             venditoreId: cliente.venditore_id,
@@ -2457,7 +2556,7 @@ function appState() {
               : 'Rata prevista',
             scaduto: rata.data < oggi
           });
-        }
+        });
       });
 
       return eventi.sort((a, b) =>
@@ -2473,7 +2572,7 @@ function appState() {
       if (this.agendaVista === 'oggi') {
         return eventi.filter(e =>
           e.data === oggi ||
-          (e.tipo === 'contatto' && e.data < oggi)
+          ((e.tipo === 'contatto' || e.tipo === 'rata') && e.data < oggi)
         );
       }
 
@@ -2481,7 +2580,7 @@ function appState() {
         const fine = this.aggiungiGiorniISO(oggi, 7);
         return eventi.filter(e =>
           (e.data >= oggi && e.data <= fine) ||
-          (e.tipo === 'contatto' && e.data < oggi)
+          ((e.tipo === 'contatto' || e.tipo === 'rata') && e.data < oggi)
         );
       }
 
@@ -3396,6 +3495,7 @@ function appState() {
     },
 
     async caricaPagamentiCliente(clienteId) {
+      this.venditaClienteAttiva = null;
       this.pagamentiCliente = [];
       this.errorePagamentiCliente = '';
       if (!clienteId) return;
@@ -3404,16 +3504,20 @@ function appState() {
       try {
         const { data: vendite, error: errVendite } = await window.supabaseClient
           .from('vendite')
-          .select('id')
+          .select('id,importo_vendita,servizio,data_vendita')
           .eq('cliente_id', clienteId)
-          .eq('stato', 'attiva');
+          .eq('stato', 'attiva')
+          .order('data_vendita', { ascending: false })
+          .order('creato_il', { ascending: false })
+          .limit(1);
 
         if (errVendite) {
           this.errorePagamentiCliente = errVendite.message;
           return;
         }
 
-        const ids = (vendite || []).map(v => v.id);
+        this.venditaClienteAttiva = (vendite || [])[0] || null;
+        const ids = this.venditaClienteAttiva ? [this.venditaClienteAttiva.id] : [];
         if (!ids.length) return;
 
         const { data, error } = await window.supabaseClient
@@ -3496,7 +3600,7 @@ function appState() {
               : pagamento.stato === 'previsto'
                 ? 'Pagamento previsto'
                 : 'Pagamento annullato',
-          dettaglio: this.formattaEuro(pagamento.importo)
+          dettaglio: this.formattaNumeroEuro(pagamento.importo)
         });
       });
 
@@ -3702,7 +3806,7 @@ function appState() {
 
         window.supabaseClient
           .from('pagamenti')
-          .select('vendita_id,importo,stato,data_scadenza,data_pagamento')
+          .select('id,vendita_id,importo,stato,data_scadenza,data_pagamento')
       ]);
 
       const errore =
@@ -3785,13 +3889,14 @@ function appState() {
         .forEach(pagamento => {
           const clienteId = venditaPerId[pagamento.vendita_id]?.cliente_id;
           const data = this.normalizzaDataAgenda(pagamento.data_scadenza);
-          if (!clienteId || !data || prossimeRate[clienteId]) return;
-          prossimeRate[clienteId] = {
+          if (!clienteId || !data) return;
+          (prossimeRate[clienteId] ||= []).push({
+            id: pagamento.id,
             tipo: 'rata',
             label: 'Rata',
             data,
             importo: Number(pagamento.importo) || 0
-          };
+          });
         });
       this.scadenzePagamentoPerCliente = prossimeRate;
 
@@ -3972,6 +4077,17 @@ function appState() {
     async apriEventoAdmin(evento) {
       await this.apriClientiVenditore(evento.venditoreId, evento.venditoreNome);
       await this.apriScheda(evento.clienteId);
+    },
+
+    async apriIncassoAgenda(evento) {
+      if (this.isAdmin) await this.apriClientiVenditore(evento.venditoreId, evento.venditoreNome);
+      const cliente = this.clienti.find(c => c.id === evento.clienteId);
+      if (!cliente) return;
+      await this.caricaPagamentiCliente(cliente.id);
+      await this.apriPagamentoCliente(cliente, {
+        id: evento.pagamentoId,
+        importo: evento.importo
+      });
     },
 
     async apriClientiVenditore(venditoreId, nomeVenditore) {
