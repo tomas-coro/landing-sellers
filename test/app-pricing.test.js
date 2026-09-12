@@ -155,6 +155,33 @@ test('le tasse sono 60% se nessun collaboratore fattura, altrimenti 40%', () => 
   ]), 40);
 });
 
+test('Tomas developer non riceve quote nelle nuove vendite', async () => {
+  const stato = appState();
+  stato.sessione = { user: { id: 'tomas' } };
+  const windowPrecedente = global.window;
+  global.window = {
+    supabaseClient: {
+      rpc: async () => ({
+        data: [
+          { id: 'alessandro', ruolo: 'venditore', ruolo_economico: 'referente' },
+          { id: 'tomas', ruolo: 'developer', ruolo_economico: null }
+        ],
+        error: null
+      })
+    }
+  };
+
+  try {
+    await stato.inizializzaPartecipantiEconomia();
+    assert.deepStrictEqual(
+      stato.venditaEconomicaForm.partecipanti.map(p => p.id),
+      ['alessandro']
+    );
+  } finally {
+    global.window = windowPrecedente;
+  }
+});
+
 test('la ripartizione applica il 60% oppure la riduzione no-fattura del 20%', () => {
   assert.strictEqual(typeof appState, 'function');
   const stato = appState();
