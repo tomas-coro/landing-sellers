@@ -24,7 +24,12 @@ function ultimiClienti(clienti = [], limite = 5) {
 }
 
 function normalizzaClientePerSalvataggio(form) {
-  return { ...form, sconto_tipo: form.sconto_tipo || null };
+  return {
+    ...form,
+    sconto_tipo: form.sconto_tipo || null,
+    data_attivazione: form.data_attivazione || null,
+    data_rinnovo: form.data_rinnovo || null
+  };
 }
 
 function prezzoRicorrenteDaForm(prezzoCatalogo, form) {

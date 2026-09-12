@@ -20,13 +20,22 @@ const {
   avatarUrlConPosizione
 } = require('../js/app.js');
 
-test('il salvataggio converte lo sconto vuoto in null', () => {
-  const form = { nome: 'ZDE', sconto_tipo: '' };
+test('il salvataggio converte sconto e date vuote in null', () => {
+  const form = {
+    nome: 'ZDE',
+    sconto_tipo: '',
+    data_attivazione: '',
+    data_rinnovo: ''
+  };
   assert.deepStrictEqual(normalizzaClientePerSalvataggio(form), {
     nome: 'ZDE',
-    sconto_tipo: null
+    sconto_tipo: null,
+    data_attivazione: null,
+    data_rinnovo: null
   });
   assert.strictEqual(form.sconto_tipo, '');
+  assert.strictEqual(form.data_attivazione, '');
+  assert.strictEqual(form.data_rinnovo, '');
 });
 
 test('un cliente legacy può impostare il rinnovo senza cambiare prezzo', () => {
