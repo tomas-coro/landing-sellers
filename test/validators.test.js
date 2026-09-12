@@ -96,6 +96,18 @@ test('etichettaGiorniResidui ritorna "N giorni" al plurale', () => {
   assert.strictEqual(etichettaGiorniResidui(5), '5 giorni');
 });
 
+test('validaClienteForm richiede periodicità con la data di attivazione', () => {
+  const r = validaClienteForm({ nome: 'X', data_attivazione: '2026-08-15' });
+  assert.strictEqual(r.valido, false);
+  assert.strictEqual(r.errori.periodicita_contratto, 'Seleziona la periodicità del contratto');
+});
+
+test('validaClienteForm richiede data di attivazione con la periodicità', () => {
+  const r = validaClienteForm({ nome: 'X', periodicita_contratto: 'annuale' });
+  assert.strictEqual(r.valido, false);
+  assert.strictEqual(r.errori.data_attivazione, 'Inserisci la data di attivazione');
+});
+
 test('validaClienteForm accetta data_rinnovo assente', () => {
   const r = validaClienteForm({ nome: 'X' });
   assert.strictEqual(r.valido, true);

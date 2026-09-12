@@ -1525,8 +1525,9 @@ function appState() {
         );
 
         if (error) {
-          this.erroreEconomia =
-            'Vendita non salvata: ' + error.message;
+          this.erroreEconomia = error.code === '23505'
+            ? 'Questo cliente ha già una vendita attiva. Usa Incassa oppure annulla prima la vendita esistente.'
+            : 'Vendita non salvata: ' + error.message;
           return;
         }
 

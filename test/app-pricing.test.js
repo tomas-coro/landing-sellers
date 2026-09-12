@@ -1,5 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
+const fs = require('node:fs');
+const path = require('node:path');
 const {
   normalizzaClientePerSalvataggio,
   prezzoRicorrenteDaForm,
@@ -25,6 +27,26 @@ test('il salvataggio converte lo sconto vuoto in null', () => {
     sconto_tipo: null
   });
   assert.strictEqual(form.sconto_tipo, '');
+});
+
+test('un cliente legacy può impostare il rinnovo senza cambiare prezzo', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  assert.match(html, /<select[^>]+x-model="nuovoClienteForm\.periodicita_contratto"/);
+});
+
+test('il database impedisce due vendite attive per lo stesso cliente', () => {
+  const sql = fs.readFileSync(
+    path.join(__dirname, '..', 'supabase', 'migration_2026_09_12_02_vendita_unica_e_legacy.sql'),
+    'utf8'
+  );
+  assert.match(sql, /create unique index/i);
+  assert.match(sql, /where stato = 'attiva'/i);
+});
+
+test('una vendita attiva duplicata mostra un errore chiaro', () => {
+  const js = fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8');
+  assert.match(js, /error\.code === '23505'/);
+  assert.match(js, /Questo cliente ha già una vendita attiva/);
 });
 
 test('il prezzo finale manuale sostituisce il prezzo di catalogo', () => {

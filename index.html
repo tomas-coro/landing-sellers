@@ -2545,6 +2545,16 @@
               <p x-show="erroriNuovoCliente.data_attivazione" x-text="erroriNuovoCliente.data_attivazione" class="err"></p>
             </div>
 
+            <div class="field" x-show="selezionePrezzo.modalita === 'legacy'">
+              <label>Periodicità contratto</label>
+              <select x-model="nuovoClienteForm.periodicita_contratto" @change="aggiornaPreviewRinnovo()">
+                <option value="">Seleziona</option>
+                <option value="mensile">Mensile</option>
+                <option value="annuale">Annuale</option>
+              </select>
+              <p x-show="erroriNuovoCliente.periodicita_contratto" x-text="erroriNuovoCliente.periodicita_contratto" class="err"></p>
+            </div>
+
             <div class="field field-full renewal-alert-config">
               <label>Avvisi scadenza</label>
 
