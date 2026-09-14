@@ -908,7 +908,12 @@ function appState() {
             modalitaFatturazioneRata:
               partecipante.modalita_fatturazione || 'nessuna',
 
-            importoFatturatoRata: 0
+            importoFatturatoRata: 0,
+
+            // Le quote manuali sono specifiche della singola rata.
+            // Non ereditiamo automaticamente gli override della vendita.
+            quotaOverrideRata: false,
+            quotaEffettivaRata: null
           }));
 
         const referenteSnapshot =
@@ -1610,6 +1615,88 @@ function appState() {
       return '';
     },
 
+    partecipantiPerMotoreRataEconomia() {
+  const importoRata =
+    Number(this.venditaEconomicaForm.importoIncassato) || 0;
+
+  return this.venditaEconomicaForm.partecipanti.map(partecipante => {
+    const referente = partecipante.ruolo === 'referente';
+
+    const modalita = referente
+      ? this.venditaEconomicaForm.modalitaFatturazioneAdminRata
+      : partecipante.modalitaFatturazioneRata;
+
+    let importoFatturato = 0;
+
+    if (modalita === 'totale') {
+      importoFatturato = importoRata;
+    } else if (modalita === 'mista') {
+      importoFatturato = referente
+        ? Number(
+            this.venditaEconomicaForm.importoFatturatoAdminRata
+          ) || 0
+        : Number(partecipante.importoFatturatoRata) || 0;
+    }
+
+    return {
+      ...partecipante,
+
+      modalitaFatturazione:
+        ['totale', 'mista', 'nessuna'].includes(modalita)
+          ? modalita
+          : 'nessuna',
+
+      importoFatturato,
+
+      quotaOverride:
+        referente
+          ? false
+          : !!partecipante.quotaOverrideRata,
+
+      quotaEffettiva:
+        referente || !partecipante.quotaOverrideRata
+          ? null
+          : Number(partecipante.quotaEffettivaRata) || 0
+    };
+  });
+},
+
+costiPerMotoreRataEconomia() {
+  return (this.venditaEconomicaForm.costiRata || [])
+    .map(costo => ({
+      descrizione:
+        (costo.descrizione || '').trim() || 'Costo',
+      importo: Math.max(0, Number(costo.importo) || 0)
+    }))
+    .filter(costo => costo.importo > 0);
+},
+
+    snapshotPagamentoEconomia() {
+      const engine = economicEngineApi();
+
+      if (!engine?.calcolaSnapshotPagamento) {
+        throw new Error(
+          'Motore economico dei pagamenti non disponibile.'
+        );
+      }
+
+      return engine.calcolaSnapshotPagamento({
+        importoPagamento:
+          Number(this.venditaEconomicaForm.importoIncassato) || 0,
+
+        costiApplicati:
+          this.costiPerMotoreRataEconomia(),
+
+        partecipanti:
+          this.partecipantiPerMotoreRataEconomia(),
+
+        percentualeRiduzioneNoFattura:
+          Number(
+            this.venditaEconomicaForm.percentualeRiduzioneNoFattura
+          ) || 0
+      });
+    },
+
     validaIncassoEconomia() {
       if (!this.venditaEconomicaAttiva) return 'Nessuna vendita attiva disponibile.';
       const importo = Number(this.venditaEconomicaForm.importoIncassato) || 0;
@@ -1618,6 +1705,42 @@ function appState() {
       if (this.venditaEconomicaForm.statoIncasso === 'previsto' && !this.venditaEconomicaForm.dataScadenza) {
         return 'Inserisci la scadenza della rata.';
       }
+
+    if (this.venditaEconomicaForm.statoIncasso !== 'previsto') {
+  const importoRata = importo;
+
+  const partecipanti =
+    this.partecipantiPerMotoreRataEconomia();
+
+  for (const partecipante of partecipanti) {
+    if (
+      partecipante.modalitaFatturazione === 'mista' &&
+      !(
+        partecipante.importoFatturato > 0 &&
+        partecipante.importoFatturato < importoRata
+      )
+    ) {
+      return 'L’importo della fatturazione mista deve essere maggiore di 0 e inferiore alla rata.';
+    }
+
+    if (
+      partecipante.quotaOverride &&
+      (
+        partecipante.quotaEffettiva == null ||
+        partecipante.quotaEffettiva < 0
+      )
+    ) {
+      return 'Inserisci una quota manuale valida per la rata.';
+    }
+  }
+
+  const snapshot = this.snapshotPagamentoEconomia();
+
+  if (!snapshot.valido) {
+    return snapshot.errore ||
+      'La ripartizione economica della rata non quadra.';
+  }
+}
       return '';
     },
 

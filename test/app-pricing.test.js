@@ -457,3 +457,44 @@ test('la fatturazione della rata ha importi propri separati dalla vendita', () =
     0
   );
 });
+
+test('un override della vendita non viene ereditato automaticamente dalla rata', () => {
+  const stato = appState();
+
+  stato.venditaEconomicaForm.importoIncassato = 375;
+
+  stato.venditaEconomicaForm.partecipanti = [
+    {
+      id: 'a',
+      ruolo: 'referente',
+      modalitaFatturazioneRata: 'totale',
+      quotaOverride: false,
+      quotaOverrideRata: false
+    },
+    {
+      id: 't',
+      ruolo: 'produzione',
+      modalitaFatturazioneRata: 'nessuna',
+
+      // Override storico della vendita.
+      quotaOverride: true,
+      quotaEffettiva: 50,
+
+      // Ma nessun override sulla nuova rata.
+      quotaOverrideRata: false,
+      quotaEffettivaRata: null
+    }
+  ];
+
+  stato.venditaEconomicaForm.modalitaFatturazioneAdminRata =
+    'totale';
+
+  const partecipanti =
+    stato.partecipantiPerMotoreRataEconomia();
+
+  const tomas =
+    partecipanti.find(p => p.id === 't');
+
+  assert.equal(tomas.quotaOverride, false);
+  assert.equal(tomas.quotaEffettiva, null);
+});

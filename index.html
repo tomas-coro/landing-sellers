@@ -2324,6 +2324,37 @@
           x-model.number="
             partecipante.importoFatturatoRata
           ">
+        <div class="economy-invoice-choice">
+  <span>Quota della rata</span>
+
+  <div>
+    <button
+      type="button"
+      :class="{ active: !partecipante.quotaOverrideRata }"
+      @click="
+        partecipante.quotaOverrideRata = false;
+        partecipante.quotaEffettivaRata = null;
+      ">
+      Automatica
+    </button>
+
+    <button
+      type="button"
+      :class="{ active: partecipante.quotaOverrideRata }"
+      @click="partecipante.quotaOverrideRata = true">
+      Manuale
+    </button>
+  </div>
+</div>
+
+<input
+  type="number"
+  min="0"
+  step="0.01"
+  inputmode="decimal"
+  placeholder="Quota effettiva rata €"
+  x-show="partecipante.quotaOverrideRata"
+  x-model.number="partecipante.quotaEffettivaRata">
 
       </div>
     </template>
