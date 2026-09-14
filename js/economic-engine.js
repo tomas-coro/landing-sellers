@@ -298,10 +298,113 @@
     };
   }
 
+
+  function calcolaSnapshotPagamento({
+    importoPagamento = 0,
+    costiApplicati = [],
+    partecipanti = [],
+    percentualeRiduzioneNoFattura = 20
+  } = {}) {
+    const base = calcolaRipartizioneEconomica({
+      importoVendita: importoPagamento,
+      costi: costiApplicati,
+      partecipanti,
+      percentualeRiduzioneNoFattura
+    });
+
+    const risultati = base.partecipanti.map(
+      partecipante => ({ ...partecipante })
+    );
+
+    const referente = risultati.find(
+      partecipante => partecipante.ruolo === 'referente'
+    );
+
+    if (!referente) {
+      return {
+        ...base,
+        importoPagamento: base.importoVendita,
+        costiApplicati: base.costi,
+        valido: false,
+        errore: 'Referente economico non trovato.',
+        partecipanti: risultati
+      };
+    }
+
+    const altri = risultati.filter(
+      partecipante => partecipante.ruolo !== 'referente'
+    );
+
+    const totaleAltri = altri.reduce(
+      (totale, partecipante) =>
+        totale + partecipante.quotaFinale,
+      0
+    );
+
+    // Nei pagamenti il referente assorbe il residuo economico.
+    // In questo modo eventuali quote concordate/override dei
+    // collaboratori non creano o distruggono denaro.
+    const residuoReferente =
+      base.nettoDistribuibile - totaleAltri;
+
+    if (residuoReferente < -0.005) {
+      return {
+        ...base,
+        importoPagamento: base.importoVendita,
+        costiApplicati: base.costi,
+        valido: false,
+        errore:
+          'Le quote dei collaboratori superano il netto distribuibile.',
+        partecipanti: risultati,
+        totaleQuotePagamento: totaleAltri,
+        differenzaQuadraturaPagamento: residuoReferente
+      };
+    }
+
+    referente.quotaFinale = Math.max(
+      0,
+      residuoReferente
+    );
+
+    referente.quotaEffettiva =
+      referente.quotaFinale;
+
+    const totaleQuotePagamento =
+      risultati.reduce(
+        (totale, partecipante) =>
+          totale + partecipante.quotaFinale,
+        0
+      );
+
+    const differenzaQuadraturaPagamento =
+      base.nettoDistribuibile -
+      totaleQuotePagamento;
+
+    return {
+      ...base,
+      importoPagamento: base.importoVendita,
+      costiApplicati: base.costi,
+
+      partecipanti: risultati,
+
+      totaleQuotePagamento,
+      differenzaQuadraturaPagamento,
+
+      valido:
+        Math.abs(differenzaQuadraturaPagamento) < 0.005,
+
+      errore:
+        Math.abs(differenzaQuadraturaPagamento) < 0.005
+          ? ''
+          : 'La ripartizione del pagamento non quadra.'
+    };
+  }
+
   return {
     arrotonda,
     totaleCosti,
     percentualeTasse,
-    calcolaRipartizioneEconomica
+    calcolaRipartizioneEconomica,
+    calcolaSnapshotPagamento
   };
 });
