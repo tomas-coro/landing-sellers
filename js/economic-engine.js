@@ -242,9 +242,12 @@
         modalitaFatturazione:
           partecipante.modalitaFatturazione,
 
-        quotaBaseLorda: arrotonda(partecipante.quotaBaseLorda),
-        quotaBase: arrotonda(partecipante.quotaBase),
-        quotaTeorica: arrotonda(partecipante.quotaTeorica),
+        // Manteniamo la precisione completa nei valori di calcolo.
+        // L'arrotondamento a centesimi avviene solo quando il dato
+        // viene mostrato o persistito.
+        quotaBaseLorda: partecipante.quotaBaseLorda,
+        quotaBase: partecipante.quotaBase,
+        quotaTeorica: partecipante.quotaTeorica,
 
         importoFatturato: arrotonda(
           partecipante.importoFatturato
@@ -253,27 +256,24 @@
           partecipante.importoNonFatturato
         ),
 
-        riduzioneNoFattura: arrotonda(
-          partecipante.riduzioneNoFattura
-        ),
+        riduzioneNoFattura:
+          partecipante.riduzioneNoFattura,
 
         bonusAdmin:
           partecipante.ruolo === 'referente'
-            ? arrotonda(bonusAdmin)
+            ? bonusAdmin
             : 0,
 
-        quotaCalcolata: arrotonda(quotaCalcolata),
+        quotaCalcolata,
         quotaOverride: !!partecipante.quotaOverride,
-        quotaFinale: arrotonda(quotaFinale)
+        quotaFinale
       };
     });
 
-    const totaleQuote = arrotonda(
-      risultati.reduce(
-        (totale, partecipante) =>
-          totale + partecipante.quotaFinale,
-        0
-      )
+    const totaleQuote = risultati.reduce(
+      (totale, partecipante) =>
+        totale + partecipante.quotaFinale,
+      0
     );
 
     return {

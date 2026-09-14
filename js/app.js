@@ -75,11 +75,43 @@ function costiGestioneCliente(cliente, rinnovo = false) {
   return costi;
 }
 
+function economicEngineApi() {
+  if (
+    typeof globalThis !== 'undefined' &&
+    globalThis.EconomicEngine
+  ) {
+    return globalThis.EconomicEngine;
+  }
+
+  if (
+    typeof module === 'object' &&
+    module.exports &&
+    typeof require === 'function'
+  ) {
+    return require('./economic-engine.js');
+  }
+
+  return null;
+}
+
 function percentualeTasseEconomia(partecipanti) {
-  const collaboratori = partecipanti.filter(p => p.ruolo !== 'referente');
-  return collaboratori.length && collaboratori.every(
-    p => (p.modalitaFatturazione || 'nessuna') === 'nessuna'
-  ) ? 60 : 40;
+  const engine = economicEngineApi();
+
+  if (engine) {
+    return engine.percentualeTasse(partecipanti);
+  }
+
+  // Fallback difensivo: normalmente browser e test caricano EconomicEngine.
+  const collaboratori = partecipanti.filter(
+    p => p.ruolo !== 'referente'
+  );
+
+  return collaboratori.length &&
+    collaboratori.every(
+      p => (p.modalitaFatturazione || 'nessuna') === 'nessuna'
+    )
+      ? 60
+      : 40;
 }
 
 function etichettaDurataScontoForm(form) {
@@ -918,6 +950,7 @@ function appState() {
         0,
         Number(this.venditaEconomicaForm.importoVendita) || 0
       );
+
       const modalita = this.modalitaFatturazioneAdminEconomia();
 
       if (modalita === 'totale') return importo;
@@ -932,243 +965,309 @@ function appState() {
       );
     },
 
-    percentualeFatturataAdminEconomia() {
-      const importo = Math.max(
-        0,
-        Number(this.venditaEconomicaForm.importoVendita) || 0
+    partecipantiPerMotoreEconomia() {
+      return this.venditaEconomicaForm.partecipanti.map(partecipante => {
+        if (partecipante.ruolo !== 'referente') {
+          return { ...partecipante };
+        }
+
+        return {
+          ...partecipante,
+          modalitaFatturazione:
+            this.modalitaFatturazioneAdminEconomia(),
+          importoFatturato:
+            this.importoFatturatoAdminEconomia()
+        };
+      });
+    },
+
+    risultatoMotoreEconomia() {
+      const engine = economicEngineApi();
+
+      if (!engine) {
+        throw new Error(
+          'Motore economico non disponibile.'
+        );
+      }
+
+      return engine.calcolaRipartizioneEconomica({
+        importoVendita:
+          Number(this.venditaEconomicaForm.importoVendita) || 0,
+        costi: this.venditaEconomicaForm.costi || [],
+        partecipanti: this.partecipantiPerMotoreEconomia(),
+        percentualeRiduzioneNoFattura:
+          Number(
+            this.venditaEconomicaForm.percentualeRiduzioneNoFattura
+          ) || 0
+      });
+    },
+
+    risultatoPartecipanteMotoreEconomia(partecipante) {
+      const risultato = this.risultatoMotoreEconomia();
+
+      if (partecipante.id) {
+        const perId = risultato.partecipanti.find(
+          p => p.id === partecipante.id
+        );
+
+        if (perId) return perId;
+      }
+
+      if (partecipante.nome) {
+        const perNomeERuolo = risultato.partecipanti.find(
+          p =>
+            p.ruolo === partecipante.ruolo &&
+            p.nome === partecipante.nome
+        );
+
+        if (perNomeERuolo) return perNomeERuolo;
+      }
+
+      // Nei test e nei dati legacy può mancare id/nome.
+      // I ruoli economici principali sono univoci nella vendita,
+      // quindi il ruolo è un fallback sicuro.
+      const stessoRuolo = risultato.partecipanti.filter(
+        p => p.ruolo === partecipante.ruolo
       );
-      if (!importo) return 0;
-      return this.importoFatturatoAdminEconomia() / importo;
+
+      return stessoRuolo.length === 1
+        ? stessoRuolo[0]
+        : null;
+    },
+
+    percentualeFatturataAdminEconomia() {
+      return (
+        this.risultatoMotoreEconomia()
+          .percentualeFatturataAdmin / 100
+      );
     },
 
     nettoDistribuibileEconomia() {
-      const margine = this.margineEconomia();
-      const tasse = percentualeTasseEconomia(
-        this.venditaEconomicaForm.partecipanti
-      );
-
-      // Se Alessandro non fattura, il margine non viene ridotto.
-      // Se fattura solo una parte, le tasse incidono in proporzione.
-      const incidenzaTasse =
-        (tasse / 100) * this.percentualeFatturataAdminEconomia();
-
-      return Math.max(0, margine * (1 - incidenzaTasse));
+      return this.risultatoMotoreEconomia()
+        .nettoDistribuibile;
     },
 
     quotaBaseLordaEconomia() {
-      const numero = this.venditaEconomicaForm.partecipanti.length;
-      if (!numero) return 0;
-      return this.margineEconomia() / numero;
+      const risultato = this.risultatoMotoreEconomia();
+      return risultato.partecipanti[0]?.quotaBaseLorda || 0;
     },
 
     quotaBaseEconomia() {
-      const numero = this.venditaEconomicaForm.partecipanti.length;
-      if (!numero) return 0;
-      return this.nettoDistribuibileEconomia() / numero;
+      const risultato = this.risultatoMotoreEconomia();
+      return risultato.partecipanti[0]?.quotaBase || 0;
     },
 
     bonusVenditoreEconomia() {
-      const partecipanti = this.venditaEconomicaForm.partecipanti;
-      if (partecipanti.length !== 2) return 0;
+      if (
+        this.venditaEconomicaForm.partecipanti.length !== 2
+      ) {
+        return 0;
+      }
 
-      const venditore = partecipanti.find(p => p.haVenduto);
+      const venditore =
+        this.risultatoMotoreEconomia().partecipanti.find(
+          p => p.haVenduto
+        );
+
       if (!venditore) return 0;
 
-      return this.quotaBaseEconomia() * 0.12;
+      return Math.max(
+        0,
+        venditore.quotaTeorica - venditore.quotaBase
+      );
     },
 
     quotaTeoricaPartecipanteEconomia(partecipante) {
-      const base = this.quotaBaseEconomia();
-      const partecipanti = this.venditaEconomicaForm.partecipanti;
-
-      if (partecipanti.length !== 2) return base;
-
-      const bonus = this.bonusVenditoreEconomia();
-      if (!bonus) return base;
-
-      if (partecipante.haVenduto) return base + bonus;
-      return Math.max(0, base - bonus);
+      return (
+        this.risultatoPartecipanteMotoreEconomia(partecipante)
+          ?.quotaTeorica || 0
+      );
     },
 
     modalitaFatturazionePartecipanteEconomia(partecipante) {
-      const valore = partecipante.modalitaFatturazione || 'nessuna';
+      const valore =
+        partecipante.modalitaFatturazione || 'nessuna';
+
       return ['totale', 'mista', 'nessuna'].includes(valore)
         ? valore
         : 'nessuna';
     },
 
-    importoFatturatoPartecipanteEconomia(partecipante, quota = null) {
+    importoFatturatoPartecipanteEconomia(
+      partecipante,
+      quota = null
+    ) {
+      if (quota == null) {
+        return (
+          this.risultatoPartecipanteMotoreEconomia(partecipante)
+            ?.importoFatturato || 0
+        );
+      }
+
       const riferimento = Math.max(
         0,
-        quota == null
-          ? this.quotaTeoricaPartecipanteEconomia(partecipante)
-          : Number(quota) || 0
+        Number(quota) || 0
       );
+
       const modalita =
-        this.modalitaFatturazionePartecipanteEconomia(partecipante);
+        this.modalitaFatturazionePartecipanteEconomia(
+          partecipante
+        );
 
       if (modalita === 'totale') return riferimento;
       if (modalita === 'nessuna') return 0;
 
       return Math.min(
         riferimento,
-        Math.max(0, Number(partecipante.importoFatturato) || 0)
+        Math.max(
+          0,
+          Number(partecipante.importoFatturato) || 0
+        )
       );
     },
 
     percentualeNonFatturataPartecipanteEconomia(partecipante) {
-      const quota = this.quotaTeoricaPartecipanteEconomia(partecipante);
-      if (!quota) return 0;
+      const risultato =
+        this.risultatoPartecipanteMotoreEconomia(
+          partecipante
+        );
+
+      if (!risultato?.quotaTeorica) return 0;
 
       return Math.max(
         0,
         Math.min(
           1,
-          (quota - this.importoFatturatoPartecipanteEconomia(
-            partecipante,
-            quota
-          )) / quota
+          risultato.importoNonFatturato /
+            risultato.quotaTeorica
         )
       );
     },
 
     riduzioneNoFatturaPartecipanteEconomia(partecipante) {
-      if (
-        partecipante.ruolo === 'referente' ||
-        percentualeTasseEconomia(this.venditaEconomicaForm.partecipanti) === 60
-      ) return 0;
-
-      const quotaTeorica =
-        this.quotaTeoricaPartecipanteEconomia(partecipante);
-      const riduzione = Math.max(
-        0,
-        Math.min(
-          100,
-          Number(this.venditaEconomicaForm.percentualeRiduzioneNoFattura) || 0
-        )
-      );
-
-      // La riduzione del 20% esiste solo sulla quota collegata alla
-      // parte fatturata da Alessandro e non fatturata dal collaboratore.
       return (
-        quotaTeorica *
-        this.percentualeFatturataAdminEconomia() *
-        this.percentualeNonFatturataPartecipanteEconomia(partecipante) *
-        (riduzione / 100)
+        this.risultatoPartecipanteMotoreEconomia(partecipante)
+          ?.riduzioneNoFattura || 0
       );
     },
 
     bonusNoFatturaAdminEconomia() {
-      return this.venditaEconomicaForm.partecipanti
-        .filter(p => p.ruolo !== 'referente')
-        .reduce(
-          (totale, p) =>
-            totale + this.riduzioneNoFatturaPartecipanteEconomia(p),
-          0
+      const referente =
+        this.risultatoMotoreEconomia().partecipanti.find(
+          p => p.ruolo === 'referente'
         );
+
+      return referente?.bonusAdmin || 0;
     },
 
-    quotaEffettivaPartecipanteEconomia(partecipante, quotaCalcolata = null) {
+    quotaEffettivaPartecipanteEconomia(
+      partecipante,
+      quotaCalcolata = null
+    ) {
+      if (quotaCalcolata == null) {
+        return (
+          this.risultatoPartecipanteMotoreEconomia(partecipante)
+            ?.quotaFinale || 0
+        );
+      }
+
       const calcolata = Math.max(
         0,
-        quotaCalcolata == null
-          ? this.calcoloPartecipanteEconomia(partecipante).quotaCalcolata
-          : Number(quotaCalcolata) || 0
+        Number(quotaCalcolata) || 0
       );
 
-      if (!partecipante.quotaOverride) return calcolata;
+      if (!partecipante.quotaOverride) {
+        return calcolata;
+      }
 
       const valore = Number(partecipante.quotaEffettiva);
-      return Number.isFinite(valore) && valore >= 0 ? valore : calcolata;
+
+      return Number.isFinite(valore) && valore >= 0
+        ? valore
+        : calcolata;
     },
 
     calcoloPartecipanteEconomia(partecipante) {
-      const quotaBase = this.quotaBaseEconomia();
-      const quotaTeorica =
-        this.quotaTeoricaPartecipanteEconomia(partecipante);
+      const risultato =
+        this.risultatoPartecipanteMotoreEconomia(
+          partecipante
+        );
+
+      if (!risultato) {
+        return {
+          quotaBase: 0,
+          quotaTeorica: 0,
+          bonusVendita: 0,
+          riduzioneNoFattura: 0,
+          bonusAdmin: 0,
+          quotaCalcolata: 0,
+          quotaFinale: 0,
+          quotaEffettiva: 0,
+          percentualeRiduzione: 0,
+          percentualeTasseEffettiva: 0,
+          importoTasse: 0,
+          importoFatturato: 0,
+          importoNonFatturato: 0
+        };
+      }
+
+      const motore = this.risultatoMotoreEconomia();
 
       const bonusVendita =
         partecipante.haVenduto &&
         this.venditaEconomicaForm.partecipanti.length === 2
-          ? this.bonusVenditoreEconomia()
+          ? Math.max(
+              0,
+              risultato.quotaTeorica - risultato.quotaBase
+            )
           : 0;
-
-      const percentualeRiduzione =
-        Number(this.venditaEconomicaForm.percentualeRiduzioneNoFattura) || 0;
-
-      const riduzioneNoFattura =
-        this.riduzioneNoFatturaPartecipanteEconomia(partecipante);
-
-      const bonusAdmin =
-        partecipante.ruolo === 'referente'
-          ? this.bonusNoFatturaAdminEconomia()
-          : 0;
-
-      const quotaCalcolata = Math.max(
-        0,
-        quotaTeorica - riduzioneNoFattura + bonusAdmin
-      );
-
-      const quotaEffettiva = partecipante.quotaOverride
-        ? Math.max(0, Number(partecipante.quotaEffettiva) || 0)
-        : quotaCalcolata;
-
-      const percentualeTasseEffettiva =
-        percentualeTasseEconomia(this.venditaEconomicaForm.partecipanti) *
-        this.percentualeFatturataAdminEconomia();
-
-      const importoTasse = Math.max(
-        0,
-        this.quotaBaseLordaEconomia() - quotaBase
-      );
-
-      const importoFatturato =
-        partecipante.ruolo === 'referente'
-          ? this.importoFatturatoAdminEconomia()
-          : this.importoFatturatoPartecipanteEconomia(
-              partecipante,
-              quotaTeorica
-            );
 
       return {
-        quotaBase,
-        quotaTeorica,
+        quotaBase: risultato.quotaBase,
+        quotaTeorica: risultato.quotaTeorica,
         bonusVendita,
-        riduzioneNoFattura,
-        bonusAdmin,
-        quotaCalcolata,
-        quotaFinale: quotaEffettiva,
-        quotaEffettiva,
-        percentualeRiduzione,
-        percentualeTasseEffettiva,
-        importoTasse,
-        importoFatturato,
+        riduzioneNoFattura:
+          risultato.riduzioneNoFattura,
+        bonusAdmin: risultato.bonusAdmin,
+        quotaCalcolata: risultato.quotaCalcolata,
+        quotaFinale: risultato.quotaFinale,
+        quotaEffettiva: risultato.quotaFinale,
+
+        percentualeRiduzione:
+          Number(
+            this.venditaEconomicaForm.percentualeRiduzioneNoFattura
+          ) || 0,
+
+        percentualeTasseEffettiva:
+          motore.percentualeTasse *
+          (motore.percentualeFatturataAdmin / 100),
+
+        importoTasse: Math.max(
+          0,
+          risultato.quotaBaseLorda -
+            risultato.quotaBase
+        ),
+
+        importoFatturato:
+          risultato.importoFatturato,
+
         importoNonFatturato:
-          partecipante.ruolo === 'referente'
-            ? Math.max(
-                0,
-                (Number(this.venditaEconomicaForm.importoVendita) || 0) -
-                  this.importoFatturatoAdminEconomia()
-              )
-            : Math.max(0, quotaTeorica - importoFatturato)
+          risultato.importoNonFatturato
       };
     },
 
     totaleQuoteFinaliEconomia() {
-      return this.venditaEconomicaForm.partecipanti.reduce(
-        (totale, partecipante) =>
-          totale + this.calcoloPartecipanteEconomia(partecipante).quotaFinale,
-        0
-      );
+      return this.risultatoMotoreEconomia()
+        .totaleQuote;
     },
 
     totaleTrattenuteEconomia() {
-      return this.venditaEconomicaForm.partecipanti
-        .filter(partecipante => partecipante.ruolo !== 'referente')
+      return this.risultatoMotoreEconomia()
+        .partecipanti
+        .filter(p => p.ruolo !== 'referente')
         .reduce(
-          (totale, partecipante) =>
-            totale +
-            this.calcoloPartecipanteEconomia(partecipante).riduzioneNoFattura,
+          (totale, p) =>
+            totale + p.riduzioneNoFattura,
           0
         );
     },

@@ -379,3 +379,44 @@ test('le gesture tornano correttamente dalle viste admin e secondarie', () => {
   stato.view = 'admin';
   assert.strictEqual(stato.vistaSupportaSwipeAvanti(), true);
 });
+
+test('il motore economico riconosce partecipanti legacy senza id o nome', () => {
+  const stato = appState();
+
+  const alessandro = {
+    ruolo: 'referente',
+    modalitaFatturazione: 'nessuna',
+    haVenduto: false
+  };
+
+  const tomas = {
+    ruolo: 'produzione',
+    modalitaFatturazione: 'nessuna',
+    haVenduto: false
+  };
+
+  const venditore = {
+    ruolo: 'venditore',
+    modalitaFatturazione: 'nessuna',
+    haVenduto: true
+  };
+
+  stato.venditaEconomicaForm.importoVendita = 300;
+  stato.venditaEconomicaForm.costi = [{ importo: 40 }];
+  stato.venditaEconomicaForm.modalitaFatturazioneAdmin = 'totale';
+  stato.venditaEconomicaForm.partecipanti = [
+    alessandro,
+    tomas,
+    venditore
+  ];
+
+  for (const partecipante of stato.venditaEconomicaForm.partecipanti) {
+    const calcolo =
+      stato.calcoloPartecipanteEconomia(partecipante);
+
+    assert.ok(calcolo);
+    assert.ok(
+      Math.abs(calcolo.quotaCalcolata - 104 / 3) < 0.001
+    );
+  }
+});
