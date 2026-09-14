@@ -349,6 +349,7 @@ function appState() {
     venditaEconomicaForm: formVenditaEconomicaVuoto(),
     modalitaEconomia: 'vendita',
     venditaEconomicaAttiva: null,
+    costiVenditaRiferimento: [],
     pagamentoPrevistoId: null,
     clienteEconomiaSelezionato: null,
     anagraficaEconomiaAperta: false,
@@ -803,6 +804,116 @@ function appState() {
       } else {
         this.venditaEconomicaAttiva = data;
         this.venditaClienteAttiva = data;
+
+        const [partecipantiResult, costiResult] = await Promise.all([
+          window.supabaseClient
+            .from('vendita_partecipanti')
+            .select('profilo_id,ruolo,fa_fattura,modalita_fatturazione,importo_fatturato,quota_calcolata,quota_effettiva,quota_finale,quota_override,note_quota,saldato,data_saldo')
+            .eq('vendita_id', data.id),
+
+          window.supabaseClient
+            .from('costi_vendita')
+            .select('descrizione,importo')
+            .eq('vendita_id', data.id)
+        ]);
+
+        if (partecipantiResult.error) {
+          this.erroreEconomia =
+            'Partecipanti economici non disponibili: ' +
+            partecipantiResult.error.message;
+          return;
+        }
+
+        if (costiResult.error) {
+          this.erroreEconomia =
+            'Costi della vendita non disponibili: ' +
+            costiResult.error.message;
+          return;
+        }
+
+        const snapshotPartecipanti =
+          partecipantiResult.data || [];
+
+        this.costiVenditaRiferimento =
+          (costiResult.data || []).map(costo => ({
+            descrizione: costo.descrizione || 'Costo',
+            importo: Number(costo.importo) || 0
+          }));
+
+        // I costi storici servono solo come riferimento:
+        // non vengono riapplicati automaticamente alla rata.
+        this.venditaEconomicaForm.costi = [];
+
+        this.venditaEconomicaForm.partecipanti =
+          snapshotPartecipanti.map(partecipante => ({
+            id: partecipante.profilo_id,
+
+            nome:
+              partecipante.ruolo === 'referente'
+                ? 'Alessandro'
+                : partecipante.ruolo === 'produzione'
+                  ? 'Tomas'
+                  : 'Venditore',
+
+            ruolo: partecipante.ruolo,
+
+            modalitaFatturazione:
+              partecipante.modalita_fatturazione ||
+              (partecipante.fa_fattura
+                ? 'totale'
+                : 'nessuna'),
+
+            importoFatturato:
+              Number(partecipante.importo_fatturato) || 0,
+
+            faFattura:
+              partecipante.modalita_fatturazione === 'totale' ||
+              !!partecipante.fa_fattura,
+
+            haVenduto: false,
+
+            quotaOverride:
+              !!partecipante.quota_override,
+
+            quotaEffettiva:
+              partecipante.quota_effettiva != null
+                ? Number(partecipante.quota_effettiva)
+                : Number(partecipante.quota_finale) || 0,
+
+            quotaCalcolata:
+              partecipante.quota_calcolata != null
+                ? Number(partecipante.quota_calcolata)
+                : Number(partecipante.quota_finale) || 0,
+
+            noteQuota:
+              partecipante.note_quota || '',
+
+            saldato:
+              !!partecipante.saldato,
+
+            dataSaldo:
+              partecipante.data_saldo || null,
+
+            bloccato: true
+          }));
+
+        const referenteSnapshot =
+          snapshotPartecipanti.find(
+            partecipante =>
+              partecipante.ruolo === 'referente'
+          );
+
+        if (referenteSnapshot) {
+          this.venditaEconomicaForm.modalitaFatturazioneAdmin =
+            referenteSnapshot.modalita_fatturazione ||
+            (referenteSnapshot.fa_fattura
+              ? 'totale'
+              : 'nessuna');
+
+          this.venditaEconomicaForm.importoFatturatoAdmin =
+            Number(referenteSnapshot.importo_fatturato) || 0;
+        }
+
         this.venditaEconomicaForm.clienteId = cliente.id;
         this.venditaEconomicaForm.clienteRicerca = cliente.nome || '';
         this.venditaEconomicaForm.servizio = data.servizio || '';
@@ -821,6 +932,7 @@ function appState() {
       this.venditaEconomicaForm = formVenditaEconomicaVuoto();
       this.modalitaEconomia = modalita;
       this.venditaEconomicaAttiva = null;
+      this.costiVenditaRiferimento = [];
       this.pagamentoPrevistoId = null;
       this.clienteEconomiaSelezionato = null;
       this.anagraficaEconomiaAperta = false;

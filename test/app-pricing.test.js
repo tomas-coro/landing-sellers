@@ -420,3 +420,23 @@ test('il motore economico riconosce partecipanti legacy senza id o nome', () => 
     );
   }
 });
+
+test('in modalità incasso i costi storici non vengono applicati automaticamente alla rata', () => {
+  const stato = appState();
+
+  stato.costiVenditaRiferimento = [
+    { descrizione: 'Costo storico', importo: 40 }
+  ];
+
+  stato.venditaEconomicaForm.costi = [];
+
+  assert.equal(
+    stato.costiVenditaRiferimento.length,
+    1
+  );
+
+  assert.deepEqual(
+    stato.venditaEconomicaForm.costi,
+    []
+  );
+});
