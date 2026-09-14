@@ -278,6 +278,13 @@ function formVenditaEconomicaVuoto() {
     metodoPagamento: '',
     notePagamento: '',
 
+    // Snapshot economico specifico della singola rata.
+    costiRata: [],
+    costoRataDescrizione: '',
+    costoRataImporto: null,
+    modalitaFatturazioneAdminRata: 'nessuna',
+    importoFatturatoAdminRata: 0,
+
     partecipanti: [],
     nuovoPartecipanteNome: ''
   };
@@ -894,7 +901,14 @@ function appState() {
             dataSaldo:
               partecipante.data_saldo || null,
 
-            bloccato: true
+            bloccato: true,
+
+            // La modalità viene ereditata dalla vendita,
+            // l'importo della singola rata invece no.
+            modalitaFatturazioneRata:
+              partecipante.modalita_fatturazione || 'nessuna',
+
+            importoFatturatoRata: 0
           }));
 
         const referenteSnapshot =
@@ -912,6 +926,16 @@ function appState() {
 
           this.venditaEconomicaForm.importoFatturatoAdmin =
             Number(referenteSnapshot.importo_fatturato) || 0;
+
+          this.venditaEconomicaForm.modalitaFatturazioneAdminRata =
+            referenteSnapshot.modalita_fatturazione ||
+            (referenteSnapshot.fa_fattura
+              ? 'totale'
+              : 'nessuna');
+
+          // L'importo fatturato della vendita non viene copiato
+          // automaticamente sulla singola rata.
+          this.venditaEconomicaForm.importoFatturatoAdminRata = 0;
         }
 
         this.venditaEconomicaForm.clienteId = cliente.id;

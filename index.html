@@ -2165,6 +2165,171 @@
               placeholder="Note pagamento"
               x-model="venditaEconomicaForm.notePagamento">
           </div>
+
+          <details
+  class="economy-payment-details"
+  x-show="
+    modalitaEconomia === 'incasso' &&
+    venditaEconomicaForm.statoIncasso !== 'previsto'
+  ">
+
+  <summary>Dettagli economici rata</summary>
+
+  <div class="economy-payment-details-body">
+
+    <div class="economy-section-head">
+      <div>
+        <strong>Costi applicati a questa rata</strong>
+        <small>
+          I costi storici della vendita non vengono applicati automaticamente.
+        </small>
+      </div>
+    </div>
+
+    <div class="economy-custom-cost">
+      <input
+        type="text"
+        placeholder="Descrizione costo"
+        x-model="venditaEconomicaForm.costoRataDescrizione">
+
+      <input
+        type="number"
+        min="0"
+        step="0.01"
+        inputmode="decimal"
+        placeholder="Importo €"
+        x-model.number="venditaEconomicaForm.costoRataImporto">
+    </div>
+
+    <div class="economy-invoice-choice">
+      <span>Alessandro fattura questa rata</span>
+
+      <div>
+        <button
+          type="button"
+          :class="{
+            active:
+              venditaEconomicaForm.modalitaFatturazioneAdminRata === 'totale'
+          }"
+          @click="
+            venditaEconomicaForm.modalitaFatturazioneAdminRata = 'totale';
+            venditaEconomicaForm.importoFatturatoAdminRata = 0;
+          ">
+          Totale
+        </button>
+
+        <button
+          type="button"
+          :class="{
+            active:
+              venditaEconomicaForm.modalitaFatturazioneAdminRata === 'mista'
+          }"
+          @click="
+            venditaEconomicaForm.modalitaFatturazioneAdminRata = 'mista'
+          ">
+          Mista
+        </button>
+
+        <button
+          type="button"
+          :class="{
+            active:
+              venditaEconomicaForm.modalitaFatturazioneAdminRata === 'nessuna'
+          }"
+          @click="
+            venditaEconomicaForm.modalitaFatturazioneAdminRata = 'nessuna';
+            venditaEconomicaForm.importoFatturatoAdminRata = 0;
+          ">
+          Nessuna
+        </button>
+      </div>
+    </div>
+
+    <input
+      type="number"
+      min="0"
+      step="0.01"
+      inputmode="decimal"
+      placeholder="Importo fatturato su questa rata €"
+      x-show="
+        venditaEconomicaForm.modalitaFatturazioneAdminRata === 'mista'
+      "
+      x-model.number="
+        venditaEconomicaForm.importoFatturatoAdminRata
+      ">
+
+    <template
+      x-for="partecipante in venditaEconomicaForm.partecipanti.filter(
+        p => p.ruolo !== 'referente'
+      )"
+      :key="'rata-' + partecipante.id">
+
+      <div class="economy-payment-person">
+
+        <strong x-text="partecipante.nome"></strong>
+
+        <div class="economy-invoice-choice">
+          <span>Fattura ad Alessandro</span>
+
+          <div>
+            <button
+              type="button"
+              :class="{
+                active:
+                  partecipante.modalitaFatturazioneRata === 'totale'
+              }"
+              @click="
+                partecipante.modalitaFatturazioneRata = 'totale';
+                partecipante.importoFatturatoRata = 0;
+              ">
+              Totale
+            </button>
+
+            <button
+              type="button"
+              :class="{
+                active:
+                  partecipante.modalitaFatturazioneRata === 'mista'
+              }"
+              @click="
+                partecipante.modalitaFatturazioneRata = 'mista'
+              ">
+              Mista
+            </button>
+
+            <button
+              type="button"
+              :class="{
+                active:
+                  partecipante.modalitaFatturazioneRata === 'nessuna'
+              }"
+              @click="
+                partecipante.modalitaFatturazioneRata = 'nessuna';
+                partecipante.importoFatturatoRata = 0;
+              ">
+              Nessuna
+            </button>
+          </div>
+        </div>
+
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          inputmode="decimal"
+          placeholder="Importo fatturato su questa rata €"
+          x-show="
+            partecipante.modalitaFatturazioneRata === 'mista'
+          "
+          x-model.number="
+            partecipante.importoFatturatoRata
+          ">
+
+      </div>
+    </template>
+
+  </div>
+</details>
         </section>
 
 

@@ -440,3 +440,20 @@ test('in modalità incasso i costi storici non vengono applicati automaticamente
     []
   );
 });
+
+test('la fatturazione della rata ha importi propri separati dalla vendita', () => {
+  const stato = appState();
+
+  stato.venditaEconomicaForm.importoFatturatoAdmin = 300;
+  stato.venditaEconomicaForm.importoFatturatoAdminRata = 0;
+
+  assert.equal(
+    stato.venditaEconomicaForm.importoFatturatoAdmin,
+    300
+  );
+
+  assert.equal(
+    stato.venditaEconomicaForm.importoFatturatoAdminRata,
+    0
+  );
+});
