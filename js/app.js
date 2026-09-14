@@ -1522,6 +1522,38 @@ function appState() {
         this.venditaEconomicaForm.costi.filter(costo => costo.id !== id);
     },
 
+    aggiungiCostoRataEconomia() {
+      const descrizione =
+        (this.venditaEconomicaForm.costoRataDescrizione || '').trim();
+
+      const importo =
+        Number(this.venditaEconomicaForm.costoRataImporto);
+
+      if (
+        !descrizione ||
+        !Number.isFinite(importo) ||
+        importo <= 0
+      ) {
+        return;
+      }
+
+      this.venditaEconomicaForm.costiRata.push({
+        id: `${Date.now()}-${Math.random()}`,
+        descrizione,
+        importo
+      });
+
+      this.venditaEconomicaForm.costoRataDescrizione = '';
+      this.venditaEconomicaForm.costoRataImporto = null;
+    },
+
+    rimuoviCostoRataEconomia(id) {
+      this.venditaEconomicaForm.costiRata =
+        this.venditaEconomicaForm.costiRata.filter(
+          costo => costo.id !== id
+        );
+    },
+
     totaleCostiEconomia() {
       return this.venditaEconomicaForm.costi.reduce(
         (totale, costo) => totale + (Number(costo.importo) || 0),

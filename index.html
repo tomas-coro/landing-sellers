@@ -2186,6 +2186,25 @@
       </div>
     </div>
 
+    <template
+      x-for="costo in venditaEconomicaForm.costiRata"
+      :key="'costo-rata-' + costo.id">
+
+      <div class="economy-cost-row">
+        <span x-text="costo.descrizione"></span>
+
+        <strong
+          x-text="formattaEuroEconomia(costo.importo)">
+        </strong>
+
+        <button
+          type="button"
+          @click="rimuoviCostoRataEconomia(costo.id)">
+          ×
+        </button>
+      </div>
+    </template>
+
     <div class="economy-custom-cost">
       <input
         type="text"
@@ -2199,6 +2218,12 @@
         inputmode="decimal"
         placeholder="Importo €"
         x-model.number="venditaEconomicaForm.costoRataImporto">
+
+      <button
+        type="button"
+        @click="aggiungiCostoRataEconomia()">
+        +
+      </button>
     </div>
 
     <div class="economy-invoice-choice">

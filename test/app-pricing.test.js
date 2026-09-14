@@ -498,3 +498,52 @@ test('un override della vendita non viene ereditato automaticamente dalla rata',
   assert.equal(tomas.quotaOverride, false);
   assert.equal(tomas.quotaEffettiva, null);
 });
+
+test('un costo della rata viene salvato separatamente dai costi della vendita', () => {
+  const stato = appState();
+
+  stato.venditaEconomicaForm.costi = [
+    {
+      id: 'vendita',
+      descrizione: 'Costo vendita',
+      importo: 40
+    }
+  ];
+
+  stato.venditaEconomicaForm.costoRataDescrizione =
+    'Costo rata';
+
+  stato.venditaEconomicaForm.costoRataImporto = 15;
+
+  stato.aggiungiCostoRataEconomia();
+
+  assert.equal(
+    stato.venditaEconomicaForm.costi.length,
+    1
+  );
+
+  assert.equal(
+    stato.venditaEconomicaForm.costiRata.length,
+    1
+  );
+
+  assert.equal(
+    stato.venditaEconomicaForm.costiRata[0].descrizione,
+    'Costo rata'
+  );
+
+  assert.equal(
+    stato.venditaEconomicaForm.costiRata[0].importo,
+    15
+  );
+
+  assert.deepEqual(
+    stato.costiPerMotoreRataEconomia(),
+    [
+      {
+        descrizione: 'Costo rata',
+        importo: 15
+      }
+    ]
+  );
+});
