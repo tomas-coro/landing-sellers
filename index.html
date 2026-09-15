@@ -2761,9 +2761,10 @@
             </div>
 
             <div class="contract-renewal-card">
-            <div class="field">
-              <label>Data attivazione</label>
-              <input type="date" x-model="nuovoClienteForm.data_attivazione" @change="aggiornaPreviewRinnovo()">
+            <div class="field activation-date-field">
+              <label for="data-attivazione">Data attivazione <span>Obbligatoria</span></label>
+              <input id="data-attivazione" type="date" required aria-describedby="data-attivazione-hint" x-model="nuovoClienteForm.data_attivazione" @change="aggiornaPreviewRinnovo()">
+              <small id="data-attivazione-hint">Serve per calcolare il primo rinnovo.</small>
               <p x-show="erroriNuovoCliente.data_attivazione" x-text="erroriNuovoCliente.data_attivazione" class="err"></p>
             </div>
 
