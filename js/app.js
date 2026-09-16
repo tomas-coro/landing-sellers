@@ -351,6 +351,7 @@ function appState() {
     }],
 
     nuovoClienteForm: formModuloVuoto(),
+    clienteFormSnapshot: null,
 
     // CRM economico / vendite
     venditaEconomicaForm: formVenditaEconomicaVuoto(),
@@ -489,6 +490,12 @@ function appState() {
         if (!this.aggiornamentoDisponibile) {
           this.aggiornamentoStato = 'errore';
         }
+      });
+
+      window.addEventListener('beforeunload', event => {
+        if (!this.clienteFormModificato()) return;
+        event.preventDefault();
+        event.returnValue = '';
       });
 
       this.sessione = await getSessioneCorrente();
@@ -665,6 +672,7 @@ function appState() {
     },
 
     async vaiHome() {
+      if (!this.confermaUscitaFormCliente()) return;
       this.view = this.isAdmin ? 'admin' : 'lista';
       if (!this.isAdmin) {
         await Promise.all([this.caricaClienti(), this.caricaStatisticheVenditore()]);
@@ -673,12 +681,13 @@ function appState() {
     },
 
     vaiNuovoCliente() {
-      if (this.isAdmin) return;
+      if (this.isAdmin || !this.confermaUscitaFormCliente()) return;
       this.apriNuovoCliente();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
     apriAgenda() {
+      if (!this.confermaUscitaFormCliente()) return;
       this.agendaVista = 'oggi';
       this.agendaDataSelezionata = this.dataISOOggi();
       this.agendaMese = this.dataISOOggi().slice(0, 7);
@@ -687,6 +696,7 @@ function appState() {
     },
 
     apriPipeline() {
+      if (!this.confermaUscitaFormCliente()) return;
       this.pipelineIndice = 0;
       this.view = 'pipeline';
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -767,6 +777,8 @@ function appState() {
     },
 
     statoPagamentoCliente() {
+      if (!this.venditaClienteAttiva) return 'nessuna_vendita';
+
       const totale = this.totaleVenditaCliente();
       const incassato = this.totaleIncassatoCliente();
 
@@ -780,7 +792,8 @@ function appState() {
 
       if (stato === 'pagato') return 'Pagato';
       if (stato === 'parziale') return 'Parziale';
-      return 'Da pagare';
+      if (stato === 'da_pagare') return 'Da pagare';
+      return 'Nessuna vendita';
     },
 
     classeStatoPagamentoCliente() {
@@ -958,6 +971,7 @@ function appState() {
     },
 
     async apriEconomia(modalita = 'vendita') {
+      if (!this.confermaUscitaFormCliente()) return;
       this.venditaEconomicaForm = formVenditaEconomicaVuoto();
       this.modalitaEconomia = modalita;
       this.venditaEconomicaAttiva = null;
@@ -1729,6 +1743,86 @@ costiPerMotoreRataEconomia() {
       });
     },
 
+    payloadSnapshotPagamentoEconomia(
+      snapshot = this.snapshotPagamentoEconomia()
+    ) {
+      return {
+        calcolo: {
+          importo_pagamento:
+            Number(snapshot.importoPagamento) || 0,
+
+          importo_costi:
+            Number(snapshot.totaleCosti) || 0,
+
+          margine:
+            Number(snapshot.margine) || 0,
+
+          percentuale_tasse:
+            Number(snapshot.percentualeTasse) || 0,
+
+          percentuale_fatturata_admin:
+            Number(snapshot.percentualeFatturataAdmin) || 0,
+
+          importo_tasse:
+            Number(snapshot.importoTasse) || 0,
+
+          netto_distribuibile:
+            Number(snapshot.nettoDistribuibile) || 0,
+
+          costi_snapshot:
+            (snapshot.costiApplicati || []).map(costo => ({
+              descrizione:
+                (costo.descrizione || '').trim() || 'Costo',
+              importo:
+                Number(costo.importo) || 0
+            }))
+        },
+
+        partecipanti:
+          (snapshot.partecipanti || []).map(partecipante => ({
+            profilo_id:
+              partecipante.id || partecipante.profilo_id,
+
+            ruolo:
+              partecipante.ruolo || null,
+
+            modalita_fatturazione:
+              partecipante.modalitaFatturazione || 'nessuna',
+
+            importo_fatturato:
+              Number(partecipante.importoFatturato) || 0,
+
+            quota_base:
+              Number(partecipante.quotaBase) || 0,
+
+            quota_teorica:
+              Number(partecipante.quotaTeorica) || 0,
+
+            percentuale_riduzione:
+              Number(partecipante.percentualeRiduzione) || 0,
+
+            importo_riduzione:
+              Number(partecipante.riduzioneNoFattura) || 0,
+
+            bonus_admin:
+              Number(partecipante.bonusAdmin) || 0,
+
+            quota_calcolata:
+              Number(partecipante.quotaCalcolata) || 0,
+
+            // Nello snapshot del pagamento conta la quota realmente
+            // attribuita a quella rata, cioè quotaFinale.
+            quota_effettiva:
+              Number(partecipante.quotaFinale) || 0,
+
+            quota_override:
+              !!partecipante.quotaOverride,
+
+            note_quota: null
+          }))
+      };
+    },
+
     validaIncassoEconomia() {
       if (!this.venditaEconomicaAttiva) return 'Nessuna vendita attiva disponibile.';
       const importo = Number(this.venditaEconomicaForm.importoIncassato) || 0;
@@ -1778,33 +1872,125 @@ costiPerMotoreRataEconomia() {
 
     async salvaIncassoEconomia() {
       if (this.salvandoVenditaEconomica) return;
+
       this.erroreEconomia = this.validaIncassoEconomia();
       this.successoEconomia = '';
+
       if (this.erroreEconomia) return;
 
       this.salvandoVenditaEconomica = true;
+
       try {
-        const previsto = this.venditaEconomicaForm.statoIncasso === 'previsto';
-        const { error } = await window.supabaseClient.rpc('registra_pagamento_vendita', {
-          p_vendita_id: this.venditaEconomicaAttiva.id,
-          p_importo: Number(this.venditaEconomicaForm.importoIncassato),
-          p_stato: previsto ? 'previsto' : 'incassato',
-          p_data_scadenza: previsto ? this.venditaEconomicaForm.dataScadenza : null,
-          p_data_pagamento: previsto ? null : (this.venditaEconomicaForm.dataPagamento || this.dataISOOggi()),
-          p_metodo: (this.venditaEconomicaForm.metodoPagamento || '').trim() || null,
-          p_note: (this.venditaEconomicaForm.notePagamento || '').trim() || null,
-          p_pagamento_previsto_id: this.pagamentoPrevistoId
-        });
+        const previsto =
+          this.venditaEconomicaForm.statoIncasso === 'previsto';
+
+        let rpcNome;
+        let rpcPayload;
+
+        if (previsto) {
+          rpcNome = 'registra_pagamento_vendita';
+
+          rpcPayload = {
+            p_vendita_id:
+              this.venditaEconomicaAttiva.id,
+
+            p_importo:
+              Number(
+                this.venditaEconomicaForm.importoIncassato
+              ),
+
+            p_stato: 'previsto',
+
+            p_data_scadenza:
+              this.venditaEconomicaForm.dataScadenza,
+
+            p_data_pagamento: null,
+
+            p_metodo: null,
+
+            p_note:
+              (this.venditaEconomicaForm.notePagamento || '')
+                .trim() || null,
+
+            p_pagamento_previsto_id:
+              this.pagamentoPrevistoId
+          };
+        } else {
+          const snapshot =
+            this.snapshotPagamentoEconomia();
+
+          if (!snapshot.valido) {
+            this.erroreEconomia =
+              snapshot.errore ||
+              'La ripartizione economica della rata non quadra.';
+            return;
+          }
+
+          const payloadEconomico =
+            this.payloadSnapshotPagamentoEconomia(snapshot);
+
+          rpcNome = 'registra_pagamento_economico';
+
+          rpcPayload = {
+            p_vendita_id:
+              this.venditaEconomicaAttiva.id,
+
+            p_importo:
+              Number(
+                this.venditaEconomicaForm.importoIncassato
+              ),
+
+            p_data_pagamento:
+              this.venditaEconomicaForm.dataPagamento ||
+              this.dataISOOggi(),
+
+            p_metodo:
+              (this.venditaEconomicaForm.metodoPagamento || '')
+                .trim() || null,
+
+            p_note:
+              (this.venditaEconomicaForm.notePagamento || '')
+                .trim() || null,
+
+            p_pagamento_previsto_id:
+              this.pagamentoPrevistoId,
+
+            p_calcolo:
+              payloadEconomico.calcolo,
+
+            p_partecipanti:
+              payloadEconomico.partecipanti
+          };
+        }
+
+        const { error } =
+          await window.supabaseClient.rpc(
+            rpcNome,
+            rpcPayload
+          );
 
         if (error) {
-          this.erroreEconomia = 'Pagamento non salvato: ' + error.message;
+          this.erroreEconomia =
+            'Pagamento non salvato: ' + error.message;
           return;
         }
 
-        this.successoEconomia = previsto ? 'Rata prevista registrata.' : 'Incasso registrato.';
-        await this.caricaPagamentiCliente(this.venditaEconomicaAttiva.cliente_id);
-        if (this.isAdmin) await this.caricaDashboardAdmin();
-        else await Promise.all([this.caricaClienti(), this.caricaStatisticheVenditore()]);
+        this.successoEconomia = previsto
+          ? 'Rata prevista registrata.'
+          : 'Incasso registrato.';
+
+        await this.caricaPagamentiCliente(
+          this.venditaEconomicaAttiva.cliente_id
+        );
+
+        if (this.isAdmin) {
+          await this.caricaDashboardAdmin();
+        } else {
+          await Promise.all([
+            this.caricaClienti(),
+            this.caricaStatisticheVenditore()
+          ]);
+        }
       } finally {
         this.salvandoVenditaEconomica = false;
       }
@@ -2165,9 +2351,7 @@ costiPerMotoreRataEconomia() {
       } else if (this.view === 'scheda') {
         this.tornaDaScheda();
       } else if (this.view === 'nuovo') {
-        this.view = this.clienteInModificaId
-          ? 'scheda'
-          : (this.isAdmin ? 'admin' : 'lista');
+        this.annullaFormCliente();
       }
     },
 
@@ -2189,6 +2373,7 @@ costiPerMotoreRataEconomia() {
     },
 
     apriProfilo() {
+      if (!this.confermaUscitaFormCliente()) return;
       this.profiloErrore = '';
       this.profiloForm.username = this.profilo.username || '';
       this.view = 'profilo';
@@ -2510,7 +2695,7 @@ costiPerMotoreRataEconomia() {
     },
 
     async cambiaAccountRapido(slot) {
-      if (this.accountSwitchInCorso) return;
+      if (this.accountSwitchInCorso || !this.confermaUscitaFormCliente()) return;
 
       if (slot === this.accountSlot) {
         this.accountSwitcherAperto = false;
@@ -2551,6 +2736,7 @@ costiPerMotoreRataEconomia() {
     },
 
     async fareLogout() {
+      if (!this.confermaUscitaFormCliente()) return;
       const slotUscente = this.accountSlot;
 
       if (slotUscente === 'personale') {
@@ -3374,8 +3560,13 @@ costiPerMotoreRataEconomia() {
     },
 
     whatsappCliente(cliente) {
-      const numero = String(cliente?.telefono || '').replace(/\D/g, '');
-      return numero ? `https://wa.me/${numero}` : '';
+      const telefono = String(cliente?.telefono || '').trim();
+      let numero = telefono.replace(/\D/g, '');
+      if (!numero) return '';
+      const internazionale = telefono.startsWith('+') || numero.startsWith('00');
+      if (numero.startsWith('00')) numero = numero.slice(2);
+      if (!internazionale && !numero.startsWith('39')) numero = '39' + numero;
+      return `https://wa.me/${numero}`;
     },
 
     sitoCliente(cliente) {
@@ -3515,6 +3706,30 @@ costiPerMotoreRataEconomia() {
     },
 
     // --- form cliente: nuovo + modifica condividono la stessa vista ---
+    snapshotFormCliente() {
+      return JSON.stringify({
+        form: this.nuovoClienteForm,
+        prezzo: this.selezionePrezzo
+      });
+    },
+
+    clienteFormModificato() {
+      return this.view === 'nuovo' &&
+        this.clienteFormSnapshot !== null &&
+        this.snapshotFormCliente() !== this.clienteFormSnapshot;
+    },
+
+    confermaUscitaFormCliente() {
+      return !this.clienteFormModificato() || globalThis.confirm(
+        'Hai modifiche non salvate. Vuoi abbandonare il form?'
+      );
+    },
+
+    annullaFormCliente() {
+      if (!this.confermaUscitaFormCliente()) return;
+      this.view = this.clienteInModificaId ? 'scheda' : 'lista';
+    },
+
     apriNuovoCliente() {
       this.clienteInModificaId = null;
       this.nuovoClienteForm = formModuloVuoto();
@@ -3524,6 +3739,7 @@ costiPerMotoreRataEconomia() {
       this.aggiornaPrezzoCliente();
       this.erroriNuovoCliente = {};
       this.view = 'nuovo';
+      this.clienteFormSnapshot = this.snapshotFormCliente();
     },
 
     apriModificaCliente(clienteId) {
@@ -3562,6 +3778,7 @@ costiPerMotoreRataEconomia() {
       this.ripristinaSelezionePrezzo(c);
       this.erroriNuovoCliente = {};
       this.view = 'nuovo';
+      this.clienteFormSnapshot = this.snapshotFormCliente();
     },
 
     catalogoPrezzi() { return window.CATALOGO_PREZZI_LE; },
@@ -3878,6 +4095,7 @@ costiPerMotoreRataEconomia() {
         const idModificato = this.clienteInModificaId;
         this.clienteInModificaId = null;
         this.nuovoClienteForm = formModuloVuoto();
+        this.clienteFormSnapshot = null;
         await Promise.all([this.caricaClienti(), this.caricaStatisticheVenditore()]);
         this.view = idModificato ? 'scheda' : 'lista';
         if (idModificato) { this.clienteSelezionatoId = idModificato; }

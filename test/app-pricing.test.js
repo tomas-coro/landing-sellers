@@ -241,6 +241,53 @@ test('totale e residuo cliente derivano dalla vendita attiva', () => {
   assert.strictEqual(stato.residuoCliente(), 375);
 });
 
+test('senza vendita attiva non mostra un pagamento da saldare', () => {
+  const stato = appState();
+
+  assert.strictEqual(stato.statoPagamentoCliente(), 'nessuna_vendita');
+  assert.strictEqual(stato.etichettaStatoPagamentoCliente(), 'Nessuna vendita');
+});
+
+test('WhatsApp aggiunge il prefisso italiano solo ai numeri locali', () => {
+  const stato = appState();
+
+  assert.strictEqual(stato.whatsappCliente({ telefono: '333 123 4567' }), 'https://wa.me/393331234567');
+  assert.strictEqual(stato.whatsappCliente({ telefono: '+39 333 123 4567' }), 'https://wa.me/393331234567');
+  assert.strictEqual(stato.whatsappCliente({ telefono: '+44 20 1234 5678' }), 'https://wa.me/442012345678');
+  assert.strictEqual(stato.whatsappCliente({ telefono: '0044 20 1234 5678' }), 'https://wa.me/442012345678');
+  assert.strictEqual(stato.whatsappCliente({ telefono: '' }), '');
+});
+
+test('la Pipeline seleziona lo stato reale del cliente', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+  assert.match(html, /:selected="opzione\.valore === cliente\.stato"/);
+});
+
+test('il form cliente chiede conferma solo se contiene modifiche non salvate', () => {
+  const stato = appState();
+  stato.view = 'nuovo';
+  stato.clienteFormSnapshot = stato.snapshotFormCliente();
+
+  let conferme = 0;
+  const confirmOriginale = global.confirm;
+  global.confirm = () => { conferme += 1; return false; };
+
+  try {
+    assert.strictEqual(stato.confermaUscitaFormCliente(), true);
+    stato.nuovoClienteForm.nome = 'Cliente non salvato';
+    stato.annullaFormCliente();
+    assert.strictEqual(stato.view, 'nuovo');
+    assert.strictEqual(conferme, 1);
+
+    global.confirm = () => true;
+    stato.annullaFormCliente();
+    assert.strictEqual(stato.view, 'lista');
+  } finally {
+    global.confirm = confirmOriginale;
+  }
+});
+
 test('un cliente condiviso viene contato per ogni partecipante alla vendita', () => {
   const clienti = [
     { id: 'c1', venditore_id: 'tomas', stato: 'pubblicato' },
@@ -543,6 +590,73 @@ test('un costo della rata viene salvato separatamente dai costi della vendita', 
       {
         descrizione: 'Costo rata',
         importo: 15
+      }
+    ]
+  );
+});
+
+test('il payload economico della rata salva la quota finale effettiva', () => {
+  const stato = appState();
+
+  const payload =
+    stato.payloadSnapshotPagamentoEconomia({
+      importoPagamento: 375,
+      totaleCosti: 40,
+      margine: 335,
+      percentualeTasse: 60,
+      percentualeFatturataAdmin: 100,
+      importoTasse: 201,
+      nettoDistribuibile: 134,
+      costiApplicati: [
+        {
+          descrizione: 'Costi iniziali',
+          importo: 40
+        }
+      ],
+      partecipanti: [
+        {
+          id: 'profilo-tomas',
+          ruolo: 'produzione',
+          modalitaFatturazione: 'nessuna',
+          importoFatturato: 0,
+          quotaBase: 44.67,
+          quotaTeorica: 44.67,
+          percentualeRiduzione: 0,
+          riduzioneNoFattura: 0,
+          bonusAdmin: 0,
+          quotaCalcolata: 44.67,
+          quotaFinale: 50,
+          quotaOverride: true
+        }
+      ]
+    });
+
+  assert.equal(
+    payload.calcolo.importo_pagamento,
+    375
+  );
+
+  assert.equal(
+    payload.calcolo.importo_costi,
+    40
+  );
+
+  assert.equal(
+    payload.partecipanti[0].quota_effettiva,
+    50
+  );
+
+  assert.equal(
+    payload.partecipanti[0].quota_override,
+    true
+  );
+
+  assert.deepEqual(
+    payload.calcolo.costi_snapshot,
+    [
+      {
+        descrizione: 'Costi iniziali',
+        importo: 40
       }
     ]
   );
