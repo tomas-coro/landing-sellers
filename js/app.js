@@ -2835,6 +2835,15 @@ costiPerMotoreRataEconomia() {
       const venditePerId = Object.fromEntries(
         (vendite || []).map(vendita => [vendita.id, vendita])
       );
+      const clientiConVenditaAttiva = new Set(
+        (vendite || []).map(vendita => vendita.cliente_id)
+      );
+
+      this.clienti = this.clienti.map(cliente => ({
+        ...cliente,
+        haVenditaAttiva: clientiConVenditaAttiva.has(cliente.id)
+      }));
+
       const venditaIds = Object.keys(venditePerId);
       if (!venditaIds.length) return;
 
@@ -3316,6 +3325,23 @@ costiPerMotoreRataEconomia() {
       this.messaggioAzioneCliente = '';
       this.erroreAzioneCliente = '';
     },
+
+    async apriEconomiaDaAzioniCliente() {
+      const cliente = this.clienteAzioniRapide();
+      if (!cliente?.id) return;
+
+      this.chiudiAzioniCliente();
+
+      if (cliente.haVenditaAttiva) {
+        await this.apriPagamentoCliente(cliente);
+        return;
+      }
+
+      await this.apriEconomia('vendita');
+      this.selezionaClienteEconomia(cliente);
+    },
+
+
 
     async apriSchedaDaAzioni(sezione = null) {
       const clienteId = this.clienteAzioniRapideId;

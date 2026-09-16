@@ -1540,7 +1540,7 @@
 
         <div>
           <span class="economy-eyebrow">CRM ECONOMICO</span>
-          <h1 x-text="modalitaEconomia === 'incasso' ? 'Incassa' : 'Nuova vendita'"></h1>
+          <h1 x-text="modalitaEconomia === 'incasso' ? 'Incassa' : 'Registra vendita'"></h1>
         </div>
       </div>
 
@@ -3655,13 +3655,13 @@
           type="button"
           @click="
             menuAzioneAperto = false;
-            apriIncasso();
+            apriEconomia();
           ">
           <span class="quick-action-icon">€</span>
 
           <div>
-            <strong>Incassa</strong>
-            <small>Registra un pagamento sulla vendita attiva</small>
+            <strong>Registra vendita</strong>
+            <small>Cliente esistente, importo e quote</small>
           </div>
         </button>
 
@@ -3669,13 +3669,13 @@
           type="button"
           @click="
             menuAzioneAperto = false;
-            apriEconomia();
+            apriIncasso();
           ">
           <span class="quick-action-icon">＋</span>
 
           <div>
-            <strong>Nuova vendita</strong>
-            <small>Cliente esistente, importo e quote</small>
+            <strong>Incassa</strong>
+            <small>Registra un pagamento sulla vendita attiva</small>
           </div>
         </button>
 
@@ -3848,6 +3848,17 @@
             </button>
           </div>
         </div>
+
+        <button
+          type="button"
+          class="client-action-secondary"
+          @click="apriEconomiaDaAzioniCliente()">
+          <span>
+            <strong x-text="clienteAzioniRapide().haVenditaAttiva ? 'Incassa' : 'Registra vendita'"></strong>
+            <small x-text="clienteAzioniRapide().haVenditaAttiva ? 'Registra un pagamento' : 'Crea la vendita per questo cliente'"></small>
+          </span>
+          <b>›</b>
+        </button>
 
         <button
           type="button"
