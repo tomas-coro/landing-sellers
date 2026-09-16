@@ -43,6 +43,7 @@
 <script src="js/web-push.js" defer></script>
 <script src="js/catalogo-prezzi.js" defer></script>
 <script src="js/assistente.js" defer></script>
+<script src="js/economic-engine.js" defer></script>
 <script src="js/app.js" defer></script>
 <!-- TODO: aggiungere integrity SRI per Alpine.js@3, vedi https://www.jsdelivr.com/package/npm/alpinejs -->
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
@@ -875,7 +876,7 @@
               <span class="theme-selector-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20.4 15.4A8.5 8.5 0 018.6 3.6a8.5 8.5 0 0011.8 11.8z"/>
+                  <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
                 </svg>
               </span>
 
@@ -2164,6 +2165,227 @@
               placeholder="Note pagamento"
               x-model="venditaEconomicaForm.notePagamento">
           </div>
+
+          <details
+  class="economy-payment-details"
+  x-show="
+    modalitaEconomia === 'incasso' &&
+    venditaEconomicaForm.statoIncasso !== 'previsto'
+  ">
+
+  <summary>Dettagli economici rata</summary>
+
+  <div class="economy-payment-details-body">
+
+    <div class="economy-section-head">
+      <div>
+        <strong>Costi applicati a questa rata</strong>
+        <small>
+          I costi storici della vendita non vengono applicati automaticamente.
+        </small>
+      </div>
+    </div>
+
+    <template
+      x-for="costo in venditaEconomicaForm.costiRata"
+      :key="'costo-rata-' + costo.id">
+
+      <div class="economy-cost-row">
+        <span x-text="costo.descrizione"></span>
+
+        <strong
+          x-text="formattaEuroEconomia(costo.importo)">
+        </strong>
+
+        <button
+          type="button"
+          @click="rimuoviCostoRataEconomia(costo.id)">
+          ×
+        </button>
+      </div>
+    </template>
+
+    <div class="economy-custom-cost">
+      <input
+        type="text"
+        placeholder="Descrizione costo"
+        x-model="venditaEconomicaForm.costoRataDescrizione">
+
+      <input
+        type="number"
+        min="0"
+        step="0.01"
+        inputmode="decimal"
+        placeholder="Importo €"
+        x-model.number="venditaEconomicaForm.costoRataImporto">
+
+      <button
+        type="button"
+        @click="aggiungiCostoRataEconomia()">
+        +
+      </button>
+    </div>
+
+    <div class="economy-invoice-choice">
+      <span>Alessandro fattura questa rata</span>
+
+      <div>
+        <button
+          type="button"
+          :class="{
+            active:
+              venditaEconomicaForm.modalitaFatturazioneAdminRata === 'totale'
+          }"
+          @click="
+            venditaEconomicaForm.modalitaFatturazioneAdminRata = 'totale';
+            venditaEconomicaForm.importoFatturatoAdminRata = 0;
+          ">
+          Totale
+        </button>
+
+        <button
+          type="button"
+          :class="{
+            active:
+              venditaEconomicaForm.modalitaFatturazioneAdminRata === 'mista'
+          }"
+          @click="
+            venditaEconomicaForm.modalitaFatturazioneAdminRata = 'mista'
+          ">
+          Mista
+        </button>
+
+        <button
+          type="button"
+          :class="{
+            active:
+              venditaEconomicaForm.modalitaFatturazioneAdminRata === 'nessuna'
+          }"
+          @click="
+            venditaEconomicaForm.modalitaFatturazioneAdminRata = 'nessuna';
+            venditaEconomicaForm.importoFatturatoAdminRata = 0;
+          ">
+          Nessuna
+        </button>
+      </div>
+    </div>
+
+    <input
+      type="number"
+      min="0"
+      step="0.01"
+      inputmode="decimal"
+      placeholder="Importo fatturato su questa rata €"
+      x-show="
+        venditaEconomicaForm.modalitaFatturazioneAdminRata === 'mista'
+      "
+      x-model.number="
+        venditaEconomicaForm.importoFatturatoAdminRata
+      ">
+
+    <template
+      x-for="partecipante in venditaEconomicaForm.partecipanti.filter(
+        p => p.ruolo !== 'referente'
+      )"
+      :key="'rata-' + partecipante.id">
+
+      <div class="economy-payment-person">
+
+        <strong x-text="partecipante.nome"></strong>
+
+        <div class="economy-invoice-choice">
+          <span>Fattura ad Alessandro</span>
+
+          <div>
+            <button
+              type="button"
+              :class="{
+                active:
+                  partecipante.modalitaFatturazioneRata === 'totale'
+              }"
+              @click="
+                partecipante.modalitaFatturazioneRata = 'totale';
+                partecipante.importoFatturatoRata = 0;
+              ">
+              Totale
+            </button>
+
+            <button
+              type="button"
+              :class="{
+                active:
+                  partecipante.modalitaFatturazioneRata === 'mista'
+              }"
+              @click="
+                partecipante.modalitaFatturazioneRata = 'mista'
+              ">
+              Mista
+            </button>
+
+            <button
+              type="button"
+              :class="{
+                active:
+                  partecipante.modalitaFatturazioneRata === 'nessuna'
+              }"
+              @click="
+                partecipante.modalitaFatturazioneRata = 'nessuna';
+                partecipante.importoFatturatoRata = 0;
+              ">
+              Nessuna
+            </button>
+          </div>
+        </div>
+
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          inputmode="decimal"
+          placeholder="Importo fatturato su questa rata €"
+          x-show="
+            partecipante.modalitaFatturazioneRata === 'mista'
+          "
+          x-model.number="
+            partecipante.importoFatturatoRata
+          ">
+        <div class="economy-invoice-choice">
+  <span>Quota della rata</span>
+
+  <div>
+    <button
+      type="button"
+      :class="{ active: !partecipante.quotaOverrideRata }"
+      @click="
+        partecipante.quotaOverrideRata = false;
+        partecipante.quotaEffettivaRata = null;
+      ">
+      Automatica
+    </button>
+
+    <button
+      type="button"
+      :class="{ active: partecipante.quotaOverrideRata }"
+      @click="partecipante.quotaOverrideRata = true">
+      Manuale
+    </button>
+  </div>
+</div>
+
+<input
+  type="number"
+  min="0"
+  step="0.01"
+  inputmode="decimal"
+  placeholder="Quota effettiva rata €"
+  x-show="partecipante.quotaOverrideRata"
+  x-model.number="partecipante.quotaEffettivaRata">
+
+      </div>
+    </template>
+
+  </div>
+</details>
         </section>
 
 
@@ -2234,7 +2456,7 @@
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
       <div class="topbar">
-        <button class="linkback" type="button" @click="view = clienteInModificaId ? 'scheda' : 'lista'">
+        <button class="linkback" type="button" @click="annullaFormCliente()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Annulla
         </button>
       </div>
@@ -2539,9 +2761,10 @@
             </div>
 
             <div class="contract-renewal-card">
-            <div class="field">
-              <label>Data attivazione</label>
-              <input type="date" x-model="nuovoClienteForm.data_attivazione" @change="aggiornaPreviewRinnovo()">
+            <div class="field activation-date-field">
+              <label for="data-attivazione">Data attivazione <span>Obbligatoria</span></label>
+              <input id="data-attivazione" type="date" required aria-describedby="data-attivazione-hint" x-model="nuovoClienteForm.data_attivazione" @change="aggiornaPreviewRinnovo()">
+              <small id="data-attivazione-hint">Serve per calcolare il primo rinnovo.</small>
               <p x-show="erroriNuovoCliente.data_attivazione" x-text="erroriNuovoCliente.data_attivazione" class="err"></p>
             </div>
 
@@ -3174,9 +3397,9 @@
                   </div>
                   <div class="pipeline-card-footer">
                     <span class="pipeline-status-pill" x-text="stato.label"></span>
-                    <select :value="cliente.stato" @change="cambiaStatoDaPipeline(cliente.id, $event.target.value)" aria-label="Cambia stato cliente">
+                    <select @change="cambiaStatoDaPipeline(cliente.id, $event.target.value)" aria-label="Cambia stato cliente">
                       <template x-for="opzione in statiPipeline()" :key="opzione.valore">
-                        <option :value="opzione.valore" x-text="opzione.label"></option>
+                        <option :value="opzione.valore" :selected="opzione.valore === cliente.stato" x-text="opzione.label"></option>
                       </template>
                     </select>
                   </div>
