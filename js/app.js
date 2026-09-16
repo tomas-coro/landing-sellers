@@ -1717,6 +1717,22 @@ costiPerMotoreRataEconomia() {
     .filter(costo => costo.importo > 0);
 },
 
+    previewPagamentoEconomia() {
+      if (
+        this.modalitaEconomia !== 'incasso' ||
+        this.venditaEconomicaForm.statoIncasso === 'previsto' ||
+        !this.venditaEconomicaAttiva ||
+        !(Number(this.venditaEconomicaForm.importoIncassato) > 0) ||
+        !this.venditaEconomicaForm.partecipanti.length
+      ) return null;
+
+      try {
+        return this.snapshotPagamentoEconomia();
+      } catch {
+        return null;
+      }
+    },
+
     snapshotPagamentoEconomia() {
       const engine = economicEngineApi();
 

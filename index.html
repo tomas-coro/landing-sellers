@@ -1544,7 +1544,7 @@
         </div>
       </div>
 
-      <div class="content economy-content">
+      <div class="content economy-content" :class="{ 'economy-content-incasso': modalitaEconomia === 'incasso' }">
 
         <p
           x-show="erroreEconomia"
@@ -1561,7 +1561,7 @@
         </p>
 
         <!-- CLIENTE -->
-        <section class="economy-card">
+        <section class="economy-card economy-card-client">
           <div class="economy-section-head">
             <span>1</span>
             <div>
@@ -1688,7 +1688,7 @@
 
         <!-- VENDITA ATTIVA -->
         <section
-          class="economy-card"
+          class="economy-card economy-card-active-sale"
           x-show="clienteEconomiaSelezionato && modalitaEconomia === 'incasso' && venditaEconomicaAttiva">
           <div class="economy-section-head">
             <span>2</span>
@@ -2087,7 +2087,7 @@
 
         <!-- INCASSO CLIENTE -->
         <section
-          class="economy-card"
+          class="economy-card economy-card-payment"
           x-show="clienteEconomiaSelezionato">
 
           <div class="economy-section-head">
@@ -2388,6 +2388,48 @@
 </details>
         </section>
 
+
+
+        <section
+          class="economy-summary economy-payment-summary-card"
+          x-show="previewPagamentoEconomia()">
+
+          <div class="economy-payment-summary-title">
+            <span>Riepilogo rata</span>
+            <strong x-text="formattaEuroEconomia(previewPagamentoEconomia()?.importoPagamento || 0)"></strong>
+          </div>
+
+          <div>
+            <span>Costi</span>
+            <strong x-text="formattaEuroEconomia(previewPagamentoEconomia()?.totaleCosti || 0)"></strong>
+          </div>
+
+          <div>
+            <span>Margine</span>
+            <strong x-text="formattaEuroEconomia(previewPagamentoEconomia()?.margine || 0)"></strong>
+          </div>
+
+          <div>
+            <span>Tasse</span>
+            <strong x-text="formattaEuroEconomia(previewPagamentoEconomia()?.importoTasse || 0)"></strong>
+          </div>
+
+          <div class="economy-summary-profit">
+            <span>Netto distribuibile</span>
+            <strong x-text="formattaEuroEconomia(previewPagamentoEconomia()?.nettoDistribuibile || 0)"></strong>
+          </div>
+
+          <div class="economy-payment-summary-people">
+            <template
+              x-for="partecipante in (previewPagamentoEconomia()?.partecipanti || [])"
+              :key="'preview-rata-' + partecipante.id">
+              <div>
+                <span x-text="partecipante.nome"></span>
+                <strong x-text="formattaEuroEconomia(partecipante.quotaFinale)"></strong>
+              </div>
+            </template>
+          </div>
+        </section>
 
         <!-- TOTALI -->
         <section
