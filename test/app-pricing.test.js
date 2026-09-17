@@ -661,3 +661,49 @@ test('il payload economico della rata salva la quota finale effettiva', () => {
     ]
   );
 });
+
+test('il riepilogo rata appare solo per un incasso valido', () => {
+  const stato = appState();
+  const riepilogo = { importoPagamento: 100 };
+  let calcoli = 0;
+  stato.snapshotPagamentoEconomia = () => {
+    calcoli += 1;
+    return riepilogo;
+  };
+  stato.venditaEconomicaForm.partecipanti = [{ id: 'a' }];
+  stato.venditaEconomicaForm.importoIncassato = 100;
+  stato.venditaEconomicaAttiva = { id: 'v1' };
+
+  assert.equal(stato.previewPagamentoEconomia(), null);
+
+  stato.modalitaEconomia = 'incasso';
+  assert.strictEqual(stato.previewPagamentoEconomia(), riepilogo);
+  assert.equal(calcoli, 1);
+
+  stato.venditaEconomicaForm.statoIncasso = 'previsto';
+  assert.equal(stato.previewPagamentoEconomia(), null);
+});
+
+test('l’azione cliente apre incasso con vendita attiva e vendita negli altri casi', async () => {
+  const stato = appState();
+  const aperture = [];
+  stato.clienti = [
+    { id: 'c1', haVenditaAttiva: true },
+    { id: 'c2', haVenditaAttiva: false }
+  ];
+  stato.chiudiAzioniCliente = () => {};
+  stato.apriPagamentoCliente = async cliente => aperture.push(['incasso', cliente.id]);
+  stato.apriEconomia = async modalita => aperture.push([modalita]);
+  stato.selezionaClienteEconomia = cliente => aperture.push(['cliente', cliente.id]);
+
+  stato.clienteAzioniRapideId = 'c1';
+  await stato.apriEconomiaDaAzioniCliente();
+  stato.clienteAzioniRapideId = 'c2';
+  await stato.apriEconomiaDaAzioniCliente();
+
+  assert.deepStrictEqual(aperture, [
+    ['incasso', 'c1'],
+    ['vendita'],
+    ['cliente', 'c2']
+  ]);
+});

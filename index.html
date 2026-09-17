@@ -192,6 +192,7 @@
 </head>
 <body>
   <div id="app" x-data="appState()" x-init="init()"
+    :class="{ 'app-wide': view === 'economia' && modalitaEconomia === 'incasso' }"
     :style="{ '--avatar-x': avatarPosizione.x + '%', '--avatar-y': avatarPosizione.y + '%', '--avatar-zoom': avatarPosizione.zoom }"
     @touchstart.passive="swipeStart($event)"
     @touchmove="swipeMove($event)"
