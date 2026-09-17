@@ -192,6 +192,7 @@
 </head>
 <body>
   <div id="app" x-data="appState()" x-init="init()"
+    :class="{ 'app-wide': view === 'economia' && modalitaEconomia === 'incasso' }"
     :style="{ '--avatar-x': avatarPosizione.x + '%', '--avatar-y': avatarPosizione.y + '%', '--avatar-zoom': avatarPosizione.zoom }"
     @touchstart.passive="swipeStart($event)"
     @touchmove="swipeMove($event)"
@@ -1540,11 +1541,11 @@
 
         <div>
           <span class="economy-eyebrow">CRM ECONOMICO</span>
-          <h1 x-text="modalitaEconomia === 'incasso' ? 'Incassa' : 'Nuova vendita'"></h1>
+          <h1 x-text="modalitaEconomia === 'incasso' ? 'Incassa' : 'Registra vendita'"></h1>
         </div>
       </div>
 
-      <div class="content economy-content">
+      <div class="content economy-content" :class="{ 'economy-content-incasso': modalitaEconomia === 'incasso' }">
 
         <p
           x-show="erroreEconomia"
@@ -1561,7 +1562,7 @@
         </p>
 
         <!-- CLIENTE -->
-        <section class="economy-card">
+        <section class="economy-card economy-card-client">
           <div class="economy-section-head">
             <span>1</span>
             <div>
@@ -1688,7 +1689,7 @@
 
         <!-- VENDITA ATTIVA -->
         <section
-          class="economy-card"
+          class="economy-card economy-card-active-sale"
           x-show="clienteEconomiaSelezionato && modalitaEconomia === 'incasso' && venditaEconomicaAttiva">
           <div class="economy-section-head">
             <span>2</span>
@@ -2087,7 +2088,7 @@
 
         <!-- INCASSO CLIENTE -->
         <section
-          class="economy-card"
+          class="economy-card economy-card-payment"
           x-show="clienteEconomiaSelezionato">
 
           <div class="economy-section-head">
@@ -2388,6 +2389,48 @@
 </details>
         </section>
 
+
+
+        <section
+          class="economy-summary economy-payment-summary-card"
+          x-show="previewPagamentoEconomia()">
+
+          <div class="economy-payment-summary-title">
+            <span>Riepilogo rata</span>
+            <strong x-text="formattaEuroEconomia(previewPagamentoEconomia()?.importoPagamento || 0)"></strong>
+          </div>
+
+          <div>
+            <span>Costi</span>
+            <strong x-text="formattaEuroEconomia(previewPagamentoEconomia()?.totaleCosti || 0)"></strong>
+          </div>
+
+          <div>
+            <span>Margine</span>
+            <strong x-text="formattaEuroEconomia(previewPagamentoEconomia()?.margine || 0)"></strong>
+          </div>
+
+          <div>
+            <span>Tasse</span>
+            <strong x-text="formattaEuroEconomia(previewPagamentoEconomia()?.importoTasse || 0)"></strong>
+          </div>
+
+          <div class="economy-summary-profit">
+            <span>Netto distribuibile</span>
+            <strong x-text="formattaEuroEconomia(previewPagamentoEconomia()?.nettoDistribuibile || 0)"></strong>
+          </div>
+
+          <div class="economy-payment-summary-people">
+            <template
+              x-for="partecipante in (previewPagamentoEconomia()?.partecipanti || [])"
+              :key="'preview-rata-' + partecipante.id">
+              <div>
+                <span x-text="partecipante.nome"></span>
+                <strong x-text="formattaEuroEconomia(partecipante.quotaFinale)"></strong>
+              </div>
+            </template>
+          </div>
+        </section>
 
         <!-- TOTALI -->
         <section
@@ -3655,13 +3698,13 @@
           type="button"
           @click="
             menuAzioneAperto = false;
-            apriIncasso();
+            apriEconomia();
           ">
           <span class="quick-action-icon">€</span>
 
           <div>
-            <strong>Incassa</strong>
-            <small>Registra un pagamento sulla vendita attiva</small>
+            <strong>Registra vendita</strong>
+            <small>Cliente esistente, importo e quote</small>
           </div>
         </button>
 
@@ -3669,13 +3712,13 @@
           type="button"
           @click="
             menuAzioneAperto = false;
-            apriEconomia();
+            apriIncasso();
           ">
           <span class="quick-action-icon">＋</span>
 
           <div>
-            <strong>Nuova vendita</strong>
-            <small>Cliente esistente, importo e quote</small>
+            <strong>Incassa</strong>
+            <small>Registra un pagamento sulla vendita attiva</small>
           </div>
         </button>
 
@@ -3848,6 +3891,17 @@
             </button>
           </div>
         </div>
+
+        <button
+          type="button"
+          class="client-action-secondary"
+          @click="apriEconomiaDaAzioniCliente()">
+          <span>
+            <strong x-text="clienteAzioniRapide().haVenditaAttiva ? 'Incassa' : 'Registra vendita'"></strong>
+            <small x-text="clienteAzioniRapide().haVenditaAttiva ? 'Registra un pagamento' : 'Crea la vendita per questo cliente'"></small>
+          </span>
+          <b>›</b>
+        </button>
 
         <button
           type="button"

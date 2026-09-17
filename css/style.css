@@ -7995,3 +7995,128 @@ html[data-theme="dark"] .event-done-action{
     max-width:72px !important;
   }
 }
+
+
+/* ==========================================================
+   INCASSO UX / DESKTOP
+   ========================================================== */
+
+.economy-payment-details{
+  margin-top:14px;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:17px;
+  background:#f7f7f7;
+  overflow:hidden;
+}
+
+.economy-payment-details>summary{
+  cursor:pointer;
+  list-style:none;
+  padding:15px 16px;
+  font-size:11px;
+  font-weight:800;
+}
+
+.economy-payment-details>summary::-webkit-details-marker{
+  display:none;
+}
+
+.economy-payment-details>summary::after{
+  content:'+';
+  float:right;
+  font-size:18px;
+}
+
+.economy-payment-details[open]>summary::after{
+  content:'−';
+}
+
+.economy-payment-details-body{
+  padding:4px 15px 16px;
+  border-top:1px solid rgba(0,0,0,.07);
+}
+
+.economy-payment-person{
+  margin-top:12px;
+  padding:14px;
+  border:1px solid rgba(0,0,0,.07);
+  border-radius:15px;
+  background:#fff;
+}
+
+.economy-payment-person>strong{
+  display:block;
+  margin-bottom:10px;
+}
+
+.economy-payment-summary-title strong{
+  font-size:22px;
+  color:var(--lime);
+}
+
+.economy-payment-summary-people{
+  display:block !important;
+  margin-top:8px;
+  padding-top:8px !important;
+  border-top:1px solid rgba(255,255,255,.16) !important;
+}
+
+.economy-payment-summary-people>div{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:5px 0;
+}
+
+@media (min-width:900px){
+  #app.app-wide{
+    max-width:1164px;
+  }
+
+  .economy-content-incasso{
+    width:min(1100px, calc(100vw - 64px));
+    max-width:none;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:minmax(0,1.15fr) minmax(340px,.85fr);
+    grid-template-areas:
+      "client client"
+      "sale summary"
+      "payment summary"
+      "payment submit";
+    gap:16px 20px;
+    align-items:start;
+  }
+
+  .economy-content-incasso>.economy-card-client{
+    grid-area:client;
+  }
+
+  .economy-content-incasso>.economy-card-active-sale{
+    grid-area:sale;
+  }
+
+  .economy-content-incasso>.economy-card-payment{
+    grid-area:payment;
+  }
+
+  .economy-content-incasso>.economy-payment-summary-card{
+    grid-area:summary;
+    position:sticky;
+    top:88px;
+  }
+
+  .economy-content-incasso>div:last-child{
+    grid-area:submit;
+  }
+}
+
+html[data-theme="dark"] .economy-payment-details{
+  background:#1b1e1a;
+  border-color:#3b3f36;
+}
+
+html[data-theme="dark"] .economy-payment-person{
+  background:#20231e;
+  border-color:#3b3f36;
+}
