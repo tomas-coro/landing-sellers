@@ -32,6 +32,18 @@ function normalizzaClientePerSalvataggio(form) {
   };
 }
 
+function normalizzaAnagraficaClientePerSalvataggio(form) {
+  return {
+    nome: (form.nome || '').trim(),
+    referente: (form.referente || '').trim() || null,
+    telefono: (form.telefono || '').trim() || null,
+    email: (form.email || '').trim() || null,
+    piva: (form.piva || '').trim() || null,
+    iban: (form.iban || '').trim() || null,
+    sito_url: (form.sito_url || '').trim() || null
+  };
+}
+
 function prezzoRicorrenteDaForm(prezzoCatalogo, form) {
   const lordo = Math.max(0, Number(prezzoCatalogo) || 0);
   const valore = Math.max(0, Number(form.sconto_valore) || 0);
@@ -351,6 +363,9 @@ function appState() {
     }],
 
     nuovoClienteForm: formModuloVuoto(),
+    ritornoDopoNuovoCliente: null,
+    clienteCreatoId: null,
+    clienteCreatoPromptAperto: false,
     clienteFormSnapshot: null,
 
     // CRM economico / vendite
@@ -1495,6 +1510,14 @@ function appState() {
         Number(cliente.importo_abbonamento) || 0;
 
       this.impostaCostiClienteEconomia(cliente);
+    },
+
+    async registraVenditaPerClienteEconomia() {
+      const cliente = this.clienteEconomiaSelezionato;
+      if (!cliente?.id) return;
+
+      await this.apriEconomia('vendita');
+      this.selezionaClienteEconomia(cliente);
     },
 
     cambiaClienteEconomia() {
@@ -3772,8 +3795,11 @@ costiPerMotoreRataEconomia() {
       this.view = this.clienteInModificaId ? 'scheda' : 'lista';
     },
 
-    apriNuovoCliente() {
+    apriNuovoCliente(ritorno = null) {
       this.clienteInModificaId = null;
+      this.ritornoDopoNuovoCliente = ritorno;
+      this.clienteCreatoId = null;
+      this.clienteCreatoPromptAperto = false;
       this.nuovoClienteForm = formModuloVuoto();
       this.selezionePrezzo = { modalita: 'catalogo', formula: 'mensile', upgrade: [] };
       this.nuovoClienteForm.periodicita_contratto = 'mensile';
@@ -4103,47 +4129,111 @@ costiPerMotoreRataEconomia() {
 
     async salvaCliente() {
       if (this.salvandoCliente) return;
-      if (this.selezionePrezzo.modalita === 'catalogo') {
-        this.aggiornaPrezzoCliente();
-        this.aggiornaPreviewRinnovo();
 
-        if (!this.nuovoClienteForm.data_attivazione) {
-          this.erroriNuovoCliente = {
-            ...this.erroriNuovoCliente,
-            data_attivazione: 'Inserisci la data di attivazione.'
+      const modificaCliente = !!this.clienteInModificaId;
+
+      const datiDaValidare = modificaCliente
+        ? this.nuovoClienteForm
+        : {
+            nome: this.nuovoClienteForm.nome,
+            referente: this.nuovoClienteForm.referente,
+            telefono: this.nuovoClienteForm.telefono,
+            email: this.nuovoClienteForm.email,
+            piva: this.nuovoClienteForm.piva,
+            iban: this.nuovoClienteForm.iban,
+            sito_url: this.nuovoClienteForm.sito_url
           };
-          return;
-        }
-      }
-      const check = validaClienteForm(this.nuovoClienteForm);
+
+      const check = validaClienteForm(datiDaValidare);
       this.erroriNuovoCliente = check.errori;
+
       if (!check.valido) return;
 
-      const cliente = normalizzaClientePerSalvataggio(this.nuovoClienteForm);
+      const cliente = modificaCliente
+        ? normalizzaClientePerSalvataggio(this.nuovoClienteForm)
+        : normalizzaAnagraficaClientePerSalvataggio(
+            this.nuovoClienteForm
+          );
+
       this.salvandoCliente = true;
+
       try {
-        if (this.clienteInModificaId) {
-          const { error } = await window.supabaseClient.from('clienti')
-            .update(cliente).eq('id', this.clienteInModificaId);
-          if (error) { this.erroriNuovoCliente.generale = 'Salvataggio fallito: ' + error.message; return; }
+        let clienteSalvatoId = this.clienteInModificaId;
+
+        if (modificaCliente) {
+          const { error } = await window.supabaseClient
+            .from('clienti')
+            .update(cliente)
+            .eq('id', this.clienteInModificaId);
+
+          if (error) {
+            this.erroriNuovoCliente.generale =
+              'Salvataggio fallito: ' + error.message;
+            return;
+          }
         } else {
-          const { error } = await window.supabaseClient.from('clienti').insert({
-            ...cliente,
-            venditore_id: this.sessione.user.id
-          });
-          if (error) { this.erroriNuovoCliente.generale = 'Salvataggio fallito: ' + error.message; return; }
+          const { data, error } = await window.supabaseClient
+            .from('clienti')
+            .insert({
+              ...cliente,
+              venditore_id: this.sessione.user.id
+            })
+            .select('id')
+            .single();
+
+          if (error) {
+            this.erroriNuovoCliente.generale =
+              'Salvataggio fallito: ' + error.message;
+            return;
+          }
+
+          clienteSalvatoId = data?.id || null;
         }
 
         const idModificato = this.clienteInModificaId;
+
         this.clienteInModificaId = null;
         this.nuovoClienteForm = formModuloVuoto();
         this.clienteFormSnapshot = null;
-        await Promise.all([this.caricaClienti(), this.caricaStatisticheVenditore()]);
-        this.view = idModificato ? 'scheda' : 'lista';
-        if (idModificato) { this.clienteSelezionatoId = idModificato; }
+
+        await Promise.all([
+          this.caricaClienti(),
+          this.caricaStatisticheVenditore()
+        ]);
+
+        if (idModificato) {
+          this.clienteSelezionatoId = idModificato;
+          this.view = 'scheda';
+          return;
+        }
+
+        this.clienteCreatoId = clienteSalvatoId;
+        this.clienteCreatoPromptAperto = true;
+        this.view = 'lista';
       } finally {
         this.salvandoCliente = false;
       }
+    },
+
+    chiudiPromptClienteCreato() {
+      this.clienteCreatoPromptAperto = false;
+      this.clienteCreatoId = null;
+      this.ritornoDopoNuovoCliente = null;
+    },
+
+    async registraVenditaDopoCliente() {
+      const cliente = this.clienti.find(
+        c => c.id === this.clienteCreatoId
+      );
+
+      if (!cliente) return;
+
+      this.clienteCreatoPromptAperto = false;
+      this.clienteCreatoId = null;
+      this.ritornoDopoNuovoCliente = null;
+
+      await this.apriEconomia('vendita');
+      this.selezionaClienteEconomia(cliente);
     },
 
     clienteSelezionato() {

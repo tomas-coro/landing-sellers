@@ -8120,3 +8120,266 @@ html[data-theme="dark"] .economy-payment-person{
   background:#20231e;
   border-color:#3b3f36;
 }
+
+
+/* ==========================================================
+   FLOW CHOICE - CLIENTE
+   ========================================================== */
+
+.flow-choice-overlay{
+  position:fixed;
+  inset:0;
+  z-index:1500;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  background:rgba(0,0,0,.48);
+  backdrop-filter:blur(5px);
+}
+
+.flow-choice-card{
+  width:min(100%,420px);
+  padding:24px;
+  border-radius:24px;
+  background:var(--paper,#fff);
+  box-shadow:0 20px 60px rgba(0,0,0,.22);
+}
+
+.flow-choice-kicker{
+  display:block;
+  margin-bottom:8px;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.12em;
+  opacity:.5;
+}
+
+.flow-choice-card h2{
+  margin:0 0 8px;
+  font-size:22px;
+}
+
+.flow-choice-card p{
+  margin:0 0 20px;
+  font-size:12px;
+  line-height:1.55;
+  opacity:.65;
+}
+
+.flow-choice-card .btn + .btn{
+  margin-top:9px;
+}
+
+html[data-theme="dark"] .flow-choice-card{
+  background:#1b1e1a;
+}
+
+
+/* ==========================================================
+   CLIENTE COMPACT + INCASSO DESKTOP FIX
+   ========================================================== */
+
+/* ---------- NUOVO CLIENTE ---------- */
+
+.client-create-content{
+  box-sizing:border-box;
+}
+
+.client-form-create{
+  width:100%;
+}
+
+@media (min-width:720px){
+  .client-create-content{
+    width:100%;
+    max-width:760px;
+    margin:0 auto;
+    padding-top:18px;
+    padding-bottom:100px;
+  }
+
+  .client-form-create .client-form-section{
+    width:100%;
+    box-sizing:border-box;
+    padding:20px;
+  }
+
+  .client-form-create .client-fields-grid{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:14px 16px;
+  }
+
+  .client-form-create .client-fields-grid .field,
+  .client-form-create .client-fields-grid .field-full{
+    grid-column:auto;
+    min-width:0;
+    margin:0;
+  }
+
+  .client-form-create .client-fields-grid .field:first-child{
+    grid-column:1 / -1;
+  }
+
+  .client-form-create .field input{
+    width:100%;
+    min-width:0;
+    box-sizing:border-box;
+  }
+
+  .client-form-create > .btn-primary{
+    width:100%;
+    max-width:320px;
+    margin:18px 0 0 auto;
+  }
+}
+
+
+/* ---------- PAGAMENTO / INCASSO ---------- */
+
+.economy-payment-main-row,
+.economy-payment-meta-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:12px;
+  width:100%;
+  margin-top:14px;
+}
+
+.economy-payment-main-row input,
+.economy-payment-meta-row input{
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+
+.economy-card-payment .economy-invoice-choice{
+  width:100%;
+}
+
+.economy-card-payment .economy-invoice-choice > div{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.economy-card-payment .economy-invoice-choice button{
+  white-space:nowrap;
+}
+
+.economy-card-payment .economy-payment-details{
+  width:100%;
+  margin-top:18px;
+}
+
+
+/* ---------- INCASSO DESKTOP ---------- */
+
+@media (min-width:900px){
+  #app.app-wide{
+    max-width:1320px;
+  }
+
+  .economy-content-incasso{
+    width:min(1240px,calc(100vw - 72px));
+    max-width:none;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:18px;
+    align-items:start;
+  }
+
+  .economy-content-incasso > .economy-card-client{
+    grid-column:1 / -1;
+    grid-row:auto;
+  }
+
+  .economy-content-incasso > .economy-card-active-sale{
+    grid-column:1 / -1;
+    grid-row:auto;
+  }
+
+  .economy-content-incasso > .economy-no-sale{
+    grid-column:1 / -1;
+    grid-row:auto;
+  }
+
+  .economy-content-incasso > .economy-card-payment{
+    grid-area:auto;
+    grid-column:1 / -1;
+    width:100%;
+  }
+
+  .economy-content-incasso > .economy-payment-summary-card{
+    grid-area:auto;
+    grid-column:1 / -1;
+    position:static;
+  }
+
+  .economy-content-incasso > div:last-child{
+    grid-area:auto;
+    grid-column:1 / -1;
+    position:static;
+  }
+
+  .economy-card-payment{
+    padding:22px 26px;
+  }
+
+  .economy-card-payment .economy-section-head{
+    margin-bottom:20px;
+  }
+
+  .economy-card-payment .economy-invoice-choice{
+    display:grid;
+    grid-template-columns:180px minmax(0,1fr);
+    align-items:center;
+    gap:18px;
+  }
+
+  .economy-card-payment .economy-invoice-choice > div{
+    justify-content:flex-end;
+  }
+
+  .economy-payment-main-row,
+  .economy-payment-meta-row{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+
+/* ---------- MOBILE ---------- */
+
+@media (max-width:719px){
+  .economy-payment-main-row,
+  .economy-payment-meta-row{
+    grid-template-columns:1fr;
+    gap:9px;
+  }
+
+  .economy-card-payment .economy-invoice-choice{
+    display:block;
+  }
+
+  .economy-card-payment .economy-invoice-choice > span{
+    display:block;
+    margin-bottom:9px;
+  }
+
+  .economy-card-payment .economy-invoice-choice > div{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .economy-card-payment .economy-invoice-choice button{
+    width:100%;
+    min-width:0;
+    white-space:normal;
+  }
+
+  .economy-card-payment .economy-invoice-choice button:first-child{
+    grid-column:1 / -1;
+  }
+}

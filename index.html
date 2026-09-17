@@ -2086,10 +2086,36 @@
         </section>
 
 
+        <section
+          class="economy-card economy-no-sale"
+          x-show="
+            modalitaEconomia === 'incasso' &&
+            clienteEconomiaSelezionato &&
+            !venditaEconomicaAttiva
+          ">
+          <div class="economy-no-sale-icon">!</div>
+          <div class="economy-no-sale-copy">
+            <strong>Nessuna vendita disponibile</strong>
+            <small>
+              Per registrare un incasso devi prima creare una vendita
+              per questo cliente.
+            </small>
+          </div>
+          <button
+            type="button"
+            class="btn btn-primary"
+            @click="registraVenditaPerClienteEconomia()">
+            Registra vendita
+          </button>
+        </section>
+
         <!-- INCASSO CLIENTE -->
         <section
           class="economy-card economy-card-payment"
-          x-show="clienteEconomiaSelezionato">
+          x-show="
+            clienteEconomiaSelezionato &&
+            (modalitaEconomia !== 'incasso' || venditaEconomicaAttiva)
+          ">
 
           <div class="economy-section-head">
             <span x-text="modalitaEconomia === 'incasso' ? '3' : '5'"></span>
@@ -2133,7 +2159,7 @@
             </div>
           </div>
 
-          <div class="economy-custom-cost">
+          <div class="economy-custom-cost economy-payment-main-row">
             <input
               type="number"
               min="0"
@@ -2154,7 +2180,7 @@
           </div>
 
           <div
-            class="economy-custom-cost"
+            class="economy-custom-cost economy-payment-meta-row"
             x-show="venditaEconomicaForm.statoIncasso !== 'previsto'">
             <input
               type="text"
@@ -2470,7 +2496,11 @@
           </div>
         </section>
 
-        <div x-show="clienteEconomiaSelezionato">
+        <div
+          x-show="
+            clienteEconomiaSelezionato &&
+            (modalitaEconomia !== 'incasso' || venditaEconomicaAttiva)
+          ">
           <button
             type="button"
             class="btn btn-primary"
@@ -2503,9 +2533,14 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Annulla
         </button>
       </div>
-      <div class="content">
+      <div
+        class="content"
+        :class="{ 'client-create-content': !clienteInModificaId }">
         <h1 x-text="clienteInModificaId ? 'Modifica cliente' : 'Aggiungi cliente'"></h1>
-        <form @submit.prevent="salvaCliente()" class="client-form">
+        <form
+          @submit.prevent="salvaCliente()"
+          class="client-form"
+          :class="{ 'client-form-create': !clienteInModificaId }">
 
           <section class="client-form-section">
             <div class="client-form-section-head">
@@ -2556,7 +2591,7 @@
             </div>
           </section>
 
-          <div x-show="selezionePrezzo.modalita === 'legacy'" class="price-legacy">
+          <div x-show="clienteInModificaId && selezionePrezzo.modalita === 'legacy'" class="price-legacy">
             <div>
               <strong>Prezzo storico</strong>
               <span>Questo cliente usa un prezzo precedente o personalizzato. Verrà mantenuto finché non scegli di passare al catalogo attuale.</span>
@@ -2578,7 +2613,9 @@
             <button type="button" class="btn btn-ghost" @click="passaAlCatalogoPrezzi()">Passa al catalogo attuale</button>
           </div>
 
-          <div class="price-builder client-form-section" x-show="selezionePrezzo.modalita !== 'legacy'">
+          <div
+            class="price-builder client-form-section"
+            x-show="clienteInModificaId && selezionePrezzo.modalita !== 'legacy'">
             <div class="client-form-section-head">
               <span>02</span>
               <div>
@@ -2794,7 +2831,9 @@
             </div>
             <p x-show="erroriNuovoCliente.importo_abbonamento" x-text="erroriNuovoCliente.importo_abbonamento" class="err"></p>
           </div>
-          <section class="client-form-section renewal-form-section">
+          <section
+            class="client-form-section renewal-form-section"
+            x-show="clienteInModificaId">
             <div class="client-form-section-head">
               <span>03</span>
               <div>
@@ -2806,7 +2845,7 @@
             <div class="contract-renewal-card">
             <div class="field activation-date-field">
               <label for="data-attivazione">Data attivazione <span>Obbligatoria</span></label>
-              <input id="data-attivazione" type="date" required aria-describedby="data-attivazione-hint" x-model="nuovoClienteForm.data_attivazione" @change="aggiornaPreviewRinnovo()">
+              <input id="data-attivazione" type="date" :required="!!clienteInModificaId" aria-describedby="data-attivazione-hint" x-model="nuovoClienteForm.data_attivazione" @change="aggiornaPreviewRinnovo()">
               <small id="data-attivazione-hint">Serve per calcolare il primo rinnovo.</small>
               <p x-show="erroriNuovoCliente.data_attivazione" x-text="erroriNuovoCliente.data_attivazione" class="err"></p>
             </div>
@@ -2904,6 +2943,40 @@
           <button type="submit" class="btn btn-primary" :disabled="salvandoCliente"
             x-text="salvandoCliente ? 'Salvataggio...' : (clienteInModificaId ? 'Salva modifiche' : 'Salva cliente')"></button>
         </form>
+      </div>
+    </div>
+
+
+    <!-- CLIENTE CREATO -->
+    <div
+      class="flow-choice-overlay"
+      x-show="clienteCreatoPromptAperto"
+      x-transition.opacity
+      @click.self="chiudiPromptClienteCreato()">
+
+      <div class="flow-choice-card">
+        <span class="flow-choice-kicker">CLIENTE SALVATO</span>
+
+        <h2>Vuoi registrare la vendita?</h2>
+
+        <p>
+          L'anagrafica è stata salvata. Puoi registrare subito
+          la prima vendita oppure farlo in un secondo momento.
+        </p>
+
+        <button
+          type="button"
+          class="btn btn-primary"
+          @click="registraVenditaDopoCliente()">
+          Registra vendita
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-ghost"
+          @click="chiudiPromptClienteCreato()">
+          Non ora
+        </button>
       </div>
     </div>
 
