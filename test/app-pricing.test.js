@@ -707,3 +707,22 @@ test('l’azione cliente apre incasso con vendita attiva e vendita negli altri c
     ['cliente', 'c2']
   ]);
 });
+
+test('la timeline formatta le attività senza metodi Alpine inesistenti', () => {
+  global.formattaData = data => `data:${data}`;
+  global.formattaStato = stato => `stato:${stato}`;
+
+  const stato = appState();
+  stato.attivitaCliente = [
+    { id: '1', tipo: 'stato', creata_il: '2026-09-17', valore_precedente: 'contattato', valore_nuovo: 'pubblicato' },
+    { id: '2', tipo: 'contatto_completato', creata_il: '2026-09-18', valore_precedente: '2026-09-18' }
+  ];
+
+  assert.deepStrictEqual(stato.timelineCliente().map(evento => evento.dettaglio), [
+    'data:2026-09-18',
+    'stato:contattato → stato:pubblicato'
+  ]);
+
+  delete global.formattaData;
+  delete global.formattaStato;
+});

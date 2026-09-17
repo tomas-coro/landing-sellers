@@ -4268,8 +4268,8 @@ costiPerMotoreRataEconomia() {
             tipo: 'stato',
             titolo: 'Stato aggiornato',
             dettaglio:
-              `${this.formattaStato(attivita.valore_precedente)} → ` +
-              `${this.formattaStato(attivita.valore_nuovo)}`
+              `${formattaStato(attivita.valore_precedente)} → ` +
+              `${formattaStato(attivita.valore_nuovo)}`
           });
         }
 
@@ -4280,7 +4280,7 @@ costiPerMotoreRataEconomia() {
             tipo: 'completato',
             titolo: 'Contatto completato',
             dettaglio: attivita.valore_precedente
-              ? this.formattaData(attivita.valore_precedente)
+              ? formattaData(attivita.valore_precedente)
               : ''
           });
         }
@@ -4296,7 +4296,7 @@ costiPerMotoreRataEconomia() {
               ? 'Prossimo contatto impostato'
               : 'Prossimo contatto rimosso',
             dettaglio: nuovaData
-              ? this.formattaData(nuovaData)
+              ? formattaData(nuovaData)
               : ''
           });
         }
