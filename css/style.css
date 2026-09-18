@@ -15113,3 +15113,161 @@ html[data-theme="dark"] .economy-create-client{
     grid-area:error;
   }
 }
+
+
+/* ==========================================================
+   PROFILO PERSONALE DESKTOP V3 - DENSITA + GERARCHIA
+   ========================================================== */
+
+@media (min-width:1000px){
+
+  .profile-view.is-personal-profile .topbar,
+  .profile-view.is-personal-profile .content{
+    width:min(980px,calc(100% - 96px));
+  }
+
+  .profile-view.is-personal-profile .profile-topbar{
+    padding:20px 0 14px;
+  }
+
+  .profile-view.is-personal-profile .profile-topbar h1{
+    font-size:18px;
+  }
+
+  .profile-view.is-personal-profile .profile-content{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:14px;
+    padding-top:0;
+  }
+
+  /* HERO PIU' DENSA */
+  .profile-view.is-personal-profile .profile-hero-card{
+    min-height:108px;
+    padding:18px 20px;
+    gap:18px;
+    border-radius:18px;
+  }
+
+  .profile-view.is-personal-profile .profile-avatar-edit{
+    width:68px;
+    height:68px;
+    flex-basis:68px;
+    font-size:25px;
+  }
+
+  .profile-view.is-personal-profile .profile-avatar-edit i{
+    width:24px;
+    height:24px;
+    font-size:15px;
+  }
+
+  .profile-view.is-personal-profile .profile-personal-identity{
+    gap:4px;
+  }
+
+  .profile-view.is-personal-profile .profile-name-row>strong{
+    font-size:19px;
+  }
+
+  .profile-view.is-personal-profile .profile-personal-identity>small{
+    font-size:10.5px;
+  }
+
+  .profile-view.is-personal-profile .profile-role{
+    margin-top:2px;
+    padding:4px 9px;
+    font-size:8px;
+  }
+
+  /* PANNELLI SECONDARI */
+  .profile-view.is-personal-profile .profile-theme-group,
+  .profile-view.is-personal-profile .profile-menu{
+    border-radius:18px;
+  }
+
+  .profile-view.is-personal-profile .profile-theme-group{
+    padding:18px;
+    gap:13px;
+  }
+
+  .profile-view.is-personal-profile .admin-profile-group-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+
+  .profile-view.is-personal-profile
+  .admin-profile-group-title>span{
+    font-size:8px;
+    letter-spacing:.12em;
+  }
+
+  .profile-view.is-personal-profile
+  .admin-profile-group-title>strong{
+    font-size:9px;
+    color:var(--muted);
+  }
+
+  /* TEMA PIU' COMPATTO */
+  .profile-view.is-personal-profile .theme-selector{
+    gap:8px;
+  }
+
+  .profile-view.is-personal-profile .theme-selector>button{
+    min-height:88px;
+    padding:12px 8px;
+    border-radius:14px;
+  }
+
+  .profile-view.is-personal-profile .theme-selector-icon{
+    width:30px;
+    height:30px;
+    border-radius:9px;
+  }
+
+  .profile-view.is-personal-profile .theme-selector-icon svg{
+    width:15px;
+    height:15px;
+  }
+
+  .profile-view.is-personal-profile .theme-selector strong{
+    font-size:10px;
+  }
+
+  .profile-view.is-personal-profile .theme-selector small{
+    font-size:8px;
+  }
+
+  /* IMPOSTAZIONI PIU' PULITE */
+  .profile-view.is-personal-profile .profile-menu button{
+    min-height:57px;
+    padding:13px 16px;
+    transition:
+      background .15s var(--ease),
+      padding-left .15s var(--ease);
+  }
+
+  .profile-view.is-personal-profile .profile-menu button:hover{
+    padding-left:19px;
+  }
+
+  .profile-view.is-personal-profile .profile-menu button>span{
+    font-size:11.5px;
+    font-weight:750;
+  }
+
+  .profile-view.is-personal-profile .profile-menu button strong{
+    font-size:9px;
+  }
+
+  .profile-view.is-personal-profile
+  .profile-menu .profile-account-row strong{
+    gap:6px;
+  }
+
+  /* riduce il vuoto percepito sotto */
+  .profile-view.is-personal-profile .content{
+    align-content:start;
+  }
+}
