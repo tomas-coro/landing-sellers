@@ -362,6 +362,7 @@ function appState() {
 
     clienti: [],
     erroreClienti: '',
+    caricandoClienti: true,
     isAdmin: false,
     filtroVenditoreId: '',
     filtroVenditoreNome: '',
@@ -3731,6 +3732,7 @@ costiPerMotoreRataEconomia() {
 
     async caricaClienti() {
       this.erroreClienti = '';
+      this.caricandoClienti = true;
       let query = window.supabaseClient.from('clienti').select('*')
         .is('cancellato_il', null)
         .order('prossimo_contatto', { ascending: true, nullsFirst: false })
@@ -3745,11 +3747,16 @@ costiPerMotoreRataEconomia() {
         query = query.eq('venditore_id', venditoreId);
       }
       const { data, error } = await query;
-      if (error) { this.erroreClienti = 'Errore nel caricare i clienti: ' + error.message; return; }
+      if (error) {
+        this.erroreClienti = 'Errore nel caricare i clienti: ' + error.message;
+        this.caricandoClienti = false;
+        return;
+      }
       const idsAttribuiti = new Set(this.adminClientiPerVenditore[venditoreId] || []);
       this.clienti = usaAttribuzioneCondivisa
         ? data.filter(cliente => idsAttribuiti.has(cliente.id))
         : data;
+      this.caricandoClienti = false;
       await Promise.all([
         this.caricaIndiceNoteRicerca(),
         this.caricaScadenzePagamentoClienti()

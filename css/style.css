@@ -162,6 +162,35 @@ h2{font-size:14px;font-weight:800;letter-spacing:-.005em;margin:22px 0 10px}
 .card-cliente:active{border-color:var(--ink)}
 .cc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .cc-top strong{font-size:15px;font-weight:700}
+
+/* --- skeleton lista clienti (stato di caricamento) --- */
+.skeleton-clienti{display:flex;flex-direction:column}
+.skeleton-card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:15px 15px;margin-bottom:10px;display:flex;flex-direction:column;gap:10px;
+}
+.skeleton-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.skeleton-block{
+  border-radius:6px;
+  background:linear-gradient(90deg,var(--line) 25%,var(--paper-2) 37%,var(--line) 63%);
+  background-size:400% 100%;
+  animation:skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.skeleton-title{width:55%;height:14px}
+.skeleton-subtitle{width:35%;height:9px;margin-top:5px}
+.skeleton-pill{width:64px;height:20px;border-radius:20px;flex-shrink:0}
+.skeleton-meta{width:40%;height:9px;border-top:1px solid var(--line);padding-top:8px;margin-top:2px}
+.skeleton-strip{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:2px}
+.skeleton-cell{display:flex;flex-direction:column;gap:6px}
+.skeleton-cell .skeleton-label{width:50%;height:7px}
+.skeleton-cell .skeleton-value{width:70%;height:12px}
+@keyframes skeleton-shimmer{
+  0%{background-position:100% 0}
+  100%{background-position:0 0}
+}
+@media (prefers-reduced-motion: reduce){
+  .skeleton-block{animation:none}
+}
 .cc-next{font-size:11.5px;color:var(--muted);font-weight:600}
 .cc-next.urg-ritardo{color:#b3261e}
 .cc-next.urg-vicino{color:#7a5b00}

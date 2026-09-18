@@ -529,6 +529,31 @@
           </template>
         </div>
 
+        <div class="skeleton-clienti" x-show="caricandoClienti && clienti.length === 0" aria-hidden="true">
+          <template x-for="n in 4" :key="'skeleton-cliente-' + n">
+            <div class="skeleton-card">
+              <div class="skeleton-row">
+                <div>
+                  <div class="skeleton-block skeleton-title"></div>
+                  <div class="skeleton-block skeleton-subtitle"></div>
+                </div>
+                <div class="skeleton-block skeleton-pill"></div>
+              </div>
+              <div class="skeleton-block skeleton-meta"></div>
+              <div class="skeleton-strip">
+                <div class="skeleton-cell">
+                  <div class="skeleton-block skeleton-label"></div>
+                  <div class="skeleton-block skeleton-value"></div>
+                </div>
+                <div class="skeleton-cell">
+                  <div class="skeleton-block skeleton-label"></div>
+                  <div class="skeleton-block skeleton-value"></div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
         <template x-for="cliente in (!isAdmin && view === 'lista') ? clientiRecenti() : (!isAdmin && view === 'clienti' ? clientiPagina() : clientiFiltrati())" :key="cliente.id">
           <div class="card-cliente home-client-card" @click="apriScheda(cliente.id)">
             <div class="cc-top">
@@ -668,7 +693,7 @@
           <button type="button" @click="cambiaPaginaClienti(1)" :disabled="paginaClienti === totalePagineClienti()">›</button>
         </div>
 
-        <div x-show="clienti.length === 0 && !erroreClienti" class="home-empty">
+        <div x-show="clienti.length === 0 && !erroreClienti && !caricandoClienti" class="home-empty">
           <div class="home-empty-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="9" cy="8" r="3.2"/>
