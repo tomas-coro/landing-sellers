@@ -5566,6 +5566,14 @@ costiPerMotoreRataEconomia() {
       if (this.view !== 'scheda') this.viewPrecedenteScheda = this.view;
       this.clienteSelezionatoId = clienteId;
       this.view = 'scheda';
+
+      requestAnimationFrame(() => {
+        document.getElementById('app')?.scrollTo({
+          top: 0,
+          behavior: 'auto'
+        });
+      });
+
       this.erroreScheda = '';
       this.confermaEliminazione = false;
       const cliente = this.clienteSelezionato();
