@@ -8290,7 +8290,7 @@ html[data-theme="dark"] .flow-choice-card{
     align-items:start;
   }
 
-  .economy-content-incasso > .economy-card-client{
+  .economy-content > .economy-card-client{
     grid-column:1 / -1;
     grid-row:auto;
   }
@@ -8574,7 +8574,7 @@ html[data-theme="dark"] .flow-choice-card{
     align-items:start;
   }
 
-  .economy-content-incasso > .economy-card-client{
+  .economy-content > .economy-card-client{
     grid-area:client;
   }
 
@@ -13542,12 +13542,12 @@ html[data-theme="dark"] .flow-choice-card{
     grid-area:message;
   }
 
-  .economy-content-incasso > .economy-card-client{
+  .economy-content > .economy-card-client{
     grid-area:client;
     padding:14px 18px;
   }
 
-  .economy-content-incasso
+  .economy-content
   > .economy-card-client
   .economy-section-head{
     margin-bottom:8px;
@@ -13820,50 +13820,157 @@ html[data-theme="dark"] .payment-history-action{
 
 
 /* ==========================================================
-   INCASSA - CLIENTE MOBILE COMPATTO
+   MOBILE POLISH - NUOVO CLIENTE + CLIENTE INCASSA
    ========================================================== */
 
-@media (max-width:899px){
+@media (max-width:719px){
 
-  /* Card generale */
-  .economy-content-incasso > .economy-card-client{
-    padding:12px;
+  /* ========================================================
+     NUOVO CLIENTE
+     Compattazione minima, dimensioni quasi originali
+     ======================================================== */
+
+  .client-create-content{
+    padding-top:14px !important;
+    padding-bottom:74px !important;
   }
 
-  .economy-content-incasso
-  > .economy-card-client
-  > .economy-section-head{
-    margin-bottom:8px;
+  .client-create-heading{
+    margin:0 0 16px;
   }
 
-  .economy-content-incasso
-  > .economy-card-client
-  > .economy-section-head > span{
-    width:30px;
-    height:30px;
-    flex:0 0 30px;
+  .client-create-heading > div{
+    display:grid;
+    gap:2px;
+  }
+
+  .client-create-heading span{
+    font-size:10px;
+    line-height:1.15;
+    letter-spacing:.11em;
+  }
+
+  .client-create-heading h1{
+    margin:4px 0 3px;
+    font-size:31px;
+    line-height:1.06;
+  }
+
+  .client-create-heading p{
+    margin:0;
+    max-width:none;
+    font-size:11px;
+    line-height:1.25;
+    white-space:nowrap;
+  }
+
+  .client-form-create{
+    gap:12px;
+  }
+
+  .client-form-create .client-form-section{
+    padding:17px 18px;
+    border-radius:18px;
+  }
+
+  .client-form-create .client-form-section-head{
+    gap:11px;
+    padding-bottom:12px;
+    margin-bottom:12px;
+  }
+
+  .client-form-create .client-form-section-head > span{
+    width:36px;
+    height:36px;
+    flex:0 0 36px;
+    border-radius:10px;
     font-size:10px;
   }
 
-  .economy-content-incasso
-  > .economy-card-client
-  > .economy-section-head strong{
+  .client-form-create .client-form-section-head strong{
     font-size:14px;
   }
 
-  .economy-content-incasso
-  > .economy-card-client
-  > .economy-section-head small{
-    max-width:260px;
-    font-size:9px;
+  .client-form-create .client-form-section-head small{
+    font-size:9.5px;
     line-height:1.25;
   }
 
+  /*
+   * Recuperiamo altezza solo con coppie logiche affiancate.
+   * Non riduciamo gli input.
+   */
+  .client-form-create .client-fields-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:0 10px;
+  }
 
-  /* Cliente selezionato:
-     riga 1 = nome + stato
-     riga 2 = azioni */
-  .economy-content-incasso
+  .client-form-create .client-fields-grid .field-full{
+    grid-column:1 / -1 !important;
+  }
+
+  .client-form-create .field{
+    margin-bottom:10px;
+  }
+
+  .client-form-create .field label{
+    margin-bottom:4px;
+    font-size:10px;
+    line-height:1.15;
+  }
+
+  .client-form-create .field input{
+    min-height:52px;
+    padding:11px 13px;
+    font-size:16px;
+    line-height:1.1;
+  }
+
+  .client-form-create > .btn-primary{
+    min-height:52px;
+    margin-top:6px;
+    font-size:12px;
+  }
+
+
+  /* ========================================================
+     INCASSA - CLIENTE SELEZIONATO
+     ======================================================== */
+
+  .economy-content > .economy-card-client{
+    padding:9px 10px;
+  }
+
+  .economy-content
+  > .economy-card-client
+  > .economy-section-head{
+    gap:8px;
+    margin-bottom:5px;
+  }
+
+  .economy-content
+  > .economy-card-client
+  > .economy-section-head > span{
+    width:27px;
+    height:27px;
+    flex:0 0 27px;
+    font-size:9px;
+  }
+
+  .economy-content
+  > .economy-card-client
+  > .economy-section-head strong{
+    font-size:13px;
+  }
+
+  /* In Incassa il sottotitolo sopra la card è ridondante */
+  .economy-content
+  > .economy-card-client
+  > .economy-section-head small{
+    display:none;
+  }
+
+  .economy-content
   .economy-selected-client-v2{
     display:grid;
     grid-template-columns:minmax(0,1fr) auto;
@@ -13871,167 +13978,159 @@ html[data-theme="dark"] .payment-history-action{
       "main progress"
       "actions actions";
     align-items:center;
-    gap:10px 12px;
 
     min-height:0;
-    padding:12px 13px;
+    gap:7px 8px;
+
+    padding:9px 10px;
+    border-radius:13px;
   }
 
-
-  /* Nome */
-  .economy-content-incasso
+  .economy-content
   .economy-selected-client-main{
     grid-area:main;
     min-width:0;
   }
 
-  .economy-content-incasso
+  .economy-content
   .economy-selected-client-title{
     display:flex;
     align-items:center;
-    gap:9px;
+    gap:7px;
     min-width:0;
   }
 
-  .economy-content-incasso
+  .economy-content
   .economy-client-check{
-    width:32px;
-    height:32px;
-    flex:0 0 32px;
+    width:27px;
+    height:27px;
+    flex:0 0 27px;
 
     display:grid;
     place-items:center;
 
-    font-size:12px;
+    font-size:10px;
   }
 
-  .economy-content-incasso
+  .economy-content
   .economy-selected-client-title > div{
     min-width:0;
   }
 
-  .economy-content-incasso
+  .economy-content
   .economy-selected-client-title strong{
     display:block;
     overflow:hidden;
-    text-overflow:ellipsis;
 
-    font-size:17px;
-    line-height:1.1;
+    font-size:14px;
+    line-height:1.05;
+
+    text-overflow:ellipsis;
     white-space:nowrap;
   }
 
-  .economy-content-incasso
+  .economy-content
   .economy-selected-client-title small{
     display:block;
-    margin-top:3px;
+    margin-top:2px;
 
-    font-size:9px;
-    line-height:1.2;
-    opacity:.58;
+    font-size:8px;
+    line-height:1.1;
+    opacity:.55;
   }
 
-
-  /* Dati completi non servono qui:
-     restano disponibili da Apri anagrafica */
-  .economy-content-incasso
+  /* I dati completi restano in Apri anagrafica */
+  .economy-content
   .economy-selected-client-meta{
     display:none;
   }
 
-
-  /* Stato anagrafica sulla stessa riga del nome */
-  .economy-content-incasso
+  .economy-content
   .economy-selected-client-progress{
     grid-area:progress;
 
     display:flex;
-    flex-direction:column;
-    align-items:flex-end;
-    justify-content:center;
-    gap:3px;
+    align-items:center;
+    justify-content:flex-end;
 
     min-width:0;
   }
 
-  .economy-content-incasso
+  .economy-content
   .economy-client-ready{
-    min-height:30px;
-    padding:0 10px;
+    min-height:25px;
+    padding:0 8px;
 
     display:flex;
     align-items:center;
-    gap:6px;
+    gap:5px;
 
     border-radius:999px;
 
-    font-size:9px;
+    font-size:8px;
+    line-height:1;
     white-space:nowrap;
   }
 
-  .economy-content-incasso
+  .economy-content
   .economy-client-ready i{
-    width:7px;
-    height:7px;
-    flex:0 0 7px;
+    width:6px;
+    height:6px;
+    flex:0 0 6px;
   }
 
-  /* "Pronto per l'incasso" sarebbe ridondante
-     sul mobile: teniamo solo il badge */
-  .economy-content-incasso
+  .economy-content
   .economy-selected-client-progress > small{
     display:none;
   }
 
-
-  /* Azioni compatte */
-  .economy-content-incasso
+  .economy-content
   .economy-client-actions-v2{
     grid-area:actions;
 
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:7px;
+    gap:6px;
 
     width:100%;
     margin:0;
   }
 
-  .economy-content-incasso
+  .economy-content
   .economy-client-actions-v2 button{
     width:100%;
     min-width:0;
-    min-height:38px;
+    min-height:32px;
 
     margin:0;
-    padding:0 10px;
+    padding:0 8px;
 
-    font-size:9px;
+    font-size:8px;
+    line-height:1;
     white-space:nowrap;
   }
 
 }
 
 
-/* Telefoni particolarmente stretti */
+/* telefoni stretti */
 @media (max-width:390px){
 
-  .economy-content-incasso
+  .economy-content
   .economy-selected-client-v2{
-    grid-template-columns:minmax(0,1fr) auto;
-    gap:9px 7px;
-    padding:11px;
+    gap:6px;
+    padding:8px 9px;
   }
 
-  .economy-content-incasso
+  .economy-content
   .economy-selected-client-title strong{
-    font-size:15px;
+    font-size:13px;
   }
 
-  .economy-content-incasso
+  .economy-content
   .economy-client-ready{
-    padding:0 8px;
-    font-size:8px;
+    padding:0 7px;
+    font-size:7.5px;
   }
 
 }
