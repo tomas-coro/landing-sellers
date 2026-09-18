@@ -14209,3 +14209,39 @@ html[data-theme="dark"] .payment-history-action:hover{
   background:var(--lime,#baff26);
   color:#10120f;
 }
+
+/* ==========================================================
+   MOBILE FIX V84 - SEZIONE 4 + DATE INCASSO
+   ========================================================== */
+
+@media (max-width:999px){
+
+  /* Registra vendita: Ripartizione larga come le altre sezioni */
+  .economy-content:not(.economy-content-incasso) >
+  .economy-card-split{
+    width:100% !important;
+    max-width:none !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+    box-sizing:border-box !important;
+  }
+
+  /* Incasso cliente / Nuovo movimento:
+     impedisce al campo data di uscire dalla larghezza standard */
+  .payment-entry-panel .payment-fields-row,
+  .payment-entry-panel .payment-field{
+    width:100%;
+    min-width:0;
+    box-sizing:border-box;
+  }
+
+  .payment-entry-panel .payment-field input[type="date"]{
+    display:block;
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+  }
+
+}
+
