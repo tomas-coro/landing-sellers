@@ -216,14 +216,14 @@
       </div>
     </div>
 
-    <!-- Command bar clienti (Cmd/Ctrl+/, solo desktop) -->
+    <!-- Command bar clienti (Cmd/Ctrl+K, solo desktop) -->
     <button
       type="button"
       class="cmdk-trigger"
       @click="apriCmdk()"
-      aria-label="Cerca cliente (Cmd+/)">
+      aria-label="Cerca cliente (Cmd+K)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      <kbd>⌘/</kbd>
+      <kbd>⌘K</kbd>
     </button>
 
     <div
@@ -5810,7 +5810,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=101', {
+      navigator.serviceWorker.register('./service-worker.js?v=106', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
