@@ -405,6 +405,7 @@ function appState() {
     venditaEconomicaForm: formVenditaEconomicaVuoto(),
     modalitaEconomia: 'vendita',
     venditaEconomicaAttiva: null,
+    economiaFormSnapshot: null,
 
     // Incasso: un cliente può avere più vendite attive.
     venditeClienteIncasso: [],
@@ -1302,8 +1303,7 @@ function appState() {
       this.venditaEconomicaForm.clienteId =
         vendita.cliente_id;
 
-      this.venditaEconomicaForm.clienteRicerca =
-        this.clienteEconomiaSelezionato?.nome || '';
+      this.azzeraRicercaClienteEconomia();
 
       this.venditaEconomicaForm.servizio =
         vendita.servizio || '';
@@ -1329,6 +1329,8 @@ function appState() {
 
       this.venditaEconomicaForm.notePagamento =
         pagamentoPrevisto?.note || '';
+
+      this.aggiornaSnapshotEconomia();
     },
 
     async apriEconomia(modalita = 'vendita') {
@@ -1353,6 +1355,9 @@ function appState() {
       }
 
       this.view = 'economia';
+      this.azzeraRicercaClienteEconomia();
+      this.aggiornaSnapshotEconomia();
+
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
@@ -2347,6 +2352,19 @@ function appState() {
         .map(costo => this.creaCostoEconomia(costo.descrizione, costo.importo));
     },
 
+    azzeraRicercaClienteEconomia() {
+      this.venditaEconomicaForm.clienteRicerca = '';
+
+      globalThis.requestAnimationFrame(() => {
+        const campo =
+          document.querySelector('.economy-client-searchbox');
+
+        if (campo) {
+          campo.textContent = '';
+        }
+      });
+    },
+
     clientiEconomiaFiltrati() {
       const testo = (this.venditaEconomicaForm.clienteRicerca || '')
         .trim()
@@ -2376,14 +2394,14 @@ function appState() {
 
       this.clienteEconomiaSelezionato = cliente;
       this.venditaEconomicaForm.clienteId = cliente.id;
-      this.venditaEconomicaForm.clienteRicerca =
-        cliente.nome || '';
+      this.azzeraRicercaClienteEconomia();
 
       /*
        * Una nuova vendita parte dal configuratore corrente.
        * Non eredita prezzo, pacchetto o costi storici del cliente.
        */
       this.aggiornaConfigurazioneVendita();
+      this.aggiornaSnapshotEconomia();
     },
 
     async registraVenditaPerClienteEconomia() {
@@ -2410,11 +2428,13 @@ function appState() {
         this.successoEconomia = '';
       }
       this.venditaEconomicaForm.clienteId = null;
-      this.venditaEconomicaForm.clienteRicerca = '';
+      this.azzeraRicercaClienteEconomia();
       this.venditaEconomicaForm.servizio = '';
       this.venditaEconomicaForm.importoVendita = null;
       this.venditaEconomicaForm.importoIncassato = null;
       this.venditaEconomicaForm.costi = [];
+
+      this.aggiornaSnapshotEconomia();
     },
 
     aggiungiCostoEconomia(descrizione = '', importo = null) {
@@ -2891,6 +2911,8 @@ costiPerMotoreRataEconomia() {
           this.venditaEconomicaAttiva.id
         );
 
+        this.aggiornaSnapshotEconomia();
+
         if (this.isAdmin) {
           await this.caricaDashboardAdmin();
         } else {
@@ -3009,6 +3031,7 @@ costiPerMotoreRataEconomia() {
         }
 
         this.successoEconomia = 'Vendita registrata correttamente.';
+        this.aggiornaSnapshotEconomia();
 
         const clienteId = this.venditaEconomicaForm.clienteId;
 
@@ -4684,10 +4707,51 @@ costiPerMotoreRataEconomia() {
         this.snapshotFormCliente() !== this.clienteFormSnapshot;
     },
 
+    snapshotFormEconomia() {
+      const {
+        clienteRicerca,
+        ...form
+      } = this.venditaEconomicaForm || {};
+
+      return JSON.stringify({
+        modalita: this.modalitaEconomia,
+        clienteId: this.clienteEconomiaSelezionato?.id || null,
+        venditaId: this.venditaEconomicaAttiva?.id || null,
+        pagamentoPrevistoId: this.pagamentoPrevistoId || null,
+        form
+      });
+    },
+
+    economiaFormModificato() {
+      return this.view === 'economia' &&
+        this.economiaFormSnapshot !== null &&
+        this.snapshotFormEconomia() !== this.economiaFormSnapshot;
+    },
+
+    aggiornaSnapshotEconomia() {
+      this.economiaFormSnapshot = this.snapshotFormEconomia();
+    },
+
     confermaUscitaFormCliente() {
-      return !this.clienteFormModificato() || globalThis.confirm(
-        'Hai modifiche non salvate. Vuoi abbandonare il form?'
-      );
+      if (
+        this.clienteFormModificato() &&
+        !globalThis.confirm(
+          'Hai modifiche non salvate. Se esci perderai quanto inserito. Vuoi uscire?'
+        )
+      ) {
+        return false;
+      }
+
+      if (
+        this.economiaFormModificato() &&
+        !globalThis.confirm(
+          'Hai modifiche non salvate nella vendita o nell’incasso. Se esci perderai quanto inserito. Vuoi uscire?'
+        )
+      ) {
+        return false;
+      }
+
+      return true;
     },
 
     annullaFormCliente() {
