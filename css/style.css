@@ -191,6 +191,24 @@ h2{font-size:14px;font-weight:800;letter-spacing:-.005em;margin:22px 0 10px}
 @media (prefers-reduced-motion: reduce){
   .skeleton-block{animation:none}
 }
+
+/* --- skeleton pipeline (kanban a slide) --- */
+.skeleton-pipeline-card{
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:var(--card);
+  padding:16px;
+}
+.skeleton-pipeline-head{display:grid;grid-template-columns:minmax(0,1fr) 18px;align-items:center;gap:10px}
+.skeleton-pipeline-title{width:60%;height:15px}
+.skeleton-pipeline-sub{width:40%;height:9px;margin-top:6px}
+.skeleton-pipeline-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
+.skeleton-pipeline-info > div{padding:11px 12px;border-radius:12px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.skeleton-pipeline-info .skeleton-label{width:55%;height:7px}
+.skeleton-pipeline-info .skeleton-value{width:75%;height:11px}
+.skeleton-pipeline-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
+.skeleton-pipeline-pill{width:40%;height:28px;border-radius:10px}
+.skeleton-pipeline-select{width:135px;height:36px;border-radius:10px}
 .cc-next{font-size:11.5px;color:var(--muted);font-weight:600}
 .cc-next.urg-ritardo{color:#b3261e}
 .cc-next.urg-vicino{color:#7a5b00}
