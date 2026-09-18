@@ -15116,158 +15116,213 @@ html[data-theme="dark"] .economy-create-client{
 
 
 /* ==========================================================
-   PROFILO PERSONALE DESKTOP V3 - DENSITA + GERARCHIA
+   PROFILO PERSONALE DESKTOP V4 - WORKSPACE
    ========================================================== */
 
 @media (min-width:1000px){
 
   .profile-view.is-personal-profile .topbar,
   .profile-view.is-personal-profile .content{
-    width:min(980px,calc(100% - 96px));
+    width:min(1120px,calc(100% - 80px));
+    margin-left:auto;
+    margin-right:auto;
   }
 
   .profile-view.is-personal-profile .profile-topbar{
-    padding:20px 0 14px;
+    padding:24px 0 20px;
   }
 
   .profile-view.is-personal-profile .profile-topbar h1{
-    font-size:18px;
+    font-size:20px;
   }
 
   .profile-view.is-personal-profile .profile-content{
-    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-    gap:14px;
-    padding-top:0;
+    display:grid;
+    grid-template-columns:340px minmax(0,1fr);
+    grid-template-areas:
+      "hero theme"
+      "hero menu"
+      "editor editor"
+      "crop crop"
+      "error error";
+    gap:16px 18px;
+    align-items:stretch;
+    padding-top:4px;
+    padding-bottom:48px;
   }
 
-  /* HERO PIU' DENSA */
+  /* PROFILO SINISTRA */
   .profile-view.is-personal-profile .profile-hero-card{
-    min-height:108px;
-    padding:18px 20px;
-    gap:18px;
-    border-radius:18px;
+    grid-area:hero;
+    min-height:390px;
+    margin:0;
+    padding:32px 28px;
+    border-radius:22px;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:20px;
+
+    text-align:center;
   }
 
   .profile-view.is-personal-profile .profile-avatar-edit{
-    width:68px;
-    height:68px;
-    flex-basis:68px;
-    font-size:25px;
+    width:112px;
+    height:112px;
+    flex:0 0 112px;
+    font-size:38px;
   }
 
   .profile-view.is-personal-profile .profile-avatar-edit i{
-    width:24px;
-    height:24px;
-    font-size:15px;
+    width:32px;
+    height:32px;
+    right:2px;
+    bottom:2px;
+    font-size:18px;
   }
 
   .profile-view.is-personal-profile .profile-personal-identity{
-    gap:4px;
+    width:100%;
+    display:grid;
+    justify-items:center;
+    gap:8px;
+  }
+
+  .profile-view.is-personal-profile .profile-name-row{
+    justify-content:center;
   }
 
   .profile-view.is-personal-profile .profile-name-row>strong{
-    font-size:19px;
+    font-size:24px;
+    line-height:1.05;
+    letter-spacing:-.035em;
   }
 
   .profile-view.is-personal-profile .profile-personal-identity>small{
-    font-size:10.5px;
+    font-size:12px;
   }
 
   .profile-view.is-personal-profile .profile-role{
     margin-top:2px;
-    padding:4px 9px;
-    font-size:8px;
+    padding:6px 11px;
+    font-size:9px;
   }
 
-  /* PANNELLI SECONDARI */
-  .profile-view.is-personal-profile .profile-theme-group,
-  .profile-view.is-personal-profile .profile-menu{
-    border-radius:18px;
+  .profile-view.is-personal-profile .profile-photo-actions{
+    justify-content:center;
+    margin:4px 0 0;
   }
 
+  /* ASPETTO DESTRA */
   .profile-view.is-personal-profile .profile-theme-group{
-    padding:18px;
-    gap:13px;
+    grid-area:theme;
+    margin:0;
+    padding:22px;
+    border:1px solid var(--line);
+    border-radius:22px;
+    background:var(--card);
+    gap:16px;
   }
 
   .profile-view.is-personal-profile .admin-profile-group-title{
     display:flex;
-    align-items:center;
+    align-items:flex-end;
     justify-content:space-between;
-    gap:12px;
+    gap:14px;
+    margin:0;
   }
 
-  .profile-view.is-personal-profile
-  .admin-profile-group-title>span{
-    font-size:8px;
+  .profile-view.is-personal-profile .admin-profile-group-title>span{
+    font-size:9px;
     letter-spacing:.12em;
   }
 
-  .profile-view.is-personal-profile
-  .admin-profile-group-title>strong{
-    font-size:9px;
+  .profile-view.is-personal-profile .admin-profile-group-title>strong{
+    font-size:10px;
     color:var(--muted);
   }
 
-  /* TEMA PIU' COMPATTO */
   .profile-view.is-personal-profile .theme-selector{
-    gap:8px;
+    gap:10px;
   }
 
   .profile-view.is-personal-profile .theme-selector>button{
-    min-height:88px;
-    padding:12px 8px;
-    border-radius:14px;
+    min-height:116px;
+    padding:16px 12px;
+    border-radius:16px;
+    gap:6px;
   }
 
   .profile-view.is-personal-profile .theme-selector-icon{
-    width:30px;
-    height:30px;
-    border-radius:9px;
+    width:38px;
+    height:38px;
+    border-radius:11px;
   }
 
   .profile-view.is-personal-profile .theme-selector-icon svg{
-    width:15px;
-    height:15px;
+    width:19px;
+    height:19px;
   }
 
   .profile-view.is-personal-profile .theme-selector strong{
-    font-size:10px;
+    font-size:12px;
   }
 
   .profile-view.is-personal-profile .theme-selector small{
-    font-size:8px;
+    font-size:9px;
   }
 
-  /* IMPOSTAZIONI PIU' PULITE */
+  .profile-view.is-personal-profile .theme-selector>button.on{
+    border-color:var(--lime);
+    box-shadow:inset 0 0 0 1px var(--lime);
+  }
+
+  .profile-view.is-personal-profile
+  .theme-selector>button.on .theme-selector-icon{
+    background:var(--lime);
+    color:#111;
+  }
+
+  /* IMPOSTAZIONI DESTRA */
+  .profile-view.is-personal-profile .profile-menu{
+    grid-area:menu;
+    margin:0;
+    padding:0;
+    overflow:hidden;
+    border-radius:22px;
+    align-self:stretch;
+  }
+
   .profile-view.is-personal-profile .profile-menu button{
-    min-height:57px;
-    padding:13px 16px;
-    transition:
-      background .15s var(--ease),
-      padding-left .15s var(--ease);
-  }
-
-  .profile-view.is-personal-profile .profile-menu button:hover{
-    padding-left:19px;
+    min-height:68px;
+    padding:16px 20px;
   }
 
   .profile-view.is-personal-profile .profile-menu button>span{
-    font-size:11.5px;
+    font-size:13px;
     font-weight:750;
   }
 
   .profile-view.is-personal-profile .profile-menu button strong{
-    font-size:9px;
+    font-size:10px;
   }
 
-  .profile-view.is-personal-profile
-  .profile-menu .profile-account-row strong{
-    gap:6px;
+  .profile-view.is-personal-profile .profile-menu button:hover{
+    background:var(--paper-2);
   }
 
-  /* riduce il vuoto percepito sotto */
-  .profile-view.is-personal-profile .content{
-    align-content:start;
+  /* EDITOR */
+  .profile-view.is-personal-profile .profile-name-editor{
+    grid-area:editor;
+  }
+
+  .profile-view.is-personal-profile .profile-crop-panel{
+    grid-area:crop;
+  }
+
+  .profile-view.is-personal-profile .profile-menu + .err{
+    grid-area:error;
   }
 }
