@@ -205,6 +205,160 @@ h2{font-size:14px;font-weight:800;letter-spacing:-.005em;margin:22px 0 10px}
 .empty .glyph svg{width:20px;height:20px}
 .empty p{font-size:13.5px;font-weight:600;line-height:1.5}
 
+/* Scheda cliente v2 - mini cruscotto operativo */
+.client-detail-hero{
+  margin-bottom:14px;
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:var(--card);
+}
+
+.client-detail-hero-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+}
+
+.client-detail-identity{
+  min-width:0;
+  display:grid;
+  gap:4px;
+}
+
+.client-detail-identity>span{
+  font-size:8px;
+  line-height:1;
+  font-weight:850;
+  letter-spacing:.11em;
+  color:var(--muted);
+}
+
+.client-detail-identity h1{
+  margin:0;
+  overflow-wrap:anywhere;
+  font-size:22px;
+  line-height:1.05;
+  letter-spacing:-.035em;
+}
+
+.client-detail-subtitle{
+  min-width:0;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:5px 8px;
+  margin-top:2px;
+}
+
+.client-detail-subtitle span{
+  color:var(--muted);
+  font-size:10px;
+  font-weight:650;
+}
+
+.client-detail-subtitle strong{
+  font-size:10px;
+  font-weight:800;
+}
+
+.client-detail-actions{
+  flex:none;
+  display:grid;
+  justify-items:end;
+  gap:8px;
+}
+
+.client-detail-actions>div{
+  display:flex;
+  gap:6px;
+}
+
+.client-detail-delete{
+  color:var(--danger);
+}
+
+.client-detail-dashboard{
+  display:grid;
+  grid-template-columns:.85fr 1.3fr 1.05fr;
+  margin-top:15px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:rgba(17,17,17,.018);
+}
+
+.client-detail-dashboard>div{
+  min-width:0;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:3px;
+}
+
+.client-detail-dashboard>div+div{
+  border-left:1px solid var(--line);
+}
+
+.client-detail-dashboard>div>span{
+  color:var(--muted);
+  font-size:7px;
+  line-height:1;
+  font-weight:850;
+  letter-spacing:.08em;
+}
+
+.client-detail-dashboard>div>strong{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:11px;
+  line-height:1.25;
+}
+
+.client-detail-dashboard>div>strong em{
+  color:var(--muted);
+  font-size:8px;
+  font-style:normal;
+  font-weight:700;
+}
+
+.client-detail-dashboard>div>small{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:var(--muted);
+  font-size:7.5px;
+  line-height:1.2;
+  font-weight:650;
+}
+
+html[data-theme="dark"] .client-detail-dashboard{
+  background:rgba(255,255,255,.025);
+}
+
+@media(max-width:390px){
+  .client-detail-hero{
+    padding:14px;
+  }
+
+  .client-detail-identity h1{
+    font-size:20px;
+  }
+
+  .client-detail-dashboard>div{
+    padding:9px 7px;
+  }
+
+  .client-detail-dashboard>div>strong{
+    font-size:10px;
+  }
+}
+
 /* --- scheda cliente --- */
 .stack-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:18px}
 .stack-card dl{display:grid;grid-template-columns:auto 1fr;column-gap:16px}
@@ -14409,3 +14563,13 @@ html[data-theme="dark"] .payment-history-action:hover{
 
 }
 
+
+/* Scheda cliente v2 - azione brief finale */
+.client-detail-footer-action{
+  margin-top:6px;
+  padding-bottom:12px;
+}
+
+.client-detail-footer-action .btn{
+  width:100%;
+}

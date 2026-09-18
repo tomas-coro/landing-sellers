@@ -5570,10 +5570,13 @@ costiPerMotoreRataEconomia() {
       this.confermaEliminazione = false;
       const cliente = this.clienteSelezionato();
       this.schedaAperture = {
-        stato: true,
-        pacchetto: !!(cliente.importo_abbonamento != null || cliente.nome_pacchetto),
+        stato: false,
+        pacchetto: !!(
+          cliente.importo_abbonamento != null ||
+          cliente.nome_pacchetto
+        ),
         contatti: false,
-        attivita: true,
+        attivita: false,
         note: false
       };
       const { data, error } = await window.supabaseClient
