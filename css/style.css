@@ -15139,7 +15139,7 @@ html[data-theme="dark"] .economy-create-client{
 }
 
 /* ==========================================================
-   PIPELINE DESKTOP V2 - TRUE KANBAN
+   PIPELINE DESKTOP V3 - TRUE KANBAN
    Mobile mantiene navigazione a singola fase.
    ========================================================== */
 
@@ -15149,139 +15149,226 @@ html[data-theme="dark"] .economy-create-client{
 
 @media (min-width:1000px){
 
+  .pipeline-view{
+    overflow:visible;
+  }
+
+  /*
+   * Centro il workspace nell'area realmente disponibile
+   * tenendo conto della rail desktop da 88px.
+   */
+  .pipeline-view .pipeline-topbar,
+  .pipeline-view .pipeline-scroll-v2{
+    width:min(
+      1320px,
+      calc(100% - var(--desktop-rail-w) - 64px)
+    );
+    margin-left:auto;
+    margin-right:auto;
+    position:relative;
+    left:calc(var(--desktop-rail-w) / 2);
+  }
+
+  /* HEADER */
   .pipeline-view .pipeline-topbar{
-    min-height:68px;
+    min-height:72px;
     display:grid;
-    grid-template-columns:auto 1fr auto;
+    grid-template-columns:auto minmax(0,1fr) auto;
     align-items:center;
-    gap:24px;
-    margin-bottom:16px;
+    gap:22px;
+    padding:0;
+    margin-bottom:14px;
+  }
+
+  .pipeline-view .pipeline-topbar > div{
+    text-align:left;
   }
 
   .pipeline-desktop-heading{
     display:grid;
-    gap:2px;
+    justify-self:start;
+    gap:3px;
   }
 
   .pipeline-desktop-heading>span{
     color:var(--muted);
     font-size:8px;
+    line-height:1;
     font-weight:850;
-    letter-spacing:.12em;
+    letter-spacing:.13em;
   }
 
   .pipeline-desktop-heading>strong{
-    font-size:22px;
-    line-height:1.05;
-    letter-spacing:-.025em;
+    font-size:24px;
+    line-height:1;
+    letter-spacing:-.035em;
   }
 
   .pipeline-client-count{
+    min-width:70px;
+    min-height:48px;
+    padding:7px 11px;
     display:grid;
-    justify-items:end;
-    gap:0;
+    grid-template-columns:auto auto;
+    align-items:center;
+    justify-content:end;
+    gap:8px;
+    border:1px solid var(--line);
+    border-radius:14px;
+    background:var(--card);
   }
 
   .pipeline-client-count>span{
+    margin:0;
     color:var(--muted);
-    font-size:8px;
+    font-size:7px;
+    line-height:1;
     font-weight:850;
-    letter-spacing:.12em;
+    letter-spacing:.11em;
   }
 
   .pipeline-client-count>h1{
     margin:0;
-    font-size:22px;
+    font-size:20px;
     line-height:1;
   }
 
-  /* Il selettore di fase serve al mobile.
-     Su desktop tutte le fasi sono già visibili. */
+  /* Il navigatore a fase singola resta mobile. */
   .pipeline-view .pipeline-stage-nav{
     display:none;
   }
 
+  /* BOARD */
   .pipeline-view .pipeline-scroll-v2{
-    width:min(1320px,calc(100% - 64px));
+    display:grid;
     grid-template-columns:repeat(4,minmax(0,1fr));
-    gap:14px;
+    gap:12px;
     align-items:start;
+    overflow:visible;
+    scroll-snap-type:none;
+    padding:0 0 44px;
   }
 
   .pipeline-view .pipeline-slide{
+    width:auto;
     min-width:0;
+    padding:0 !important;
+    scroll-snap-align:none;
   }
 
+  /* COLUMN HEADER */
   .pipeline-view .pipeline-slide-header{
-    min-height:54px;
-    margin-bottom:10px;
-    padding:11px 13px;
-    border-radius:15px;
+    position:relative;
+    min-height:50px;
+    margin-bottom:9px;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:14px;
+    background:var(--card);
+  }
+
+  .pipeline-view .pipeline-slide-header::before{
+    content:"";
+    position:absolute;
+    left:12px;
+    right:44px;
+    bottom:-1px;
+    height:2px;
+    border-radius:999px;
+    background:var(--lime);
+    opacity:.5;
   }
 
   .pipeline-view .pipeline-slide-header>div{
-    display:grid;
-    gap:2px;
+    min-width:0;
   }
 
   .pipeline-view .pipeline-slide-header>div>span{
-    font-size:8px;
-    letter-spacing:.08em;
-    text-transform:uppercase;
+    display:none;
   }
 
   .pipeline-view .pipeline-slide-header>div>strong{
+    margin:0;
     font-size:14px;
     line-height:1.1;
   }
 
   .pipeline-view .pipeline-count{
-    width:30px;
-    height:30px;
-    min-width:30px;
+    width:28px;
+    height:28px;
+    min-width:28px;
+    border-radius:10px;
+    font-size:10px;
   }
 
+  /* CARDS */
   .pipeline-view .pipeline-cards-v2{
-    gap:10px;
+    display:grid;
+    gap:9px;
   }
 
   .pipeline-view .pipeline-card-v2{
-    padding:14px;
-    border-radius:16px;
+    padding:13px;
+    border-radius:15px;
+    box-shadow:none;
   }
 
   .pipeline-view .pipeline-card-head{
-    margin-bottom:11px;
+    margin:0;
+    grid-template-columns:minmax(0,1fr) 24px;
+    gap:8px;
   }
 
   .pipeline-view .pipeline-card-head strong{
     font-size:15px;
-    line-height:1.15;
+    line-height:1.12;
+    letter-spacing:-.015em;
+  }
+
+  .pipeline-view .pipeline-card-head small{
+    margin-top:4px;
+    font-size:10px;
+    line-height:1.2;
+  }
+
+  .pipeline-view .pipeline-card-arrow{
+    width:24px;
+    height:24px;
+    display:grid;
+    place-items:center;
+    border-radius:8px;
+    background:var(--surface);
+    font-size:18px;
   }
 
   .pipeline-view .pipeline-card-info{
     grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:7px;
+    gap:6px;
+    margin-top:11px;
   }
 
   .pipeline-view .pipeline-card-info>div{
-    min-height:58px;
-    padding:10px 11px;
+    min-height:54px;
+    padding:9px 10px;
+    border-radius:11px;
   }
 
   .pipeline-view .pipeline-card-info>div>span{
-    font-size:8px;
+    font-size:7.5px;
   }
 
   .pipeline-view .pipeline-card-info>div>strong{
-    font-size:10.5px;
-    line-height:1.25;
+    margin-top:3px;
+    font-size:10px;
+    line-height:1.22;
   }
 
+  /* CAMBIO STATO */
   .pipeline-view .pipeline-card-footer{
     justify-content:flex-end;
-    margin-top:10px;
-    padding-top:10px;
+    gap:0;
+    margin-top:9px;
+    padding-top:9px;
   }
 
   .pipeline-view .pipeline-status-pill{
@@ -15289,32 +15376,47 @@ html[data-theme="dark"] .economy-create-client{
   }
 
   .pipeline-view .pipeline-card-footer select{
-    width:100%;
-    min-height:38px;
-    padding:0 10px;
-    border-radius:10px;
-    font-size:10px;
+    width:min(158px,100%);
+    min-width:0;
+    max-width:none;
+    min-height:34px;
+    margin-left:auto;
+    padding:0 9px;
+    border-radius:9px;
+    font-size:9.5px;
   }
 
+  /* EMPTY COLUMN */
   .pipeline-view .pipeline-empty-v2{
-    min-height:105px;
-    padding:16px 14px;
-    gap:5px;
+    min-height:64px;
+    padding:12px 14px;
+    display:flex;
+    flex-direction:row;
+    justify-content:flex-start;
+    gap:9px;
+    border-radius:14px;
+    text-align:left;
   }
 
   .pipeline-view .pipeline-empty-icon{
-    width:32px;
-    height:32px;
-    margin-bottom:2px;
+    width:30px;
+    height:30px;
+    flex:0 0 30px;
+    margin:0;
+    border-radius:9px;
+  }
+
+  .pipeline-view .pipeline-empty-icon svg{
+    width:15px;
+    height:15px;
   }
 
   .pipeline-view .pipeline-empty-v2 strong{
-    font-size:11px;
+    margin:0;
+    font-size:10px;
   }
 
   .pipeline-view .pipeline-empty-v2 p{
-    max-width:220px;
-    font-size:9px;
-    line-height:1.35;
+    display:none;
   }
 }
