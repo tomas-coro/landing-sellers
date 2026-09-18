@@ -216,6 +216,73 @@
       </div>
     </div>
 
+    <!-- Command bar clienti (Cmd/Ctrl+K, solo desktop) -->
+    <button
+      type="button"
+      class="cmdk-trigger"
+      @click="apriCmdk()"
+      aria-label="Cerca cliente (Cmd+K)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <kbd>⌘K</kbd>
+    </button>
+
+    <div
+      class="cmdk-overlay"
+      :class="{ open: cmdkAperta }"
+      @click="if ($event.target === $el) chiudiCmdk()">
+
+      <div class="cmdk" role="dialog" aria-modal="true" aria-label="Cerca cliente">
+        <div class="cmdk-input-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input
+            id="cmdkInput"
+            type="text"
+            placeholder="Cerca un cliente..."
+            x-model="cmdkTesto"
+            @input="cmdkIndiceAttivo = 0"
+            autocomplete="off">
+          <span class="cmdk-esc">esc</span>
+        </div>
+
+        <div class="cmdk-results">
+          <template x-if="risultatiCmdk().length === 0">
+            <div class="cmdk-empty" x-text="cmdkTesto ? 'Nessun cliente trovato per &quot;' + cmdkTesto + '&quot;' : 'Nessun cliente'"></div>
+          </template>
+
+          <template x-if="risultatiCmdk().length > 0">
+            <div>
+              <div class="cmdk-section-label">Clienti</div>
+              <template x-for="(c, i) in risultatiCmdk()" :key="c.id">
+                <div
+                  class="cmdk-row"
+                  :class="{ active: i === cmdkIndiceAttivo }"
+                  @click="selezionaCmdk(c)"
+                  @mouseenter="cmdkIndiceAttivo = i">
+
+                  <div class="cmdk-avatar" x-text="(c.nome || '').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+
+                  <div class="cmdk-row-body">
+                    <strong x-text="c.nome"></strong>
+                    <small x-text="c.nome_pacchetto || 'Senza pacchetto'"></small>
+                  </div>
+
+                  <span class="cmdk-pill" :class="'pill-' + c.stato" x-text="etichettaStatoCmdk(c)"></span>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+
+        <div class="cmdk-footer">
+          <div class="keys">
+            <span><kbd>↑</kbd><kbd>↓</kbd> naviga</span>
+            <span><kbd>↵</kbd> apri scheda</span>
+          </div>
+          <span x-text="cmdkTesto ? risultatiCmdk().length + ' risultati' : clienti.length + ' clienti'"></span>
+        </div>
+      </div>
+    </div>
+
     <!-- TOAST: feedback non bloccante per azioni che oggi salvano senza alcun riscontro visivo -->
     <div class="toast-stack" aria-live="polite" aria-atomic="true">
       <template x-for="toast in toasts" :key="toast.id">
@@ -4542,8 +4609,25 @@
               Registra pagamento
             </button>
 
+            <div class="skeleton-payment-history" x-show="caricandoPagamentiCliente" aria-hidden="true">
+              <div class="skeleton-payment-row">
+                <div>
+                  <div class="skeleton-block skeleton-payment-amount"></div>
+                  <div class="skeleton-block skeleton-payment-date"></div>
+                </div>
+                <div class="skeleton-block skeleton-payment-pill"></div>
+              </div>
+              <div class="skeleton-payment-row">
+                <div>
+                  <div class="skeleton-block skeleton-payment-amount"></div>
+                  <div class="skeleton-block skeleton-payment-date"></div>
+                </div>
+                <div class="skeleton-block skeleton-payment-pill"></div>
+              </div>
+            </div>
+
             <div class="client-payment-history"
-              x-show="pagamentiCliente.length > 0">
+              x-show="!caricandoPagamentiCliente && pagamentiCliente.length > 0">
 
               <span class="client-payment-history-title">
                 Storico ultima vendita attiva
@@ -4584,7 +4668,7 @@
 
             <div
               class="client-payment-empty"
-              x-show="pagamentiCliente.length === 0">
+              x-show="!caricandoPagamentiCliente && pagamentiCliente.length === 0">
 
               Nessun pagamento registrato.
             </div>
@@ -4696,9 +4780,33 @@
             x-show="schedaAperture.attivita">
 
             <div
-              class="client-timeline-loading"
-              x-show="caricandoAttivitaCliente">
-              Caricamento attività...
+              class="skeleton-timeline"
+              x-show="caricandoAttivitaCliente"
+              aria-hidden="true">
+
+              <div class="skeleton-timeline-item">
+                <div class="skeleton-block skeleton-timeline-marker"></div>
+                <div class="skeleton-timeline-content">
+                  <div class="skeleton-block skeleton-timeline-date"></div>
+                  <div class="skeleton-block skeleton-timeline-title"></div>
+                </div>
+              </div>
+
+              <div class="skeleton-timeline-item">
+                <div class="skeleton-block skeleton-timeline-marker"></div>
+                <div class="skeleton-timeline-content">
+                  <div class="skeleton-block skeleton-timeline-date"></div>
+                  <div class="skeleton-block skeleton-timeline-title"></div>
+                </div>
+              </div>
+
+              <div class="skeleton-timeline-item">
+                <div class="skeleton-block skeleton-timeline-marker"></div>
+                <div class="skeleton-timeline-content">
+                  <div class="skeleton-block skeleton-timeline-date"></div>
+                  <div class="skeleton-block skeleton-timeline-title"></div>
+                </div>
+              </div>
             </div>
 
             <div

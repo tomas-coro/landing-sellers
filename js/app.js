@@ -368,6 +368,9 @@ function appState() {
     filtroVenditoreNome: '',
     filtroTesto: '',
     filtroStato: '',
+    cmdkAperta: false,
+    cmdkTesto: '',
+    cmdkIndiceAttivo: 0,
     filtroSoloRitardo: false,
     ordinamento: 'prossimo_contatto',
     ordinamentoDesc: false,
@@ -689,6 +692,30 @@ function appState() {
 
         event.preventDefault();
         event.returnValue = '';
+      });
+
+      window.addEventListener('keydown', event => {
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+          if (!this.cmdkDesktop()) return;
+          event.preventDefault();
+          this.cmdkAperta ? this.chiudiCmdk() : this.apriCmdk();
+          return;
+        }
+
+        if (!this.cmdkAperta) return;
+
+        if (event.key === 'Escape') {
+          this.chiudiCmdk();
+        } else if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          this.muoviCmdk(1);
+        } else if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          this.muoviCmdk(-1);
+        } else if (event.key === 'Enter') {
+          event.preventDefault();
+          this.confermaCmdk();
+        }
       });
 
       this.sessione = await getSessioneCorrente();
@@ -4030,6 +4057,59 @@ costiPerMotoreRataEconomia() {
           || (c.referente || '').toLowerCase().includes(testo);
       });
       return this.ordinaClienti(risultato);
+    },
+
+    cmdkDesktop() {
+      return window.matchMedia('(min-width:721px)').matches;
+    },
+
+    apriCmdk() {
+      if (!this.cmdkDesktop()) return;
+      this.cmdkAperta = true;
+      this.cmdkTesto = '';
+      this.cmdkIndiceAttivo = 0;
+      this.$nextTick(() => {
+        document.getElementById('cmdkInput')?.focus();
+      });
+    },
+
+    chiudiCmdk() {
+      this.cmdkAperta = false;
+    },
+
+    risultatiCmdk() {
+      const testo = this.cmdkTesto.trim().toLowerCase();
+      const lista = this.clienti.filter(c => {
+        if (!testo) return true;
+        return (c.nome || '').toLowerCase().includes(testo)
+          || (c.referente || '').toLowerCase().includes(testo);
+      });
+      return lista.slice(0, 8);
+    },
+
+    etichettaStatoCmdk(cliente) {
+      const stato = this.statiPipeline().find(s => s.valore === cliente.stato);
+      return stato ? stato.label : '-';
+    },
+
+    muoviCmdk(delta) {
+      const risultati = this.risultatiCmdk();
+      if (!risultati.length) return;
+      this.cmdkIndiceAttivo = Math.max(
+        0,
+        Math.min(risultati.length - 1, this.cmdkIndiceAttivo + delta)
+      );
+    },
+
+    selezionaCmdk(cliente) {
+      if (!cliente) return;
+      this.chiudiCmdk();
+      this.apriScheda(cliente.id);
+    },
+
+    confermaCmdk() {
+      const risultati = this.risultatiCmdk();
+      this.selezionaCmdk(risultati[this.cmdkIndiceAttivo]);
     },
 
     clientiPagina() {
