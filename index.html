@@ -354,25 +354,29 @@
             <div class="home-contract-metrics" :class="{ 'is-developer': profilo.ruolo === 'developer' }">
               <div class="home-contract-metric" x-show="profilo.ruolo !== 'developer'">
                 <span>Venduto</span>
-                <strong x-text="formattaEuro(statisticheVenditore.venduto)"></strong>
+                <strong x-show="!caricandoStatistiche" x-text="formattaEuro(statisticheVenditore.venduto)"></strong>
+                <div class="skeleton-block skeleton-metric-value" x-show="caricandoStatistiche" aria-hidden="true"></div>
                 <small>Valore contratti</small>
               </div>
 
               <div class="home-contract-metric">
                 <span x-text="profilo.ruolo === 'developer' ? 'La tua parte' : 'Generato'"></span>
-                <strong x-text="formattaEuro(statisticheVenditore.generato)"></strong>
+                <strong x-show="!caricandoStatistiche" x-text="formattaEuro(statisticheVenditore.generato)"></strong>
+                <div class="skeleton-block skeleton-metric-value" x-show="caricandoStatistiche" aria-hidden="true"></div>
                 <small>Quota maturata</small>
               </div>
 
               <div class="home-contract-metric">
                 <span>Incassato</span>
-                <strong x-text="formattaEuro(statisticheVenditore.incassato)"></strong>
+                <strong x-show="!caricandoStatistiche" x-text="formattaEuro(statisticheVenditore.incassato)"></strong>
+                <div class="skeleton-block skeleton-metric-value" x-show="caricandoStatistiche" aria-hidden="true"></div>
                 <small>Quota già ricevuta</small>
               </div>
 
               <div class="home-contract-metric" x-show="profilo.ruolo !== 'developer'">
                 <span>Media vendita</span>
-                <strong x-text="formattaEuro(statisticheVenditore.mediaVendita)"></strong>
+                <strong x-show="!caricandoStatistiche" x-text="formattaEuro(statisticheVenditore.mediaVendita)"></strong>
+                <div class="skeleton-block skeleton-metric-value" x-show="caricandoStatistiche" aria-hidden="true"></div>
                 <small>Per contratto</small>
               </div>
             </div>

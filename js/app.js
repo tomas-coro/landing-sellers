@@ -382,6 +382,7 @@ function appState() {
     agendaDataSelezionata: new Date().toISOString().slice(0, 10),
 
     pipelineIndice: 0,
+    caricandoStatistiche: true,
     statisticheVenditore: {
       generato: 0,
       incassato: 0,
@@ -4050,6 +4051,7 @@ costiPerMotoreRataEconomia() {
     },
 
     async caricaStatisticheVenditore() {
+      this.caricandoStatistiche = true;
       this.statisticheVenditore = {
         generato: 0,
         incassato: 0,
@@ -4058,47 +4060,51 @@ costiPerMotoreRataEconomia() {
         numeroVendite: 0
       };
 
-      const partecipazioni = await window.supabaseClient
-        .from('vendita_partecipanti')
-        .select('vendita_id,quota_finale')
-        .eq('profilo_id', this.sessione.user.id);
+      try {
+        const partecipazioni = await window.supabaseClient
+          .from('vendita_partecipanti')
+          .select('vendita_id,quota_finale')
+          .eq('profilo_id', this.sessione.user.id);
 
-      if (partecipazioni.error) {
-        console.warn('Statistiche economiche non disponibili:', partecipazioni.error.message);
-        return;
+        if (partecipazioni.error) {
+          console.warn('Statistiche economiche non disponibili:', partecipazioni.error.message);
+          return;
+        }
+
+        const quotePerVendita = {};
+        (partecipazioni.data || []).forEach(p => {
+          quotePerVendita[p.vendita_id] = (quotePerVendita[p.vendita_id] || 0) + (Number(p.quota_finale) || 0);
+        });
+
+        const ids = Object.keys(quotePerVendita);
+        if (!ids.length) return;
+
+        const [vendite, pagamenti] = await Promise.all([
+          window.supabaseClient
+            .from('vendite')
+            .select('id,cliente_id,importo_vendita,stato,venditore_id')
+            .in('id', ids),
+          window.supabaseClient
+            .from('pagamenti')
+            .select('vendita_id,importo,stato')
+            .in('vendita_id', ids)
+        ]);
+
+        if (vendite.error || pagamenti.error) {
+          console.warn('Statistiche economiche non disponibili:', (vendite.error || pagamenti.error).message);
+          return;
+        }
+
+        this.statisticheVenditore = calcolaStatisticheVenditore(
+          vendite.data || [],
+          pagamenti.data || [],
+          quotePerVendita,
+          this.sessione.user.id,
+          Object.fromEntries(this.clienti.map(cliente => [cliente.id, cliente]))
+        );
+      } finally {
+        this.caricandoStatistiche = false;
       }
-
-      const quotePerVendita = {};
-      (partecipazioni.data || []).forEach(p => {
-        quotePerVendita[p.vendita_id] = (quotePerVendita[p.vendita_id] || 0) + (Number(p.quota_finale) || 0);
-      });
-
-      const ids = Object.keys(quotePerVendita);
-      if (!ids.length) return;
-
-      const [vendite, pagamenti] = await Promise.all([
-        window.supabaseClient
-          .from('vendite')
-          .select('id,cliente_id,importo_vendita,stato,venditore_id')
-          .in('id', ids),
-        window.supabaseClient
-          .from('pagamenti')
-          .select('vendita_id,importo,stato')
-          .in('vendita_id', ids)
-      ]);
-
-      if (vendite.error || pagamenti.error) {
-        console.warn('Statistiche economiche non disponibili:', (vendite.error || pagamenti.error).message);
-        return;
-      }
-
-      this.statisticheVenditore = calcolaStatisticheVenditore(
-        vendite.data || [],
-        pagamenti.data || [],
-        quotePerVendita,
-        this.sessione.user.id,
-        Object.fromEntries(this.clienti.map(cliente => [cliente.id, cliente]))
-      );
     },
 
     eventiOggiHome() {
