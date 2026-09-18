@@ -5717,6 +5717,8 @@ html[data-theme="dark"] .client-status-strip{
   --danger-bg:#fdecea;
   --warning:#7a5b00;
   --warning-bg:#fbf3d9;
+  --success:#1e7d32;
+  --success-bg:#e6f4ea;
   --surface-overlay:rgba(255,255,255,.94);
 }
 
@@ -8975,7 +8977,7 @@ html[data-theme="dark"] .flow-choice-card{
 
 
   /* ========================================================
-     PIPELINE — KANBAN DESKTOP
+     PIPELINE - KANBAN DESKTOP
      ======================================================== */
 
   .pipeline-view{
@@ -9076,7 +9078,7 @@ html[data-theme="dark"] .flow-choice-card{
 
 
   /* ========================================================
-     "+" — DRAWER DESKTOP DA SINISTRA
+     "+" - DRAWER DESKTOP DA SINISTRA
      ======================================================== */
 
   .quick-action-overlay{
@@ -14631,4 +14633,123 @@ html[data-theme="dark"] .payment-history-action:hover{
 
 html[data-theme="dark"] .economy-create-client{
   background:rgba(200,255,61,.035);
+}
+
+/* ==========================================================
+   TOAST
+   Feedback non bloccante per azioni che oggi salvano senza
+   nessun riscontro visivo (es. modifica cliente, profilo,
+   cambio stato pipeline). Non sostituisce i confirm() nativi
+   sulle azioni distruttive, resta un livello a parte.
+   ========================================================== */
+
+.toast-stack{
+  position:fixed;
+  left:50%;
+  bottom:calc(20px + env(safe-area-inset-bottom));
+  transform:translateX(-50%);
+  display:flex;
+  flex-direction:column-reverse;
+  gap:10px;
+  z-index:4000;
+  width:calc(100% - 32px);
+  max-width:380px;
+  pointer-events:none;
+}
+
+.toast{
+  position:relative;
+  pointer-events:auto;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:13px 34px 13px 14px;
+  box-shadow:0 8px 24px rgba(0,0,0,.18);
+  font-family:var(--sans);
+  font-size:14px;
+  font-weight:500;
+  color:var(--ink);
+  animation:toast-in .22s var(--ease);
+}
+
+.toast.toast-leaving{
+  animation:toast-out .2s var(--ease) forwards;
+}
+
+@keyframes toast-in{
+  from{opacity:0;transform:translateY(14px) scale(.96);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+
+@keyframes toast-out{
+  from{opacity:1;transform:translateY(0) scale(1);}
+  to{opacity:0;transform:translateY(-6px) scale(.97);}
+}
+
+.toast-icon{
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  font-weight:700;
+  margin-top:1px;
+}
+
+.toast.success .toast-icon{background:var(--success-bg);color:var(--success);}
+.toast.error .toast-icon{background:var(--danger-bg);color:var(--danger);}
+
+.toast-msg{flex:1;line-height:1.4;}
+.toast-title{display:block;font-weight:700;margin-bottom:1px;}
+
+.toast-close{
+  position:absolute;
+  top:10px;
+  right:10px;
+  background:none;
+  border:none;
+  color:var(--muted);
+  cursor:pointer;
+  font-size:16px;
+  line-height:1;
+  padding:2px;
+}
+
+.toast-bar{
+  position:absolute;
+  left:12px;
+  right:12px;
+  bottom:0;
+  height:2px;
+  background:var(--line);
+  border-radius:2px;
+  overflow:hidden;
+}
+
+.toast-bar-fill{
+  display:block;
+  height:100%;
+  width:100%;
+  transform-origin:left;
+  animation:toast-shrink 3.2s linear forwards;
+}
+
+.toast.success .toast-bar-fill{background:var(--success);}
+.toast.error .toast-bar-fill{background:var(--danger);}
+
+@keyframes toast-shrink{
+  from{transform:scaleX(1);}
+  to{transform:scaleX(0);}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .toast{animation:none;}
+  .toast.toast-leaving{animation:none;}
+  .toast-bar-fill{animation:none;}
 }

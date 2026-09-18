@@ -345,6 +345,10 @@ function appState() {
     emailInput: '',
     passwordInput: '',
 
+    // toast: feedback non bloccante per azioni che oggi salvano senza alcun riscontro visivo
+    toasts: [],
+    _toastId: 0,
+
     accountSlot: globalThis.window?.AccountSessions?.getActiveSlot() || 'personale',
     accountSwitcherAperto: false,
     accountSwitchInCorso: false,
@@ -628,6 +632,21 @@ function appState() {
           });
         }
       });
+    },
+
+    mostraToast(tipo, titolo, testo = '') {
+      const id = ++this._toastId;
+      this.toasts.push({ id, tipo, titolo, testo, uscita: false });
+      window.setTimeout(() => this.chiudiToast(id), 3200);
+    },
+
+    chiudiToast(id) {
+      const toast = this.toasts.find(t => t.id === id);
+      if (!toast || toast.uscita) return;
+      toast.uscita = true;
+      window.setTimeout(() => {
+        this.toasts = this.toasts.filter(t => t.id !== id);
+      }, 200);
     },
 
     async init() {
@@ -3436,6 +3455,7 @@ costiPerMotoreRataEconomia() {
         this.profiloPersonale = { ...this.profilo, email: this.sessione.user.email || '' };
         this.modificaInquadraturaAperta = false;
         this.modificaProfiloAperta = false;
+        this.mostraToast('success', 'Profilo aggiornato');
       } finally {
         this.profiloSalvando = false;
       }
@@ -3900,7 +3920,7 @@ costiPerMotoreRataEconomia() {
     etichettaDurataContrattoCliente(cliente) {
       const durata = Number(cliente?.durata_contratto_anni);
 
-      if (!(durata > 0)) return '—';
+      if (!(durata > 0)) return '-';
 
       return durata === 1
         ? '1 anno'
@@ -4379,6 +4399,7 @@ costiPerMotoreRataEconomia() {
       }
 
       await this.caricaClienti();
+      this.mostraToast('success', 'Stato aggiornato');
     },
 
     clienteAzioniRapide() {
@@ -5346,6 +5367,7 @@ costiPerMotoreRataEconomia() {
         if (idModificato) {
           this.clienteSelezionatoId = idModificato;
           this.view = 'scheda';
+          this.mostraToast('success', 'Cliente aggiornato');
           return;
         }
 

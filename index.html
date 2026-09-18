@@ -216,6 +216,21 @@
       </div>
     </div>
 
+    <!-- TOAST: feedback non bloccante per azioni che oggi salvano senza alcun riscontro visivo -->
+    <div class="toast-stack" aria-live="polite" aria-atomic="true">
+      <template x-for="toast in toasts" :key="toast.id">
+        <div class="toast" :class="[toast.tipo, toast.uscita ? 'toast-leaving' : '']">
+          <span class="toast-icon" x-text="toast.tipo === 'success' ? '✓' : '!'"></span>
+          <span class="toast-msg">
+            <span class="toast-title" x-text="toast.titolo"></span>
+            <template x-if="toast.testo"><span x-text="toast.testo"></span></template>
+          </span>
+          <button type="button" class="toast-close" aria-label="Chiudi" @click="chiudiToast(toast.id)">×</button>
+          <span class="toast-bar"><span class="toast-bar-fill"></span></span>
+        </div>
+      </template>
+    </div>
+
     <!-- BANNER AGGIORNAMENTO: appare sopra qualunque vista appena il service worker scarica una versione nuova -->
     <div x-show="aggiornamentoDisponibile" x-cloak class="update-bar">
       <span>Nuova versione disponibile</span>
@@ -582,7 +597,7 @@
                   x-show="
                     riepilogoPagamentoListaCliente(cliente).numeroVendite === 0
                   ">
-                  —
+                  -
                 </strong>
 
                 <div
@@ -4295,7 +4310,7 @@
                     clienteSelezionato()
                   ).numeroVendite === 0
                 ">
-                —
+                -
               </strong>
 
               <div
