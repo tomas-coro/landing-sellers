@@ -4129,6 +4129,7 @@
     <div
       class="flow-choice-overlay"
       x-show="clienteCreatoPromptAperto"
+      x-cloak
       x-transition.opacity
       @click.self="chiudiPromptClienteCreato()">
 
@@ -5621,7 +5622,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=92', {
+      navigator.serviceWorker.register('./service-worker.js?v=93', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
