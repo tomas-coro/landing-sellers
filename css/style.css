@@ -246,7 +246,7 @@ html[data-theme="dark"] .skeleton-payment-row{border-bottom-color:var(--line)}
 .skeleton-timeline-date{width:30%;height:8px}
 .skeleton-timeline-title{width:65%;height:12px}
 
-/* --- command bar clienti (Cmd/Ctrl+K, solo desktop) --- */
+/* --- command bar clienti (Cmd/Ctrl+/, solo desktop) --- */
 .cmdk-trigger{
   display:none;position:fixed;right:24px;bottom:24px;z-index:90;
   align-items:center;gap:8px;

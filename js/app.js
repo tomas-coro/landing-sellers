@@ -695,7 +695,7 @@ function appState() {
       });
 
       window.addEventListener('keydown', event => {
-        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        if ((event.metaKey || event.ctrlKey) && event.key === '/') {
           if (!this.cmdkDesktop()) return;
           event.preventDefault();
           this.cmdkAperta ? this.chiudiCmdk() : this.apriCmdk();
