@@ -634,10 +634,15 @@
             </div>
 
             <span
-              class="cc-next"
-              :class="'urg-' + classeUrgenza(cliente.prossimo_contatto)"
-              x-show="cliente.prossimo_contatto">
-              Prossimo contatto: <span x-text="cliente.prossimo_contatto"></span>
+              class="cc-next urg-ritardo"
+              x-show="
+                cliente.prossimo_contatto &&
+                classeUrgenza(cliente.prossimo_contatto) === 'ritardo'
+              ">
+              Contatto in ritardo ·
+              <span
+                x-text="formattaDataCompleta(cliente.prossimo_contatto)">
+              </span>
             </span>
           </div>
         </template>
@@ -4151,17 +4156,195 @@
         </button>
       </div>
       <div class="content">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:18px">
-          <h1 style="margin-bottom:0" x-text="clienteSelezionato().nome"></h1>
-          <div style="display:flex;gap:8px;flex:none">
-            <button type="button" class="iconbtn" @click="apriModificaCliente(clienteSelezionatoId)" aria-label="Modifica cliente">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            </button>
-            <button type="button" class="iconbtn" @click="confermaEliminazione = true" aria-label="Elimina cliente">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-            </button>
+        <section class="client-detail-hero">
+
+          <div class="client-detail-hero-head">
+
+            <div class="client-detail-identity">
+              <span>CLIENTE</span>
+
+              <h1 x-text="clienteSelezionato().nome"></h1>
+
+              <div class="client-detail-subtitle">
+                <span
+                  x-text="
+                    clienteSelezionato().nome_pacchetto ||
+                    'Pacchetto non specificato'
+                  ">
+                </span>
+
+                <strong
+                  x-text="etichettaImportoCliente(clienteSelezionato())">
+                </strong>
+              </div>
+            </div>
+
+            <div class="client-detail-actions">
+
+              <span
+                class="pill"
+                :class="'s-' + classeStato(clienteSelezionato().stato)">
+                <i></i>
+                <span
+                  x-text="formattaStato(clienteSelezionato().stato)">
+                </span>
+              </span>
+
+              <div>
+                <button
+                  type="button"
+                  class="iconbtn"
+                  @click="apriModificaCliente(clienteSelezionatoId)"
+                  aria-label="Modifica cliente">
+                  <svg viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  class="iconbtn client-detail-delete"
+                  @click="confermaEliminazione = true"
+                  aria-label="Elimina cliente">
+                  <svg viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18"/>
+                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  </svg>
+                </button>
+              </div>
+
+            </div>
           </div>
-        </div>
+
+          <div class="client-detail-dashboard">
+
+            <div>
+              <span>CONTRATTO</span>
+
+              <strong
+                x-text="
+                  etichettaDurataContrattoCliente(
+                    clienteSelezionato()
+                  )
+                ">
+              </strong>
+
+              <small
+                x-text="
+                  etichettaPeriodicitaContrattoCliente(
+                    clienteSelezionato()
+                  )
+                ">
+              </small>
+            </div>
+
+            <div class="client-detail-payment">
+              <span>INCASSATO</span>
+
+              <strong
+                x-show="
+                  riepilogoPagamentoListaCliente(
+                    clienteSelezionato()
+                  ).numeroVendite > 0
+                ">
+                <span
+                  x-text="
+                    formattaNumeroEuro(
+                      riepilogoPagamentoListaCliente(
+                        clienteSelezionato()
+                      ).incassato
+                    )
+                  ">
+                </span>
+
+                <em
+                  x-text="
+                    '/ ' +
+                    formattaNumeroEuro(
+                      riepilogoPagamentoListaCliente(
+                        clienteSelezionato()
+                      ).totaleVendite
+                    )
+                  ">
+                </em>
+              </strong>
+
+              <strong
+                x-show="
+                  riepilogoPagamentoListaCliente(
+                    clienteSelezionato()
+                  ).numeroVendite === 0
+                ">
+                —
+              </strong>
+
+              <div
+                class="client-payment-progress"
+                x-show="
+                  riepilogoPagamentoListaCliente(
+                    clienteSelezionato()
+                  ).numeroVendite > 0
+                ">
+                <i
+                  :style="{
+                    width:
+                      riepilogoPagamentoListaCliente(
+                        clienteSelezionato()
+                      ).percentualeIncassata + '%'
+                  }">
+                </i>
+              </div>
+
+              <small
+                x-text="
+                  riepilogoPagamentoListaCliente(
+                    clienteSelezionato()
+                  ).numeroVendite > 0
+                    ? (
+                        Math.round(
+                          riepilogoPagamentoListaCliente(
+                            clienteSelezionato()
+                          ).percentualeIncassata
+                        ) + '% pagato'
+                      )
+                    : 'Nessuna vendita'
+                ">
+              </small>
+            </div>
+
+            <div>
+              <span>PROSSIMA</span>
+
+              <strong
+                x-text="
+                  etichettaProssimaScadenzaCard(
+                    clienteSelezionato()
+                  )
+                ">
+              </strong>
+
+              <small
+                x-text="
+                  prossimaScadenzaCliente(clienteSelezionato())
+                    ? formattaDataCompleta(
+                        prossimaScadenzaCliente(
+                          clienteSelezionato()
+                        ).data
+                      )
+                    : 'Nessuna scadenza'
+                ">
+              </small>
+            </div>
+
+          </div>
+
+        </section>
         <p x-show="erroreScheda" x-text="erroreScheda" class="err" style="margin-bottom:14px"></p>
 
         <div class="client-quick-actions">
@@ -4221,32 +4404,13 @@
         </div>
 
         <div class="accordion-section">
-          <button type="button" class="accordion-header" :class="{ open: schedaAperture.stato }" @click="toggleAccordion('stato')">
-            <span>Stato</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div class="accordion-body" x-show="schedaAperture.stato">
-            <div class="stato-current">
-              <span class="lbl">Stato attuale</span>
-              <span class="pill" :class="'s-' + classeStato(clienteSelezionato().stato)"><i></i><span x-text="formattaStato(clienteSelezionato().stato)"></span></span>
-            </div>
-            <div class="stato-grid" style="margin-bottom:0">
-              <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'contattato' }" @click="cambiaStato('contattato')">Contattato</button>
-              <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'brief_mandato' }" @click="cambiaStato('brief_mandato')">Brief mandato</button>
-              <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'in_lavorazione' }" @click="cambiaStato('in_lavorazione')">In lavorazione</button>
-              <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'pubblicato' }" @click="cambiaStato('pubblicato')">Pubblicato</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="accordion-section">
           <button
             type="button"
             class="accordion-header"
             :class="{ open: schedaAperture.pacchetto }"
             @click="toggleAccordion('pacchetto')">
 
-            <span>Pacchetto e pagamento</span>
+            <span>Pagamenti e contratto</span>
 
             <div class="client-payment-head-right">
               <span
@@ -4269,21 +4433,45 @@
               <div>
                 <span>Totale</span>
                 <strong
-                  x-text="formattaEuro(totaleVenditaCliente())">
+                  x-text="
+                    formattaEuro(
+                      riepilogoPagamentoListaCliente(
+                        clienteSelezionato()
+                      ).totaleVendite
+                    )
+                  ">
                 </strong>
               </div>
 
               <div>
                 <span>Incassato</span>
                 <strong
-                  x-text="formattaEuro(totaleIncassatoCliente())">
+                  x-text="
+                    formattaEuro(
+                      riepilogoPagamentoListaCliente(
+                        clienteSelezionato()
+                      ).incassato
+                    )
+                  ">
                 </strong>
               </div>
 
               <div>
                 <span>Residuo</span>
                 <strong
-                  x-text="formattaEuro(residuoCliente())">
+                  x-text="
+                    formattaEuro(
+                      Math.max(
+                        0,
+                        riepilogoPagamentoListaCliente(
+                          clienteSelezionato()
+                        ).totaleVendite -
+                        riepilogoPagamentoListaCliente(
+                          clienteSelezionato()
+                        ).incassato
+                      )
+                    )
+                  ">
                 </strong>
               </div>
 
@@ -4300,7 +4488,7 @@
               x-show="pagamentiCliente.length > 0">
 
               <span class="client-payment-history-title">
-                Storico pagamenti
+                Storico ultima vendita attiva
               </span>
 
               <template x-for="p in pagamentiCliente" :key="p.id">
@@ -4384,6 +4572,25 @@
         </div>
 
         <div class="accordion-section">
+          <button type="button" class="accordion-header" :class="{ open: schedaAperture.stato }" @click="toggleAccordion('stato')">
+            <span>Stato cliente</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="accordion-body" x-show="schedaAperture.stato">
+            <div class="stato-current">
+              <span class="lbl">Stato attuale</span>
+              <span class="pill" :class="'s-' + classeStato(clienteSelezionato().stato)"><i></i><span x-text="formattaStato(clienteSelezionato().stato)"></span></span>
+            </div>
+            <div class="stato-grid" style="margin-bottom:0">
+              <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'contattato' }" @click="cambiaStato('contattato')">Contattato</button>
+              <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'brief_mandato' }" @click="cambiaStato('brief_mandato')">Brief mandato</button>
+              <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'in_lavorazione' }" @click="cambiaStato('in_lavorazione')">In lavorazione</button>
+              <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'pubblicato' }" @click="cambiaStato('pubblicato')">Pubblicato</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-section">
           <button type="button" class="accordion-header" :class="{ open: schedaAperture.contatti }"  @click="toggleAccordion('contatti')">
             <span>Contatti</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -4403,10 +4610,6 @@
           </div>
         </div>
 
-        <a href="https://landingevolution.it/brief.html" target="_blank" rel="noopener" class="btn btn-lime" style="margin-bottom:22px">
-          Manda a brief
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
-        </a>
         <div class="accordion-section client-timeline-section">
 
           <button
@@ -4503,6 +4706,21 @@
             <p x-show="note.length === 0" style="color:var(--muted);font-size:13.5px">Nessuna nota ancora.</p>
           </div>
         </div>
+        <div class="client-detail-footer-action">
+          <a
+            href="https://landingevolution.it/brief.html"
+            target="_blank"
+            rel="noopener"
+            class="btn btn-lime">
+            Manda a brief
+            <svg viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 17L17 7M9 7h8v8"/>
+            </svg>
+          </a>
+        </div>
+
       </div>
     </div>
 
@@ -5390,7 +5608,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=89', {
+      navigator.serviceWorker.register('./service-worker.js?v=90', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
