@@ -666,6 +666,101 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 .home-client-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding-top:8px;font-size:9.5px;color:var(--muted);font-weight:700}
 .home-client-meta strong{color:var(--ink)}
 
+.client-status-strip{
+  display:grid;
+  grid-template-columns:.82fr 1.25fr 1.05fr;
+  border:1px solid var(--line);
+  border-radius:14px;
+  overflow:hidden;
+  background:rgba(17,17,17,.018);
+}
+
+.client-status-cell{
+  min-width:0;
+  padding:10px 9px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:3px;
+}
+
+.client-status-cell + .client-status-cell{
+  border-left:1px solid var(--line);
+}
+
+.client-status-cell > span{
+  font-size:7px;
+  line-height:1;
+  font-weight:850;
+  letter-spacing:.08em;
+  color:var(--muted);
+}
+
+.client-status-cell > strong{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:11px;
+  line-height:1.25;
+  font-weight:800;
+  color:var(--ink);
+}
+
+.client-status-cell > strong em{
+  color:var(--muted);
+  font-size:8px;
+  font-style:normal;
+  font-weight:700;
+}
+
+.client-status-cell > small{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:7.5px;
+  line-height:1.2;
+  font-weight:650;
+  color:var(--muted);
+}
+
+.client-payment-progress{
+  width:100%;
+  height:3px;
+  overflow:hidden;
+  border-radius:999px;
+  background:var(--line);
+}
+
+.client-payment-progress > i{
+  display:block;
+  width:0;
+  height:100%;
+  border-radius:inherit;
+  background:var(--lime);
+  transition:width .2s ease;
+}
+
+html[data-theme="dark"] .client-status-strip{
+  background:rgba(255,255,255,.025);
+}
+
+@media (max-width:390px){
+  .client-status-cell{
+    padding:9px 7px;
+  }
+
+  .client-status-cell > strong{
+    font-size:10px;
+  }
+
+  .client-status-cell > strong em{
+    font-size:7px;
+  }
+}
+
+
 .home-empty{margin-top:26px;padding:28px 20px;border:1px solid var(--line);border-radius:20px;text-align:center;background:var(--card);display:flex;flex-direction:column;align-items:center}
 .home-empty-icon{width:52px;height:52px;border-radius:16px;background:var(--lime);display:grid;place-items:center;margin-bottom:15px}
 .home-empty-icon svg{width:25px;height:25px}

@@ -540,10 +540,97 @@
 
             <div class="home-client-meta">
               <span x-text="etichettaImportoCliente(cliente)"></span>
-              <span x-show="prossimaScadenzaCliente(cliente)">
-                <span x-text="prossimaScadenzaCliente(cliente)?.label"></span>
-                <strong x-text="formattaDataCompleta(prossimaScadenzaCliente(cliente)?.data)"></strong>
-              </span>
+            </div>
+
+            <div class="client-status-strip">
+
+              <div class="client-status-cell">
+                <span>CONTRATTO</span>
+                <strong
+                  x-text="etichettaDurataContrattoCliente(cliente)">
+                </strong>
+                <small
+                  x-text="etichettaPeriodicitaContrattoCliente(cliente)">
+                </small>
+              </div>
+
+              <div class="client-status-cell client-status-payment">
+                <span>INCASSATO</span>
+
+                <strong
+                  x-show="
+                    riepilogoPagamentoListaCliente(cliente).numeroVendite > 0
+                  ">
+                  <span
+                    x-text="
+                      formattaNumeroEuro(
+                        riepilogoPagamentoListaCliente(cliente).incassato
+                      )
+                    ">
+                  </span>
+                  <em
+                    x-text="
+                      '/ ' +
+                      formattaNumeroEuro(
+                        riepilogoPagamentoListaCliente(cliente).totaleVendite
+                      )
+                    ">
+                  </em>
+                </strong>
+
+                <strong
+                  x-show="
+                    riepilogoPagamentoListaCliente(cliente).numeroVendite === 0
+                  ">
+                  —
+                </strong>
+
+                <div
+                  class="client-payment-progress"
+                  x-show="
+                    riepilogoPagamentoListaCliente(cliente).numeroVendite > 0
+                  ">
+                  <i
+                    :style="{
+                      width:
+                        riepilogoPagamentoListaCliente(cliente)
+                          .percentualeIncassata + '%'
+                    }">
+                  </i>
+                </div>
+
+                <small
+                  x-text="
+                    riepilogoPagamentoListaCliente(cliente).numeroVendite > 0
+                      ? (
+                          Math.round(
+                            riepilogoPagamentoListaCliente(cliente)
+                              .percentualeIncassata
+                          ) + '% pagato'
+                        )
+                      : 'Nessuna vendita'
+                  ">
+                </small>
+              </div>
+
+              <div class="client-status-cell client-status-next">
+                <span>PROSSIMA</span>
+
+                <strong
+                  x-text="etichettaProssimaScadenzaCard(cliente)">
+                </strong>
+
+                <small
+                  x-text="
+                    prossimaScadenzaCliente(cliente)
+                      ? formattaDataCompleta(
+                          prossimaScadenzaCliente(cliente).data
+                        )
+                      : 'Nessuna scadenza'
+                  ">
+                </small>
+              </div>
+
             </div>
 
             <span
@@ -5303,7 +5390,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=87', {
+      navigator.serviceWorker.register('./service-worker.js?v=88', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

@@ -462,6 +462,7 @@ function appState() {
     caricandoPagamentiCliente: false,
     errorePagamentiCliente: '',
     scadenzePagamentoPerCliente: {},
+    riepilogoPagamentiPerCliente: {},
 
     schedaAperture: { stato: true, pacchetto: false, contatti: false, attivita: true, note: false },
 
@@ -3755,13 +3756,14 @@ costiPerMotoreRataEconomia() {
 
     async caricaScadenzePagamentoClienti() {
       this.scadenzePagamentoPerCliente = {};
+      this.riepilogoPagamentiPerCliente = {};
 
       const clienteIds = this.clienti.map(cliente => cliente.id).filter(Boolean);
       if (!clienteIds.length) return;
 
       const { data: vendite, error: venditeError } = await window.supabaseClient
         .from('vendite')
-        .select('id,cliente_id')
+        .select('id,cliente_id,importo_vendita')
         .in('cliente_id', clienteIds)
         .eq('stato', 'attiva');
 
@@ -3773,6 +3775,7 @@ costiPerMotoreRataEconomia() {
       const venditePerId = Object.fromEntries(
         (vendite || []).map(vendita => [vendita.id, vendita])
       );
+
       const clientiConVenditaAttiva = new Set(
         (vendite || []).map(vendita => vendita.cliente_id)
       );
@@ -3782,28 +3785,74 @@ costiPerMotoreRataEconomia() {
         haVenditaAttiva: clientiConVenditaAttiva.has(cliente.id)
       }));
 
-      const venditaIds = Object.keys(venditePerId);
-      if (!venditaIds.length) return;
+      const riepiloghi = {};
 
-      const { data: pagamenti, error: pagamentiError } = await window.supabaseClient
-        .from('pagamenti')
-        .select('id,vendita_id,importo,stato,data_scadenza')
-        .in('vendita_id', venditaIds)
-        .eq('stato', 'previsto')
-        .not('data_scadenza', 'is', null)
-        .order('data_scadenza', { ascending: true });
+      (vendite || []).forEach(vendita => {
+        const clienteId = vendita.cliente_id;
+        if (!clienteId) return;
+
+        const riepilogo = riepiloghi[clienteId] ||= {
+          numeroVendite: 0,
+          totaleVendite: 0,
+          incassato: 0,
+          rateIncassate: 0,
+          ratePreviste: 0,
+          percentualeIncassata: 0
+        };
+
+        riepilogo.numeroVendite += 1;
+        riepilogo.totaleVendite +=
+          Number(vendita.importo_vendita) || 0;
+      });
+
+      const venditaIds = Object.keys(venditePerId);
+
+      if (!venditaIds.length) {
+        this.riepilogoPagamentiPerCliente = riepiloghi;
+        return;
+      }
+
+      const { data: pagamenti, error: pagamentiError } =
+        await window.supabaseClient
+          .from('pagamenti')
+          .select(
+            'id,vendita_id,importo,stato,data_scadenza,data_pagamento'
+          )
+          .in('vendita_id', venditaIds);
 
       if (pagamentiError) {
-        console.warn('Scadenze pagamento non disponibili:', pagamentiError.message);
+        console.warn(
+          'Pagamenti clienti non disponibili:',
+          pagamentiError.message
+        );
+        this.riepilogoPagamentiPerCliente = riepiloghi;
         return;
       }
 
       const prossime = {};
+
       (pagamenti || []).forEach(pagamento => {
         const vendita = venditePerId[pagamento.vendita_id];
         const clienteId = vendita?.cliente_id;
-        const data = this.normalizzaDataAgenda(pagamento.data_scadenza);
-        if (!clienteId || !data) return;
+        if (!clienteId) return;
+
+        const riepilogo = riepiloghi[clienteId];
+        if (!riepilogo) return;
+
+        if (pagamento.stato === 'incassato') {
+          riepilogo.incassato += Number(pagamento.importo) || 0;
+          riepilogo.rateIncassate += 1;
+          return;
+        }
+
+        if (pagamento.stato !== 'previsto') return;
+
+        riepilogo.ratePreviste += 1;
+
+        const data =
+          this.normalizzaDataAgenda(pagamento.data_scadenza);
+
+        if (!data) return;
 
         (prossime[clienteId] ||= []).push({
           id: pagamento.id,
@@ -3814,14 +3863,85 @@ costiPerMotoreRataEconomia() {
         });
       });
 
+      Object.values(riepiloghi).forEach(riepilogo => {
+        riepilogo.percentualeIncassata =
+          riepilogo.totaleVendite > 0
+            ? Math.max(
+                0,
+                Math.min(
+                  100,
+                  riepilogo.incassato /
+                    riepilogo.totaleVendite *
+                    100
+                )
+              )
+            : 0;
+      });
+
+      Object.values(prossime).forEach(rate => {
+        rate.sort((a, b) => a.data.localeCompare(b.data));
+      });
+
       this.scadenzePagamentoPerCliente = prossime;
+      this.riepilogoPagamentiPerCliente = riepiloghi;
+    },
+
+    riepilogoPagamentoListaCliente(cliente) {
+      return this.riepilogoPagamentiPerCliente[cliente?.id] || {
+        numeroVendite: 0,
+        totaleVendite: 0,
+        incassato: 0,
+        rateIncassate: 0,
+        ratePreviste: 0,
+        percentualeIncassata: 0
+      };
+    },
+
+    etichettaDurataContrattoCliente(cliente) {
+      const durata = Number(cliente?.durata_contratto_anni);
+
+      if (!(durata > 0)) return '—';
+
+      return durata === 1
+        ? '1 anno'
+        : `${durata} anni`;
+    },
+
+    etichettaPeriodicitaContrattoCliente(cliente) {
+      if (cliente?.periodicita_contratto === 'mensile') {
+        return 'Mensile';
+      }
+
+      if (cliente?.periodicita_contratto === 'annuale') {
+        return 'Annuale';
+      }
+
+      return 'Non indicata';
+    },
+
+    etichettaProssimaScadenzaCard(cliente) {
+      const scadenza = this.prossimaScadenzaCliente(cliente);
+
+      if (!scadenza) return 'Nessuna';
+
+      if (
+        scadenza.tipo === 'rata' &&
+        Number(scadenza.importo) > 0
+      ) {
+        return `Rata ${this.formattaNumeroEuro(scadenza.importo)}`;
+      }
+
+      return scadenza.label || 'Scadenza';
     },
 
     prossimaScadenzaCliente(cliente) {
       if (!cliente?.id) return null;
 
       const scadenze = [];
-      const rinnovo = this.normalizzaDataAgenda(cliente.data_rinnovo);
+
+      const rinnovo =
+        this.normalizzaDataAgenda(cliente.data_rinnovo);
+
       if (rinnovo) {
         scadenze.push({
           tipo: 'rinnovo',
@@ -3831,11 +3951,29 @@ costiPerMotoreRataEconomia() {
         });
       }
 
-      const rata = this.scadenzePagamentoPerCliente[cliente.id]?.[0];
-      if (rata?.data) scadenze.push(rata);
+      const rata =
+        this.scadenzePagamentoPerCliente[cliente.id]?.[0];
+
+      if (rata?.data) {
+        scadenze.push(rata);
+      }
+
+      const contatto =
+        this.normalizzaDataAgenda(cliente.prossimo_contatto);
+
+      if (contatto) {
+        scadenze.push({
+          tipo: 'contatto',
+          label: 'Contatto',
+          data: contatto,
+          importo: null
+        });
+      }
 
       if (!scadenze.length) return null;
-      return scadenze.sort((a, b) => a.data.localeCompare(b.data))[0];
+
+      return scadenze
+        .sort((a, b) => a.data.localeCompare(b.data))[0];
     },
 
     formattaDataCompleta(value) {
