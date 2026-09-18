@@ -15137,3 +15137,184 @@ html[data-theme="dark"] .economy-create-client{
     grid-area:error;
   }
 }
+
+/* ==========================================================
+   PIPELINE DESKTOP V2 - TRUE KANBAN
+   Mobile mantiene navigazione a singola fase.
+   ========================================================== */
+
+.pipeline-desktop-heading{
+  display:none;
+}
+
+@media (min-width:1000px){
+
+  .pipeline-view .pipeline-topbar{
+    min-height:68px;
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    align-items:center;
+    gap:24px;
+    margin-bottom:16px;
+  }
+
+  .pipeline-desktop-heading{
+    display:grid;
+    gap:2px;
+  }
+
+  .pipeline-desktop-heading>span{
+    color:var(--muted);
+    font-size:8px;
+    font-weight:850;
+    letter-spacing:.12em;
+  }
+
+  .pipeline-desktop-heading>strong{
+    font-size:22px;
+    line-height:1.05;
+    letter-spacing:-.025em;
+  }
+
+  .pipeline-client-count{
+    display:grid;
+    justify-items:end;
+    gap:0;
+  }
+
+  .pipeline-client-count>span{
+    color:var(--muted);
+    font-size:8px;
+    font-weight:850;
+    letter-spacing:.12em;
+  }
+
+  .pipeline-client-count>h1{
+    margin:0;
+    font-size:22px;
+    line-height:1;
+  }
+
+  /* Il selettore di fase serve al mobile.
+     Su desktop tutte le fasi sono già visibili. */
+  .pipeline-view .pipeline-stage-nav{
+    display:none;
+  }
+
+  .pipeline-view .pipeline-scroll-v2{
+    width:min(1320px,calc(100% - 64px));
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:14px;
+    align-items:start;
+  }
+
+  .pipeline-view .pipeline-slide{
+    min-width:0;
+  }
+
+  .pipeline-view .pipeline-slide-header{
+    min-height:54px;
+    margin-bottom:10px;
+    padding:11px 13px;
+    border-radius:15px;
+  }
+
+  .pipeline-view .pipeline-slide-header>div{
+    display:grid;
+    gap:2px;
+  }
+
+  .pipeline-view .pipeline-slide-header>div>span{
+    font-size:8px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+
+  .pipeline-view .pipeline-slide-header>div>strong{
+    font-size:14px;
+    line-height:1.1;
+  }
+
+  .pipeline-view .pipeline-count{
+    width:30px;
+    height:30px;
+    min-width:30px;
+  }
+
+  .pipeline-view .pipeline-cards-v2{
+    gap:10px;
+  }
+
+  .pipeline-view .pipeline-card-v2{
+    padding:14px;
+    border-radius:16px;
+  }
+
+  .pipeline-view .pipeline-card-head{
+    margin-bottom:11px;
+  }
+
+  .pipeline-view .pipeline-card-head strong{
+    font-size:15px;
+    line-height:1.15;
+  }
+
+  .pipeline-view .pipeline-card-info{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px;
+  }
+
+  .pipeline-view .pipeline-card-info>div{
+    min-height:58px;
+    padding:10px 11px;
+  }
+
+  .pipeline-view .pipeline-card-info>div>span{
+    font-size:8px;
+  }
+
+  .pipeline-view .pipeline-card-info>div>strong{
+    font-size:10.5px;
+    line-height:1.25;
+  }
+
+  .pipeline-view .pipeline-card-footer{
+    justify-content:flex-end;
+    margin-top:10px;
+    padding-top:10px;
+  }
+
+  .pipeline-view .pipeline-status-pill{
+    display:none;
+  }
+
+  .pipeline-view .pipeline-card-footer select{
+    width:100%;
+    min-height:38px;
+    padding:0 10px;
+    border-radius:10px;
+    font-size:10px;
+  }
+
+  .pipeline-view .pipeline-empty-v2{
+    min-height:105px;
+    padding:16px 14px;
+    gap:5px;
+  }
+
+  .pipeline-view .pipeline-empty-icon{
+    width:32px;
+    height:32px;
+    margin-bottom:2px;
+  }
+
+  .pipeline-view .pipeline-empty-v2 strong{
+    font-size:11px;
+  }
+
+  .pipeline-view .pipeline-empty-v2 p{
+    max-width:220px;
+    font-size:9px;
+    line-height:1.35;
+  }
+}
