@@ -15137,3 +15137,87 @@ html[data-theme="dark"] .economy-create-client{
     grid-area:error;
   }
 }
+
+/* ==========================================================
+   SCHEDA CLIENTE DESKTOP WORKSPACE V1
+   Mobile mantiene la propria composizione.
+   ========================================================== */
+
+@media (min-width:1000px){
+
+  .client-detail-view .client-detail-content{
+    width:min(1180px,calc(100% - 64px));
+    margin-left:auto;
+    margin-right:auto;
+    display:grid;
+    grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);
+    grid-template-areas:
+      "hero hero"
+      "error error"
+      "actions actions"
+      "timeline payment"
+      "timeline status"
+      "notes contacts"
+      "notes copy";
+    gap:16px 18px;
+    align-items:start;
+    padding-bottom:48px;
+  }
+
+  .client-detail-view .client-detail-hero{
+    grid-area:hero;
+    margin-bottom:0;
+  }
+
+  .client-detail-view .err{
+    grid-area:error;
+    margin:0 !important;
+  }
+
+  .client-detail-view .client-quick-actions{
+    grid-area:actions;
+    margin:0;
+  }
+
+  .client-detail-view .client-copy-actions{
+    grid-area:copy;
+    margin:0;
+  }
+
+  .client-detail-panel-payment{
+    grid-area:payment;
+  }
+
+  .client-detail-panel-status{
+    grid-area:status;
+  }
+
+  .client-detail-panel-contacts{
+    grid-area:contacts;
+  }
+
+  .client-detail-panel-timeline{
+    grid-area:timeline;
+  }
+
+  .client-detail-panel-notes{
+    grid-area:notes;
+  }
+
+  .client-detail-view .accordion-section{
+    margin-bottom:0;
+  }
+
+  .client-detail-view .client-detail-hero{
+    padding:20px 22px;
+    border-radius:20px;
+  }
+
+  .client-detail-view .client-detail-dashboard{
+    margin-top:16px;
+  }
+
+  .client-detail-view .client-quick-actions{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+  }
+}
