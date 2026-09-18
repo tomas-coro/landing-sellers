@@ -4911,9 +4911,30 @@ costiPerMotoreRataEconomia() {
       return true;
     },
 
-    annullaFormCliente() {
+    async annullaFormCliente() {
       if (!this.confermaUscitaFormCliente()) return;
+
+      if (
+        !this.clienteInModificaId &&
+        this.ritornoDopoNuovoCliente === 'economia-vendita'
+      ) {
+        this.ritornoDopoNuovoCliente = null;
+        await this.apriEconomia('vendita');
+        return;
+      }
+
       this.view = this.clienteInModificaId ? 'scheda' : 'lista';
+    },
+
+    apriNuovoClienteDaVendita() {
+      this.apriNuovoCliente('economia-vendita');
+
+      requestAnimationFrame(() => {
+        document.getElementById('app')?.scrollTo({
+          top: 0,
+          behavior: 'auto'
+        });
+      });
     },
 
     apriNuovoCliente(ritorno = null) {
@@ -5325,6 +5346,27 @@ costiPerMotoreRataEconomia() {
         if (idModificato) {
           this.clienteSelezionatoId = idModificato;
           this.view = 'scheda';
+          return;
+        }
+
+        if (
+          this.ritornoDopoNuovoCliente === 'economia-vendita' &&
+          clienteSalvatoId
+        ) {
+          const clienteCreato = this.clienti.find(
+            cliente => cliente.id === clienteSalvatoId
+          );
+
+          this.ritornoDopoNuovoCliente = null;
+          this.clienteCreatoId = null;
+          this.clienteCreatoPromptAperto = false;
+
+          await this.apriEconomia('vendita');
+
+          if (clienteCreato) {
+            this.selezionaClienteEconomia(clienteCreato);
+          }
+
           return;
         }
 

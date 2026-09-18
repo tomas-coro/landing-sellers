@@ -1740,6 +1740,19 @@
               @keydown.enter.prevent>
             </div>
 
+            <button
+              type="button"
+              class="economy-create-client"
+              x-show="modalitaEconomia === 'vendita'"
+              @click="apriNuovoClienteDaVendita()">
+              <span>+</span>
+              <div>
+                <strong>Nuovo cliente</strong>
+                <small>Non è ancora in anagrafica? Crealo senza uscire dalla vendita.</small>
+              </div>
+              <b>›</b>
+            </button>
+
             <div
               class="economy-client-results"
               x-show="clientiEconomiaFiltrati().length">
@@ -5608,7 +5621,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=91', {
+      navigator.serviceWorker.register('./service-worker.js?v=92', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
