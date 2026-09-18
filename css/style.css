@@ -14244,3 +14244,48 @@ html[data-theme="dark"] .payment-history-action:hover{
   }
 
 }
+
+/* ==========================================================
+   IOS DATE INPUT FIX V86
+   ========================================================== */
+
+@media (max-width:719px){
+
+  .payment-entry-panel .payment-field{
+    width:100%;
+    min-width:0;
+  }
+
+  .payment-entry-panel .payment-field input[type="date"]{
+    display:block;
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    height:56px;
+    box-sizing:border-box;
+    padding:0 16px !important;
+    text-align:left !important;
+    border-radius:14px;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+
+  .payment-entry-panel
+  .payment-field
+  input[type="date"]::-webkit-date-and-time-value{
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    min-height:56px;
+    padding:0;
+    text-align:left !important;
+  }
+
+  .payment-entry-panel
+  .payment-field
+  input[type="date"]::-webkit-calendar-picker-indicator{
+    margin-left:auto;
+  }
+
+}
+
