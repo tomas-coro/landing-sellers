@@ -9558,6 +9558,31 @@ html[data-theme="dark"] .flow-choice-card{
 
 
 /* ==========================================================
+   CLIENT ACTIONS - DELETE + MODAL LAYER FIX
+   ========================================================== */
+
+/* Azione distruttiva evidente anche su mobile */
+.client-action-delete{
+  color:var(--danger) !important;
+}
+
+.client-action-delete strong,
+.client-action-delete small,
+.client-action-delete > b{
+  color:var(--danger) !important;
+}
+
+.client-action-delete{
+  border-color:color-mix(in srgb, var(--danger) 28%, var(--line)) !important;
+  background:var(--danger-bg) !important;
+}
+
+/* I popup di conferma devono stare sopra la bottom navigation */
+.modal-overlay{
+  z-index:120;
+}
+
+/* ==========================================================
    CLIENT ACTIONS - DESKTOP ANCORATE ALLA CARD
    ========================================================== */
 

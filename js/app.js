@@ -569,6 +569,21 @@ function appState() {
         const stato = event.state;
         if (!stato?.le) return;
 
+        if (!this.confermaUscitaFormCliente()) {
+          const corrente = this.statoHistoryCorrente();
+
+          history.pushState(
+            corrente,
+            '',
+            location.href
+          );
+
+          this.historyUltimaChiave =
+            this.chiaveHistory(corrente);
+
+          return;
+        }
+
         this.historyRipristino = true;
 
         try {
@@ -645,7 +660,11 @@ function appState() {
       });
 
       window.addEventListener('beforeunload', event => {
-        if (!this.clienteFormModificato()) return;
+        if (
+          !this.clienteFormModificato() &&
+          !this.economiaFormModificato()
+        ) return;
+
         event.preventDefault();
         event.returnValue = '';
       });
