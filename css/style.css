@@ -8120,3 +8120,5993 @@ html[data-theme="dark"] .economy-payment-person{
   background:#20231e;
   border-color:#3b3f36;
 }
+
+
+/* ==========================================================
+   FLOW CHOICE - CLIENTE
+   ========================================================== */
+
+.flow-choice-overlay{
+  position:fixed;
+  inset:0;
+  z-index:1500;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  background:rgba(0,0,0,.48);
+  backdrop-filter:blur(5px);
+}
+
+.flow-choice-card{
+  width:min(100%,420px);
+  padding:24px;
+  border-radius:24px;
+  background:var(--paper,#fff);
+  box-shadow:0 20px 60px rgba(0,0,0,.22);
+}
+
+.flow-choice-kicker{
+  display:block;
+  margin-bottom:8px;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.12em;
+  opacity:.5;
+}
+
+.flow-choice-card h2{
+  margin:0 0 8px;
+  font-size:22px;
+}
+
+.flow-choice-card p{
+  margin:0 0 20px;
+  font-size:12px;
+  line-height:1.55;
+  opacity:.65;
+}
+
+.flow-choice-card .btn + .btn{
+  margin-top:9px;
+}
+
+html[data-theme="dark"] .flow-choice-card{
+  background:#1b1e1a;
+}
+
+
+/* ==========================================================
+   CLIENTE COMPACT + INCASSO DESKTOP FIX
+   ========================================================== */
+
+/* ---------- NUOVO CLIENTE ---------- */
+
+.client-create-content{
+  box-sizing:border-box;
+}
+
+.client-form-create{
+  width:100%;
+}
+
+@media (min-width:720px){
+  .client-create-content{
+    width:100%;
+    max-width:760px;
+    margin:0 auto;
+    padding-top:18px;
+    padding-bottom:100px;
+  }
+
+  .client-form-create .client-form-section{
+    width:100%;
+    box-sizing:border-box;
+    padding:20px;
+  }
+
+  .client-form-create .client-fields-grid{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:14px 16px;
+  }
+
+  .client-form-create .client-fields-grid .field,
+  .client-form-create .client-fields-grid .field-full{
+    grid-column:auto;
+    min-width:0;
+    margin:0;
+  }
+
+  .client-form-create .client-fields-grid .field:first-child{
+    grid-column:1 / -1;
+  }
+
+  .client-form-create .field input{
+    width:100%;
+    min-width:0;
+    box-sizing:border-box;
+  }
+
+  .client-form-create > .btn-primary{
+    width:100%;
+    max-width:320px;
+    margin:18px 0 0 auto;
+  }
+}
+
+
+/* ---------- PAGAMENTO / INCASSO ---------- */
+
+.economy-payment-main-row,
+.economy-payment-meta-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:12px;
+  width:100%;
+  margin-top:14px;
+}
+
+.economy-payment-main-row input,
+.economy-payment-meta-row input{
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+
+.economy-card-payment .economy-invoice-choice{
+  width:100%;
+}
+
+.economy-card-payment .economy-invoice-choice > div{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.economy-card-payment .economy-invoice-choice button{
+  white-space:nowrap;
+}
+
+.economy-card-payment .economy-payment-details{
+  width:100%;
+  margin-top:18px;
+}
+
+
+/* ---------- INCASSO DESKTOP ---------- */
+
+@media (min-width:900px){
+  #app.app-wide{
+    max-width:1320px;
+  }
+
+  .economy-content-incasso{
+    width:min(1240px,calc(100vw - 72px));
+    max-width:none;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:18px;
+    align-items:start;
+  }
+
+  .economy-content-incasso > .economy-card-client{
+    grid-column:1 / -1;
+    grid-row:auto;
+  }
+
+  .economy-content-incasso > .economy-card-active-sale{
+    grid-column:1 / -1;
+    grid-row:auto;
+  }
+
+  .economy-content-incasso > .economy-no-sale{
+    grid-column:1 / -1;
+    grid-row:auto;
+  }
+
+  .economy-content-incasso > .economy-card-payment{
+    grid-area:auto;
+    grid-column:1 / -1;
+    width:100%;
+  }
+
+  .economy-content-incasso > .economy-payment-summary-card{
+    grid-area:auto;
+    grid-column:1 / -1;
+    position:static;
+  }
+
+  .economy-content-incasso > div:last-child{
+    grid-area:auto;
+    grid-column:1 / -1;
+    position:static;
+  }
+
+  .economy-card-payment{
+    padding:22px 26px;
+  }
+
+  .economy-card-payment .economy-section-head{
+    margin-bottom:20px;
+  }
+
+  .economy-card-payment .economy-invoice-choice{
+    display:grid;
+    grid-template-columns:180px minmax(0,1fr);
+    align-items:center;
+    gap:18px;
+  }
+
+  .economy-card-payment .economy-invoice-choice > div{
+    justify-content:flex-end;
+  }
+
+  .economy-payment-main-row,
+  .economy-payment-meta-row{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+
+/* ---------- MOBILE ---------- */
+
+@media (max-width:719px){
+  .economy-payment-main-row,
+  .economy-payment-meta-row{
+    grid-template-columns:1fr;
+    gap:9px;
+  }
+
+  .economy-card-payment .economy-invoice-choice{
+    display:block;
+  }
+
+  .economy-card-payment .economy-invoice-choice > span{
+    display:block;
+    margin-bottom:9px;
+  }
+
+  .economy-card-payment .economy-invoice-choice > div{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .economy-card-payment .economy-invoice-choice button{
+    width:100%;
+    min-width:0;
+    white-space:normal;
+  }
+
+  .economy-card-payment .economy-invoice-choice button:first-child{
+    grid-column:1 / -1;
+  }
+}
+
+/* ==========================================================
+   DESKTOP SHELL GLOBALE
+   Mobile invariato sotto 900px
+   ========================================================== */
+
+@media (min-width:900px){
+
+  /* Il contenitore principale non è più un telefono da 460px */
+  #app{
+    width:100%;
+    max-width:1440px;
+    margin:0 auto;
+  }
+
+  /* Header coerente con il contenuto desktop */
+  #app .brandbar{
+    padding-left:max(32px, calc((100% - 1240px) / 2));
+    padding-right:max(32px, calc((100% - 1240px) / 2));
+  }
+
+  #app .topbar{
+    width:min(1240px, calc(100% - 64px));
+    box-sizing:border-box;
+    margin-left:auto;
+    margin-right:auto;
+    padding-left:0;
+    padding-right:0;
+  }
+
+  /* Area di lavoro desktop standard */
+  #app .content{
+    width:min(1240px, calc(100% - 64px));
+    max-width:none;
+    box-sizing:border-box;
+    margin-left:auto;
+    margin-right:auto;
+    padding-left:0;
+    padding-right:0;
+  }
+
+  /* Le viste che hanno già layout desktop proprio
+     possono sfruttare tutta l'area senza il limite mobile */
+  #app.app-wide{
+    width:100%;
+    max-width:1440px;
+  }
+
+  /* Nuovo cliente: resta compatto, ma dentro una vera pagina desktop */
+  #app .client-create-content{
+    width:min(820px, calc(100% - 64px));
+    max-width:820px;
+  }
+
+  /* Evita che il form nuovo cliente erediti larghezze strane */
+  #app .client-form-create{
+    width:100%;
+  }
+}
+
+
+/* ==========================================================
+   DESKTOP UI V2
+   Solo desktop >= 1000px
+   ========================================================== */
+
+@media (min-width:1000px){
+
+  /* ---------------------------------------
+     NAV DESKTOP
+     --------------------------------------- */
+
+  :root{
+    --desktop-rail-w:88px;
+  }
+
+  .mobile-tabbar{
+    left:22px;
+    top:50%;
+    bottom:auto;
+    transform:translateY(-50%);
+    width:72px;
+    min-height:0;
+    padding:10px 7px;
+    flex-direction:column;
+    align-items:stretch;
+    justify-content:center;
+    gap:7px;
+    border:1px solid var(--line);
+    border-radius:22px;
+    box-shadow:0 18px 50px rgba(0,0,0,.12);
+  }
+
+  .mobile-tabbar>button{
+    width:58px;
+    min-width:58px;
+    min-height:60px;
+    margin:0 auto;
+    padding:7px 4px;
+  }
+
+  .mobile-tabbar-add{
+    margin-top:0;
+  }
+
+  .mobile-add-circle{
+    width:42px;
+    height:42px;
+    box-shadow:none;
+  }
+
+  .mobile-tabbar>button>svg{
+    width:21px;
+    height:21px;
+  }
+
+  .mobile-tabbar>button>span:last-child{
+    font-size:9px;
+  }
+
+  #app .brandbar,
+  #app .topbar,
+  #app .content{
+    padding-left:calc(var(--desktop-rail-w) + 28px);
+  }
+
+
+  /* ---------------------------------------
+     REGISTRA VENDITA
+     --------------------------------------- */
+
+  .economy-content:not(.economy-content-incasso){
+    display:grid;
+    grid-template-columns:repeat(12,minmax(0,1fr));
+    gap:18px;
+    align-items:start;
+  }
+
+  .economy-content:not(.economy-content-incasso) > .err,
+  .economy-content:not(.economy-content-incasso) > .economy-preview-note,
+  .economy-content:not(.economy-content-incasso) > .economy-card-client,
+  .economy-content:not(.economy-content-incasso) > .economy-card-purchase{
+    grid-column:1 / -1;
+  }
+
+  .economy-content:not(.economy-content-incasso) > .economy-card-costs{
+    grid-column:1 / span 5;
+  }
+
+  .economy-content:not(.economy-content-incasso) > .economy-card-split{
+    grid-column:6 / -1;
+  }
+
+  .economy-content:not(.economy-content-incasso) > .economy-card-payment,
+  .economy-content:not(.economy-content-incasso) > .economy-summary,
+  .economy-content:not(.economy-content-incasso) > div:last-child{
+    grid-column:1 / -1;
+  }
+
+  .economy-card{
+    padding:20px;
+  }
+
+  .economy-card-costs,
+  .economy-card-split{
+    height:100%;
+  }
+
+  .economy-card-split .economy-participants{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+  }
+
+
+  /* ---------------------------------------
+     INCASSA
+     --------------------------------------- */
+
+  .economy-content-incasso{
+    display:grid;
+    grid-template-columns:minmax(0,1.45fr) minmax(340px,.55fr);
+    grid-template-areas:
+      "client client"
+      "sale summary"
+      "payment summary"
+      "payment submit";
+    gap:18px 22px;
+    align-items:start;
+  }
+
+  .economy-content-incasso > .economy-card-client{
+    grid-area:client;
+  }
+
+  .economy-content-incasso > .economy-card-active-sale{
+    grid-area:sale;
+  }
+
+  .economy-content-incasso > .economy-card-payment{
+    grid-area:payment;
+  }
+
+  .economy-content-incasso > .economy-payment-summary-card{
+    grid-area:summary;
+    position:sticky;
+    top:24px;
+  }
+
+  .economy-content-incasso > div:last-child{
+    grid-area:submit;
+  }
+
+  .economy-content-incasso .economy-card-payment{
+    padding:20px 22px;
+  }
+
+  .economy-content-incasso .economy-payment-main-row,
+  .economy-content-incasso .economy-payment-meta-row{
+    grid-template-columns:1fr 1fr;
+  }
+
+
+  /* ---------------------------------------
+     NUOVO CLIENTE
+     --------------------------------------- */
+
+  .client-create-content{
+    max-width:900px;
+  }
+
+  .client-form-create .client-form-section{
+    padding:22px 24px;
+  }
+
+  .client-form-create > .btn-primary{
+    margin-top:14px;
+  }
+}
+
+
+/* ==========================================================
+   DESKTOP CRM V3
+   Agenda / Pipeline / New drawer
+   ========================================================== */
+
+@media (min-width:1000px){
+
+  /* ========================================================
+     AGENDA
+     ======================================================== */
+
+  .agenda-content{
+    max-width:none !important;
+    width:min(1240px,calc(100% - 64px)) !important;
+    display:grid;
+    grid-template-columns:repeat(12,minmax(0,1fr));
+    gap:16px 20px;
+    align-items:start;
+  }
+
+  .agenda-overview{
+    grid-column:1 / span 4;
+    margin:0;
+    min-height:96px;
+    padding:18px 20px;
+  }
+
+  .agenda-overview > div{
+    align-content:center;
+  }
+
+  .agenda-overview strong{
+    font-size:38px;
+  }
+
+  .agenda-overview p{
+    max-width:170px;
+    font-size:10px;
+  }
+
+  .agenda-switch{
+    grid-column:5 / -1;
+    margin:0 !important;
+    min-height:96px;
+    align-self:stretch;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    padding:8px;
+  }
+
+  .agenda-switch button{
+    min-height:76px;
+    font-size:12px;
+  }
+
+  /* Oggi / 7 giorni */
+  .agenda-content:not(.agenda-mode-month) .agenda-list{
+    grid-column:1 / -1;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+
+  .agenda-content:not(.agenda-mode-month) .crm-empty{
+    grid-column:1 / -1;
+  }
+
+  /* Vista mese = calendario + agenda laterale */
+  .agenda-content.agenda-mode-month .agenda-calendar{
+    grid-column:1 / span 8;
+    margin:0;
+    padding:18px;
+  }
+
+  .agenda-content.agenda-mode-month .agenda-list{
+    grid-column:9 / -1;
+    margin:0;
+    display:grid;
+    gap:9px;
+    align-content:start;
+  }
+
+  .agenda-month-head{
+    margin-bottom:14px;
+  }
+
+  .agenda-days{
+    gap:6px;
+  }
+
+  .agenda-days button{
+    min-height:74px;
+    border-radius:12px;
+  }
+
+  .agenda-event{
+    min-height:78px;
+    padding:12px 14px;
+  }
+
+
+  /* ========================================================
+     PIPELINE — KANBAN DESKTOP
+     ======================================================== */
+
+  .pipeline-view{
+    overflow:visible;
+  }
+
+  .pipeline-topbar{
+    width:min(1240px,calc(100% - 64px));
+    margin:0 auto;
+    padding-left:0;
+    padding-right:0;
+  }
+
+  .pipeline-stage-nav{
+    width:min(1240px,calc(100% - 64px));
+    margin:0 auto 18px;
+    padding:16px 18px;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:var(--card);
+  }
+
+  .pipeline-stage-current{
+    align-items:center;
+  }
+
+  .pipeline-stage-current strong{
+    font-size:20px;
+  }
+
+  .pipeline-dots{
+    margin-top:12px;
+  }
+
+  .pipeline-scroll-v2{
+    width:min(1240px,calc(100% - 64px));
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:12px;
+    overflow:visible;
+    scroll-snap-type:none;
+    padding:0 0 40px;
+  }
+
+  .pipeline-slide{
+    width:auto;
+    min-width:0;
+    padding:0 !important;
+    scroll-snap-align:none;
+  }
+
+  .pipeline-slide-header{
+    min-height:62px;
+    margin-bottom:8px;
+    padding:12px 14px;
+    border:1px solid var(--line);
+    border-radius:14px;
+    background:var(--card);
+  }
+
+  .pipeline-slide-header > div > strong{
+    font-size:13px;
+  }
+
+  .pipeline-cards-v2{
+    display:grid;
+    gap:9px;
+  }
+
+  .pipeline-card-v2{
+    border-radius:15px;
+    padding:14px;
+  }
+
+  .pipeline-card-info{
+    grid-template-columns:1fr;
+    gap:7px;
+  }
+
+  .pipeline-card-info > div{
+    min-height:54px;
+  }
+
+  .pipeline-card-footer{
+    gap:7px;
+  }
+
+  .pipeline-card-footer select{
+    min-width:0;
+    width:100%;
+  }
+
+  .pipeline-empty-v2{
+    min-height:180px;
+    padding:20px 14px;
+  }
+
+
+  /* ========================================================
+     "+" — DRAWER DESKTOP DA SINISTRA
+     ======================================================== */
+
+  .quick-action-overlay{
+    display:block;
+    padding:0;
+    background:rgba(0,0,0,.52);
+    backdrop-filter:blur(4px);
+    -webkit-backdrop-filter:blur(4px);
+  }
+
+  .quick-action-sheet{
+    position:fixed;
+    top:0;
+    bottom:0;
+    left:0;
+    width:min(390px,32vw);
+    max-width:none;
+    margin:0;
+    padding:96px 22px 26px;
+    border-radius:0 28px 28px 0;
+    border-right:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    overflow-y:auto;
+    box-shadow:24px 0 70px rgba(0,0,0,.28);
+  }
+
+  .quick-action-handle{
+    display:none;
+  }
+
+  .quick-action-title{
+    margin-bottom:12px;
+    font-size:22px;
+    line-height:1.1;
+    letter-spacing:-.02em;
+  }
+
+  .quick-action-sheet > button:not(.quick-action-cancel){
+    min-height:90px;
+    padding:16px;
+    border-radius:17px;
+  }
+
+  .quick-action-sheet button strong{
+    font-size:14px;
+  }
+
+  .quick-action-sheet button small{
+    font-size:10px;
+    line-height:1.4;
+  }
+
+  .quick-action-icon{
+    width:42px;
+    height:42px;
+    flex:0 0 42px;
+  }
+
+  .quick-action-cancel{
+    margin-top:auto;
+  }
+}
+
+
+/* ==========================================================
+   DESKTOP QUICK ADD POPOVER
+   ========================================================== */
+
+@media (min-width:1000px){
+
+  #agenda-attivita-giorno{
+    scroll-margin-top:110px;
+  }
+
+  /* click esterno continua a chiudere, ma senza oscurare tutto */
+  .quick-action-overlay{
+    display:block;
+    padding:0;
+    background:transparent;
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+  }
+
+  .quick-action-sheet{
+    position:fixed;
+
+    /* sidebar 22px + 72px + piccolo distacco */
+    left:106px;
+    top:50%;
+
+    width:310px;
+    max-width:310px;
+    height:auto;
+    max-height:none;
+
+    transform:translateY(-50%);
+
+    margin:0;
+    padding:12px;
+
+    border:1px solid var(--line);
+    border-radius:18px;
+
+    display:grid;
+    gap:7px;
+
+    overflow:visible;
+
+    background:var(--card);
+    box-shadow:0 18px 55px rgba(0,0,0,.28);
+  }
+
+  .quick-action-handle{
+    display:none;
+  }
+
+  .quick-action-title{
+    margin:2px 5px 6px;
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    opacity:.55;
+  }
+
+  .quick-action-sheet > button:not(.quick-action-cancel){
+    min-height:68px;
+    margin:0;
+    padding:11px 12px;
+
+    border:1px solid var(--line);
+    border-radius:14px;
+
+    display:flex;
+    align-items:center;
+    gap:11px;
+
+    background:var(--paper);
+  }
+
+  .quick-action-icon{
+    width:36px;
+    height:36px;
+    flex:0 0 36px;
+    border-radius:10px;
+    font-size:16px;
+  }
+
+  .quick-action-sheet button strong{
+    font-size:12px;
+  }
+
+  .quick-action-sheet button small{
+    font-size:9px;
+    line-height:1.3;
+  }
+
+  .quick-action-cancel{
+    display:none;
+  }
+
+  /* piccolo triangolo verso il + */
+  .quick-action-sheet::before{
+    content:"";
+    position:absolute;
+    left:-7px;
+    top:50%;
+    width:12px;
+    height:12px;
+    transform:translateY(-50%) rotate(45deg);
+
+    background:var(--card);
+    border-left:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+}
+
+
+/* ==========================================================
+   DESKTOP QUICK ADD - COMPACT V2
+   ========================================================== */
+
+@media (min-width:1000px){
+
+  .quick-action-sheet{
+    left:102px;
+    width:270px;
+    max-width:270px;
+    padding:9px;
+    gap:5px;
+    border-radius:15px;
+    box-shadow:0 12px 34px rgba(0,0,0,.24);
+  }
+
+  .quick-action-title{
+    margin:3px 7px 5px;
+    font-size:9px;
+  }
+
+  .quick-action-sheet > button:not(.quick-action-cancel){
+    min-height:56px;
+    padding:8px 9px;
+    gap:9px;
+    border-radius:11px;
+  }
+
+  .quick-action-icon{
+    width:32px;
+    height:32px;
+    flex-basis:32px;
+    border-radius:9px;
+    font-size:15px;
+  }
+
+  .quick-action-sheet button strong{
+    font-size:11.5px;
+    line-height:1.2;
+  }
+
+  .quick-action-sheet button small{
+    margin-top:2px;
+    font-size:8.5px;
+    line-height:1.25;
+  }
+
+  .quick-action-sheet::before{
+    left:-6px;
+    width:10px;
+    height:10px;
+  }
+}
+
+
+/* ==========================================================
+   DESKTOP QUICK ADD - MINI POPOVER V3
+   ========================================================== */
+
+@media (min-width:1000px){
+
+  .quick-action-overlay{
+    background:transparent !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+    pointer-events:auto;
+  }
+
+  .quick-action-sheet{
+    position:fixed !important;
+
+    left:104px !important;
+    top:50% !important;
+
+    width:238px !important;
+    max-width:238px !important;
+
+    height:auto !important;
+    min-height:0 !important;
+    max-height:none !important;
+
+    transform:translateY(-50%) !important;
+
+    margin:0 !important;
+    padding:6px !important;
+
+    display:flex !important;
+    flex-direction:column !important;
+    gap:4px !important;
+
+    border:1px solid var(--line) !important;
+    border-radius:13px !important;
+
+    overflow:visible !important;
+
+    background:var(--card) !important;
+
+    box-shadow:
+      0 10px 28px rgba(0,0,0,.18),
+      0 2px 8px rgba(0,0,0,.08) !important;
+  }
+
+  .quick-action-title{
+    display:none !important;
+  }
+
+  .quick-action-handle{
+    display:none !important;
+  }
+
+  .quick-action-sheet > button:not(.quick-action-cancel){
+    width:100% !important;
+    min-height:48px !important;
+
+    margin:0 !important;
+    padding:7px 8px !important;
+
+    border:0 !important;
+    border-radius:9px !important;
+
+    background:transparent !important;
+
+    display:flex !important;
+    align-items:center !important;
+    gap:8px !important;
+
+    text-align:left !important;
+  }
+
+  .quick-action-sheet > button:not(.quick-action-cancel):hover{
+    background:var(--paper) !important;
+  }
+
+  .quick-action-icon{
+    width:29px !important;
+    height:29px !important;
+    flex:0 0 29px !important;
+
+    border-radius:8px !important;
+
+    font-size:14px !important;
+  }
+
+  .quick-action-sheet button > div{
+    gap:1px !important;
+  }
+
+  .quick-action-sheet button strong{
+    font-size:11px !important;
+    line-height:1.15 !important;
+  }
+
+  .quick-action-sheet button small{
+    font-size:8px !important;
+    line-height:1.2 !important;
+    opacity:.55 !important;
+  }
+
+  .quick-action-cancel{
+    display:none !important;
+  }
+
+  .quick-action-sheet::before{
+    content:"" !important;
+
+    position:absolute !important;
+
+    left:-5px !important;
+    top:50% !important;
+
+    width:8px !important;
+    height:8px !important;
+
+    transform:translateY(-50%) rotate(45deg) !important;
+
+    background:var(--card) !important;
+
+    border-left:1px solid var(--line) !important;
+    border-bottom:1px solid var(--line) !important;
+  }
+}
+
+
+/* FIX DEFINITIVO QUICK ADD DESKTOP */
+@media (min-width:1000px){
+
+  .quick-action-sheet{
+    top:50% !important;
+    bottom:auto !important;
+
+    left:172px !important;
+
+    width:250px !important;
+    max-width:250px !important;
+
+    height:auto !important;
+    min-height:0 !important;
+
+    transform:translateY(-50%) !important;
+
+    padding:6px !important;
+    gap:3px !important;
+
+    border-radius:14px !important;
+  }
+
+  .quick-action-sheet > button:not(.quick-action-cancel){
+    min-height:0 !important;
+    height:52px !important;
+
+    padding:7px 9px !important;
+    margin:0 !important;
+
+    border:0 !important;
+    border-radius:9px !important;
+  }
+
+  .quick-action-sheet button small{
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  .quick-action-sheet::before{
+    top:50% !important;
+  }
+}
+
+
+/* QUICK ADD DESKTOP - aggancio alla sidebar */
+@media (min-width:1000px){
+  .quick-action-sheet{
+    left:98px !important;
+  }
+}
+
+
+/* ==========================================================
+   NUOVO CLIENTE - DESKTOP V2
+   ========================================================== */
+
+.client-create-heading{
+  margin-bottom:16px;
+}
+
+.client-create-heading > div > span{
+  display:block;
+  margin-bottom:5px;
+  color:var(--muted);
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.12em;
+}
+
+.client-create-heading h1{
+  margin:0;
+}
+
+.client-create-heading p{
+  margin:6px 0 0;
+  max-width:560px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.45;
+}
+
+@media (min-width:1000px){
+
+  #app .client-create-content{
+    width:min(1040px,calc(100% - 64px)) !important;
+    max-width:1040px !important;
+    margin-left:auto;
+    margin-right:auto;
+    padding-top:22px;
+  }
+
+  .client-create-heading{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    margin-bottom:18px;
+  }
+
+  .client-create-heading h1{
+    font-size:28px;
+    line-height:1.05;
+    letter-spacing:-.03em;
+  }
+
+  .client-create-heading p{
+    font-size:10px;
+  }
+
+  .client-form-create{
+    gap:12px !important;
+  }
+
+  .client-form-create .client-form-section{
+    padding:20px 22px !important;
+    border-radius:18px !important;
+  }
+
+  .client-form-create .client-form-section-head{
+    margin-bottom:18px;
+  }
+
+  .client-form-create .client-form-section-head > span{
+    width:32px;
+    height:32px;
+    min-width:32px;
+  }
+
+  .client-form-create .client-form-section-head strong{
+    font-size:13px;
+  }
+
+  .client-form-create .client-form-section-head small{
+    font-size:9px;
+  }
+
+  .client-form-create .client-fields-grid{
+    display:grid !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:13px 14px !important;
+    align-items:start;
+  }
+
+  /* Nome */
+  .client-form-create .client-fields-grid > .field:nth-child(1){
+    grid-column:1 / span 2 !important;
+  }
+
+  /* Referente */
+  .client-form-create .client-fields-grid > .field:nth-child(2){
+    grid-column:3 !important;
+  }
+
+  /* Telefono */
+  .client-form-create .client-fields-grid > .field:nth-child(3){
+    grid-column:1 !important;
+  }
+
+  /* Email */
+  .client-form-create .client-fields-grid > .field:nth-child(4){
+    grid-column:2 / span 2 !important;
+  }
+
+  /* P.IVA */
+  .client-form-create .client-fields-grid > .field:nth-child(5){
+    grid-column:1 !important;
+  }
+
+  /* IBAN */
+  .client-form-create .client-fields-grid > .field:nth-child(6){
+    grid-column:2 !important;
+  }
+
+  /* URL sito */
+  .client-form-create .client-fields-grid > .field:nth-child(7){
+    grid-column:3 !important;
+  }
+
+  .client-form-create .client-fields-grid .field,
+  .client-form-create .client-fields-grid .field-full{
+    width:auto !important;
+    margin:0 !important;
+  }
+
+  .client-form-create .field label{
+    margin-bottom:5px;
+    font-size:9px;
+  }
+
+  .client-form-create .field input{
+    min-height:44px !important;
+    height:44px !important;
+    padding:0 12px !important;
+    border-radius:11px !important;
+    font-size:11px !important;
+  }
+
+  .client-form-create > .btn-primary{
+    width:auto !important;
+    min-width:190px;
+    min-height:45px;
+    justify-self:end;
+    margin-top:2px !important;
+    padding-left:24px;
+    padding-right:24px;
+  }
+}
+
+/* ==========================================================
+   NUOVO CLIENTE - DESKTOP FORM V4
+   solo anagrafica, nessun contenuto aggiuntivo
+   ========================================================== */
+
+@media (min-width:1000px){
+
+  #app .client-create-content{
+    width:min(1120px,calc(100% - 64px)) !important;
+    max-width:1120px !important;
+    margin:0 auto !important;
+    padding-top:36px !important;
+    padding-bottom:48px !important;
+  }
+
+  .client-create-heading{
+    margin-bottom:24px !important;
+  }
+
+  .client-create-heading > div > span{
+    font-size:11px !important;
+    margin-bottom:7px !important;
+  }
+
+  .client-create-heading h1{
+    font-size:34px !important;
+    line-height:1.05 !important;
+  }
+
+  .client-create-heading p{
+    margin-top:8px !important;
+    font-size:13px !important;
+    line-height:1.45 !important;
+    max-width:700px !important;
+  }
+
+  .client-form-create{
+    width:100% !important;
+    gap:18px !important;
+  }
+
+  .client-form-create .client-form-section{
+    width:100% !important;
+    padding:28px 30px 30px !important;
+    border-radius:20px !important;
+  }
+
+  .client-form-create .client-form-section-head{
+    margin-bottom:24px !important;
+    padding-bottom:18px !important;
+    border-bottom:1px solid var(--line) !important;
+  }
+
+  .client-form-create .client-form-section-head > span{
+    width:40px !important;
+    height:40px !important;
+    min-width:40px !important;
+    font-size:11px !important;
+    border-radius:11px !important;
+  }
+
+  .client-form-create .client-form-section-head strong{
+    font-size:16px !important;
+    line-height:1.2 !important;
+  }
+
+  .client-form-create .client-form-section-head small{
+    margin-top:3px !important;
+    font-size:11px !important;
+    line-height:1.35 !important;
+  }
+
+  .client-form-create .client-fields-grid{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:20px 22px !important;
+  }
+
+  .client-form-create .client-fields-grid > .field{
+    width:auto !important;
+    margin:0 !important;
+    grid-column:auto !important;
+  }
+
+  /* Nome */
+  .client-form-create .client-fields-grid > .field:nth-child(1){
+    grid-column:1 / -1 !important;
+  }
+
+  /* Referente */
+  .client-form-create .client-fields-grid > .field:nth-child(2){
+    grid-column:1 !important;
+  }
+
+  /* Telefono */
+  .client-form-create .client-fields-grid > .field:nth-child(3){
+    grid-column:2 !important;
+  }
+
+  /* Email */
+  .client-form-create .client-fields-grid > .field:nth-child(4){
+    grid-column:1 / -1 !important;
+  }
+
+  /* P.IVA */
+  .client-form-create .client-fields-grid > .field:nth-child(5){
+    grid-column:1 !important;
+  }
+
+  /* IBAN */
+  .client-form-create .client-fields-grid > .field:nth-child(6){
+    grid-column:2 !important;
+  }
+
+  /* URL sito */
+  .client-form-create .client-fields-grid > .field:nth-child(7){
+    grid-column:1 / -1 !important;
+  }
+
+  .client-form-create .field label{
+    display:block !important;
+    margin-bottom:7px !important;
+    font-size:12px !important;
+    font-weight:700 !important;
+  }
+
+  .client-form-create .field input{
+    width:100% !important;
+    min-height:52px !important;
+    height:52px !important;
+    padding:0 15px !important;
+    border-radius:12px !important;
+    font-size:14px !important;
+  }
+
+  .client-form-create .field input::placeholder{
+    font-size:13px !important;
+  }
+
+  .client-form-create .err{
+    margin-top:6px !important;
+    font-size:10px !important;
+  }
+
+  .client-form-create > .btn-primary{
+    width:220px !important;
+    min-width:220px !important;
+    min-height:52px !important;
+    justify-self:end !important;
+    margin-top:2px !important;
+    padding:0 24px !important;
+    border-radius:12px !important;
+    font-size:13px !important;
+  }
+}
+
+
+/* ==========================================================
+   CLIENT ACTIONS - DESKTOP ANCORATE ALLA CARD
+   ========================================================== */
+
+.client-create-save-desktop{
+  display:none;
+}
+
+@media (min-width:1000px){
+
+  /* Il menu cliente NON deve ereditare il popup del + */
+  .client-action-overlay{
+    background:transparent !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+
+  .client-action-overlay .client-action-sheet{
+    position:fixed !important;
+
+    top:var(--client-action-top) !important;
+    left:var(--client-action-left) !important;
+    right:auto !important;
+    bottom:auto !important;
+
+    width:360px !important;
+    max-width:calc(100vw - 36px) !important;
+    height:auto !important;
+    min-height:0 !important;
+    max-height:calc(100vh - 36px) !important;
+
+    transform:none !important;
+
+    margin:0 !important;
+    padding:14px !important;
+
+    overflow:auto !important;
+
+    border:1px solid var(--line) !important;
+    border-radius:17px !important;
+
+    box-shadow:0 18px 48px rgba(0,0,0,.28) !important;
+  }
+
+  .client-action-overlay .quick-action-handle{
+    display:none !important;
+  }
+
+  .client-action-delete{
+    margin-top:7px !important;
+  }
+
+  .client-action-delete strong{
+    color:#d35f58 !important;
+  }
+
+
+  /* ========================================================
+     NUOVO CLIENTE - CTA SEMPRE DISPONIBILE
+     ======================================================== */
+
+  .client-create-heading{
+    display:flex !important;
+    align-items:flex-end !important;
+    justify-content:space-between !important;
+    gap:28px !important;
+  }
+
+  .client-create-save-desktop{
+    display:inline-flex !important;
+    flex:0 0 auto !important;
+
+    min-width:190px !important;
+    min-height:50px !important;
+
+    padding:0 24px !important;
+
+    border-radius:12px !important;
+    font-size:13px !important;
+  }
+
+  /* Su desktop usiamo il bottone in alto.
+     Quello originale resta per mobile. */
+  .client-form-create > .btn-primary{
+    display:none !important;
+  }
+}
+
+
+/* ==========================================================
+   NUOVO CLIENTE DESKTOP - ONE SCREEN
+   ========================================================== */
+
+@media (min-width:1000px){
+
+  #app .client-create-content{
+    width:min(1120px,calc(100% - 64px)) !important;
+    max-width:1120px !important;
+
+    min-height:0 !important;
+
+    margin:0 auto !important;
+
+    padding-top:18px !important;
+    padding-bottom:18px !important;
+  }
+
+  .client-create-heading{
+    display:block !important;
+    margin-bottom:14px !important;
+  }
+
+  .client-create-heading > div > span{
+    margin-bottom:4px !important;
+    font-size:9px !important;
+  }
+
+  .client-create-heading h1{
+    font-size:28px !important;
+    line-height:1 !important;
+  }
+
+  .client-create-heading p{
+    margin-top:6px !important;
+    font-size:11px !important;
+    line-height:1.35 !important;
+  }
+
+  .client-create-save-desktop{
+    display:none !important;
+  }
+
+  .client-form-create{
+    gap:10px !important;
+  }
+
+  .client-form-create .client-form-section{
+    padding:18px 22px !important;
+    border-radius:18px !important;
+  }
+
+  .client-form-create .client-form-section-head{
+    margin-bottom:14px !important;
+    padding-bottom:12px !important;
+  }
+
+  .client-form-create .client-form-section-head > span{
+    width:34px !important;
+    height:34px !important;
+    min-width:34px !important;
+  }
+
+  .client-form-create .client-form-section-head strong{
+    font-size:14px !important;
+  }
+
+  .client-form-create .client-form-section-head small{
+    font-size:9.5px !important;
+  }
+
+  .client-form-create .client-fields-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:11px 18px !important;
+  }
+
+  .client-form-create .field label{
+    margin-bottom:4px !important;
+    font-size:10px !important;
+  }
+
+  .client-form-create .field input{
+    height:44px !important;
+    min-height:44px !important;
+    padding:0 13px !important;
+    font-size:12px !important;
+  }
+
+  .client-form-create .field input::placeholder{
+    font-size:11px !important;
+  }
+
+  /* Nome */
+  .client-form-create .client-fields-grid > .field:nth-child(1){
+    grid-column:1 / -1 !important;
+  }
+
+  /* Referente / Telefono */
+  .client-form-create .client-fields-grid > .field:nth-child(2){
+    grid-column:1 !important;
+  }
+
+  .client-form-create .client-fields-grid > .field:nth-child(3){
+    grid-column:2 !important;
+  }
+
+  /* Email */
+  .client-form-create .client-fields-grid > .field:nth-child(4){
+    grid-column:1 / -1 !important;
+  }
+
+  /* PIVA / IBAN */
+  .client-form-create .client-fields-grid > .field:nth-child(5){
+    grid-column:1 !important;
+  }
+
+  .client-form-create .client-fields-grid > .field:nth-child(6){
+    grid-column:2 !important;
+  }
+
+  /* URL */
+  .client-form-create .client-fields-grid > .field:nth-child(7){
+    grid-column:1 / -1 !important;
+  }
+
+  /* Il pulsante originale torna sotto ed è visibile */
+  .client-form-create > .btn-primary{
+    display:inline-flex !important;
+
+    width:210px !important;
+    min-width:210px !important;
+    min-height:44px !important;
+
+    justify-self:end !important;
+
+    margin-top:2px !important;
+  }
+}
+
+
+/* ==========================================================
+   REGISTRA VENDITA - WORKSPACE V4
+   ========================================================== */
+
+.economy-workflow{
+  display:flex;
+  align-items:center;
+  width:100%;
+  margin-bottom:14px;
+  padding:12px 14px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:var(--card);
+}
+
+.economy-workflow-item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+  opacity:.42;
+}
+
+.economy-workflow-item.active{
+  opacity:1;
+}
+
+.economy-workflow-item>span{
+  display:grid;
+  place-items:center;
+  width:25px;
+  height:25px;
+  flex:none;
+  border:1px solid var(--line);
+  border-radius:50%;
+  font-size:9px;
+  font-weight:800;
+}
+
+.economy-workflow-item.active>span{
+  background:var(--text);
+  color:var(--bg);
+  border-color:var(--text);
+}
+
+.economy-workflow-item strong{
+  font-size:10px;
+  white-space:nowrap;
+}
+
+.economy-workflow>i{
+  height:1px;
+  flex:1;
+  min-width:12px;
+  margin:0 10px;
+  background:var(--line);
+}
+
+
+/* ----- Configuratore ----- */
+
+.economy-sale-builder{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.sale-builder-section{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--bg);
+}
+
+.sale-builder-label,
+.sale-builder-section .commercial-section-title{
+  margin:0;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.035em;
+  text-transform:uppercase;
+}
+
+.sale-builder-summary{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:var(--line);
+  gap:1px;
+}
+
+.sale-builder-summary>div{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:4px;
+  min-height:70px;
+  padding:12px 14px;
+  background:var(--card);
+}
+
+.sale-builder-summary span{
+  font-size:9px;
+  color:var(--muted);
+}
+
+.sale-builder-summary strong{
+  font-size:14px;
+  line-height:1.15;
+}
+
+.sale-builder-summary .sale-builder-grand-total{
+  grid-column:1/-1;
+}
+
+.sale-builder-summary .sale-builder-grand-total strong{
+  font-size:21px;
+}
+
+
+/* ==========================================================
+   DESKTOP
+   ========================================================== */
+
+@media (min-width:1000px){
+
+  .economy-content:not(.economy-content-incasso){
+    width:min(1260px,calc(100% - 64px)) !important;
+    max-width:1260px !important;
+    margin:0 auto !important;
+    padding-top:18px !important;
+    padding-bottom:56px !important;
+
+    display:grid !important;
+    grid-template-columns:repeat(12,minmax(0,1fr)) !important;
+    gap:14px !important;
+    align-items:start !important;
+  }
+
+  .economy-content:not(.economy-content-incasso)>.economy-workflow,
+  .economy-content:not(.economy-content-incasso)>.err,
+  .economy-content:not(.economy-content-incasso)>.economy-preview-note{
+    grid-column:1/-1 !important;
+    margin:0 !important;
+  }
+
+
+  /* ----- Cliente: barra compatta ----- */
+
+  .economy-content:not(.economy-content-incasso)>.economy-card-client{
+    grid-column:1/-1 !important;
+    padding:14px 16px !important;
+    border-radius:16px !important;
+  }
+
+  .economy-card-client .economy-section-head{
+    margin-bottom:10px !important;
+  }
+
+  .economy-card-client .economy-section-head>span{
+    width:28px !important;
+    height:28px !important;
+    min-width:28px !important;
+    font-size:9px !important;
+  }
+
+  .economy-card-client .economy-section-head strong{
+    font-size:12px !important;
+  }
+
+  .economy-card-client .economy-section-head small{
+    font-size:9px !important;
+  }
+
+  .economy-card-client .economy-selected-client{
+    min-height:54px !important;
+    padding:10px 12px !important;
+    border-radius:12px !important;
+  }
+
+  .economy-card-client .economy-selected-client>div>strong{
+    font-size:14px !important;
+  }
+
+  .economy-card-client .economy-client-actions button{
+    min-height:34px !important;
+    padding:0 12px !important;
+  }
+
+
+  /* ========================================================
+     OFFERTA: configuratore + riepilogo sticky
+     ======================================================== */
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-sale-builder{
+    grid-column:1/-1 !important;
+
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) 300px !important;
+    column-gap:18px !important;
+    row-gap:10px !important;
+
+    padding:18px !important;
+    border-radius:20px !important;
+  }
+
+  .economy-sale-builder>.economy-section-head{
+    grid-column:1/-1 !important;
+    margin-bottom:2px !important;
+  }
+
+  .economy-sale-builder>.sale-builder-section{
+    grid-column:1 !important;
+  }
+
+  .economy-sale-builder>.sale-builder-summary{
+    grid-column:2 !important;
+    grid-row:2 / span 8 !important;
+
+    display:flex !important;
+    flex-direction:column !important;
+
+    position:sticky !important;
+    top:20px !important;
+
+    align-self:start !important;
+    gap:0 !important;
+    border-radius:17px !important;
+  }
+
+  .economy-sale-builder>.sale-builder-summary>div{
+    min-height:74px !important;
+    padding:14px 16px !important;
+    border-bottom:1px solid var(--line);
+  }
+
+  .economy-sale-builder>.sale-builder-summary>div:last-child{
+    border-bottom:0;
+  }
+
+  .economy-sale-builder>
+  .sale-builder-summary>
+  .sale-builder-grand-total{
+    margin-top:auto;
+    min-height:94px !important;
+  }
+
+  .economy-sale-builder>
+  .sale-builder-summary>
+  .sale-builder-grand-total strong{
+    font-size:24px !important;
+  }
+
+
+  /* ----- Formula ----- */
+
+  .economy-sale-builder .price-choice-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:8px !important;
+  }
+
+  .economy-sale-builder .price-choice{
+    min-height:92px !important;
+    padding:14px !important;
+    border-radius:13px !important;
+  }
+
+  .economy-sale-builder .price-choice strong{
+    font-size:13px !important;
+  }
+
+  .economy-sale-builder .price-choice>span{
+    margin-top:4px !important;
+    font-size:17px !important;
+    font-weight:800 !important;
+  }
+
+
+  /* ----- Servizi ----- */
+
+  .economy-sale-builder .upgrade-compact-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:8px !important;
+  }
+
+  .economy-sale-builder .upgrade-compact-toggle,
+  .economy-sale-builder .upgrade-qty-card{
+    min-height:68px !important;
+    border-radius:12px !important;
+  }
+
+
+  /* ----- Durata ----- */
+
+  .economy-sale-builder .duration-choice-grid{
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+    gap:7px !important;
+  }
+
+  .economy-sale-builder .duration-choice{
+    min-height:62px !important;
+    border-radius:12px !important;
+  }
+
+
+  /* ----- Sconto ----- */
+
+  .economy-sale-builder .discount-row{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) 180px !important;
+    gap:8px !important;
+  }
+
+  .economy-sale-builder .discount-row select,
+  .economy-sale-builder .discount-row input{
+    min-height:42px !important;
+  }
+
+
+  /* ----- Dominio ----- */
+
+  .economy-sale-builder .domain-choice-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:8px !important;
+  }
+
+  .economy-sale-builder .domain-choice-grid button{
+    min-height:66px !important;
+  }
+
+  .economy-sale-builder .annual-extras{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:8px !important;
+  }
+
+
+  /* ========================================================
+     COSTI + RIPARTIZIONE
+     ======================================================== */
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-card-costs{
+    grid-column:1/span 4 !important;
+    padding:18px !important;
+    border-radius:18px !important;
+  }
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-card-split{
+    grid-column:5/-1 !important;
+    padding:18px !important;
+    border-radius:18px !important;
+  }
+
+  .economy-card-costs .economy-custom-cost{
+    grid-template-columns:minmax(0,1fr) 105px 40px !important;
+  }
+
+  .economy-card-split .economy-participants{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:10px !important;
+  }
+
+  .economy-card-split .economy-participant{
+    min-width:0 !important;
+    margin:0 !important;
+    border-radius:14px !important;
+  }
+
+  .economy-card-split .economy-person-calc{
+    font-size:10px !important;
+  }
+
+
+  /* ========================================================
+     INCASSO + TOTALI
+     ======================================================== */
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-card-payment{
+    grid-column:1/span 8 !important;
+    padding:18px !important;
+    border-radius:18px !important;
+  }
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-summary{
+    grid-column:9/-1 !important;
+    padding:18px !important;
+    border-radius:18px !important;
+  }
+
+  .economy-card-payment .economy-payment-main-row,
+  .economy-card-payment .economy-payment-meta-row{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+
+  .economy-content:not(.economy-content-incasso)>div:last-child{
+    grid-column:1/-1 !important;
+
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) 280px !important;
+    align-items:center !important;
+    gap:16px !important;
+
+    padding-top:2px !important;
+  }
+
+  .economy-content:not(.economy-content-incasso)>
+  div:last-child>.btn-primary{
+    grid-column:2 !important;
+    grid-row:1 !important;
+
+    width:100% !important;
+    min-height:52px !important;
+    border-radius:14px !important;
+  }
+
+  .economy-content:not(.economy-content-incasso)>
+  div:last-child>.economy-preview-note{
+    grid-column:1 !important;
+    grid-row:1 !important;
+    margin:0 !important;
+  }
+
+
+  /* Gerarchia comune */
+
+  .economy-content:not(.economy-content-incasso)
+  .economy-section-head>span{
+    width:34px !important;
+    height:34px !important;
+    min-width:34px !important;
+    font-size:10px !important;
+  }
+
+  .economy-content:not(.economy-content-incasso)
+  .economy-section-head strong{
+    font-size:14px !important;
+  }
+
+  .economy-content:not(.economy-content-incasso)
+  .economy-section-head small{
+    margin-top:2px !important;
+    font-size:9.5px !important;
+  }
+}
+
+
+/* ==========================================================
+   DESKTOP COMPATTO
+   ========================================================== */
+
+@media (min-width:1000px) and (max-width:1180px){
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-sale-builder{
+    grid-template-columns:minmax(0,1fr) 260px !important;
+  }
+
+  .economy-card-split .economy-participants{
+    grid-template-columns:1fr !important;
+  }
+
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width:999px){
+
+  .economy-workflow{
+    padding:10px;
+    overflow:hidden;
+  }
+
+  .economy-workflow-item{
+    gap:5px;
+  }
+
+  .economy-workflow-item strong{
+    font-size:8px;
+  }
+
+  .economy-workflow-item>span{
+    width:22px;
+    height:22px;
+  }
+
+  .economy-workflow>i{
+    margin:0 5px;
+  }
+
+  .sale-builder-section{
+    padding:12px;
+  }
+
+  .economy-sale-builder{
+    gap:10px;
+  }
+
+}
+
+
+/* ==========================================================
+   REGISTRA VENDITA - CLIENTE COMPLETATO V5
+   ========================================================== */
+
+.economy-workflow > i{
+  transition:background .2s ease, opacity .2s ease;
+}
+
+.economy-workflow > i.completed{
+  background:var(--lime);
+  opacity:.8;
+}
+
+.economy-workflow-item.completed > span{
+  background:var(--lime);
+  border-color:var(--lime);
+  color:#111;
+}
+
+.economy-workflow-item.current > span{
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--lime) 12%,transparent);
+}
+
+
+/* selected client */
+
+.economy-selected-client-v2{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1.6fr) minmax(180px,.65fr) auto;
+  align-items:center;
+  gap:24px;
+
+  width:100%;
+  min-height:0 !important;
+  padding:15px 17px !important;
+
+  border:1px solid color-mix(in srgb,var(--lime) 18%,var(--line));
+  border-radius:14px !important;
+
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb,var(--lime) 3%,var(--card)),
+      var(--card) 32%
+    ) !important;
+}
+
+.economy-selected-client-v2::before{
+  content:"";
+  position:absolute;
+  left:-1px;
+  top:15px;
+  bottom:15px;
+  width:3px;
+  border-radius:3px;
+  background:var(--lime);
+}
+
+
+/* identity */
+
+.economy-selected-client-main{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+}
+
+.economy-selected-client-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+
+.economy-client-check{
+  display:grid;
+  place-items:center;
+  width:28px;
+  height:28px;
+  flex:none;
+
+  border-radius:50%;
+  background:var(--lime);
+  color:#111;
+
+  font-size:12px;
+  font-weight:900;
+}
+
+.economy-selected-client-title > div{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  gap:2px;
+}
+
+.economy-selected-client-title strong{
+  overflow:hidden;
+  font-size:16px !important;
+  font-weight:800;
+  line-height:1.1;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.economy-selected-client-title small{
+  font-size:9px;
+  color:var(--muted);
+}
+
+
+/* contact/meta */
+
+.economy-selected-client-meta{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px 16px;
+  padding-left:38px;
+}
+
+.economy-selected-client-meta > span{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  min-width:0;
+
+  color:var(--muted);
+  font-size:10px;
+}
+
+.economy-selected-client-meta b{
+  color:var(--text);
+  font-size:8px;
+  font-weight:700;
+  text-transform:uppercase;
+  opacity:.55;
+}
+
+
+/* progression status */
+
+.economy-selected-client-progress{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:5px;
+}
+
+.economy-client-ready{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+
+  padding:7px 9px;
+  border:1px solid color-mix(in srgb,var(--lime) 20%,var(--line));
+  border-radius:999px;
+
+  font-size:9px;
+  font-weight:750;
+  white-space:nowrap;
+}
+
+.economy-client-ready i{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:var(--lime);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--lime) 12%,transparent);
+}
+
+.economy-selected-client-progress small{
+  padding-left:3px;
+  font-size:9px;
+  color:var(--muted);
+}
+
+
+/* actions */
+
+.economy-client-actions-v2{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:8px !important;
+}
+
+.economy-client-actions-v2 button{
+  width:auto !important;
+  min-height:36px !important;
+  margin:0 !important;
+  padding:0 12px !important;
+  border-radius:10px !important;
+
+  font-size:9px !important;
+  font-weight:750 !important;
+
+  text-decoration:none !important;
+  white-space:nowrap;
+}
+
+.economy-change-client{
+  border:1px solid var(--line) !important;
+  background:var(--card) !important;
+  color:var(--text) !important;
+}
+
+.economy-open-client{
+  border:0 !important;
+  background:transparent !important;
+  color:var(--muted) !important;
+}
+
+.economy-open-client:hover{
+  color:var(--text) !important;
+}
+
+
+/* desktop: riduce drasticamente altezza dello step 1 */
+
+@media (min-width:1000px){
+
+  .economy-content:not(.economy-content-incasso)
+  > .economy-card-client{
+    padding:13px 15px 15px !important;
+  }
+
+  .economy-card-client .economy-section-head{
+    margin-bottom:9px !important;
+  }
+
+}
+
+
+/* mobile/tablet */
+
+@media (max-width:760px){
+
+  .economy-selected-client-v2{
+    grid-template-columns:1fr;
+    gap:13px;
+    padding:14px !important;
+  }
+
+  .economy-selected-client-progress{
+    padding-left:38px;
+  }
+
+  .economy-client-actions-v2{
+    justify-content:flex-start !important;
+    padding-left:38px;
+  }
+
+  .economy-selected-client-meta{
+    gap:5px 10px;
+  }
+
+}
+
+/* ==========================================================
+   REGISTRA VENDITA - RESPONSIVE WORKSPACE V7
+   Rispetta la desktop rail esistente
+   ========================================================== */
+
+.economy-sale-builder,
+.economy-sale-builder *,
+.sale-builder-section,
+.sale-builder-summary{
+  box-sizing:border-box;
+  min-width:0;
+}
+
+
+/* ==========================================================
+   DESKTOP
+   ========================================================== */
+
+@media (min-width:1000px){
+
+  /*
+   * NON tocchiamo padding-left della .content:
+   * viene già gestito dalla desktop rail globale.
+   *
+   * La larghezza disponibile reale è viewport - rail - margini.
+   */
+  #app .economy-content:not(.economy-content-incasso){
+    width:auto !important;
+    max-width:1320px !important;
+
+    margin-left:0 !important;
+    margin-right:28px !important;
+
+    padding-right:0 !important;
+
+    overflow:visible !important;
+  }
+
+
+  /* ----- workflow ----- */
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-workflow{
+    grid-column:1/-1 !important;
+    width:100% !important;
+  }
+
+
+  /* ----- Cliente ----- */
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-card-client{
+    grid-column:1/-1 !important;
+    width:100% !important;
+  }
+
+
+  /* ========================================================
+     OFFERTA
+     Laptop/desktop normale: una colonna completa
+     ======================================================== */
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-sale-builder{
+    grid-column:1/-1 !important;
+
+    display:flex !important;
+    flex-direction:column !important;
+
+    width:100% !important;
+    max-width:none !important;
+
+    gap:12px !important;
+  }
+
+  .economy-sale-builder>.economy-section-head,
+  .economy-sale-builder>.sale-builder-section,
+  .economy-sale-builder>.sale-builder-summary{
+    width:100% !important;
+    max-width:none !important;
+
+    grid-column:auto !important;
+    grid-row:auto !important;
+  }
+
+
+  /* ----- Formula ----- */
+
+  .economy-sale-builder .price-choice-grid{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:10px !important;
+  }
+
+
+  /* ----- Extra ----- */
+
+  .economy-sale-builder .upgrade-compact-grid{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:9px !important;
+  }
+
+
+  /* ----- Durata ----- */
+
+  .economy-sale-builder .duration-choice-grid{
+    display:grid !important;
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+    gap:8px !important;
+  }
+
+
+  /* ----- Sconto ----- */
+
+  .economy-sale-builder .discount-row{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) 180px !important;
+    gap:9px !important;
+  }
+
+
+  /* ----- Dominio ----- */
+
+  .economy-sale-builder .domain-choice-grid{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:9px !important;
+  }
+
+  .economy-sale-builder .annual-extras{
+    display:grid !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:9px !important;
+  }
+
+
+  /* ========================================================
+     RIEPILOGO
+     Desktop normale: barra orizzontale, niente sidebar stretta
+     ======================================================== */
+
+  .economy-sale-builder>.sale-builder-summary{
+    position:static !important;
+
+    display:grid !important;
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+
+    overflow:hidden !important;
+    gap:1px !important;
+  }
+
+  .economy-sale-builder>.sale-builder-summary>div{
+    display:flex !important;
+    flex-direction:column !important;
+    justify-content:center !important;
+
+    min-height:78px !important;
+    padding:13px 15px !important;
+  }
+
+  .economy-sale-builder>.sale-builder-summary span{
+    font-size:9px !important;
+  }
+
+  .economy-sale-builder>.sale-builder-summary strong{
+    font-size:15px !important;
+    line-height:1.15 !important;
+  }
+
+  .economy-sale-builder>
+  .sale-builder-summary>
+  .sale-builder-grand-total{
+    grid-column:auto !important;
+  }
+
+  .economy-sale-builder>
+  .sale-builder-summary>
+  .sale-builder-grand-total strong{
+    font-size:19px !important;
+  }
+
+
+  /* ========================================================
+     COSTI + RIPARTIZIONE
+     ======================================================== */
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-card-costs{
+    grid-column:1/span 5 !important;
+  }
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-card-split{
+    grid-column:6/-1 !important;
+  }
+
+
+  /* ========================================================
+     INCASSO + TOTALI
+     ======================================================== */
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-card-payment{
+    grid-column:1/span 8 !important;
+  }
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-summary{
+    grid-column:9/-1 !important;
+  }
+
+}
+
+
+/* ==========================================================
+   SOLO MONITOR DAVVERO LARGHI
+   riepilogo laterale
+   ========================================================== */
+
+@media (min-width:1750px){
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-sale-builder{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) 300px !important;
+    column-gap:18px !important;
+    row-gap:10px !important;
+  }
+
+  .economy-sale-builder>.economy-section-head{
+    grid-column:1/-1 !important;
+  }
+
+  .economy-sale-builder>.sale-builder-section{
+    grid-column:1 !important;
+  }
+
+  .economy-sale-builder>.sale-builder-summary{
+    grid-column:2 !important;
+    grid-row:2/span 10 !important;
+
+    display:flex !important;
+    flex-direction:column !important;
+
+    position:sticky !important;
+    top:18px !important;
+  }
+
+  .economy-sale-builder>.sale-builder-summary>div{
+    width:100% !important;
+    min-height:76px !important;
+  }
+
+}
+
+
+/* ==========================================================
+   TABLET
+   ========================================================== */
+
+@media (min-width:700px) and (max-width:999px){
+
+  .economy-sale-builder .price-choice-grid,
+  .economy-sale-builder .upgrade-compact-grid,
+  .economy-sale-builder .domain-choice-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+
+  .economy-sale-builder .duration-choice-grid{
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  }
+
+  .economy-sale-builder .annual-extras{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+
+  .economy-sale-builder>.sale-builder-summary{
+    position:static !important;
+
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+
+  .sale-builder-summary .sale-builder-grand-total{
+    grid-column:1/-1 !important;
+  }
+
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width:699px){
+
+  .economy-sale-builder{
+    width:100% !important;
+  }
+
+  .economy-sale-builder .price-choice-grid,
+  .economy-sale-builder .upgrade-compact-grid,
+  .economy-sale-builder .domain-choice-grid,
+  .economy-sale-builder .annual-extras{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+  }
+
+  .economy-sale-builder .duration-choice-grid{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+
+  .economy-sale-builder .discount-row{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+  }
+
+  .economy-sale-builder>.sale-builder-summary{
+    position:static !important;
+
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+
+  .sale-builder-summary .sale-builder-grand-total{
+    grid-column:1/-1 !important;
+  }
+
+  .upgrade-qty-card{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    gap:12px !important;
+  }
+
+  .qty-stepper{
+    flex:none !important;
+  }
+
+}
+
+@media (max-width:420px){
+
+  .economy-sale-builder>.sale-builder-summary{
+    grid-template-columns:1fr !important;
+  }
+
+  .sale-builder-summary .sale-builder-grand-total{
+    grid-column:auto !important;
+  }
+
+}
+
+/* ==========================================================
+   REGISTRA VENDITA - LIVE PRICE V8
+   ========================================================== */
+
+.sale-live-price{
+  display:grid;
+  grid-template-columns:minmax(220px,.75fr) minmax(0,2fr);
+  gap:0;
+
+  overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--lime) 38%,var(--line));
+  border-radius:17px;
+
+  background:var(--card);
+}
+
+.sale-live-price-main{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:6px;
+
+  min-height:104px;
+  padding:17px 20px;
+
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb,var(--lime) 12%,var(--card)),
+      color-mix(in srgb,var(--lime) 3%,var(--card))
+    );
+}
+
+.sale-live-price-main>span{
+  font-size:9px;
+  font-weight:850;
+  letter-spacing:.08em;
+  opacity:.62;
+}
+
+.sale-live-price-main>strong{
+  display:flex;
+  align-items:baseline;
+  gap:5px;
+
+  font-size:31px;
+  line-height:1;
+  font-weight:900;
+}
+
+.sale-live-price-main>strong small{
+  font-size:12px;
+  font-weight:750;
+  opacity:.6;
+}
+
+.sale-live-price-meta{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+}
+
+.sale-live-price-meta>div{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:5px;
+
+  min-width:0;
+  min-height:104px;
+  padding:14px 16px;
+
+  border-left:1px solid var(--line);
+}
+
+.sale-live-price-meta span{
+  font-size:9px;
+  color:var(--muted);
+}
+
+.sale-live-price-meta strong{
+  overflow:hidden;
+  font-size:13px;
+  line-height:1.2;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+@media (min-width:1000px){
+  .sale-live-price{
+    position:sticky;
+    top:12px;
+    z-index:6;
+    box-shadow:0 8px 30px rgba(0,0,0,.08);
+  }
+}
+
+@media (max-width:900px){
+  .sale-live-price{
+    grid-template-columns:1fr;
+  }
+
+  .sale-live-price-meta{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .sale-live-price-meta>div{
+    min-height:68px;
+    border-top:1px solid var(--line);
+  }
+}
+
+@media (max-width:520px){
+  .sale-live-price-main>strong{
+    font-size:27px;
+  }
+
+  .sale-live-price-meta{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+/* ==========================================================
+   SEZIONI CONFIGURATORE
+   ========================================================== */
+
+.economy-sale-builder{
+  gap:10px !important;
+}
+
+.economy-sale-builder>.sale-builder-section{
+  padding:12px 14px !important;
+  border-radius:13px !important;
+}
+
+.sale-builder-label{
+  font-size:9px !important;
+}
+
+
+/* formula più compatta */
+.economy-sale-builder .price-choice{
+  min-height:72px !important;
+  padding:11px 13px !important;
+}
+
+.economy-sale-builder .price-choice strong{
+  font-size:11px !important;
+}
+
+.economy-sale-builder .price-choice>span{
+  font-size:15px !important;
+}
+
+
+/* extra più densi */
+.economy-sale-builder .upgrade-compact-toggle,
+.economy-sale-builder .upgrade-qty-card{
+  min-height:56px !important;
+  padding:9px 11px !important;
+}
+
+
+/* ==========================================================
+   CONDIZIONI COMMERCIALI
+   ========================================================== */
+
+.sale-commercial-compact{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.sale-commercial-row{
+  display:grid;
+  grid-template-columns:minmax(220px,.65fr) minmax(0,1.35fr);
+  gap:8px;
+}
+
+.sale-compact-control{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+
+  min-width:0;
+  padding:11px 12px;
+
+  border:1px solid var(--line);
+  border-radius:13px;
+
+  background:var(--bg);
+}
+
+.sale-compact-control>label{
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.025em;
+}
+
+
+/* durata */
+
+.sale-mini-stepper{
+  display:grid;
+  grid-template-columns:34px minmax(80px,1fr) 34px;
+  align-items:center;
+
+  width:100%;
+  min-height:38px;
+
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:10px;
+}
+
+.sale-mini-stepper button{
+  height:38px;
+
+  border:0;
+  background:transparent;
+  color:var(--text);
+
+  font-size:16px;
+  font-weight:700;
+
+  cursor:pointer;
+}
+
+.sale-mini-stepper button:disabled{
+  opacity:.25;
+  cursor:default;
+}
+
+.sale-mini-stepper strong{
+  display:grid;
+  place-items:center;
+
+  height:38px;
+
+  border-left:1px solid var(--line);
+  border-right:1px solid var(--line);
+
+  font-size:11px;
+}
+
+
+/* sconto */
+
+.sale-compact-fields{
+  display:grid;
+  grid-template-columns:minmax(150px,1.3fr) minmax(90px,.65fr) minmax(150px,1fr);
+  gap:6px;
+}
+
+.sale-compact-fields select,
+.sale-compact-fields input{
+  width:100%;
+  min-width:0;
+  min-height:38px;
+
+  padding:0 10px;
+
+  border:1px solid var(--line);
+  border-radius:9px;
+
+  background:var(--card);
+  color:var(--text);
+
+  font:inherit;
+  font-size:10px;
+}
+
+
+/* ==========================================================
+   DOMINIO
+   ========================================================== */
+
+.sale-domain-row{
+  grid-template-columns:minmax(280px,.8fr) minmax(0,1.2fr);
+}
+
+.sale-segmented{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:10px;
+}
+
+.sale-segmented button{
+  min-height:38px;
+
+  border:0;
+  border-right:1px solid var(--line);
+
+  background:transparent;
+  color:var(--muted);
+
+  font-size:10px;
+  font-weight:700;
+
+  cursor:pointer;
+}
+
+.sale-segmented button:last-child{
+  border-right:0;
+}
+
+.sale-segmented button.on{
+  background:var(--text);
+  color:var(--bg);
+}
+
+
+/* opzioni dominio compaiono solo quando servono */
+
+.sale-domain-options{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:6px;
+}
+
+.sale-domain-options>label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+
+  min-height:60px;
+  padding:9px 10px;
+
+  border:1px solid var(--line);
+  border-radius:11px;
+
+  background:var(--bg);
+  cursor:pointer;
+}
+
+.sale-domain-options>label span{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.sale-domain-options strong{
+  font-size:10px;
+}
+
+.sale-domain-options small{
+  font-size:8px;
+  color:var(--muted);
+}
+
+
+/* ==========================================================
+   SICUREZZA
+   ========================================================== */
+
+.sale-security-compact{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+
+  min-height:52px;
+  padding:9px 12px;
+
+  border:1px solid var(--line);
+  border-radius:12px;
+
+  background:var(--bg);
+  cursor:pointer;
+}
+
+.sale-security-compact>span{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.sale-security-compact strong{
+  font-size:10px;
+}
+
+.sale-security-compact small{
+  font-size:8px;
+  color:var(--muted);
+}
+
+.sale-security-compact>b{
+  font-size:11px;
+}
+
+
+/* ==========================================================
+   COSTI
+   ========================================================== */
+
+.economy-card-costs{
+  padding:16px !important;
+}
+
+.economy-card-costs .economy-section-head{
+  margin-bottom:10px !important;
+}
+
+.economy-card-costs .economy-section-head small b{
+  color:var(--text);
+}
+
+.economy-card-costs .economy-cost-row{
+  min-height:38px !important;
+  padding:7px 9px !important;
+}
+
+.economy-card-costs .economy-custom-cost{
+  margin-top:8px !important;
+  grid-template-columns:minmax(0,1fr) 92px 36px !important;
+  gap:6px !important;
+}
+
+.economy-card-costs .economy-custom-cost input,
+.economy-card-costs .economy-custom-cost button{
+  min-height:36px !important;
+}
+
+
+/* ==========================================================
+   RIPARTIZIONE
+   ========================================================== */
+
+.economy-card-split{
+  padding:16px !important;
+}
+
+.economy-card-split .economy-section-head{
+  margin-bottom:10px !important;
+}
+
+.economy-seller-selector{
+  margin-bottom:10px !important;
+  padding:11px !important;
+}
+
+.economy-seller-option{
+  min-height:48px !important;
+  padding:8px 10px !important;
+}
+
+
+/* ==========================================================
+   DESKTOP
+   ========================================================== */
+
+@media (min-width:1000px){
+
+  .economy-content:not(.economy-content-incasso){
+    gap:12px !important;
+  }
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-card-costs{
+    grid-column:1/span 4 !important;
+  }
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-card-split{
+    grid-column:5/-1 !important;
+  }
+
+}
+
+
+/* ==========================================================
+   TABLET / MOBILE
+   ========================================================== */
+
+@media (max-width:900px){
+
+  .sale-commercial-row,
+  .sale-domain-row{
+    grid-template-columns:1fr;
+  }
+
+  .sale-compact-fields{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .sale-compact-fields select:last-child{
+    grid-column:1/-1;
+  }
+
+}
+
+@media (max-width:560px){
+
+  .sale-compact-fields{
+    grid-template-columns:1fr;
+  }
+
+  .sale-compact-fields select:last-child{
+    grid-column:auto;
+  }
+
+  .sale-domain-options{
+    grid-template-columns:1fr;
+  }
+
+}
+
+/* ==========================================================
+   SEZIONE 4 - RIPARTIZIONE
+   ========================================================== */
+
+.economy-card-split{
+  padding:18px !important;
+}
+
+.economy-card-split .economy-section-head{
+  margin-bottom:14px !important;
+}
+
+.economy-card-split .economy-section-head strong{
+  font-size:17px !important;
+}
+
+.economy-card-split .economy-section-head small{
+  font-size:12px !important;
+}
+
+
+/* selettore venditore */
+
+.economy-seller-selector{
+  padding:15px !important;
+  gap:13px !important;
+}
+
+.economy-seller-selector-head span{
+  font-size:10px !important;
+}
+
+.economy-seller-selector-head strong{
+  font-size:15px !important;
+}
+
+.economy-seller-selector-head > small{
+  font-size:11px !important;
+  line-height:1.35 !important;
+}
+
+.economy-seller-option{
+  min-height:62px !important;
+  padding:12px 14px !important;
+}
+
+.economy-seller-option strong{
+  font-size:14px !important;
+}
+
+.economy-seller-option small{
+  font-size:11px !important;
+}
+
+.economy-seller-dot{
+  width:27px !important;
+  height:27px !important;
+
+  font-size:12px !important;
+}
+
+
+/* aggiunta venditore */
+
+.economy-add-seller{
+  gap:10px !important;
+}
+
+.economy-add-seller label{
+  font-size:12px !important;
+}
+
+.economy-add-seller select{
+  min-height:46px !important;
+  padding:0 12px !important;
+
+  font-size:13px !important;
+}
+
+
+/* card partecipanti */
+
+.economy-participant{
+  padding:14px !important;
+}
+
+.economy-participant-top{
+  margin-bottom:10px !important;
+}
+
+.economy-participant-top strong{
+  font-size:14px !important;
+}
+
+.economy-participant-top small{
+  font-size:11px !important;
+}
+
+.economy-remove-third-seller{
+  font-size:10px !important;
+}
+
+
+/* venditore / fatturazione */
+
+.economy-invoice-choice{
+  min-height:48px !important;
+}
+
+.economy-invoice-choice > span{
+  font-size:12px !important;
+  font-weight:700 !important;
+}
+
+.economy-invoice-choice button{
+  min-height:40px !important;
+  padding:0 12px !important;
+
+  font-size:12px !important;
+  font-weight:700 !important;
+}
+
+.economy-mixed-label{
+  font-size:11px !important;
+}
+
+.economy-mixed-field input{
+  min-height:42px !important;
+  font-size:12px !important;
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width:600px){
+
+  .sale-compact-control{
+    padding:14px !important;
+  }
+
+  .sale-domain-options{
+    grid-template-columns:1fr !important;
+  }
+
+  .economy-seller-selector-head{
+    gap:6px !important;
+  }
+
+}
+
+/* ==========================================================
+   REGISTRA VENDITA - WORKSPACE V13
+   ========================================================== */
+
+/* ---------- struttura ---------- */
+
+.economy-sale-builder{
+  gap:14px !important;
+}
+
+.economy-sale-builder>.sale-builder-section{
+  padding:16px !important;
+  border-radius:15px !important;
+}
+
+.sale-builder-label{
+  display:block;
+  margin-bottom:10px;
+
+  font-size:12px !important;
+  font-weight:800;
+}
+
+
+/* ---------- formula ---------- */
+
+.economy-sale-builder .price-choice-grid{
+  gap:10px !important;
+}
+
+.economy-sale-builder .price-choice{
+  min-height:92px !important;
+  padding:15px 17px !important;
+  border-radius:13px !important;
+}
+
+.economy-sale-builder .price-choice strong{
+  font-size:14px !important;
+}
+
+.economy-sale-builder .price-choice>span{
+  margin-top:3px;
+  font-size:20px !important;
+  font-weight:850;
+}
+
+.economy-sale-builder .price-choice small{
+  margin-top:3px;
+  font-size:11px !important;
+}
+
+
+/* ---------- servizi extra ---------- */
+
+.economy-sale-builder .upgrade-compact-grid{
+  gap:9px !important;
+}
+
+.economy-sale-builder .upgrade-compact-toggle,
+.economy-sale-builder .upgrade-qty-card{
+  min-height:72px !important;
+  padding:12px 14px !important;
+  border-radius:12px !important;
+}
+
+.economy-sale-builder .upgrade-compact-toggle strong,
+.economy-sale-builder .upgrade-qty-card strong{
+  font-size:13px !important;
+}
+
+.economy-sale-builder .upgrade-compact-toggle small,
+.economy-sale-builder .upgrade-qty-card small{
+  margin-top:3px;
+  font-size:10px !important;
+}
+
+.economy-sale-builder .upgrade-compact-toggle input{
+  width:19px;
+  height:19px;
+}
+
+.qty-stepper button{
+  width:36px !important;
+  height:38px !important;
+  font-size:17px !important;
+}
+
+.qty-stepper input{
+  height:38px !important;
+  font-size:12px !important;
+}
+
+
+/* ==========================================================
+   CONDIZIONI COMMERCIALI
+   ========================================================== */
+
+.sale-commercial-panel{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.sale-commercial-primary{
+  display:grid;
+  grid-template-columns:minmax(260px,.72fr) minmax(0,1.28fr);
+  gap:10px;
+}
+
+.sale-control-card,
+.sale-domain-card,
+.sale-security-row{
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--bg);
+}
+
+.sale-control-card{
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+
+  min-height:108px;
+  padding:15px 16px;
+  gap:12px;
+}
+
+.sale-control-copy{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+
+.sale-control-copy span,
+.sale-domain-copy>span{
+  font-size:9px;
+  font-weight:850;
+  letter-spacing:.08em;
+  color:var(--muted);
+}
+
+.sale-control-copy strong,
+.sale-domain-copy>strong{
+  font-size:14px;
+}
+
+
+/* ---------- durata ---------- */
+
+.sale-duration-stepper{
+  display:grid;
+  grid-template-columns:42px minmax(90px,1fr) 42px;
+
+  min-height:46px;
+
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:11px;
+
+  background:var(--card);
+}
+
+.sale-duration-stepper button{
+  border:0;
+  background:transparent;
+  color:var(--text);
+
+  font-size:20px;
+  cursor:pointer;
+}
+
+.sale-duration-stepper button:disabled{
+  opacity:.25;
+}
+
+.sale-duration-stepper>div{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+
+  border-left:1px solid var(--line);
+  border-right:1px solid var(--line);
+}
+
+.sale-duration-stepper>div strong{
+  font-size:15px;
+}
+
+.sale-duration-stepper>div small{
+  font-size:11px;
+  color:var(--muted);
+}
+
+
+/* ---------- sconto ---------- */
+
+.sale-discount-controls{
+  display:grid;
+  grid-template-columns:
+    minmax(150px,1.15fr)
+    minmax(95px,.55fr)
+    minmax(150px,.95fr);
+
+  gap:7px;
+}
+
+.sale-discount-controls select,
+.sale-discount-controls input{
+  width:100%;
+  min-width:0;
+  height:46px;
+
+  padding:0 12px;
+
+  border:1px solid var(--line);
+  border-radius:10px;
+
+  background:var(--card);
+  color:var(--text);
+
+  font:inherit;
+  font-size:12px;
+}
+
+.sale-discount-value{
+  position:relative;
+}
+
+.sale-discount-value input{
+  padding-right:32px;
+}
+
+.sale-discount-value>span{
+  position:absolute;
+  top:50%;
+  right:11px;
+
+  transform:translateY(-50%);
+
+  font-size:11px;
+  font-weight:750;
+  color:var(--muted);
+}
+
+
+/* ==========================================================
+   DOMINIO
+   ========================================================== */
+
+.sale-domain-card{
+  padding:15px 16px;
+}
+
+.sale-domain-head{
+  display:grid;
+  grid-template-columns:minmax(220px,.65fr) minmax(320px,1.35fr);
+  align-items:center;
+
+  gap:16px;
+}
+
+.sale-domain-copy{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+
+.sale-domain-choice{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.sale-domain-choice button{
+  display:flex;
+  align-items:center;
+
+  min-height:58px;
+  padding:10px 13px;
+  gap:10px;
+
+  border:1px solid var(--line);
+  border-radius:11px;
+
+  background:var(--card);
+  color:var(--text);
+
+  text-align:left;
+  cursor:pointer;
+}
+
+.sale-domain-choice button>i{
+  display:grid;
+  place-items:center;
+
+  width:24px;
+  height:24px;
+  flex:none;
+
+  border:1px solid var(--line);
+  border-radius:50%;
+
+  font-style:normal;
+  font-size:11px;
+  font-weight:900;
+}
+
+.sale-domain-choice button>span:last-child{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.sale-domain-choice button strong{
+  font-size:13px;
+}
+
+.sale-domain-choice button small{
+  font-size:10px;
+  color:var(--muted);
+}
+
+.sale-domain-choice button.selected{
+  border-color:var(--lime);
+  background:
+    color-mix(in srgb,var(--lime) 6%,var(--card));
+}
+
+.sale-domain-choice button.selected>i{
+  border-color:var(--lime);
+  background:var(--lime);
+  color:#111;
+}
+
+
+/* ---------- servizi dominio ---------- */
+
+.sale-domain-services{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+
+  margin-top:11px;
+  padding-top:11px;
+  gap:8px;
+
+  border-top:1px solid var(--line);
+}
+
+.sale-domain-services label{
+  display:flex;
+  align-items:center;
+
+  min-height:64px;
+  padding:10px 12px;
+  gap:10px;
+
+  border:1px solid var(--line);
+  border-radius:11px;
+
+  background:var(--card);
+
+  cursor:pointer;
+}
+
+.sale-domain-services label.selected{
+  border-color:var(--lime);
+  background:
+    color-mix(in srgb,var(--lime) 5%,var(--card));
+}
+
+.sale-domain-services input{
+  width:19px;
+  height:19px;
+  flex:none;
+}
+
+.sale-domain-services label>span{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+
+.sale-domain-services strong{
+  font-size:12px;
+}
+
+.sale-domain-services small{
+  font-size:10px;
+  color:var(--muted);
+}
+
+
+/* ==========================================================
+   SICUREZZA
+   ========================================================== */
+
+.sale-security-row{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+
+  min-height:66px;
+  padding:11px 15px;
+  gap:10px;
+
+  cursor:pointer;
+}
+
+.sale-security-row>input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+
+.sale-security-check{
+  display:grid;
+  place-items:center;
+
+  width:23px;
+  height:23px;
+
+  border:1px solid var(--line);
+  border-radius:6px;
+
+  font-size:11px;
+  font-weight:900;
+}
+
+.sale-security-row.selected{
+  border-color:var(--lime);
+}
+
+.sale-security-row.selected .sale-security-check{
+  border-color:var(--lime);
+  background:var(--lime);
+  color:#111;
+}
+
+.sale-security-copy{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+
+.sale-security-copy strong{
+  font-size:13px;
+}
+
+.sale-security-copy small{
+  font-size:10px;
+  color:var(--muted);
+}
+
+.sale-security-price{
+  font-size:14px;
+}
+
+
+/* ==========================================================
+   COSTI
+   ========================================================== */
+
+.economy-card-costs{
+  height:auto !important;
+  min-height:0 !important;
+  align-self:start !important;
+
+  padding:17px !important;
+}
+
+.economy-card-costs .economy-section-head{
+  margin-bottom:12px !important;
+}
+
+.economy-card-costs .economy-section-head strong{
+  font-size:15px !important;
+}
+
+.economy-card-costs .economy-section-head small{
+  font-size:10px !important;
+}
+
+.economy-card-costs .economy-cost-row{
+  display:grid;
+
+  grid-template-columns:minmax(0,1fr) auto auto;
+  align-items:center;
+
+  min-height:42px !important;
+  padding:8px 10px !important;
+  gap:8px;
+}
+
+.economy-card-costs .economy-cost-row span{
+  font-size:11px !important;
+}
+
+.economy-card-costs .economy-cost-row strong{
+  font-size:12px !important;
+}
+
+.economy-card-costs .economy-custom-cost{
+  display:grid !important;
+
+  grid-template-columns:minmax(0,1fr) 92px 38px !important;
+
+  margin-top:8px !important;
+  gap:7px !important;
+}
+
+.economy-card-costs .economy-custom-cost input,
+.economy-card-costs .economy-custom-cost button{
+  min-height:38px !important;
+}
+
+
+/* ==========================================================
+   RIPARTIZIONE
+   ========================================================== */
+
+.economy-card-split{
+  height:auto !important;
+  min-height:0 !important;
+  align-self:start !important;
+
+  padding:17px !important;
+}
+
+.economy-card-split .economy-section-head{
+  margin-bottom:12px !important;
+}
+
+.economy-card-split .economy-section-head strong{
+  font-size:15px !important;
+}
+
+.economy-card-split .economy-section-head small{
+  font-size:10px !important;
+}
+
+
+/* ---------- selezione venditore ---------- */
+
+.economy-seller-selector{
+  display:flex;
+  flex-direction:column;
+
+  margin-bottom:11px;
+  padding:13px;
+  gap:11px;
+
+  border:1px solid var(--line);
+  border-radius:13px;
+
+  background:var(--bg);
+}
+
+.economy-seller-selector-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+
+  gap:14px;
+}
+
+.economy-seller-selector-head>div{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+
+.economy-seller-selector-head span{
+  font-size:9px !important;
+  font-weight:850;
+  letter-spacing:.07em;
+
+  color:var(--muted);
+}
+
+.economy-seller-selector-head strong{
+  font-size:13px !important;
+}
+
+.economy-seller-selector-head>small{
+  max-width:280px;
+
+  font-size:10px !important;
+  line-height:1.3;
+
+  color:var(--muted);
+}
+
+.economy-seller-options{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(165px,1fr));
+
+  gap:8px;
+}
+
+.economy-seller-option{
+  display:flex;
+  align-items:center;
+
+  min-height:58px !important;
+  padding:10px 12px !important;
+  gap:10px;
+
+  border:1px solid var(--line);
+  border-radius:11px;
+
+  background:var(--card);
+  color:var(--text);
+
+  text-align:left;
+  cursor:pointer;
+}
+
+.economy-seller-option.active{
+  border-color:var(--lime);
+  background:
+    color-mix(in srgb,var(--lime) 5%,var(--card));
+}
+
+.economy-seller-dot{
+  display:grid;
+  place-items:center;
+
+  width:25px !important;
+  height:25px !important;
+  flex:none;
+
+  border:1px solid var(--line);
+  border-radius:50%;
+
+  font-size:10px !important;
+  font-weight:900;
+}
+
+.economy-seller-option.active .economy-seller-dot{
+  border-color:var(--lime);
+  background:var(--lime);
+  color:#111;
+}
+
+.economy-seller-option>span:last-child{
+  display:flex;
+  flex-direction:column;
+
+  min-width:0;
+  gap:2px;
+}
+
+.economy-seller-option strong{
+  font-size:13px !important;
+}
+
+.economy-seller-option small{
+  font-size:10px !important;
+  color:var(--muted);
+}
+
+
+/* ---------- aggiungi venditore ---------- */
+
+.economy-add-seller{
+  display:grid;
+  grid-template-columns:auto minmax(180px,280px);
+  align-items:center;
+  justify-content:start;
+
+  gap:9px;
+}
+
+.economy-add-seller label{
+  font-size:10px !important;
+  font-weight:700;
+
+  color:var(--muted);
+}
+
+.economy-add-seller select{
+  min-height:42px !important;
+  padding:0 11px !important;
+
+  border:1px solid var(--line);
+  border-radius:9px;
+
+  background:var(--card);
+  color:var(--text);
+
+  font-size:11px !important;
+}
+
+
+/* ---------- partecipanti ---------- */
+
+.economy-participant{
+  padding:13px !important;
+}
+
+.economy-participant-top{
+  margin-bottom:9px !important;
+}
+
+.economy-participant-top strong{
+  font-size:13px !important;
+}
+
+.economy-participant-top small{
+  font-size:10px !important;
+}
+
+.economy-invoice-choice{
+  min-height:46px !important;
+}
+
+.economy-invoice-choice>span{
+  font-size:11px !important;
+  font-weight:700;
+}
+
+.economy-invoice-choice button{
+  min-height:38px !important;
+  padding:0 11px !important;
+
+  font-size:11px !important;
+  font-weight:700;
+}
+
+
+/* ==========================================================
+   DESKTOP
+   ========================================================== */
+
+@media (min-width:1000px){
+
+  .economy-content:not(.economy-content-incasso){
+    gap:14px !important;
+  }
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-card-costs{
+    grid-column:1/span 4 !important;
+  }
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-card-split{
+    grid-column:5/-1 !important;
+  }
+
+}
+
+
+/* ==========================================================
+   TABLET
+   ========================================================== */
+
+@media (max-width:900px){
+
+  .sale-commercial-primary{
+    grid-template-columns:1fr;
+  }
+
+  .sale-domain-head{
+    grid-template-columns:1fr;
+  }
+
+  .sale-discount-controls{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .sale-discount-controls>select:last-child{
+    grid-column:1/-1;
+  }
+
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width:600px){
+
+  .sale-commercial-primary{
+    grid-template-columns:1fr;
+  }
+
+  .sale-discount-controls{
+    grid-template-columns:1fr;
+  }
+
+  .sale-discount-controls>select:last-child{
+    grid-column:auto;
+  }
+
+  .sale-domain-choice{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .sale-domain-services{
+    grid-template-columns:1fr;
+  }
+
+  .economy-seller-selector-head{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:5px;
+  }
+
+  .economy-seller-selector-head>small{
+    max-width:none;
+  }
+
+  .economy-seller-options{
+    grid-template-columns:1fr;
+  }
+
+  .economy-add-seller{
+    grid-template-columns:1fr;
+  }
+
+}
+
+/* ==========================================================
+   CLIENT LOOKUP - NO PASSWORD MANAGER
+   ========================================================== */
+
+.economy-client-searchbox{
+  display:flex;
+  align-items:center;
+
+  width:100%;
+  min-height:58px;
+
+  cursor:text;
+  outline:none;
+  white-space:nowrap;
+  overflow:hidden;
+
+  color:var(--text);
+}
+
+.economy-client-searchbox:empty::before{
+  content:attr(data-placeholder);
+  color:var(--muted);
+  pointer-events:none;
+}
+
+.economy-client-searchbox:focus{
+  outline:none;
+}
+
+.economy-client-searchbox br{
+  display:none;
+}
+
+
+/* ==========================================================
+   REGISTRA VENDITA - FINAL SUMMARY V15
+   ========================================================== */
+
+.economy-sale-final-summary{
+  display:flex;
+  flex-direction:column;
+  align-self:stretch !important;
+
+  padding:20px 22px !important;
+}
+
+.economy-sale-summary-title{
+  display:flex !important;
+  flex-direction:column;
+  align-items:flex-start !important;
+
+  padding-bottom:14px !important;
+  margin-bottom:2px;
+
+  border-bottom:1px solid var(--line);
+}
+
+.economy-sale-summary-title>span{
+  font-size:15px !important;
+  font-weight:800 !important;
+  color:var(--text) !important;
+}
+
+.economy-sale-summary-title>small{
+  margin-top:3px;
+
+  font-size:10px;
+  color:var(--muted);
+}
+
+.economy-sale-final-summary>div:not(.economy-sale-summary-title){
+  min-height:57px;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:20px;
+}
+
+.economy-sale-final-summary>div>span{
+  font-size:12px;
+}
+
+.economy-sale-final-summary>div>strong{
+  font-size:13px;
+}
+
+.economy-sale-final-summary .economy-summary-profit{
+  margin-top:auto;
+}
+
+.economy-sale-final-summary .economy-summary-profit>strong{
+  font-size:24px !important;
+}
+
+
+/* quota mostrata ora nell'header partecipante */
+.economy-participant .economy-person-total{
+  display:none !important;
+}
+
+
+/* ==========================================================
+   REGISTRA VENDITA - OPERATIVE FLOW V16
+   ========================================================== */
+
+@media (min-width:1000px){
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-card-costs{
+    grid-column:1/-1 !important;
+    width:100% !important;
+  }
+
+  .economy-content:not(.economy-content-incasso)>
+  .economy-card-split{
+    grid-column:1/-1 !important;
+    width:100% !important;
+  }
+
+}
+
+
+/* COSTI */
+
+.economy-card-costs{
+  padding:20px !important;
+}
+
+.economy-card-costs .economy-section-head{
+  margin-bottom:14px !important;
+}
+
+.economy-card-costs .economy-section-head strong{
+  font-size:17px !important;
+}
+
+.economy-card-costs .economy-section-head small{
+  font-size:11px !important;
+}
+
+.economy-card-costs .economy-cost-row{
+  min-height:48px !important;
+  padding:10px 12px !important;
+}
+
+.economy-card-costs .economy-cost-row span{
+  font-size:13px !important;
+}
+
+.economy-card-costs .economy-cost-row strong{
+  font-size:14px !important;
+}
+
+.economy-card-costs .economy-custom-cost{
+  grid-template-columns:minmax(240px,1fr) 140px 46px !important;
+  gap:8px !important;
+}
+
+.economy-card-costs .economy-custom-cost input,
+.economy-card-costs .economy-custom-cost button{
+  min-height:44px !important;
+}
+
+
+/* RIPARTIZIONE */
+
+.economy-card-split{
+  padding:20px !important;
+}
+
+.economy-card-split .economy-section-head strong{
+  font-size:17px !important;
+}
+
+.economy-card-split .economy-section-head small{
+  font-size:11px !important;
+}
+
+.economy-participants{
+  gap:12px !important;
+}
+
+.economy-participant{
+  padding:15px !important;
+  border-radius:13px !important;
+}
+
+.economy-participant-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+
+  margin-bottom:12px !important;
+}
+
+.economy-participant-top>div:first-child{
+  min-width:0;
+}
+
+.economy-participant-top>div:first-child>strong{
+  font-size:15px !important;
+}
+
+.economy-participant-top>div:first-child>small{
+  font-size:10px !important;
+}
+
+.economy-participant-head-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.economy-participant-quote{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:2px;
+
+  padding-left:12px;
+
+  border-left:1px solid var(--line);
+}
+
+.economy-participant-quote small{
+  font-size:9px !important;
+  color:var(--muted);
+}
+
+.economy-participant-quote strong{
+  font-size:17px !important;
+  color:var(--lime);
+}
+
+.economy-invoice-choice>span{
+  font-size:11px !important;
+}
+
+.economy-invoice-choice button{
+  min-height:40px !important;
+  font-size:11px !important;
+}
+
+
+/* RIEPILOGO */
+
+.economy-sale-final-summary{
+  min-height:0 !important;
+}
+
+.economy-sale-final-summary .economy-my-share{
+  margin-top:8px !important;
+
+  border-top:1px solid
+    color-mix(in srgb,var(--lime) 25%,var(--line));
+}
+
+.economy-sale-final-summary .economy-my-share>span{
+  font-weight:750;
+}
+
+.economy-sale-final-summary .economy-my-share>strong{
+  font-size:26px !important;
+  color:var(--lime);
+}
+
+
+@media (max-width:600px){
+
+  .economy-card-costs .economy-custom-cost{
+    grid-template-columns:minmax(0,1fr) 90px 42px !important;
+  }
+
+  .economy-participant-top{
+    align-items:flex-start;
+  }
+
+  .economy-participant-head-actions{
+    flex-direction:column;
+    align-items:flex-end;
+  }
+
+}
+
+/* ==========================================================
+   REGISTRA VENDITA - DESKTOP DENSITY V17
+   ========================================================== */
+
+@media (min-width:1000px){
+
+  /* ========================================================
+     COSTI
+     ======================================================== */
+
+  .economy-card-costs{
+    padding:18px 20px !important;
+  }
+
+  .economy-card-costs .economy-section-head{
+    margin-bottom:12px !important;
+  }
+
+  .economy-costs-workspace{
+    display:grid;
+    grid-template-columns:minmax(0,1.45fr) minmax(360px,.55fr);
+    align-items:stretch;
+    gap:14px;
+  }
+
+  .economy-costs-list{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    min-width:0;
+  }
+
+  .economy-card-costs .economy-cost-row{
+    min-height:48px !important;
+    padding:9px 12px !important;
+  }
+
+  .economy-cost-add-panel{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:9px;
+
+    padding:12px 13px;
+
+    border:1px solid var(--line);
+    border-radius:12px;
+
+    background:var(--bg);
+  }
+
+  .economy-cost-add-copy{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+
+  .economy-cost-add-copy strong{
+    font-size:12px;
+  }
+
+  .economy-cost-add-copy small{
+    font-size:9px;
+    line-height:1.3;
+    color:var(--muted);
+  }
+
+  .economy-cost-add-panel .economy-custom-cost{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) 100px 42px !important;
+
+    margin:0 !important;
+    gap:7px !important;
+  }
+
+  .economy-cost-add-panel .economy-custom-cost input,
+  .economy-cost-add-panel .economy-custom-cost button{
+    min-height:42px !important;
+  }
+
+
+  /* ========================================================
+     RIPARTIZIONE - SELETTORE VENDITORE
+     ======================================================== */
+
+  .economy-card-split{
+    padding:18px 20px !important;
+  }
+
+  .economy-seller-selector{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) minmax(250px,320px);
+    align-items:end;
+
+    padding:13px 14px !important;
+    gap:11px 14px !important;
+  }
+
+  .economy-seller-selector-head{
+    grid-column:1/-1;
+
+    display:flex !important;
+    flex-direction:row !important;
+    justify-content:space-between;
+    align-items:flex-end !important;
+
+    gap:20px !important;
+  }
+
+  .economy-seller-selector-head>small{
+    max-width:none !important;
+    text-align:right;
+  }
+
+  .economy-seller-options{
+    grid-column:1;
+
+    display:grid !important;
+    grid-template-columns:repeat(
+      2,
+      minmax(180px,1fr)
+    );
+
+    gap:8px !important;
+  }
+
+  .economy-seller-option{
+    min-height:56px !important;
+    padding:9px 12px !important;
+  }
+
+  .economy-add-seller{
+    grid-column:2;
+
+    display:flex !important;
+    flex-direction:column;
+    align-items:stretch !important;
+
+    min-width:0;
+    gap:5px !important;
+  }
+
+  .economy-add-seller label{
+    font-size:9px !important;
+  }
+
+  .economy-add-seller select{
+    width:100%;
+    min-height:56px !important;
+
+    padding:0 12px !important;
+
+    font-size:11px !important;
+  }
+
+
+  /* ========================================================
+     RIPARTIZIONE - CARD ALESSANDRO / TOMAS
+     ======================================================== */
+
+  .economy-participants{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+
+    gap:12px !important;
+  }
+
+  .economy-participant{
+    min-width:0;
+
+    padding:14px 15px !important;
+
+    border-radius:13px !important;
+  }
+
+  .economy-participant-top{
+    min-height:52px;
+
+    margin-bottom:9px !important;
+  }
+
+  .economy-participant-top>div:first-child>strong{
+    font-size:15px !important;
+  }
+
+  .economy-participant-top>div:first-child>small{
+    font-size:10px !important;
+  }
+
+  .economy-participant-head-actions{
+    flex:none;
+  }
+
+  .economy-participant-quote{
+    min-width:110px;
+
+    padding-left:14px;
+  }
+
+  .economy-participant-quote small{
+    font-size:9px !important;
+  }
+
+  .economy-participant-quote strong{
+    font-size:19px !important;
+  }
+
+
+  /* fatturazione più orizzontale */
+
+  .economy-invoice-choice{
+    display:grid !important;
+    grid-template-columns:minmax(125px,.55fr) minmax(0,1fr);
+    align-items:center;
+
+    min-height:46px !important;
+
+    gap:10px;
+  }
+
+  .economy-invoice-choice>span{
+    font-size:11px !important;
+  }
+
+  .economy-invoice-choice>div{
+    display:flex;
+    justify-content:flex-end;
+    gap:5px;
+  }
+
+  .economy-invoice-choice button{
+    min-height:38px !important;
+    padding:0 11px !important;
+
+    font-size:11px !important;
+  }
+
+
+  /* calcoli: 2 colonne anziché elenco verticale */
+
+  .economy-person-calc{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+
+    gap:0 14px !important;
+  }
+
+  .economy-person-calc>div{
+    min-width:0;
+  }
+
+}
+
+
+/* ==========================================================
+   TABLET
+   ========================================================== */
+
+@media (min-width:701px) and (max-width:999px){
+
+  .economy-costs-workspace{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+
+  .economy-participants{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width:700px){
+
+  .economy-costs-workspace{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .economy-cost-add-panel{
+    padding:11px;
+  }
+
+  .economy-cost-add-panel .economy-custom-cost{
+    grid-template-columns:minmax(0,1fr) 90px 42px !important;
+  }
+
+  .economy-seller-selector{
+    display:flex !important;
+    flex-direction:column;
+  }
+
+  .economy-seller-selector-head{
+    align-items:flex-start !important;
+    flex-direction:column !important;
+  }
+
+  .economy-seller-options{
+    width:100%;
+  }
+
+  .economy-add-seller{
+    width:100%;
+  }
+
+  .economy-participants{
+    grid-template-columns:1fr !important;
+  }
+
+}
+
+
+/* ==========================================================
+   INCASSA
+   Mobile e desktop hanno composizioni dedicate.
+   ========================================================== */
+
+/* ==========================================================
+   INCASSA
+   UX desktop e mobile dedicate
+   ========================================================== */
+
+
+/* ==========================================================
+   COMPONENTI CONDIVISI
+   ========================================================== */
+
+.payment-sale-overview,
+.payment-history-panel,
+.payment-entry-panel{
+  box-sizing:border-box;
+}
+
+
+/* ---------- SITUAZIONE VENDITA ---------- */
+
+.payment-sale-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+}
+
+.payment-sale-top > div:first-child{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.payment-sale-kicker,
+.payment-sale-next > span,
+.payment-history-head > div > span,
+.payment-group-label span,
+.payment-field > span{
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.09em;
+  opacity:.62;
+}
+
+.payment-sale-top > div:first-child > strong{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-size:18px;
+  line-height:1.15;
+  white-space:nowrap;
+}
+
+.payment-sale-next{
+  flex:0 0 auto;
+  display:grid;
+  grid-template-columns:auto auto;
+  align-items:baseline;
+  column-gap:7px;
+  text-align:right;
+}
+
+.payment-sale-next > span{
+  grid-column:1 / -1;
+}
+
+.payment-sale-next strong{
+  font-size:14px;
+}
+
+.payment-sale-next small{
+  font-size:10px;
+  opacity:.55;
+}
+
+.payment-sale-stats{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  margin-top:14px;
+}
+
+.payment-sale-stats > div{
+  min-width:0;
+  padding:0 16px;
+  border-right:1px solid rgba(128,128,128,.18);
+}
+
+.payment-sale-stats > div:first-child{
+  padding-left:0;
+}
+
+.payment-sale-stats > div:last-child{
+  padding-right:0;
+  border-right:0;
+}
+
+.payment-sale-stats span{
+  display:block;
+  margin-bottom:3px;
+  font-size:9px;
+  opacity:.5;
+}
+
+.payment-sale-stats strong{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-size:17px;
+  white-space:nowrap;
+}
+
+.payment-sale-stats .is-residual strong{
+  color:var(--lime,#baff26);
+}
+
+.payment-sale-progress{
+  width:100%;
+  height:5px;
+  margin-top:13px;
+  overflow:hidden;
+  border-radius:999px;
+  background:rgba(128,128,128,.15);
+}
+
+.payment-sale-progress i{
+  display:block;
+  height:100%;
+  border-radius:inherit;
+  background:var(--lime,#baff26);
+  transition:width .2s ease;
+}
+
+
+/* ---------- STORICO PAGAMENTI ---------- */
+
+.payment-history-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:13px;
+}
+
+.payment-history-head > div{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+
+.payment-history-head > div > strong{
+  font-size:16px;
+}
+
+.payment-history-head > small{
+  max-width:160px;
+  font-size:9px;
+  line-height:1.35;
+  opacity:.52;
+  text-align:right;
+}
+
+.payment-group-label{
+  margin:12px 0 6px;
+}
+
+.payment-history-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.payment-history-item{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  padding:10px 11px;
+  border:1px solid rgba(128,128,128,.15);
+  border-radius:12px;
+  background:rgba(128,128,128,.055);
+}
+
+.payment-history-status{
+  width:27px;
+  height:27px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:rgba(128,128,128,.10);
+  font-size:10px;
+  font-weight:900;
+}
+
+.payment-history-item.is-paid .payment-history-status{
+  background:rgba(105,150,75,.17);
+}
+
+.payment-history-item.is-planned .payment-history-status{
+  background:rgba(190,145,45,.17);
+}
+
+.payment-history-copy{
+  min-width:0;
+}
+
+.payment-history-copy strong{
+  display:block;
+  font-size:12px;
+}
+
+.payment-history-copy small,
+.payment-history-copy p{
+  display:block;
+  overflow:hidden;
+  margin:2px 0 0;
+  text-overflow:ellipsis;
+  font-size:9px;
+  line-height:1.35;
+  opacity:.56;
+}
+
+.payment-history-action{
+  min-height:33px;
+  padding:0 12px;
+  border:0;
+  border-radius:9px;
+  background:var(--paper,#f4f1ea);
+  color:#111;
+  font:inherit;
+  font-size:9px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.payment-history-empty{
+  min-height:90px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  text-align:center;
+  opacity:.5;
+}
+
+
+/* ---------- SCELTA OPERAZIONE ---------- */
+
+.payment-operation-switch{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:11px;
+}
+
+.payment-operation-switch > button{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  min-width:0;
+  min-height:68px;
+  padding:12px 13px;
+  border:1px solid rgba(128,128,128,.18);
+  border-radius:12px;
+  background:rgba(128,128,128,.045);
+  color:inherit;
+  text-align:left;
+  font:inherit;
+  cursor:pointer;
+}
+
+.payment-operation-switch > button.active{
+  border-color:rgba(186,255,38,.55);
+  background:rgba(186,255,38,.075);
+}
+
+.payment-operation-icon{
+  width:32px;
+  height:32px;
+  flex:0 0 auto;
+  display:grid;
+  place-items:center;
+  border-radius:8px;
+  background:rgba(128,128,128,.10);
+  font-size:12px;
+  font-weight:900;
+}
+
+.payment-operation-switch > button > span:last-child{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.payment-operation-switch strong{
+  font-size:13px;
+  line-height:1.15;
+}
+
+.payment-operation-switch small{
+  margin-top:2px;
+  font-size:10px;
+  line-height:1.3;
+  opacity:.58;
+}
+
+
+/* ---------- RESIDUO ---------- */
+
+.payment-amount-context{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+  padding:9px 11px;
+  border-radius:11px;
+  background:rgba(128,128,128,.07);
+}
+
+.payment-amount-context > div{
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+}
+
+.payment-amount-context span{
+  font-size:10px;
+  opacity:.58;
+}
+
+.payment-amount-context strong{
+  font-size:16px;
+}
+
+.payment-amount-context button{
+  border:0;
+  background:transparent;
+  color:inherit;
+  padding:6px 0;
+  font:inherit;
+  font-size:10px;
+  font-weight:800;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  cursor:pointer;
+}
+
+
+/* ---------- CAMPI ---------- */
+
+.payment-fields-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:8px;
+}
+
+.payment-field{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.payment-field > span{
+  padding-left:2px;
+}
+
+.payment-field input{
+  width:100%;
+  min-width:0;
+  min-height:46px;
+  box-sizing:border-box;
+  padding:0 13px;
+  font-size:15px;
+  line-height:1.2;
+}
+
+.payment-amount-input{
+  position:relative;
+}
+
+.payment-amount-input > b{
+  position:absolute;
+  left:13px;
+  top:50%;
+  z-index:1;
+  transform:translateY(-50%);
+  font-size:14px;
+  pointer-events:none;
+}
+
+.payment-amount-input input{
+  padding-left:34px !important;
+}
+
+
+/* ---------- DETTAGLI ECONOMICI ---------- */
+
+.payment-entry-panel .economy-payment-details{
+  margin-top:10px;
+}
+
+
+/* ---------- RIEPILOGO DENTRO MOVIMENTO ---------- */
+
+.payment-inline-summary{
+  margin-top:11px;
+  padding:12px 13px;
+  border:1px solid rgba(128,128,128,.18);
+  border-radius:12px;
+  background:rgba(128,128,128,.045);
+}
+
+.payment-inline-summary .economy-payment-summary-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding-bottom:8px;
+  margin-bottom:5px;
+  border-bottom:1px solid rgba(128,128,128,.17);
+}
+
+.payment-inline-summary .economy-payment-summary-title span{
+  font-size:11px;
+  font-weight:700;
+  opacity:.68;
+}
+
+.payment-inline-summary .economy-payment-summary-title strong{
+  font-size:22px;
+  color:var(--lime,#baff26);
+}
+
+.payment-inline-summary > div:not(
+  .economy-payment-summary-title
+):not(
+  .economy-payment-summary-people
+){
+  min-height:27px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  font-size:11px;
+}
+
+.payment-inline-summary .economy-summary-profit{
+  margin-top:3px;
+  padding-top:6px;
+  border-top:1px solid rgba(128,128,128,.17);
+}
+
+.payment-inline-summary .economy-summary-profit strong{
+  font-size:17px;
+  color:var(--lime,#baff26);
+}
+
+.payment-inline-summary .economy-payment-summary-people{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:5px;
+  padding-top:8px;
+  margin-top:6px;
+  border-top:1px solid rgba(128,128,128,.17);
+}
+
+.payment-inline-summary .economy-payment-summary-people > div{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  padding:6px 7px;
+  border-radius:8px;
+  background:rgba(128,128,128,.075);
+  font-size:8px;
+}
+
+.payment-inline-summary .economy-payment-summary-people span{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.payment-inline-summary .economy-payment-summary-people strong{
+  white-space:nowrap;
+}
+
+
+/* ==========================================================
+   DESKTOP
+   ========================================================== */
+
+@media (min-width:900px){
+
+  #app.app-wide{
+    max-width:1440px;
+  }
+
+  .economy-content-incasso{
+    width:min(1380px,calc(100vw - 48px));
+    max-width:none;
+    margin:0 auto;
+
+    display:grid;
+    grid-template-columns:
+      minmax(0,1.03fr)
+      minmax(480px,.97fr);
+
+    grid-template-areas:
+      "message message"
+      "client client"
+      "picker picker"
+      "sale sale"
+      "history entry"
+      ". submit";
+
+    gap:11px 13px;
+    align-items:start;
+  }
+
+  .economy-content-incasso > .err,
+  .economy-content-incasso > .economy-preview-note{
+    grid-area:message;
+  }
+
+  .economy-content-incasso > .economy-card-client{
+    grid-area:client;
+    padding:14px 18px;
+  }
+
+  .economy-content-incasso
+  > .economy-card-client
+  .economy-section-head{
+    margin-bottom:8px;
+  }
+
+  .economy-content-incasso > .economy-card-sale-picker{
+    grid-area:picker;
+  }
+
+  .economy-content-incasso > .payment-sale-overview{
+    grid-area:sale;
+    padding:15px 18px;
+  }
+
+  .economy-content-incasso > .payment-history-panel{
+    grid-area:history;
+    min-height:0;
+    padding:16px 18px;
+  }
+
+  .economy-content-incasso > .payment-entry-panel{
+    grid-area:entry;
+    width:100%;
+    padding:19px 21px;
+  }
+
+  .economy-content-incasso > .economy-no-sale{
+    grid-column:1 / -1;
+  }
+
+  .economy-content-incasso > div:last-child{
+    grid-area:submit;
+    width:100%;
+    margin-top:-2px;
+  }
+
+  .economy-content-incasso
+  > div:last-child
+  .btn-primary{
+    min-height:48px;
+  }
+
+  .payment-entry-panel .economy-section-head{
+    margin-bottom:15px;
+  }
+
+  .payment-entry-panel .economy-section-head > div > strong{
+    font-size:19px;
+    line-height:1.15;
+  }
+
+  .payment-entry-panel .economy-section-head > div > small{
+    margin-top:3px;
+    font-size:11px;
+    line-height:1.35;
+    opacity:.58;
+  }
+
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width:899px){
+
+  .economy-content-incasso{
+    width:100%;
+    max-width:100%;
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+  }
+
+  .economy-content-incasso > .economy-card-client{
+    order:1;
+  }
+
+  .economy-content-incasso > .economy-card-sale-picker{
+    order:2;
+  }
+
+  .economy-content-incasso > .payment-sale-overview{
+    order:3;
+  }
+
+  .economy-content-incasso > .payment-history-panel{
+    order:4;
+  }
+
+  .economy-content-incasso > .payment-entry-panel{
+    order:5;
+  }
+
+  .economy-content-incasso > div:last-child{
+    order:6;
+  }
+
+  .payment-sale-overview,
+  .payment-history-panel,
+  .payment-entry-panel{
+    margin:0;
+    padding:13px;
+    border-radius:15px;
+  }
+
+
+  /* Vendita più compatta */
+
+  .payment-sale-top{
+    gap:9px;
+  }
+
+  .payment-sale-top > div:first-child > strong{
+    font-size:14px;
+  }
+
+  .payment-sale-next{
+    display:flex;
+    flex-direction:column;
+    gap:1px;
+  }
+
+  .payment-sale-next > span{
+    font-size:7px;
+  }
+
+  .payment-sale-next strong{
+    font-size:11px;
+  }
+
+  .payment-sale-next small{
+    font-size:8px;
+  }
+
+  .payment-sale-stats{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    margin-top:11px;
+  }
+
+  .payment-sale-stats > div{
+    padding:0 7px;
+  }
+
+  .payment-sale-stats > div:first-child{
+    padding-left:0;
+  }
+
+  .payment-sale-stats > div:nth-child(3){
+    padding-right:0;
+    border-right:0;
+  }
+
+  .payment-sale-progress-copy{
+    display:none;
+  }
+
+  .payment-sale-stats span{
+    font-size:7px;
+  }
+
+  .payment-sale-stats strong{
+    font-size:12px;
+  }
+
+
+  /* Storico */
+
+  .payment-history-head{
+    margin-bottom:10px;
+  }
+
+  .payment-history-head > div > strong{
+    font-size:14px;
+  }
+
+  .payment-history-head > small{
+    max-width:105px;
+    font-size:7px;
+  }
+
+  .payment-history-item{
+    padding:9px;
+  }
+
+  .payment-history-status{
+    width:24px;
+    height:24px;
+  }
+
+  .payment-history-action{
+    min-height:31px;
+    padding:0 9px;
+    font-size:8px;
+  }
+
+
+  /* Operazione */
+
+  .payment-operation-switch{
+    gap:6px;
+  }
+
+  .payment-operation-switch > button{
+    min-height:55px;
+    padding:9px 8px;
+    align-items:flex-start;
+  }
+
+  .payment-operation-icon{
+    width:24px;
+    height:24px;
+  }
+
+  .payment-operation-switch strong{
+    font-size:9px;
+  }
+
+  .payment-operation-switch small{
+    font-size:7px;
+  }
+
+  .payment-amount-context{
+    padding:8px 9px;
+  }
+
+  .payment-fields-row{
+    grid-template-columns:1fr;
+    gap:7px;
+  }
+
+  .payment-inline-summary{
+    margin-top:9px;
+    padding:11px;
+  }
+
+  .payment-inline-summary
+  .economy-payment-summary-title strong{
+    font-size:17px;
+  }
+
+  .payment-inline-summary
+  .economy-payment-summary-people{
+    grid-template-columns:1fr;
+  }
+
+  .payment-entry-panel .economy-payment-details{
+    margin-top:9px;
+  }
+
+}
+
+
+/* ==========================================================
+   DARK MODE
+   ========================================================== */
+
+html[data-theme="dark"] .payment-history-item,
+html[data-theme="dark"] .payment-operation-switch > button,
+html[data-theme="dark"] .payment-amount-context,
+html[data-theme="dark"] .payment-inline-summary{
+  border-color:rgba(255,255,255,.10);
+}
+
+html[data-theme="dark"] .payment-history-action{
+  background:#f2efe8;
+  color:#111;
+}
+
+
+/* ==========================================================
+   INCASSA - CLIENTE MOBILE COMPATTO
+   ========================================================== */
+
+@media (max-width:899px){
+
+  /* Card generale */
+  .economy-content-incasso > .economy-card-client{
+    padding:12px;
+  }
+
+  .economy-content-incasso
+  > .economy-card-client
+  > .economy-section-head{
+    margin-bottom:8px;
+  }
+
+  .economy-content-incasso
+  > .economy-card-client
+  > .economy-section-head > span{
+    width:30px;
+    height:30px;
+    flex:0 0 30px;
+    font-size:10px;
+  }
+
+  .economy-content-incasso
+  > .economy-card-client
+  > .economy-section-head strong{
+    font-size:14px;
+  }
+
+  .economy-content-incasso
+  > .economy-card-client
+  > .economy-section-head small{
+    max-width:260px;
+    font-size:9px;
+    line-height:1.25;
+  }
+
+
+  /* Cliente selezionato:
+     riga 1 = nome + stato
+     riga 2 = azioni */
+  .economy-content-incasso
+  .economy-selected-client-v2{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:
+      "main progress"
+      "actions actions";
+    align-items:center;
+    gap:10px 12px;
+
+    min-height:0;
+    padding:12px 13px;
+  }
+
+
+  /* Nome */
+  .economy-content-incasso
+  .economy-selected-client-main{
+    grid-area:main;
+    min-width:0;
+  }
+
+  .economy-content-incasso
+  .economy-selected-client-title{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    min-width:0;
+  }
+
+  .economy-content-incasso
+  .economy-client-check{
+    width:32px;
+    height:32px;
+    flex:0 0 32px;
+
+    display:grid;
+    place-items:center;
+
+    font-size:12px;
+  }
+
+  .economy-content-incasso
+  .economy-selected-client-title > div{
+    min-width:0;
+  }
+
+  .economy-content-incasso
+  .economy-selected-client-title strong{
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+
+    font-size:17px;
+    line-height:1.1;
+    white-space:nowrap;
+  }
+
+  .economy-content-incasso
+  .economy-selected-client-title small{
+    display:block;
+    margin-top:3px;
+
+    font-size:9px;
+    line-height:1.2;
+    opacity:.58;
+  }
+
+
+  /* Dati completi non servono qui:
+     restano disponibili da Apri anagrafica */
+  .economy-content-incasso
+  .economy-selected-client-meta{
+    display:none;
+  }
+
+
+  /* Stato anagrafica sulla stessa riga del nome */
+  .economy-content-incasso
+  .economy-selected-client-progress{
+    grid-area:progress;
+
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    justify-content:center;
+    gap:3px;
+
+    min-width:0;
+  }
+
+  .economy-content-incasso
+  .economy-client-ready{
+    min-height:30px;
+    padding:0 10px;
+
+    display:flex;
+    align-items:center;
+    gap:6px;
+
+    border-radius:999px;
+
+    font-size:9px;
+    white-space:nowrap;
+  }
+
+  .economy-content-incasso
+  .economy-client-ready i{
+    width:7px;
+    height:7px;
+    flex:0 0 7px;
+  }
+
+  /* "Pronto per l'incasso" sarebbe ridondante
+     sul mobile: teniamo solo il badge */
+  .economy-content-incasso
+  .economy-selected-client-progress > small{
+    display:none;
+  }
+
+
+  /* Azioni compatte */
+  .economy-content-incasso
+  .economy-client-actions-v2{
+    grid-area:actions;
+
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+
+    width:100%;
+    margin:0;
+  }
+
+  .economy-content-incasso
+  .economy-client-actions-v2 button{
+    width:100%;
+    min-width:0;
+    min-height:38px;
+
+    margin:0;
+    padding:0 10px;
+
+    font-size:9px;
+    white-space:nowrap;
+  }
+
+}
+
+
+/* Telefoni particolarmente stretti */
+@media (max-width:390px){
+
+  .economy-content-incasso
+  .economy-selected-client-v2{
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:9px 7px;
+    padding:11px;
+  }
+
+  .economy-content-incasso
+  .economy-selected-client-title strong{
+    font-size:15px;
+  }
+
+  .economy-content-incasso
+  .economy-client-ready{
+    padding:0 8px;
+    font-size:8px;
+  }
+
+}
+
+
+/* ==========================================================
+   INCASSA - CTA RATA COERENTE CON BRAND
+   ========================================================== */
+
+.payment-history-action{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  min-width:82px;
+  min-height:38px;
+  padding:0 14px;
+
+  border:1px solid rgba(186,255,38,.42);
+  border-radius:11px;
+
+  background:rgba(186,255,38,.07);
+  color:var(--lime,#baff26);
+
+  font:inherit;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.01em;
+
+  cursor:pointer;
+
+  transition:
+    background .16s ease,
+    border-color .16s ease,
+    color .16s ease,
+    transform .16s ease;
+}
+
+.payment-history-action:hover{
+  border-color:var(--lime,#baff26);
+  background:var(--lime,#baff26);
+  color:#10120f;
+}
+
+.payment-history-action:active{
+  transform:scale(.97);
+}
+
+
+/* mobile */
+@media (max-width:899px){
+
+  .payment-history-action{
+    min-width:72px;
+    min-height:36px;
+
+    padding:0 11px;
+
+    border-radius:10px;
+
+    font-size:9px;
+  }
+
+}
+
+
+/* dark mode: evita vecchio override bianco */
+html[data-theme="dark"] .payment-history-action{
+  border-color:rgba(186,255,38,.42);
+  background:rgba(186,255,38,.07);
+  color:var(--lime,#baff26);
+}
+
+html[data-theme="dark"] .payment-history-action:hover{
+  border-color:var(--lime,#baff26);
+  background:var(--lime,#baff26);
+  color:#10120f;
+}

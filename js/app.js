@@ -32,15 +32,38 @@ function normalizzaClientePerSalvataggio(form) {
   };
 }
 
+function normalizzaAnagraficaClientePerSalvataggio(form) {
+  return {
+    nome: (form.nome || '').trim(),
+    referente: (form.referente || '').trim() || null,
+    telefono: (form.telefono || '').trim() || null,
+    email: (form.email || '').trim() || null,
+    piva: (form.piva || '').trim() || null,
+    iban: (form.iban || '').trim() || null,
+    sito_url: (form.sito_url || '').trim() || null
+  };
+}
+
 function prezzoRicorrenteDaForm(prezzoCatalogo, form) {
   const lordo = Math.max(0, Number(prezzoCatalogo) || 0);
   const valore = Math.max(0, Number(form.sconto_valore) || 0);
 
-  if (form.sconto_tipo === 'prezzo_fisso') return valore;
-  if (form.sconto_tipo === 'percentuale') {
-    return lordo * (1 - Math.min(valore, 100) / 100);
+  if (form.sconto_tipo === 'prezzo_fisso') {
+    return valore;
   }
-  if (form.sconto_tipo === 'fisso') return Math.max(0, lordo - valore);
+
+  if (form.sconto_tipo === 'percentuale') {
+    // Un valore oltre 100% è invalido:
+    // non deve azzerare il prezzo configurato.
+    if (valore > 100) return lordo;
+
+    return lordo * (1 - valore / 100);
+  }
+
+  if (form.sconto_tipo === 'fisso') {
+    return Math.max(0, lordo - valore);
+  }
+
   return lordo;
 }
 
@@ -261,6 +284,27 @@ function formVenditaEconomicaVuoto() {
     clienteId: null,
     servizio: '',
     importoVendita: null,
+
+    configurazioneCommerciale: {
+      formula: 'mensile',
+      upgrade: [],
+      periodicita_contratto: 'mensile',
+      pagine_extra: 0,
+      lingue_extra: 0,
+
+      durata_contratto_anni: 1,
+      sconto_tipo: '',
+      sconto_valore: 0,
+      sconto_durata_anni: null,
+
+      cliente_ha_dominio: true,
+      dominio_it: false,
+      dominio_com: false,
+      email_5_caselle: false,
+
+      pacchetto_sicurezza: false
+    },
+
     costi: [],
     costoDescrizione: '',
     costoImporto: null,
@@ -286,6 +330,7 @@ function formVenditaEconomicaVuoto() {
     importoFatturatoAdminRata: 0,
 
     partecipanti: [],
+    venditoriDisponibili: [],
     nuovoPartecipanteNome: ''
   };
 }
@@ -351,12 +396,21 @@ function appState() {
     }],
 
     nuovoClienteForm: formModuloVuoto(),
+    ritornoDopoNuovoCliente: null,
+    clienteCreatoId: null,
+    clienteCreatoPromptAperto: false,
     clienteFormSnapshot: null,
 
     // CRM economico / vendite
     venditaEconomicaForm: formVenditaEconomicaVuoto(),
     modalitaEconomia: 'vendita',
     venditaEconomicaAttiva: null,
+
+    // Incasso: un cliente può avere più vendite attive.
+    venditeClienteIncasso: [],
+    venditaIncassoSelezionataId: null,
+    caricandoVenditeIncasso: false,
+
     costiVenditaRiferimento: [],
     pagamentoPrevistoId: null,
     clienteEconomiaSelezionato: null,
@@ -365,6 +419,8 @@ function appState() {
 
     // Azioni rapide cliente
     clienteAzioniRapideId: null,
+    clienteAzioniPosizione: { top: 0, left: 0 },
+    eliminazioneDaAzioniRapide: false,
     clienteAzioniStatoAperto: false,
     clienteAzioniContattoAperto: false,
     clienteAzioniNotaAperta: false,
@@ -462,6 +518,101 @@ function appState() {
     swipeDirection: null,
     swipeElement: null,
 
+    historyPronta: false,
+    historyRipristino: false,
+    historyUltimaChiave: '',
+
+    statoHistoryCorrente() {
+      return {
+        le: true,
+        view: this.view,
+        clienteId: this.clienteSelezionatoId || null,
+        modalitaEconomia: this.modalitaEconomia || null,
+        agendaVista: this.agendaVista || null,
+        agendaData: this.agendaDataSelezionata || null,
+        agendaMese: this.agendaMese || null,
+        pipelineIndice: Number(this.pipelineIndice) || 0
+      };
+    },
+
+    chiaveHistory(stato = this.statoHistoryCorrente()) {
+      return JSON.stringify(stato);
+    },
+
+    sincronizzaHistoryNavigazione() {
+      if (
+        !this.historyPronta ||
+        this.historyRipristino ||
+        this.view === 'login'
+      ) return;
+
+      const stato = this.statoHistoryCorrente();
+      const chiave = this.chiaveHistory(stato);
+
+      if (chiave === this.historyUltimaChiave) return;
+
+      history.pushState(stato, '', location.href);
+      this.historyUltimaChiave = chiave;
+    },
+
+    inizializzaHistoryNavigazione() {
+      if (this.historyPronta || this.view === 'login') return;
+
+      const iniziale = this.statoHistoryCorrente();
+
+      history.replaceState(iniziale, '', location.href);
+      this.historyUltimaChiave = this.chiaveHistory(iniziale);
+      this.historyPronta = true;
+
+      window.addEventListener('popstate', async event => {
+        const stato = event.state;
+        if (!stato?.le) return;
+
+        this.historyRipristino = true;
+
+        try {
+          if (stato.view === 'scheda' && stato.clienteId) {
+            await this.apriScheda(stato.clienteId);
+
+          } else if (stato.view === 'economia') {
+            await this.apriEconomia(
+              stato.modalitaEconomia || 'vendita'
+            );
+
+          } else {
+            this.view = stato.view || (this.isAdmin ? 'admin' : 'lista');
+
+            if (stato.view === 'agenda') {
+              this.agendaVista = stato.agendaVista || 'oggi';
+              this.agendaDataSelezionata =
+                stato.agendaData || this.dataISOOggi();
+              this.agendaMese =
+                stato.agendaMese || this.dataISOOggi().slice(0, 7);
+            }
+
+            if (stato.view === 'pipeline') {
+              this.pipelineIndice =
+                Number(stato.pipelineIndice) || 0;
+            }
+          }
+
+          this.historyUltimaChiave = this.chiaveHistory(stato);
+
+          requestAnimationFrame(() => {
+            document.getElementById('app')?.scrollTo({
+              top: 0,
+              behavior: 'auto'
+            });
+          });
+
+        } finally {
+          requestAnimationFrame(() => {
+            this.historyRipristino = false;
+          });
+        }
+      });
+    },
+
     async init() {
       this.applicaTema(this.temaPreferenza);
 
@@ -502,12 +653,24 @@ function appState() {
       this.accountSlot = window.AccountSessions.getActiveSlot();
       await this.aggiornaStatoAccountSwitcher();
 
-      if (this.sessione) { await this.dopoLogin(); }
-      else { this.view = 'login'; }
+      if (this.sessione) {
+        await this.dopoLogin();
+        this.inizializzaHistoryNavigazione();
+      } else {
+        this.view = 'login';
+      }
     },
 
     aggiornaApp() {
-      window.leAggiornaApp();
+      this.aggiornamentoDisponibile = false;
+      this.aggiornamentoStato = 'controllo';
+
+      try {
+        window.leAggiornaApp();
+      } catch (err) {
+        this.aggiornamentoStato = 'errore';
+        console.error('Aggiornamento app non riuscito:', err);
+      }
     },
 
     temaRisolto(preferenza = this.temaPreferenza) {
@@ -800,174 +963,372 @@ function appState() {
       return 'payment-' + this.statoPagamentoCliente();
     },
 
-    async apriPagamentoCliente(cliente = this.clienteSelezionato(), pagamentoPrevisto = null) {
-      if (!cliente) return;
+    pagamentiIncassatiCliente() {
+      return (this.pagamentiCliente || [])
+        .filter(pagamento => pagamento.stato === 'incassato');
+    },
+
+    ratePrevisteCliente() {
+      return (this.pagamentiCliente || [])
+        .filter(pagamento => pagamento.stato === 'previsto')
+        .sort((a, b) => {
+          const dataA = a.data_scadenza || '9999-12-31';
+          const dataB = b.data_scadenza || '9999-12-31';
+          return dataA.localeCompare(dataB);
+        });
+    },
+
+    percentualeIncassataCliente() {
+      const totale = this.totaleVenditaCliente();
+
+      if (!(totale > 0)) return 0;
+
+      return Math.max(
+        0,
+        Math.min(
+          100,
+          (this.totaleIncassatoCliente() / totale) * 100
+        )
+      );
+    },
+
+    prossimaRataPrevistaCliente() {
+      return this.ratePrevisteCliente()[0] || null;
+    },
+
+
+    selezionaOperazioneIncasso(tipo) {
+      if (tipo === 'previsto') {
+        this.venditaEconomicaForm.statoIncasso = 'previsto';
+        this.venditaEconomicaForm.importoIncassato = 0;
+        this.venditaEconomicaForm.dataScadenza = '';
+        this.pagamentoPrevistoId = null;
+        return;
+      }
+
+      this.venditaEconomicaForm.statoIncasso = 'incassato';
+      this.venditaEconomicaForm.dataPagamento =
+        this.dataISOOggi();
+
+      if (
+        !(Number(this.venditaEconomicaForm.importoIncassato) > 0)
+      ) {
+        this.venditaEconomicaForm.importoIncassato =
+          this.residuoCliente();
+      }
+    },
+
+    usaResiduoIncasso() {
+      this.venditaEconomicaForm.statoIncasso = 'incassato';
+      this.venditaEconomicaForm.importoIncassato =
+        this.residuoCliente();
+    },
+
+    async incassaRataPrevista(pagamento) {
+      if (!pagamento?.id || !this.clienteEconomiaSelezionato) {
+        return;
+      }
+
+      await this.apriPagamentoCliente(
+        this.clienteEconomiaSelezionato,
+        pagamento
+      );
+    },
+
+    async apriPagamentoCliente(
+      cliente = this.clienteSelezionato(),
+      pagamentoPrevisto = null
+    ) {
+      if (!cliente?.id) return;
 
       await this.apriEconomia('incasso');
-      this.pagamentoPrevistoId = pagamentoPrevisto?.id || null;
+
       this.clienteEconomiaSelezionato = cliente;
+      this.pagamentoPrevistoId = pagamentoPrevisto?.id || null;
 
-      const { data, error } = await window.supabaseClient
-        .from('vendite')
-        .select('id,cliente_id,servizio,importo_vendita,data_vendita')
-        .eq('cliente_id', cliente.id)
-        .eq('stato', 'attiva')
-        .order('data_vendita', { ascending: false })
-        .order('creato_il', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      this.venditeClienteIncasso = [];
+      this.venditaIncassoSelezionataId = null;
+      this.venditaEconomicaAttiva = null;
+      this.venditaClienteAttiva = null;
+      this.pagamentiCliente = [];
+      this.costiVenditaRiferimento = [];
+      this.caricandoVenditeIncasso = true;
+      this.erroreEconomia = '';
 
-      if (error || !data) {
-        this.erroreEconomia = error
-          ? 'Vendita non disponibile: ' + error.message
-          : 'Nessuna vendita attiva per questo cliente.';
-      } else {
-        this.venditaEconomicaAttiva = data;
-        this.venditaClienteAttiva = data;
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('vendite')
+          .select(
+            'id,cliente_id,servizio,importo_vendita,data_vendita,creato_il'
+          )
+          .eq('cliente_id', cliente.id)
+          .eq('stato', 'attiva')
+          .order('data_vendita', { ascending: false })
+          .order('creato_il', { ascending: false });
 
-        const [partecipantiResult, costiResult] = await Promise.all([
-          window.supabaseClient
-            .from('vendita_partecipanti')
-            .select('profilo_id,ruolo,fa_fattura,modalita_fatturazione,importo_fatturato,quota_calcolata,quota_effettiva,quota_finale,quota_override,note_quota,saldato,data_saldo')
-            .eq('vendita_id', data.id),
-
-          window.supabaseClient
-            .from('costi_vendita')
-            .select('descrizione,importo')
-            .eq('vendita_id', data.id)
-        ]);
-
-        if (partecipantiResult.error) {
+        if (error) {
           this.erroreEconomia =
-            'Partecipanti economici non disponibili: ' +
-            partecipantiResult.error.message;
+            'Vendite non disponibili: ' + error.message;
           return;
         }
 
-        if (costiResult.error) {
+        this.venditeClienteIncasso = data || [];
+
+        if (!this.venditeClienteIncasso.length) {
           this.erroreEconomia =
-            'Costi della vendita non disponibili: ' +
-            costiResult.error.message;
+            'Nessuna vendita attiva per questo cliente.';
           return;
         }
 
-        const snapshotPartecipanti =
-          partecipantiResult.data || [];
+        let venditaDaAprireId =
+          pagamentoPrevisto?.vendita_id || null;
 
-        this.costiVenditaRiferimento =
-          (costiResult.data || []).map(costo => ({
-            descrizione: costo.descrizione || 'Costo',
-            importo: Number(costo.importo) || 0
-          }));
+        // Alcuni ingressi legacy passano solo l'id della rata.
+        if (!venditaDaAprireId && pagamentoPrevisto?.id) {
+          const {
+            data: pagamentoSalvato,
+            error: errorePagamento
+          } = await window.supabaseClient
+            .from('pagamenti')
+            .select('vendita_id')
+            .eq('id', pagamentoPrevisto.id)
+            .maybeSingle();
 
-        // I costi storici servono solo come riferimento:
-        // non vengono riapplicati automaticamente alla rata.
-        this.venditaEconomicaForm.costi = [];
+          if (errorePagamento) {
+            this.erroreEconomia =
+              'Rata prevista non disponibile: ' +
+              errorePagamento.message;
+            return;
+          }
 
-        this.venditaEconomicaForm.partecipanti =
-          snapshotPartecipanti.map(partecipante => ({
-            id: partecipante.profilo_id,
+          venditaDaAprireId =
+            pagamentoSalvato?.vendita_id || null;
+        }
 
-            nome:
-              partecipante.ruolo === 'referente'
-                ? 'Alessandro'
-                : partecipante.ruolo === 'produzione'
-                  ? 'Tomas'
-                  : 'Venditore',
+        // Una sola vendita: selezione automatica.
+        if (
+          !venditaDaAprireId &&
+          this.venditeClienteIncasso.length === 1
+        ) {
+          venditaDaAprireId =
+            this.venditeClienteIncasso[0].id;
+        }
 
-            ruolo: partecipante.ruolo,
+        // Più vendite: nessuna scelta arbitraria.
+        if (venditaDaAprireId) {
+          const esiste =
+            this.venditeClienteIncasso.some(
+              vendita => vendita.id === venditaDaAprireId
+            );
 
-            modalitaFatturazione:
-              partecipante.modalita_fatturazione ||
-              (partecipante.fa_fattura
-                ? 'totale'
-                : 'nessuna'),
+          if (!esiste) {
+            this.erroreEconomia =
+              'La vendita collegata al pagamento non è più disponibile.';
+            return;
+          }
 
-            importoFatturato:
-              Number(partecipante.importo_fatturato) || 0,
-
-            faFattura:
-              partecipante.modalita_fatturazione === 'totale' ||
-              !!partecipante.fa_fattura,
-
-            haVenduto: false,
-
-            quotaOverride:
-              !!partecipante.quota_override,
-
-            quotaEffettiva:
-              partecipante.quota_effettiva != null
-                ? Number(partecipante.quota_effettiva)
-                : Number(partecipante.quota_finale) || 0,
-
-            quotaCalcolata:
-              partecipante.quota_calcolata != null
-                ? Number(partecipante.quota_calcolata)
-                : Number(partecipante.quota_finale) || 0,
-
-            noteQuota:
-              partecipante.note_quota || '',
-
-            saldato:
-              !!partecipante.saldato,
-
-            dataSaldo:
-              partecipante.data_saldo || null,
-
-            bloccato: true,
-
-            // La modalità viene ereditata dalla vendita,
-            // l'importo della singola rata invece no.
-            modalitaFatturazioneRata:
-              partecipante.modalita_fatturazione || 'nessuna',
-
-            importoFatturatoRata: 0,
-
-            // Le quote manuali sono specifiche della singola rata.
-            // Non ereditiamo automaticamente gli override della vendita.
-            quotaOverrideRata: false,
-            quotaEffettivaRata: null
-          }));
-
-        const referenteSnapshot =
-          snapshotPartecipanti.find(
-            partecipante =>
-              partecipante.ruolo === 'referente'
+          await this.selezionaVenditaIncasso(
+            venditaDaAprireId,
+            pagamentoPrevisto
           );
-
-        if (referenteSnapshot) {
-          this.venditaEconomicaForm.modalitaFatturazioneAdmin =
-            referenteSnapshot.modalita_fatturazione ||
-            (referenteSnapshot.fa_fattura
-              ? 'totale'
-              : 'nessuna');
-
-          this.venditaEconomicaForm.importoFatturatoAdmin =
-            Number(referenteSnapshot.importo_fatturato) || 0;
-
-          this.venditaEconomicaForm.modalitaFatturazioneAdminRata =
-            referenteSnapshot.modalita_fatturazione ||
-            (referenteSnapshot.fa_fattura
-              ? 'totale'
-              : 'nessuna');
-
-          // L'importo fatturato della vendita non viene copiato
-          // automaticamente sulla singola rata.
-          this.venditaEconomicaForm.importoFatturatoAdminRata = 0;
         }
-
-        this.venditaEconomicaForm.clienteId = cliente.id;
-        this.venditaEconomicaForm.clienteRicerca = cliente.nome || '';
-        this.venditaEconomicaForm.servizio = data.servizio || '';
-        this.venditaEconomicaForm.importoVendita = Number(data.importo_vendita) || 0;
-        this.venditaEconomicaForm.importoIncassato = pagamentoPrevisto
-          ? Number(pagamentoPrevisto.importo) || 0
-          : this.residuoCliente();
-        this.venditaEconomicaForm.dataPagamento = this.dataISOOggi();
+      } finally {
+        this.caricandoVenditeIncasso = false;
       }
 
       this.view = 'economia';
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    async selezionaVenditaIncasso(
+      venditaId,
+      pagamentoPrevisto = null
+    ) {
+      if (!venditaId) return;
+
+      const vendita =
+        this.venditeClienteIncasso.find(
+          voce => voce.id === venditaId
+        );
+
+      if (!vendita) {
+        this.erroreEconomia =
+          'Vendita selezionata non disponibile.';
+        return;
+      }
+
+      this.erroreEconomia = '';
+      this.successoEconomia = '';
+
+      this.venditaIncassoSelezionataId = vendita.id;
+      this.venditaEconomicaAttiva = vendita;
+      this.venditaClienteAttiva = vendita;
+
+      /*
+       * Stato operativo della singola rata:
+       * non deve mai passare da una vendita all'altra.
+       */
+      this.venditaEconomicaForm.statoIncasso = 'incassato';
+      this.venditaEconomicaForm.costiRata = [];
+      this.venditaEconomicaForm.costoRataDescrizione = '';
+      this.venditaEconomicaForm.costoRataImporto = null;
+      this.venditaEconomicaForm.metodoPagamento = '';
+      this.venditaEconomicaForm.notePagamento =
+        pagamentoPrevisto?.note || '';
+      this.venditaEconomicaForm.dataScadenza =
+        pagamentoPrevisto?.data_scadenza || '';
+      this.venditaEconomicaForm.importoFatturatoAdminRata = 0;
+
+      this.pagamentoPrevistoId =
+        pagamentoPrevisto?.id || null;
+
+      const [
+        partecipantiResult,
+        costiResult
+      ] = await Promise.all([
+        window.supabaseClient
+          .from('vendita_partecipanti')
+          .select(
+            'profilo_id,ruolo,fa_fattura,modalita_fatturazione,importo_fatturato,quota_calcolata,quota_effettiva,quota_finale,quota_override,note_quota,saldato,data_saldo'
+          )
+          .eq('vendita_id', vendita.id),
+
+        window.supabaseClient
+          .from('costi_vendita')
+          .select('descrizione,importo')
+          .eq('vendita_id', vendita.id)
+      ]);
+
+      if (partecipantiResult.error) {
+        this.erroreEconomia =
+          'Partecipanti economici non disponibili: ' +
+          partecipantiResult.error.message;
+        return;
+      }
+
+      if (costiResult.error) {
+        this.erroreEconomia =
+          'Costi della vendita non disponibili: ' +
+          costiResult.error.message;
+        return;
+      }
+
+      const snapshotPartecipanti =
+        partecipantiResult.data || [];
+
+      this.costiVenditaRiferimento =
+        (costiResult.data || []).map(costo => ({
+          descrizione: costo.descrizione || 'Costo',
+          importo: Number(costo.importo) || 0
+        }));
+
+      // I costi storici restano solo riferimento.
+      this.venditaEconomicaForm.costi = [];
+
+      this.venditaEconomicaForm.partecipanti =
+        snapshotPartecipanti.map(partecipante => ({
+          id: partecipante.profilo_id,
+
+          nome:
+            partecipante.ruolo === 'referente'
+              ? 'Alessandro'
+              : partecipante.ruolo === 'produzione'
+                ? 'Tomas'
+                : 'Venditore',
+
+          ruolo: partecipante.ruolo,
+
+          modalitaFatturazione:
+            partecipante.modalita_fatturazione ||
+            (partecipante.fa_fattura ? 'totale' : 'nessuna'),
+
+          importoFatturato:
+            Number(partecipante.importo_fatturato) || 0,
+
+          faFattura:
+            partecipante.modalita_fatturazione === 'totale' ||
+            !!partecipante.fa_fattura,
+
+          haVenduto: false,
+
+          quotaOverride: !!partecipante.quota_override,
+
+          quotaEffettiva:
+            partecipante.quota_effettiva != null
+              ? Number(partecipante.quota_effettiva)
+              : Number(partecipante.quota_finale) || 0,
+
+          quotaCalcolata:
+            partecipante.quota_calcolata != null
+              ? Number(partecipante.quota_calcolata)
+              : Number(partecipante.quota_finale) || 0,
+
+          noteQuota: partecipante.note_quota || '',
+          saldato: !!partecipante.saldato,
+          dataSaldo: partecipante.data_saldo || null,
+          bloccato: true,
+
+          // La modalità viene ereditata; gli importi no.
+          modalitaFatturazioneRata:
+            partecipante.modalita_fatturazione ||
+            (partecipante.fa_fattura ? 'totale' : 'nessuna'),
+
+          importoFatturatoRata: 0,
+          quotaOverrideRata: false,
+          quotaEffettivaRata: null
+        }));
+
+      const referenteSnapshot =
+        snapshotPartecipanti.find(
+          partecipante =>
+            partecipante.ruolo === 'referente'
+        );
+
+      if (referenteSnapshot) {
+        this.venditaEconomicaForm.modalitaFatturazioneAdmin =
+          referenteSnapshot.modalita_fatturazione ||
+          (referenteSnapshot.fa_fattura ? 'totale' : 'nessuna');
+
+        this.venditaEconomicaForm.importoFatturatoAdmin =
+          Number(referenteSnapshot.importo_fatturato) || 0;
+
+        this.venditaEconomicaForm.modalitaFatturazioneAdminRata =
+          referenteSnapshot.modalita_fatturazione ||
+          (referenteSnapshot.fa_fattura ? 'totale' : 'nessuna');
+
+        this.venditaEconomicaForm.importoFatturatoAdminRata = 0;
+      }
+
+      this.venditaEconomicaForm.clienteId =
+        vendita.cliente_id;
+
+      this.venditaEconomicaForm.clienteRicerca =
+        this.clienteEconomiaSelezionato?.nome || '';
+
+      this.venditaEconomicaForm.servizio =
+        vendita.servizio || '';
+
+      this.venditaEconomicaForm.importoVendita =
+        Number(vendita.importo_vendita) || 0;
+
+      await this.caricaPagamentiCliente(
+        vendita.cliente_id,
+        vendita.id
+      );
+
+      this.venditaEconomicaForm.importoIncassato =
+        pagamentoPrevisto
+          ? Number(pagamentoPrevisto.importo) || 0
+          : this.residuoCliente();
+
+      this.venditaEconomicaForm.dataPagamento =
+        this.dataISOOggi();
+
+      this.venditaEconomicaForm.dataScadenza =
+        pagamentoPrevisto?.data_scadenza || '';
+
+      this.venditaEconomicaForm.notePagamento =
+        pagamentoPrevisto?.note || '';
     },
 
     async apriEconomia(modalita = 'vendita') {
@@ -975,13 +1336,22 @@ function appState() {
       this.venditaEconomicaForm = formVenditaEconomicaVuoto();
       this.modalitaEconomia = modalita;
       this.venditaEconomicaAttiva = null;
+
+      this.venditeClienteIncasso = [];
+      this.venditaIncassoSelezionataId = null;
+      this.caricandoVenditeIncasso = false;
+
       this.costiVenditaRiferimento = [];
       this.pagamentoPrevistoId = null;
       this.clienteEconomiaSelezionato = null;
       this.anagraficaEconomiaAperta = false;
       this.erroreEconomia = '';
       this.successoEconomia = '';
-      if (modalita === 'vendita') await this.inizializzaPartecipantiEconomia();
+      if (modalita === 'vendita') {
+        await this.inizializzaPartecipantiEconomia();
+        this.aggiornaConfigurazioneVendita();
+      }
+
       this.view = 'economia';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
@@ -1011,6 +1381,373 @@ function appState() {
         .includes('tomas');
     },
 
+    configurazioneVendita() {
+      return this.venditaEconomicaForm.configurazioneCommerciale;
+    },
+
+    selezionaFormulaVendita(formula) {
+      const cfg = this.configurazioneVendita();
+
+      cfg.formula = formula === 'annuale'
+        ? 'annuale'
+        : 'mensile';
+
+      cfg.periodicita_contratto = cfg.formula;
+
+      if (cfg.formula === 'annuale') {
+        cfg.pacchetto_sicurezza = false;
+      }
+
+      this.aggiornaConfigurazioneVendita();
+    },
+
+    toggleUpgradeVendita(id) {
+      const cfg = this.configurazioneVendita();
+      const attuali = Array.isArray(cfg.upgrade)
+        ? cfg.upgrade
+        : [];
+
+      cfg.upgrade = attuali.includes(id)
+        ? attuali.filter(x => x !== id)
+        : [...attuali, id];
+
+      this.aggiornaConfigurazioneVendita();
+    },
+
+    setQuantitaExtraVendita(campo, delta, max) {
+      const cfg = this.configurazioneVendita();
+      const corrente = Number(cfg[campo]) || 0;
+
+      cfg[campo] = Math.max(
+        0,
+        Math.min(max, corrente + Number(delta || 0))
+      );
+
+      this.aggiornaConfigurazioneVendita();
+    },
+
+    normalizzaQuantitaExtraVendita(campo, max) {
+      const cfg = this.configurazioneVendita();
+
+      cfg[campo] = Math.max(
+        0,
+        Math.min(max, Number(cfg[campo]) || 0)
+      );
+
+      this.aggiornaConfigurazioneVendita();
+    },
+
+    setDurataContrattoVendita(anni) {
+      const cfg = this.configurazioneVendita();
+
+      cfg.durata_contratto_anni = Math.max(
+        1,
+        Math.min(4, Number(anni) || 1)
+      );
+
+      if (
+        cfg.sconto_durata_anni != null &&
+        Number(cfg.sconto_durata_anni) >
+          cfg.durata_contratto_anni
+      ) {
+        cfg.sconto_durata_anni =
+          cfg.durata_contratto_anni;
+      }
+
+      this.aggiornaConfigurazioneVendita();
+    },
+
+    normalizzaScontoVendita() {
+      const cfg = this.configurazioneVendita();
+
+      let valore = Math.max(
+        0,
+        Number(cfg.sconto_valore) || 0
+      );
+
+      if (
+        cfg.sconto_tipo === 'percentuale' &&
+        valore > 100
+      ) {
+        valore = 100;
+      }
+
+      cfg.sconto_valore = valore;
+      this.aggiornaConfigurazioneVendita();
+    },
+
+    setDurataScontoVendita(anni) {
+      const cfg = this.configurazioneVendita();
+
+      if (anni == null || anni === '') {
+        cfg.sconto_durata_anni = null;
+      } else {
+        cfg.sconto_durata_anni = Math.max(
+          1,
+          Math.min(
+            Number(cfg.durata_contratto_anni) || 1,
+            Number(anni) || 1
+          )
+        );
+      }
+
+      this.aggiornaConfigurazioneVendita();
+    },
+
+    prezzoUpgradeMensileVendita() {
+      const cfg = this.configurazioneVendita();
+      const catalogo = this.catalogoPrezzi();
+
+      const toggle = catalogo.upgrade
+        .filter(u => (cfg.upgrade || []).includes(u.id))
+        .reduce(
+          (totale, u) =>
+            totale + (Number(u.prezzoMensile) || 0),
+          0
+        );
+
+      const pagine =
+        (Number(cfg.pagine_extra) || 0) *
+        (Number(catalogo.paginaExtra.prezzoMensile) || 0);
+
+      const lingue =
+        (Number(cfg.lingue_extra) || 0) *
+        (Number(
+          catalogo.multilingua.prezzoMensilePerLingua
+        ) || 0);
+
+      return toggle + pagine + lingue;
+    },
+
+    prezzoLordoRicorrenteVendita() {
+      const cfg = this.configurazioneVendita();
+      const catalogo = this.catalogoPrezzi();
+
+      const formula =
+        catalogo.formule[cfg.formula] ||
+        catalogo.formule.mensile;
+
+      const extraMensili =
+        this.prezzoUpgradeMensileVendita();
+
+      return formula.id === 'annuale'
+        ? (Number(formula.prezzoBase) || 0) +
+            extraMensili * 12
+        : (Number(formula.prezzoBase) || 0) +
+            extraMensili;
+    },
+
+    prezzoRicorrenteScontatoVendita() {
+      return prezzoRicorrenteDaForm(
+        this.prezzoLordoRicorrenteVendita(),
+        this.configurazioneVendita()
+      );
+    },
+
+    anniScontoEffettiviVendita() {
+      const cfg = this.configurazioneVendita();
+
+      if (
+        !cfg.sconto_tipo ||
+        Number(cfg.sconto_valore) <= 0
+      ) {
+        return 0;
+      }
+
+      const durata = Math.max(
+        1,
+        Math.min(
+          4,
+          Number(cfg.durata_contratto_anni) || 1
+        )
+      );
+
+      if (cfg.sconto_durata_anni == null) {
+        return durata;
+      }
+
+      return Math.max(
+        1,
+        Math.min(
+          durata,
+          Number(cfg.sconto_durata_anni) || 1
+        )
+      );
+    },
+
+    valoreCanoneContrattoVendita() {
+      const cfg = this.configurazioneVendita();
+
+      const durata = Math.max(
+        1,
+        Math.min(
+          4,
+          Number(cfg.durata_contratto_anni) || 1
+        )
+      );
+
+      const lordo =
+        this.prezzoLordoRicorrenteVendita();
+
+      const scontato =
+        prezzoRicorrenteDaForm(lordo, cfg);
+
+      const anniScontati =
+        this.anniScontoEffettiviVendita();
+
+      const periodiPerAnno =
+        cfg.periodicita_contratto === 'annuale'
+          ? 1
+          : 12;
+
+      return (
+        scontato *
+          periodiPerAnno *
+          anniScontati
+        +
+        lordo *
+          periodiPerAnno *
+          (durata - anniScontati)
+      );
+    },
+
+    totaleAnnualiSeparatiVendita() {
+      const cfg = this.configurazioneVendita();
+
+      if (cfg.cliente_ha_dominio !== false) {
+        return 0;
+      }
+
+      const annuali = this.catalogoPrezzi().annuali;
+
+      return (
+        (cfg.dominio_it
+          ? Number(annuali.dominioIt.prezzo) || 0
+          : 0)
+        +
+        (cfg.dominio_com
+          ? Number(annuali.dominioCom.prezzo) || 0
+          : 0)
+        +
+        (cfg.email_5_caselle
+          ? Number(annuali.email5.prezzo) || 0
+          : 0)
+      );
+    },
+
+    totaleUnaTantumVendita() {
+      const cfg = this.configurazioneVendita();
+      const catalogo = this.catalogoPrezzi();
+
+      const formula =
+        catalogo.formule[cfg.formula] ||
+        catalogo.formule.mensile;
+
+      return (
+        (Number(formula.setup) || 0)
+        +
+        (
+          formula.id === 'mensile' &&
+          cfg.pacchetto_sicurezza
+            ? Number(catalogo.sicurezza.prezzo) || 0
+            : 0
+        )
+      );
+    },
+
+    valoreTotaleContrattoStimatoVendita() {
+      const cfg = this.configurazioneVendita();
+
+      const durata = Math.max(
+        1,
+        Math.min(
+          4,
+          Number(cfg.durata_contratto_anni) || 1
+        )
+      );
+
+      return totaleContrattoDaForm(
+        this.valoreCanoneContrattoVendita(),
+        this.totaleUnaTantumVendita() +
+          this.totaleAnnualiSeparatiVendita() *
+            durata,
+        cfg
+      );
+    },
+
+    nomePacchettoVendita() {
+      const cfg = this.configurazioneVendita();
+      const catalogo = this.catalogoPrezzi();
+
+      const formula =
+        catalogo.formule[cfg.formula] ||
+        catalogo.formule.mensile;
+
+      return formula.nome || 'Start mensile';
+    },
+
+    aggiornaConfigurazioneVendita() {
+      const cfg = this.configurazioneVendita();
+
+      if (!cfg) return;
+
+      cfg.periodicita_contratto =
+        cfg.formula === 'annuale'
+          ? 'annuale'
+          : 'mensile';
+
+      if (cfg.formula === 'annuale') {
+        cfg.pacchetto_sicurezza = false;
+      }
+
+      this.venditaEconomicaForm.servizio =
+        this.nomePacchettoVendita();
+
+      /*
+       * Valore economico complessivo della vendita.
+       * La configurazione resta mensile/annuale, ma quote,
+       * margine e ripartizione lavorano sul valore contratto.
+       */
+      this.venditaEconomicaForm.importoVendita =
+        this.valoreTotaleContrattoStimatoVendita();
+
+      const automatici = costiGestioneCliente(
+        cfg,
+        false
+      ).map((costo, indice) => ({
+        id: `automatico-${indice}-${costo.descrizione}`,
+        descrizione: costo.descrizione,
+        importo: Number(costo.importo) || 0,
+        automatico: true
+      }));
+
+      /*
+       * Evita di mantenere come "manuale" una vecchia copia
+       * dello stesso costo automatico.
+       */
+      const firmeAutomatiche = new Set(
+        automatici.map(costo =>
+          `${costo.descrizione}::${Number(costo.importo) || 0}`
+        )
+      );
+
+      const manuali = (
+        this.venditaEconomicaForm.costi || []
+      ).filter(costo => {
+        if (costo.automatico) return false;
+
+        const firma =
+          `${costo.descrizione}::${Number(costo.importo) || 0}`;
+
+        return !firmeAutomatiche.has(firma);
+      });
+
+      this.venditaEconomicaForm.costi = [
+        ...automatici,
+        ...manuali
+      ];
+    },
+
     async inizializzaPartecipantiEconomia() {
       this.erroreEconomia = '';
 
@@ -1025,66 +1762,177 @@ function appState() {
       }
 
       const profili = data || [];
-      const referente = profili.find(p => p.ruolo_economico === 'referente');
-      const tomas = profili.find(p => p.ruolo_economico === 'produzione');
-      const corrente = profili.find(p => p.id === this.sessione?.user?.id);
+
+      this.venditaEconomicaForm.venditoriDisponibili =
+        profili
+          .filter(profilo => profilo?.id)
+          .filter(
+            (profilo, indice, array) =>
+              array.findIndex(p => p.id === profilo.id) === indice
+          );
+
+      const referente = profili.find(
+        p => p.ruolo_economico === 'referente'
+      );
+
+      const tomas = profili.find(
+        p => p.ruolo_economico === 'produzione'
+      );
 
       if (!referente) {
-        this.erroreEconomia = 'Profilo economico di Alessandro non trovato.';
+        this.erroreEconomia =
+          'Profilo economico di Alessandro non trovato.';
         this.venditaEconomicaForm.partecipanti = [];
         return;
       }
 
       if (!tomas) {
-        this.erroreEconomia = 'Profilo economico di Tomas non trovato.';
+        this.erroreEconomia =
+          'Profilo economico di Tomas non trovato.';
         this.venditaEconomicaForm.partecipanti = [];
         return;
       }
 
       const creaPartecipante = (profilo, ruolo) => ({
         id: profilo.id,
+
         nome:
           ruolo === 'referente'
             ? 'Alessandro'
             : ruolo === 'produzione'
               ? 'Tomas'
-              : (profilo.username || profilo.nome || 'Venditore'),
+              : (
+                  profilo.username ||
+                  profilo.nome ||
+                  'Venditore'
+                ),
+
         ruolo,
+
         modalitaFatturazione: 'nessuna',
         importoFatturato: 0,
         faFattura: false,
         haVenduto: false,
+
         quotaOverride: false,
         quotaEffettiva: null,
         noteQuota: '',
+
         saldato: false,
         dataSaldo: null,
         bloccato: true
       });
 
+      /*
+       * La vendita parte sempre dai due partecipanti strutturali.
+       * Eventuali venditori terzi vengono aggiunti esplicitamente.
+       */
       const partecipanti = [
         creaPartecipante(referente, 'referente')
       ];
 
       if (tomas.id !== referente.id) {
-        partecipanti.push(creaPartecipante(tomas, 'produzione'));
+        partecipanti.push(
+          creaPartecipante(tomas, 'produzione')
+        );
       }
 
-      if (
-        corrente &&
-        corrente.ruolo !== 'admin' &&
-        corrente.id !== referente.id &&
-        corrente.id !== tomas.id
-      ) {
-        partecipanti.push(creaPartecipante(corrente, 'venditore'));
-      }
+      const venditoreDefault =
+        partecipanti.find(
+          partecipante => partecipante.ruolo === 'referente'
+        );
 
-      // Alessandro è il venditore commerciale predefinito nei casi ordinari.
-      // La scelta resta sempre modificabile dall'utente.
-      const venditoreDefault = partecipanti.find(p => p.ruolo === 'referente');
-      if (venditoreDefault) venditoreDefault.haVenduto = true;
+      if (venditoreDefault) {
+        venditoreDefault.haVenduto = true;
+      }
 
       this.venditaEconomicaForm.partecipanti = partecipanti;
+    },
+
+    venditoriTerziDisponibiliEconomia() {
+      const presenti = new Set(
+        this.venditaEconomicaForm.partecipanti
+          .map(partecipante => partecipante.id)
+      );
+
+      return (
+        this.venditaEconomicaForm.venditoriDisponibili || []
+      ).filter(profilo => !presenti.has(profilo.id));
+    },
+
+    aggiungiVenditoreTerzoEconomia(profiloId) {
+      if (!profiloId) return;
+
+      const profilo = (
+        this.venditaEconomicaForm.venditoriDisponibili || []
+      ).find(p => p.id === profiloId);
+
+      if (!profilo) return;
+
+      const esiste =
+        this.venditaEconomicaForm.partecipanti.some(
+          p => p.id === profilo.id
+        );
+
+      if (esiste) return;
+
+      const partecipante = {
+        id: profilo.id,
+
+        nome:
+          profilo.username ||
+          profilo.nome ||
+          'Venditore',
+
+        ruolo: 'venditore',
+
+        modalitaFatturazione: 'nessuna',
+        importoFatturato: 0,
+        faFattura: false,
+        haVenduto: false,
+
+        quotaOverride: false,
+        quotaEffettiva: null,
+        noteQuota: '',
+
+        saldato: false,
+        dataSaldo: null,
+        bloccato: true
+      };
+
+      this.venditaEconomicaForm.partecipanti.push(
+        partecipante
+      );
+
+      /*
+       * Se aggiungo esplicitamente un venditore terzo,
+       * viene considerato il venditore della vendita.
+       */
+      this.impostaVenditoreEconomia(partecipante);
+    },
+
+    rimuoviVenditoreTerzoEconomia(partecipante) {
+      if (!partecipante || partecipante.ruolo !== 'venditore') {
+        return;
+      }
+
+      const eraVenditore = partecipante.haVenduto;
+
+      this.venditaEconomicaForm.partecipanti =
+        this.venditaEconomicaForm.partecipanti.filter(
+          p => p.id !== partecipante.id
+        );
+
+      if (eraVenditore) {
+        const referente =
+          this.venditaEconomicaForm.partecipanti.find(
+            p => p.ruolo === 'referente'
+          );
+
+        if (referente) {
+          this.impostaVenditoreEconomia(referente);
+        }
+      }
     },
 
     impostaVenditoreEconomia(partecipante) {
@@ -1200,6 +2048,49 @@ function appState() {
     nettoDistribuibileEconomia() {
       return this.risultatoMotoreEconomia()
         .nettoDistribuibile;
+    },
+
+    partecipanteUtenteCorrenteEconomia() {
+      const partecipanti =
+        this.venditaEconomicaForm.partecipanti || [];
+
+      const userId = this.sessione?.user?.id;
+
+      if (userId) {
+        const perId = partecipanti.find(
+          partecipante => partecipante.id === userId
+        );
+
+        if (perId) return perId;
+      }
+
+      const identita = [
+        this.profilo?.nome,
+        this.profilo?.username,
+        this.profiloPersonale?.nome,
+        this.profiloPersonale?.username
+      ]
+        .filter(Boolean)
+        .map(valore => String(valore).trim().toLowerCase());
+
+      return partecipanti.find(partecipante =>
+        identita.includes(
+          String(partecipante.nome || '')
+            .trim()
+            .toLowerCase()
+        )
+      ) || null;
+    },
+
+    quotaUtenteCorrenteEconomia() {
+      const partecipante =
+        this.partecipanteUtenteCorrenteEconomia();
+
+      if (!partecipante) return 0;
+
+      return this.calcoloPartecipanteEconomia(
+        partecipante
+      ).quotaFinale || 0;
     },
 
     quotaBaseLordaEconomia() {
@@ -1479,27 +2370,45 @@ function appState() {
     },
 
     selezionaClienteEconomia(cliente) {
-      if (this.modalitaEconomia === 'incasso') return this.apriPagamentoCliente(cliente);
+      if (this.modalitaEconomia === 'incasso') {
+        return this.apriPagamentoCliente(cliente);
+      }
 
       this.clienteEconomiaSelezionato = cliente;
       this.venditaEconomicaForm.clienteId = cliente.id;
-      this.venditaEconomicaForm.clienteRicerca = cliente.nome || '';
+      this.venditaEconomicaForm.clienteRicerca =
+        cliente.nome || '';
 
-      this.venditaEconomicaForm.servizio =
-        cliente.nome_pacchetto || 'Servizio registrato';
+      /*
+       * Una nuova vendita parte dal configuratore corrente.
+       * Non eredita prezzo, pacchetto o costi storici del cliente.
+       */
+      this.aggiornaConfigurazioneVendita();
+    },
 
-      this.venditaEconomicaForm.importoVendita =
-        Number(cliente.importo_abbonamento) || 0;
+    async registraVenditaPerClienteEconomia() {
+      const cliente = this.clienteEconomiaSelezionato;
+      if (!cliente?.id) return;
 
-      this.venditaEconomicaForm.importoIncassato =
-        Number(cliente.importo_abbonamento) || 0;
-
-      this.impostaCostiClienteEconomia(cliente);
+      await this.apriEconomia('vendita');
+      this.selezionaClienteEconomia(cliente);
     },
 
     cambiaClienteEconomia() {
       this.clienteEconomiaSelezionato = null;
       this.anagraficaEconomiaAperta = false;
+
+      if (this.modalitaEconomia === 'incasso') {
+        this.venditeClienteIncasso = [];
+        this.venditaIncassoSelezionataId = null;
+        this.venditaEconomicaAttiva = null;
+        this.venditaClienteAttiva = null;
+        this.pagamentiCliente = [];
+        this.costiVenditaRiferimento = [];
+        this.pagamentoPrevistoId = null;
+        this.erroreEconomia = '';
+        this.successoEconomia = '';
+      }
       this.venditaEconomicaForm.clienteId = null;
       this.venditaEconomicaForm.clienteRicerca = '';
       this.venditaEconomicaForm.servizio = '';
@@ -1635,28 +2544,10 @@ function appState() {
         }
       }
 
-      const incasso = Math.max(
-        0,
-        Number(this.venditaEconomicaForm.importoIncassato) || 0
-      );
-      const vendita = Number(this.venditaEconomicaForm.importoVendita) || 0;
-
-      if (this.venditaEconomicaForm.statoIncasso === 'incassato') {
-        if (!(incasso > 0 && incasso <= vendita)) {
-          return 'Inserisci un importo incassato valido.';
-        }
-      }
-
-      if (this.venditaEconomicaForm.statoIncasso === 'parziale') {
-        if (!(incasso > 0 && incasso < vendita)) {
-          return 'Il pagamento parziale deve essere maggiore di 0 e minore del totale.';
-        }
-      }
-
-      if (this.venditaEconomicaForm.statoIncasso === 'previsto') {
-        if (!(incasso > 0 && incasso <= vendita)) return 'Inserisci un importo rata valido.';
-        if (!this.venditaEconomicaForm.dataScadenza) return 'Inserisci la scadenza della rata.';
-      }
+      /*
+       * Pagamenti e rate vengono validati nel flusso Incassa.
+       * La registrazione della vendita non richiede un incasso iniziale.
+       */
 
       return '';
     },
@@ -1996,7 +2887,8 @@ costiPerMotoreRataEconomia() {
           : 'Incasso registrato.';
 
         await this.caricaPagamentiCliente(
-          this.venditaEconomicaAttiva.cliente_id
+          this.venditaEconomicaAttiva.cliente_id,
+          this.venditaEconomicaAttiva.id
         );
 
         if (this.isAdmin) {
@@ -2067,23 +2959,11 @@ costiPerMotoreRataEconomia() {
         };
       });
 
-      const statoIncasso = this.venditaEconomicaForm.statoIncasso;
-      let pagamento = null;
-
-      if (Number(this.venditaEconomicaForm.importoIncassato) > 0) {
-        pagamento = {
-          importo: Number(this.venditaEconomicaForm.importoIncassato),
-          stato: statoIncasso === 'previsto' ? 'previsto' : 'incassato',
-          data_scadenza: statoIncasso === 'previsto'
-            ? this.venditaEconomicaForm.dataScadenza
-            : null,
-          data_pagamento: statoIncasso === 'previsto'
-            ? null
-            : (this.venditaEconomicaForm.dataPagamento || null),
-          metodo: (this.venditaEconomicaForm.metodoPagamento || '').trim() || null,
-          note: (this.venditaEconomicaForm.notePagamento || '').trim() || null
-        };
-      }
+      /*
+       * Vendita e incasso sono due operazioni distinte.
+       * Il primo pagamento verrà registrato dal flusso Incassa.
+       */
+      const pagamento = null;
 
       const payloadVendita = {
         cliente_id: this.venditaEconomicaForm.clienteId,
@@ -3235,6 +4115,17 @@ costiPerMotoreRataEconomia() {
       this.agendaVista = 'mese';
       this.agendaDataSelezionata = iso;
       this.agendaMese = iso.slice(0, 7);
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          document
+            .getElementById('agenda-attivita-giorno')
+            ?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+        });
+      });
     },
 
     clientiPipeline(stato) {
@@ -3316,9 +4207,31 @@ costiPerMotoreRataEconomia() {
       ) || {};
     },
 
-    apriAzioniCliente(clienteId) {
+    apriAzioniCliente(clienteId, event = null) {
       const cliente = this.clienti.find(c => c.id === clienteId);
       if (!cliente) return;
+
+      const trigger = event?.currentTarget;
+      const rect = trigger?.getBoundingClientRect?.();
+
+      if (rect && window.innerWidth >= 1000) {
+        const menuWidth = 360;
+        const gap = 12;
+
+        let left = rect.right + gap;
+
+        if (left + menuWidth > window.innerWidth - 18) {
+          left = rect.left - menuWidth - gap;
+        }
+
+        this.clienteAzioniPosizione = {
+          left: Math.max(18, left),
+          top: Math.max(
+            18,
+            Math.min(rect.top - 12, window.innerHeight - 500)
+          )
+        };
+      }
 
       this.clienteAzioniRapideId = clienteId;
       this.clienteAzioniStatoAperto = false;
@@ -3340,6 +4253,16 @@ costiPerMotoreRataEconomia() {
       this.clienteNotaRapidaTesto = '';
       this.messaggioAzioneCliente = '';
       this.erroreAzioneCliente = '';
+    },
+
+    richiediEliminazioneDaAzioniCliente() {
+      const clienteId = this.clienteAzioniRapideId;
+      if (!clienteId) return;
+
+      this.clienteSelezionatoId = clienteId;
+      this.eliminazioneDaAzioniRapide = true;
+      this.chiudiAzioniCliente();
+      this.confermaEliminazione = true;
     },
 
     async apriEconomiaDaAzioniCliente() {
@@ -3772,8 +4695,11 @@ costiPerMotoreRataEconomia() {
       this.view = this.clienteInModificaId ? 'scheda' : 'lista';
     },
 
-    apriNuovoCliente() {
+    apriNuovoCliente(ritorno = null) {
       this.clienteInModificaId = null;
+      this.ritornoDopoNuovoCliente = ritorno;
+      this.clienteCreatoId = null;
+      this.clienteCreatoPromptAperto = false;
       this.nuovoClienteForm = formModuloVuoto();
       this.selezionePrezzo = { modalita: 'catalogo', formula: 'mensile', upgrade: [] };
       this.nuovoClienteForm.periodicita_contratto = 'mensile';
@@ -4103,85 +5029,190 @@ costiPerMotoreRataEconomia() {
 
     async salvaCliente() {
       if (this.salvandoCliente) return;
-      if (this.selezionePrezzo.modalita === 'catalogo') {
-        this.aggiornaPrezzoCliente();
-        this.aggiornaPreviewRinnovo();
 
-        if (!this.nuovoClienteForm.data_attivazione) {
-          this.erroriNuovoCliente = {
-            ...this.erroriNuovoCliente,
-            data_attivazione: 'Inserisci la data di attivazione.'
+      const modificaCliente = !!this.clienteInModificaId;
+
+      const datiDaValidare = modificaCliente
+        ? this.nuovoClienteForm
+        : {
+            nome: this.nuovoClienteForm.nome,
+            referente: this.nuovoClienteForm.referente,
+            telefono: this.nuovoClienteForm.telefono,
+            email: this.nuovoClienteForm.email,
+            piva: this.nuovoClienteForm.piva,
+            iban: this.nuovoClienteForm.iban,
+            sito_url: this.nuovoClienteForm.sito_url
           };
-          return;
-        }
-      }
-      const check = validaClienteForm(this.nuovoClienteForm);
+
+      const check = validaClienteForm(datiDaValidare);
       this.erroriNuovoCliente = check.errori;
+
       if (!check.valido) return;
 
-      const cliente = normalizzaClientePerSalvataggio(this.nuovoClienteForm);
+      const cliente = modificaCliente
+        ? normalizzaClientePerSalvataggio(this.nuovoClienteForm)
+        : normalizzaAnagraficaClientePerSalvataggio(
+            this.nuovoClienteForm
+          );
+
       this.salvandoCliente = true;
+
       try {
-        if (this.clienteInModificaId) {
-          const { error } = await window.supabaseClient.from('clienti')
-            .update(cliente).eq('id', this.clienteInModificaId);
-          if (error) { this.erroriNuovoCliente.generale = 'Salvataggio fallito: ' + error.message; return; }
+        let clienteSalvatoId = this.clienteInModificaId;
+
+        if (modificaCliente) {
+          const { error } = await window.supabaseClient
+            .from('clienti')
+            .update(cliente)
+            .eq('id', this.clienteInModificaId);
+
+          if (error) {
+            this.erroriNuovoCliente.generale =
+              'Salvataggio fallito: ' + error.message;
+            return;
+          }
         } else {
-          const { error } = await window.supabaseClient.from('clienti').insert({
-            ...cliente,
-            venditore_id: this.sessione.user.id
-          });
-          if (error) { this.erroriNuovoCliente.generale = 'Salvataggio fallito: ' + error.message; return; }
+          const { data, error } = await window.supabaseClient
+            .from('clienti')
+            .insert({
+              ...cliente,
+              venditore_id: this.sessione.user.id
+            })
+            .select('id')
+            .single();
+
+          if (error) {
+            this.erroriNuovoCliente.generale =
+              'Salvataggio fallito: ' + error.message;
+            return;
+          }
+
+          clienteSalvatoId = data?.id || null;
         }
 
         const idModificato = this.clienteInModificaId;
+
         this.clienteInModificaId = null;
         this.nuovoClienteForm = formModuloVuoto();
         this.clienteFormSnapshot = null;
-        await Promise.all([this.caricaClienti(), this.caricaStatisticheVenditore()]);
-        this.view = idModificato ? 'scheda' : 'lista';
-        if (idModificato) { this.clienteSelezionatoId = idModificato; }
+
+        await Promise.all([
+          this.caricaClienti(),
+          this.caricaStatisticheVenditore()
+        ]);
+
+        if (idModificato) {
+          this.clienteSelezionatoId = idModificato;
+          this.view = 'scheda';
+          return;
+        }
+
+        this.clienteCreatoId = clienteSalvatoId;
+        this.clienteCreatoPromptAperto = true;
+        this.view = 'lista';
       } finally {
         this.salvandoCliente = false;
       }
+    },
+
+    chiudiPromptClienteCreato() {
+      this.clienteCreatoPromptAperto = false;
+      this.clienteCreatoId = null;
+      this.ritornoDopoNuovoCliente = null;
+    },
+
+    async registraVenditaDopoCliente() {
+      const cliente = this.clienti.find(
+        c => c.id === this.clienteCreatoId
+      );
+
+      if (!cliente) return;
+
+      this.clienteCreatoPromptAperto = false;
+      this.clienteCreatoId = null;
+      this.ritornoDopoNuovoCliente = null;
+
+      await this.apriEconomia('vendita');
+      this.selezionaClienteEconomia(cliente);
     },
 
     clienteSelezionato() {
       return this.clienti.find(c => c.id === this.clienteSelezionatoId) || {};
     },
 
-    async caricaPagamentiCliente(clienteId) {
+    async caricaPagamentiCliente(
+      clienteId,
+      venditaId = null
+    ) {
       this.venditaClienteAttiva = null;
       this.pagamentiCliente = [];
       this.errorePagamentiCliente = '';
+
       if (!clienteId) return;
 
       this.caricandoPagamentiCliente = true;
-      try {
-        const { data: vendite, error: errVendite } = await window.supabaseClient
-          .from('vendite')
-          .select('id,importo_vendita,servizio,data_vendita')
-          .eq('cliente_id', clienteId)
-          .eq('stato', 'attiva')
-          .order('data_vendita', { ascending: false })
-          .order('creato_il', { ascending: false })
-          .limit(1);
 
-        if (errVendite) {
-          this.errorePagamentiCliente = errVendite.message;
-          return;
+      try {
+        let vendita = null;
+
+        if (venditaId) {
+          const { data, error } =
+            await window.supabaseClient
+              .from('vendite')
+              .select(
+                'id,cliente_id,importo_vendita,servizio,data_vendita,creato_il'
+              )
+              .eq('id', venditaId)
+              .eq('cliente_id', clienteId)
+              .maybeSingle();
+
+          if (error) {
+            this.errorePagamentiCliente = error.message;
+            return;
+          }
+
+          vendita = data || null;
+        } else {
+          // Compatibilità con le viste che ancora usano
+          // l'ultima vendita attiva del cliente.
+          const { data, error } =
+            await window.supabaseClient
+              .from('vendite')
+              .select(
+                'id,cliente_id,importo_vendita,servizio,data_vendita,creato_il'
+              )
+              .eq('cliente_id', clienteId)
+              .eq('stato', 'attiva')
+              .order('data_vendita', { ascending: false })
+              .order('creato_il', { ascending: false })
+              .limit(1);
+
+          if (error) {
+            this.errorePagamentiCliente = error.message;
+            return;
+          }
+
+          vendita = (data || [])[0] || null;
         }
 
-        this.venditaClienteAttiva = (vendite || [])[0] || null;
-        const ids = this.venditaClienteAttiva ? [this.venditaClienteAttiva.id] : [];
-        if (!ids.length) return;
+        this.venditaClienteAttiva = vendita;
 
-        const { data, error } = await window.supabaseClient
-          .from('pagamenti')
-          .select('*')
-          .in('vendita_id', ids)
-          .order('data_pagamento', { ascending: false, nullsFirst: false })
-          .order('creato_il', { ascending: false });
+        if (!vendita?.id) return;
+
+        const { data, error } =
+          await window.supabaseClient
+            .from('pagamenti')
+            .select('*')
+            .eq('vendita_id', vendita.id)
+            .order(
+              'data_pagamento',
+              { ascending: false, nullsFirst: false }
+            )
+            .order(
+              'data_scadenza',
+              { ascending: true, nullsFirst: false }
+            )
+            .order('creato_il', { ascending: false });
 
         if (error) {
           this.errorePagamentiCliente = error.message;
@@ -4336,7 +5367,22 @@ costiPerMotoreRataEconomia() {
     },
 
     tornaDaScheda() {
-      this.view = ['clienti', 'ricerca', 'lista', 'admin', 'agenda', 'pipeline'].includes(this.viewPrecedenteScheda)
+      if (
+        this._historyInizializzata &&
+        history.state?.le
+      ) {
+        history.back();
+        return;
+      }
+
+      this.view = [
+        'clienti',
+        'ricerca',
+        'lista',
+        'admin',
+        'agenda',
+        'pipeline'
+      ].includes(this.viewPrecedenteScheda)
         ? this.viewPrecedenteScheda
         : (this.isAdmin ? 'admin' : 'lista');
     },
@@ -4382,12 +5428,20 @@ costiPerMotoreRataEconomia() {
       if (this.eliminandoCliente) return;
       this.eliminandoCliente = true;
       try {
-        const { error } = await window.supabaseClient.from('clienti')
-          .update({ cancellato_il: new Date().toISOString() }).eq('id', this.clienteSelezionatoId);
+        const { error } = await window.supabaseClient
+          .rpc('sposta_cliente_nel_cestino', {
+            p_cliente_id: this.clienteSelezionatoId
+          });
         if (error) { this.erroreScheda = 'Eliminazione fallita: ' + error.message; return; }
         this.confermaEliminazione = false;
         await this.caricaClienti();
-        this.tornaDaScheda();
+
+        if (this.eliminazioneDaAzioniRapide) {
+          this.eliminazioneDaAzioniRapide = false;
+          this.clienteSelezionatoId = null;
+        } else {
+          this.tornaDaScheda();
+        }
       } finally {
         this.eliminandoCliente = false;
       }
@@ -4423,9 +5477,15 @@ costiPerMotoreRataEconomia() {
     },
 
     async ripristinaCliente(clienteId) {
-      const { error } = await window.supabaseClient.from('clienti')
-        .update({ cancellato_il: null }).eq('id', clienteId);
-      if (error) { this.erroreCestino = 'Ripristino fallito: ' + error.message; return; }
+      const { error } = await window.supabaseClient
+        .rpc('ripristina_cliente_dal_cestino', {
+          p_cliente_id: clienteId
+        });
+
+      if (error) {
+        this.erroreCestino = 'Ripristino fallito: ' + error.message;
+        return;
+      }
       await this.caricaCestino();
       // se questa fallisce, l'errore va in erroreClienti e si vede solo tornando alla vista lista
       await this.caricaClienti();
