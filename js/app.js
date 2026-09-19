@@ -655,6 +655,9 @@ function appState() {
     },
 
     async init() {
+      if (window.__leAppInitDone) return;
+      window.__leAppInitDone = true;
+
       this.applicaTema(this.temaPreferenza);
 
       this._temaMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -4099,6 +4102,10 @@ costiPerMotoreRataEconomia() {
         0,
         Math.min(risultati.length - 1, this.cmdkIndiceAttivo + delta)
       );
+      this.$nextTick(() => {
+        document.querySelectorAll('.cmdk-row')[this.cmdkIndiceAttivo]
+          ?.scrollIntoView({ block: 'nearest' });
+      });
     },
 
     selezionaCmdk(cliente) {
