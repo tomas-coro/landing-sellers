@@ -447,6 +447,32 @@
                 <small>Per contratto</small>
               </div>
             </div>
+
+            <div class="metrics-trend metrics-trend-venditore">
+              <div class="metrics-trend-head">
+                <div>
+                  <span>TREND</span>
+                  <strong>Venduto per mese</strong>
+                </div>
+                <div class="metrics-trend-chips">
+                  <button type="button" :class="{ active: trendRangeVenditore === 12 }" @click="trendRangeVenditore = 12">12 mesi</button>
+                  <button type="button" :class="{ active: trendRangeVenditore === 6 }" @click="trendRangeVenditore = 6">6 mesi</button>
+                </div>
+              </div>
+
+              <div class="skeleton-block skeleton-trend" x-show="caricandoStatistiche" aria-hidden="true"></div>
+
+              <template x-if="!caricandoStatistiche">
+                <div>
+                  <div class="metrics-trend-empty" x-show="!trendDatiVenditore.some(p => p.valore > 0)">
+                    Nessuna vendita registrata negli ultimi 12 mesi.
+                  </div>
+                  <div class="metrics-chart-area" x-show="trendDatiVenditore.some(p => p.valore > 0)">
+                    <svg viewBox="0 0 640 200" preserveAspectRatio="xMidYMid meet" x-html="trendMarkupVenditore()"></svg>
+                  </div>
+                </div>
+              </template>
+            </div>
           </section>
 
           <section class="home-flow">
@@ -456,15 +482,22 @@
                 <strong>Dove sono i clienti</strong>
               </div>
             </div>
-            <div class="home-flow-stages">
-              <template x-for="stato in statiPipeline()" :key="'home-' + stato.valore">
-                <button
-                  type="button"
-                  :class="'stage-' + stato.valore"
-                  @click="apriPipeline()">
-                  <strong x-text="clientiPipeline(stato.valore).length"></strong>
-                  <span x-text="stato.label"></span>
-                </button>
+            <div class="metrics-funnel">
+              <template x-for="(stadio, indice) in funnelPipeline()" :key="'funnel-' + stadio.valore">
+                <div class="metrics-funnel-row">
+                  <div class="metrics-funnel-label" x-text="stadio.label"></div>
+                  <div class="metrics-funnel-track">
+                    <button
+                      type="button"
+                      class="metrics-funnel-fill"
+                      :class="'metrics-funnel-fill-' + indice"
+                      :style="{ width: Math.max(stadio.larghezza, 8) + '%' }"
+                      @click="apriPipeline(stadio.valore)">
+                      <span x-text="stadio.count"></span>
+                    </button>
+                  </div>
+                  <div class="metrics-funnel-conv" x-text="stadio.conversione !== null ? ('→ ' + stadio.conversione + '%') : ''"></div>
+                </div>
               </template>
             </div>
           </section>
@@ -1575,6 +1608,36 @@
           </div>
         </section>
 
+        <!-- TREND VENDITE -->
+        <section class="metrics-trend metrics-trend-admin" x-show="trendDatiAdmin.length > 0">
+          <div class="metrics-trend-head">
+            <div>
+              <span>TREND</span>
+              <strong>Venduto per mese</strong>
+            </div>
+            <div class="metrics-trend-chips">
+              <button type="button" :class="{ active: trendRangeAdmin === 12 }" @click="trendRangeAdmin = 12">12 mesi</button>
+              <button type="button" :class="{ active: trendRangeAdmin === 6 }" @click="trendRangeAdmin = 6">6 mesi</button>
+            </div>
+          </div>
+
+          <div class="metrics-trend-legend">
+            <template x-for="serie in trendSerieAdminVisibili()" :key="'legenda-' + serie.id">
+              <div class="metrics-legend-item">
+                <span class="metrics-legend-dot" :style="{ background: serie.color }"></span>
+                <span x-text="serie.nome"></span>
+              </div>
+            </template>
+          </div>
+
+          <div class="metrics-trend-empty" x-show="!trendDatiAdmin.some(s => s.punti.some(p => p.valore > 0))">
+            Nessuna vendita registrata negli ultimi 12 mesi.
+          </div>
+
+          <div class="metrics-chart-area" x-show="trendDatiAdmin.some(s => s.punti.some(p => p.valore > 0))">
+            <svg viewBox="0 0 640 200" preserveAspectRatio="xMidYMid meet" x-html="trendMarkupAdmin()"></svg>
+          </div>
+        </section>
 
         <!-- CLASSIFICA VENDITORI -->
         <section class="admin-ranking" x-show="classificaVenditori().length > 0">

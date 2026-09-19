@@ -218,6 +218,47 @@ function valoreContrattoVendita(vendita, clientiPerId = {}) {
   return cliente?.periodicita_contratto === 'mensile' ? importo * 12 : importo;
 }
 
+const MESI_LABEL_TREND = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+
+function ultimiMesiTrend(n = 12) {
+  const oggi = new Date();
+  const risultato = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(oggi.getFullYear(), oggi.getMonth() - i, 1);
+    risultato.push({
+      chiave: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'),
+      label: MESI_LABEL_TREND[d.getMonth()]
+    });
+  }
+  return risultato;
+}
+
+// Aggregazione mensile del valore contratto (stessa funzione dei tile
+// "Venduto"). Il dedupe e' per mese, non globale come nel tile: un cliente
+// con piu' vendite attive in mesi diversi (es. rinnovo) compare nel mese
+// giusto in ogni punto - e' la lettura corretta per un trend temporale,
+// anche se puo' differire dal totale cumulativo del tile sopra.
+function serieMensileValore(vendite = [], clientiPerId = {}, filtroVenditoreId = null) {
+  const mesi = ultimiMesiTrend(12);
+  const somme = Object.fromEntries(mesi.map(m => [m.chiave, 0]));
+  const clientiContatiPerMese = {};
+
+  vendite
+    .filter(v => v.stato === 'attiva' && v.data_vendita)
+    .filter(v => !filtroVenditoreId || v.venditore_id === filtroVenditoreId)
+    .forEach(v => {
+      const chiaveMese = String(v.data_vendita).slice(0, 7);
+      if (!(chiaveMese in somme)) return;
+      const chiaveCliente = v.cliente_id || v.id;
+      const contati = (clientiContatiPerMese[chiaveMese] ||= new Set());
+      if (contati.has(chiaveCliente)) return;
+      contati.add(chiaveCliente);
+      somme[chiaveMese] += valoreContrattoVendita(v, clientiPerId);
+    });
+
+  return mesi.map(m => ({ ...m, valore: somme[m.chiave] }));
+}
+
 function calcolaStatisticheVenditore(
   vendite = [],
   pagamenti = [],
@@ -393,6 +434,16 @@ function appState() {
       mediaVendita: 0,
       numeroVendite: 0
     },
+
+    // grafici: trend vendite mensile (sempre 12 mesi in memoria, la vista
+    // mostra uno slice di 6 o 12 - vedi trendRangeVenditore/trendRangeAdmin)
+    trendDatiVenditore: [],
+    trendRangeVenditore: 12,
+    trendHoverVenditore: null,
+
+    trendDatiAdmin: [], // [{ id, nome, color, punti: [{chiave,label,valore}] }]
+    trendRangeAdmin: 12,
+    trendHoverAdmin: null,
 
     ricercaGlobale: '',
     indiceNoteRicerca: [],
@@ -930,9 +981,10 @@ function appState() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
-    apriPipeline() {
+    apriPipeline(stato) {
       if (!this.confermaUscitaFormCliente()) return;
-      this.pipelineIndice = 0;
+      const indice = stato ? this.statiPipeline().findIndex(s => s.valore === stato) : 0;
+      this.pipelineIndice = indice >= 0 ? indice : 0;
       this.view = 'pipeline';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
@@ -4146,6 +4198,11 @@ costiPerMotoreRataEconomia() {
         mediaVendita: 0,
         numeroVendite: 0
       };
+      this.trendDatiVenditore = [];
+
+      // Il developer non ha una quota su ogni vendita: il grafico gli serve
+      // per vedere il totale venduto dall'azienda, non la propria parte.
+      const isDeveloper = this.profilo.ruolo === 'developer';
 
       try {
         const partecipazioni = await window.supabaseClient
@@ -4164,31 +4221,60 @@ costiPerMotoreRataEconomia() {
         });
 
         const ids = Object.keys(quotePerVendita);
-        if (!ids.length) return;
+        if (!ids.length && !isDeveloper) return;
 
-        const [vendite, pagamenti] = await Promise.all([
-          window.supabaseClient
-            .from('vendite')
-            .select('id,cliente_id,importo_vendita,stato,venditore_id')
-            .in('id', ids),
-          window.supabaseClient
-            .from('pagamenti')
-            .select('vendita_id,importo,stato')
-            .in('vendita_id', ids)
-        ]);
+        const clientiPerId = Object.fromEntries(this.clienti.map(cliente => [cliente.id, cliente]));
 
-        if (vendite.error || pagamenti.error) {
-          console.warn('Statistiche economiche non disponibili:', (vendite.error || pagamenti.error).message);
-          return;
+        if (ids.length) {
+          const [vendite, pagamenti] = await Promise.all([
+            window.supabaseClient
+              .from('vendite')
+              .select('id,cliente_id,importo_vendita,stato,venditore_id,data_vendita')
+              .in('id', ids),
+            window.supabaseClient
+              .from('pagamenti')
+              .select('vendita_id,importo,stato')
+              .in('vendita_id', ids)
+          ]);
+
+          if (vendite.error || pagamenti.error) {
+            console.warn('Statistiche economiche non disponibili:', (vendite.error || pagamenti.error).message);
+            return;
+          }
+
+          this.statisticheVenditore = calcolaStatisticheVenditore(
+            vendite.data || [],
+            pagamenti.data || [],
+            quotePerVendita,
+            this.sessione.user.id,
+            clientiPerId
+          );
+
+          if (!isDeveloper) {
+            this.trendDatiVenditore = serieMensileValore(
+              vendite.data || [],
+              clientiPerId,
+              this.sessione.user.id
+            );
+          }
         }
 
-        this.statisticheVenditore = calcolaStatisticheVenditore(
-          vendite.data || [],
-          pagamenti.data || [],
-          quotePerVendita,
-          this.sessione.user.id,
-          Object.fromEntries(this.clienti.map(cliente => [cliente.id, cliente]))
-        );
+        if (isDeveloper) {
+          const venditeGenerali = await window.supabaseClient
+            .from('vendite')
+            .select('id,cliente_id,importo_vendita,stato,venditore_id,data_vendita');
+
+          if (venditeGenerali.error) {
+            console.warn('Statistiche economiche non disponibili:', venditeGenerali.error.message);
+            return;
+          }
+
+          this.trendDatiVenditore = serieMensileValore(
+            venditeGenerali.data || [],
+            clientiPerId,
+            null
+          );
+        }
       } finally {
         this.caricandoStatistiche = false;
       }
@@ -4441,6 +4527,200 @@ costiPerMotoreRataEconomia() {
         { valore: 'in_lavorazione', label: 'In lavorazione' },
         { valore: 'pubblicato', label: 'Pubblicato' }
       ];
+    },
+
+    // Funnel pipeline Home: barra proporzionale al numero massimo di
+    // clienti tra gli stadi, + tasso di passaggio allo stadio successivo.
+    funnelPipeline() {
+      const stadi = this.statiPipeline().map(stato => ({
+        ...stato,
+        count: this.clientiPipeline(stato.valore).length
+      }));
+      const max = Math.max(1, ...stadi.map(s => s.count));
+      return stadi.map((stadio, indice) => {
+        const successivo = stadi[indice + 1];
+        const conversione = successivo && stadio.count > 0
+          ? Math.round((successivo.count / stadio.count) * 100)
+          : null;
+        return {
+          ...stadio,
+          larghezza: Math.round((stadio.count / max) * 100),
+          conversione
+        };
+      });
+    },
+
+    // ===== Grafici a linea (trend vendite) - geometria condivisa =====
+    // viewBox fisso 640x200, preserveAspectRatio uniforme (mai "none":
+    // deforma le etichette quando la card e' piu' stretta di 640px).
+    trendVisibile(datiCompleti, range) {
+      return range === 6 ? datiCompleti.slice(-6) : datiCompleti;
+    },
+
+    trendPuntiSerie(punti) {
+      const w = 640, h = 200, pad = 28;
+      if (punti.length < 2) return [];
+      const maxVal = Math.max(1, ...punti.map(p => p.valore)) * 1.15;
+      const stepX = (w - pad * 2) / (punti.length - 1);
+      return punti.map((p, i) => ({
+        x: pad + i * stepX,
+        y: h - pad - (p.valore / maxVal) * (h - pad * 2 - 20),
+        valore: p.valore,
+        label: p.label,
+        chiave: p.chiave
+      }));
+    },
+
+    trendPathLinea(punti) {
+      const pts = this.trendPuntiSerie(punti);
+      if (!pts.length) return '';
+      return pts.map((p, i) => (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+    },
+
+    trendPathArea(punti) {
+      const pts = this.trendPuntiSerie(punti);
+      if (!pts.length) return '';
+      const h = 200, pad = 28;
+      const linea = this.trendPathLinea(punti);
+      const ultimo = pts[pts.length - 1];
+      const primo = pts[0];
+      return `${linea} L${ultimo.x},${h - pad} L${primo.x},${h - pad} Z`;
+    },
+
+    // Etichette dirette a fine linea con anti-sovrapposizione verticale:
+    // se due serie finiscono a meno di 14 unita' viewBox, la piu' in alto
+    // viene spinta ancora piu' su.
+    trendEtichetteFinali(serie) {
+      const MIN_GAP = 14;
+      const etichette = serie
+        .map(s => {
+          const pts = this.trendPuntiSerie(s.punti);
+          if (!pts.length) return null;
+          const ultimo = pts[pts.length - 1];
+          return {
+            x: ultimo.x + 9,
+            y: ultimo.y + 3,
+            color: s.color,
+            text: (ultimo.valore / 1000).toFixed(1) + 'k'
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.y - b.y);
+
+      for (let i = 1; i < etichette.length; i++) {
+        const gap = etichette[i].y - etichette[i - 1].y;
+        if (gap < MIN_GAP) etichette[i - 1].y -= (MIN_GAP - gap);
+      }
+      return etichette;
+    },
+
+    trendGridLineY() {
+      const h = 200, pad = 28;
+      const step = (h - pad * 2 - 20) / 3;
+      return [0, 1, 2, 3].map(i => pad + i * step);
+    },
+
+    trendEtichetteAsse(punti) {
+      const pts = this.trendPuntiSerie(punti);
+      if (!pts.length) return [];
+      const passo = pts.length > 8 ? 2 : 1;
+      return pts
+        .filter((_, i) => i % passo === 0 || i === pts.length - 1)
+        .map(p => ({ x: p.x, text: p.label }));
+    },
+
+    // ===== Rendering SVG dei due grafici trend =====
+    // Alpine x-for/x-if con <template> DENTRO <svg> non funziona (verificato:
+    // il parser HTML non popola .content sul <template> in contesto SVG
+    // foreign-content, Alpine lancia "Cannot read properties of undefined
+    // (reading 'children')"). Si genera quindi la marcatura SVG come stringa
+    // e si lega con x-html sull'elemento <svg>; l'hover/click sui punti usa
+    // handler inline (non window.addEventListener, per non ripetere il bug
+    // di doppia registrazione gia' documentato altrove in questo file) che
+    // scrivono direttamente sullo stato Alpine via Alpine.$data(...).
+    trendSerieAdminVisibili() {
+      return this.trendDatiAdmin.map(serie => ({
+        ...serie,
+        puntiVisibili: this.trendVisibile(serie.punti, this.trendRangeAdmin)
+      }));
+    },
+
+    trendMarkupVenditore() {
+      const punti = this.trendVisibile(this.trendDatiVenditore, this.trendRangeVenditore);
+      if (!punti.some(p => p.valore > 0)) return '';
+
+      const pts = this.trendPuntiSerie(punti);
+      let svg = '';
+
+      this.trendGridLineY().forEach(y => {
+        svg += `<line class="metrics-grid-line metrics-grid-line-dark" x1="28" y1="${y}" x2="632" y2="${y}"></line>`;
+      });
+      this.trendEtichetteAsse(punti).forEach(a => {
+        svg += `<text class="metrics-axis-label metrics-axis-label-dark" x="${a.x}" y="194" text-anchor="middle">${a.text}</text>`;
+      });
+
+      svg += `<path class="metrics-trend-area" d="${this.trendPathArea(punti)}"></path>`;
+      svg += `<path class="metrics-trend-line" d="${this.trendPathLinea(punti)}"></path>`;
+
+      pts.forEach((p, i) => {
+        svg += `<circle class="metrics-trend-dot" cx="${p.x}" cy="${p.y}" r="4"
+          onmouseenter="Alpine.$data(document.getElementById('app')).trendHoverVenditore=${i}"
+          onmouseleave="Alpine.$data(document.getElementById('app')).trendHoverVenditore=null"
+          onclick="const __d=Alpine.$data(document.getElementById('app'));__d.trendHoverVenditore=(__d.trendHoverVenditore===${i}?null:${i})"></circle>`;
+      });
+
+      if (this.trendHoverVenditore !== null && pts[this.trendHoverVenditore]) {
+        const p = pts[this.trendHoverVenditore];
+        const x = Math.max(50, Math.min(590, p.x));
+        const y = Math.max(14, p.y - 10);
+        svg += `<text class="metrics-tooltip metrics-tooltip-dark" x="${x}" y="${y}" text-anchor="middle">${p.label} · ${formattaEuro(p.valore)}</text>`;
+      }
+
+      return svg;
+    },
+
+    trendMarkupAdmin() {
+      const serie = this.trendSerieAdminVisibili();
+      if (!serie.some(s => s.puntiVisibili.some(p => p.valore > 0))) return '';
+
+      let svg = '';
+
+      this.trendGridLineY().forEach(y => {
+        svg += `<line class="metrics-grid-line" x1="28" y1="${y}" x2="632" y2="${y}"></line>`;
+      });
+      this.trendEtichetteAsse(serie[0] ? serie[0].puntiVisibili : []).forEach(a => {
+        svg += `<text class="metrics-axis-label" x="${a.x}" y="194" text-anchor="middle">${a.text}</text>`;
+      });
+
+      serie.forEach(s => {
+        svg += `<path class="metrics-trend-line" style="stroke:${s.color}" d="${this.trendPathLinea(s.puntiVisibili)}"></path>`;
+      });
+
+      serie.forEach((s, si) => {
+        this.trendPuntiSerie(s.puntiVisibili).forEach((p, pi) => {
+          svg += `<circle class="metrics-trend-dot" cx="${p.x}" cy="${p.y}" r="3.5" style="fill:${s.color}"
+            onmouseenter="Alpine.$data(document.getElementById('app')).trendHoverAdmin={si:${si},pi:${pi}}"
+            onmouseleave="Alpine.$data(document.getElementById('app')).trendHoverAdmin=null"
+            onclick="const __d=Alpine.$data(document.getElementById('app'));const __h=__d.trendHoverAdmin;__d.trendHoverAdmin=(__h&&__h.si===${si}&&__h.pi===${pi})?null:{si:${si},pi:${pi}}"></circle>`;
+        });
+      });
+
+      this.trendEtichetteFinali(serie.map(s => ({ color: s.color, punti: s.puntiVisibili }))).forEach(e => {
+        svg += `<text class="metrics-direct-label" x="${e.x}" y="${e.y}" style="fill:${e.color}">${e.text}</text>`;
+      });
+
+      if (this.trendHoverAdmin) {
+        const s = serie[this.trendHoverAdmin.si];
+        const p = s && this.trendPuntiSerie(s.puntiVisibili)[this.trendHoverAdmin.pi];
+        if (p) {
+          const x = Math.max(50, Math.min(590, p.x));
+          const y = Math.max(14, p.y - 10);
+          const nomeSerie = s.id !== 'totale' ? ' · ' + s.nome : '';
+          svg += `<text class="metrics-tooltip" x="${x}" y="${y}" text-anchor="middle">${p.label}${nomeSerie} · ${formattaEuro(p.valore)}</text>`;
+        }
+      }
+
+      return svg;
     },
 
     aggiornaPipelineIndice(event) {
@@ -5910,7 +6190,7 @@ costiPerMotoreRataEconomia() {
 
         window.supabaseClient
           .from('vendite')
-          .select('id,cliente_id,venditore_id,importo_vendita,stato'),
+          .select('id,cliente_id,venditore_id,importo_vendita,stato,data_vendita'),
 
         window.supabaseClient
           .from('vendita_partecipanti')
@@ -6140,6 +6420,22 @@ costiPerMotoreRataEconomia() {
           nPubblicatiMese: suoiPubblicatiMese.length
         };
       }));
+
+      const coloriCategorici = ['var(--cat-1)', 'var(--cat-2)', 'var(--cat-3)'];
+      this.trendDatiAdmin = [
+        {
+          id: 'totale',
+          nome: 'Totale',
+          color: 'var(--lime-deep)',
+          punti: serieMensileValore(vendite, clientiPerId, null)
+        },
+        ...this.classificaVenditori().slice(0, 3).map((venditore, indice) => ({
+          id: venditore.id,
+          nome: venditore.nome,
+          color: coloriCategorici[indice],
+          punti: serieMensileValore(vendite, clientiPerId, venditore.id)
+        }))
+      ];
     },
 
     totaleGeneraleAdmin() {

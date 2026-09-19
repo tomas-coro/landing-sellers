@@ -222,6 +222,17 @@ h2{font-size:14px;font-weight:800;letter-spacing:-.005em;margin:22px 0 10px}
   .skeleton-metric-value{animation:none}
 }
 
+/* skeleton trend venditore: stesso pannello sempre scuro di .skeleton-metric-value sopra */
+.skeleton-trend{
+  width:100%;height:190px;margin-top:12px;border-radius:10px;
+  background:linear-gradient(90deg,#3a3a3a 25%,#4a4a4a 37%,#3a3a3a 63%);
+  background-size:400% 100%;
+  animation:skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce){
+  .skeleton-trend{animation:none}
+}
+
 /* --- skeleton scheda cliente (pagamenti + timeline attivita') --- */
 .skeleton-payment-summary{
   display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;
@@ -15401,4 +15412,98 @@ html[data-theme="dark"] .economy-create-client{
   .pipeline-view .pipeline-empty-v2 p{
     display:none;
   }
+}
+
+/* ==========================================================
+   GRAFICI - funnel pipeline + trend vendite
+   Mockup approvato: vedi memoria project_landing_sellers.md
+   ========================================================== */
+:root{
+  --cat-1:#2a78d6;
+  --cat-2:#eb6834;
+  --cat-3:#1baf7a;
+}
+html[data-theme="dark"]{
+  --cat-1:#3987e5;
+  --cat-2:#d95926;
+  --cat-3:#199e70;
+}
+
+/* ---- Funnel pipeline (Home, card normale a token) ---- */
+.metrics-funnel{display:flex;flex-direction:column;gap:9px;margin-top:2px}
+.metrics-funnel-row{display:flex;align-items:center;gap:10px}
+.metrics-funnel-label{width:78px;flex-shrink:0;font-size:9.5px;font-weight:700;color:var(--ink-soft);text-align:right;line-height:1.2}
+.metrics-funnel-track{flex:1;min-width:0;height:32px;background:var(--paper-2);border-radius:8px;position:relative}
+.metrics-funnel-fill{
+  height:100%;min-width:34px;border:0;border-radius:8px;display:flex;align-items:center;justify-content:flex-end;
+  padding-right:10px;transition:width .4s var(--ease);cursor:pointer;font:inherit;
+}
+.metrics-funnel-fill span{font-size:12px;font-weight:800;color:#16210a}
+.metrics-funnel-fill-0{background:#eaffb8}
+.metrics-funnel-fill-1{background:#d4f987}
+.metrics-funnel-fill-2{background:var(--lime)}
+.metrics-funnel-fill-3{background:var(--lime-deep)}
+.metrics-funnel-conv{font-size:9px;font-weight:700;color:var(--muted);width:38px;flex-shrink:0}
+
+/* ---- Trend vendite - struttura condivisa ---- */
+.metrics-trend-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.metrics-trend-chips{display:flex;gap:6px}
+.metrics-trend-chips button{
+  font-family:var(--sans);font-size:9.5px;font-weight:750;padding:6px 11px;border-radius:999px;
+  border:1.5px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;
+}
+.metrics-trend-chips button.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+.metrics-trend-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+.metrics-legend-item{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;color:var(--ink-soft)}
+.metrics-legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+.metrics-chart-area{position:relative;height:190px;margin-top:10px}
+.metrics-chart-area svg{width:100%;height:100%;overflow:visible}
+.metrics-grid-line{stroke:var(--line);stroke-width:1}
+.metrics-axis-label{font-size:9px;font-family:var(--sans);font-weight:600;fill:var(--muted)}
+.metrics-trend-line{fill:none;stroke-width:2.5;stroke:var(--lime-deep)}
+.metrics-trend-area{opacity:.12;fill:var(--lime-deep)}
+.metrics-trend-dot{fill:var(--lime-deep);stroke:var(--card);stroke-width:2;cursor:pointer}
+.metrics-trend-dot:hover{r:6}
+.metrics-direct-label{font-size:10px;font-weight:800;font-family:var(--sans);text-anchor:start}
+.metrics-tooltip{font-size:10px;font-weight:700;font-family:var(--sans);fill:var(--ink)}
+
+.metrics-trend-empty{
+  margin-top:12px;padding:10px 12px;background:var(--paper-2);border-radius:10px;
+  font-size:11px;color:var(--muted);border:1px dashed var(--line);
+}
+
+/* ---- Trend admin: card normale a token, tra overview e classifica ---- */
+.metrics-trend-admin{
+  background:var(--card);border:1px solid var(--line);border-radius:19px;padding:16px;
+}
+.metrics-trend-admin .metrics-trend-head strong{display:block;font-size:15px;margin-top:3px}
+.metrics-trend-admin .metrics-trend-head span{display:block;font-size:9px;letter-spacing:.06em;color:var(--muted);font-weight:800;text-transform:uppercase}
+
+/* ---- Trend venditore: dentro il pannello .home-performance-v4, sempre
+   scuro con colori fissi (non segue --line/--paper-2, stessa scelta
+   documentata per .home-contract-metric) ---- */
+.metrics-trend-venditore{padding:16px 18px 18px;border-top:1px solid #363636}
+.metrics-trend-venditore .metrics-trend-head span{font-size:8px;letter-spacing:.08em;color:#8f8f8f;font-weight:800}
+.metrics-trend-venditore .metrics-trend-head strong{margin-top:4px;font-size:14px;display:block}
+.metrics-trend-venditore .metrics-trend-chips button{
+  border-color:#3a3a3a;background:#252525;color:#ccc;
+}
+.metrics-trend-venditore .metrics-trend-chips button.active{background:var(--lime);color:#0f1a00;border-color:var(--lime)}
+.metrics-grid-line-dark{stroke:#363636}
+.metrics-axis-label-dark{fill:#8f8f8f}
+.metrics-trend-venditore .metrics-trend-line{stroke:var(--lime)}
+.metrics-trend-venditore .metrics-trend-area{fill:var(--lime)}
+.metrics-trend-venditore .metrics-trend-dot{fill:var(--lime);stroke:#1d201c}
+.metrics-tooltip-dark{fill:#fff}
+.metrics-trend-venditore .metrics-trend-empty{background:#1e1e1e;border-color:#3a3a3a;color:#9b9b9b}
+
+@media (prefers-reduced-motion: reduce){
+  .metrics-funnel-fill{transition:none}
+}
+
+@media (max-width:600px){
+  .metrics-funnel-label{width:62px;font-size:8.5px}
+  .metrics-chart-area{height:170px}
 }
