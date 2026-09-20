@@ -405,6 +405,11 @@ function appState() {
 
     clienti: [],
     erroreClienti: '',
+    // Bottone "Riprova": { fn } quando l'errore e' di rete/server, null sui
+    // validazione. Avvolto in un oggetto perche' Alpine auto-invoca i
+    // riferimenti a funzione bare in x-show/x-text (userebbe il return della
+    // funzione come condizione, non la sua esistenza) - un oggetto invece no.
+    retryClienti: null,
     caricandoClienti: true,
     isAdmin: false,
     filtroVenditoreId: '',
@@ -494,12 +499,14 @@ function appState() {
     salvandoNotaRapida: false,
     messaggioAzioneCliente: '',
     erroreAzioneCliente: '',
+    retryAzioneCliente: null,
     salvandoVenditaEconomica: false,
     erroreEconomia: '',
     successoEconomia: '',
 
     selezionePrezzo: { modalita: 'catalogo', formula: 'mensile', upgrade: [] },
     erroriNuovoCliente: {},
+    retryNuovoCliente: null,
     clienteInModificaId: null,
     salvandoCliente: false,
 
@@ -4785,22 +4792,34 @@ costiPerMotoreRataEconomia() {
         return 'Stato non valido';
       }
 
-      const { error } = await window.supabaseClient
-        .rpc('imposta_stato_cliente', {
-          p_cliente_id: clienteId,
-          p_stato: stato
-        });
+      try {
+        const { error } = await window.supabaseClient
+          .rpc('imposta_stato_cliente', {
+            p_cliente_id: clienteId,
+            p_stato: stato
+          });
 
-      return error ? error.message : '';
+        return error ? error.message : '';
+      } catch (err) {
+        console.error('Errore impostaStatoCliente:', err);
+        return 'Errore di connessione.';
+      }
     },
 
     async cambiaStatoDaPipeline(clienteId, stato) {
       this.erroreClienti = '';
+      this.retryClienti = null;
 
       const errore = await this.impostaStatoCliente(clienteId, stato);
 
       if (errore) {
         this.erroreClienti = 'Stato non aggiornato: ' + errore;
+        // "Stato non valido" e' un errore di validazione lato client (stato
+        // non tra quelli consentiti): riprovare non cambierebbe l'esito,
+        // quindi niente bottone Riprova su questo caso specifico.
+        if (errore !== 'Stato non valido') {
+          this.retryClienti = { fn: () => this.cambiaStatoDaPipeline(clienteId, stato) };
+        }
         return;
       }
 
@@ -4860,6 +4879,7 @@ costiPerMotoreRataEconomia() {
       this.clienteNotaRapidaTesto = '';
       this.messaggioAzioneCliente = '';
       this.erroreAzioneCliente = '';
+      this.retryAzioneCliente = null;
     },
 
     richiediEliminazioneDaAzioniCliente() {
@@ -4928,6 +4948,7 @@ costiPerMotoreRataEconomia() {
 
       this.messaggioAzioneCliente = '';
       this.erroreAzioneCliente = '';
+      this.retryAzioneCliente = null;
 
       if (!clienteId) {
         this.erroreAzioneCliente = 'Cliente non disponibile.';
@@ -4962,6 +4983,7 @@ costiPerMotoreRataEconomia() {
         if (error) {
           console.error('Errore nota rapida:', error);
           this.erroreAzioneCliente = 'Nota non salvata: ' + error.message;
+          this.retryAzioneCliente = { fn: () => this.salvaNotaRapida() };
           return;
         }
 
@@ -4983,6 +5005,7 @@ costiPerMotoreRataEconomia() {
         console.error('Errore nota rapida:', err);
         this.erroreAzioneCliente =
           'Errore durante il salvataggio della nota.';
+        this.retryAzioneCliente = { fn: () => this.salvaNotaRapida() };
       } finally {
         this.salvandoNotaRapida = false;
       }
@@ -4993,6 +5016,7 @@ costiPerMotoreRataEconomia() {
 
       this.messaggioAzioneCliente = '';
       this.erroreAzioneCliente = '';
+      this.retryAzioneCliente = null;
 
       if (!clienteId || this.salvandoProssimoContattoRapido) return;
 
@@ -5009,6 +5033,7 @@ costiPerMotoreRataEconomia() {
           console.error('Errore prossimo contatto:', error);
           this.erroreAzioneCliente =
             'Data non salvata: ' + error.message;
+          this.retryAzioneCliente = { fn: () => this.salvaProssimoContattoRapido() };
           return;
         }
 
@@ -5027,6 +5052,7 @@ costiPerMotoreRataEconomia() {
         console.error('Errore prossimo contatto:', err);
         this.erroreAzioneCliente =
           'Errore durante il salvataggio.';
+        this.retryAzioneCliente = { fn: () => this.salvaProssimoContattoRapido() };
       } finally {
         this.salvandoProssimoContattoRapido = false;
       }
@@ -5715,6 +5741,7 @@ costiPerMotoreRataEconomia() {
 
       const check = validaClienteForm(datiDaValidare);
       this.erroriNuovoCliente = check.errori;
+      this.retryNuovoCliente = null;
 
       if (!check.valido) return;
 
@@ -5738,6 +5765,7 @@ costiPerMotoreRataEconomia() {
           if (error) {
             this.erroriNuovoCliente.generale =
               'Salvataggio fallito: ' + error.message;
+            this.retryNuovoCliente = { fn: () => this.salvaCliente() };
             return;
           }
         } else {
@@ -5753,6 +5781,7 @@ costiPerMotoreRataEconomia() {
           if (error) {
             this.erroriNuovoCliente.generale =
               'Salvataggio fallito: ' + error.message;
+            this.retryNuovoCliente = { fn: () => this.salvaCliente() };
             return;
           }
 
@@ -5801,6 +5830,11 @@ costiPerMotoreRataEconomia() {
         this.clienteCreatoId = clienteSalvatoId;
         this.clienteCreatoPromptAperto = true;
         this.view = 'lista';
+      } catch (err) {
+        console.error('Errore salvataggio cliente:', err);
+        this.erroriNuovoCliente.generale =
+          'Errore durante il salvataggio del cliente.';
+        this.retryNuovoCliente = { fn: () => this.salvaCliente() };
       } finally {
         this.salvandoCliente = false;
       }

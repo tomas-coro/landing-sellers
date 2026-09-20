@@ -382,7 +382,10 @@
         <h1 style="font-size:19px" x-text="isAdmin ? filtroVenditoreNome : (view === 'clienti' ? 'Clienti' : 'Home')"></h1>
       </div>
       <div class="content">
-        <p x-show="erroreClienti" x-text="erroreClienti" class="err" style="margin-bottom:14px"></p>
+        <p x-show="erroreClienti" style="margin-bottom:14px">
+          <span x-text="erroreClienti" class="err"></span>
+          <button type="button" class="retry-btn" x-show="retryClienti" @click="retryClienti && retryClienti.fn()">Riprova</button>
+        </p>
 
         <div class="home-dashboard home-dashboard-v3" x-show="!isAdmin && view === 'lista' && clienti.length > 0">
           <section class="home-performance home-performance-v4">
@@ -4293,7 +4296,10 @@
             </div>
           </div>
           </section>
-          <p x-show="erroriNuovoCliente.generale" x-text="erroriNuovoCliente.generale" class="err" style="margin-bottom:14px"></p>
+          <p x-show="erroriNuovoCliente.generale" style="margin-bottom:14px">
+            <span x-text="erroriNuovoCliente.generale" class="err"></span>
+            <button type="button" class="retry-btn" x-show="retryNuovoCliente" @click="retryNuovoCliente && retryNuovoCliente.fn()">Riprova</button>
+          </p>
           <button type="submit" class="btn btn-primary" :disabled="salvandoCliente"
             x-text="salvandoCliente ? 'Salvataggio...' : (clienteInModificaId ? 'Salva modifiche' : 'Salva cliente')"></button>
         </form>
@@ -5552,6 +5558,8 @@
               x-show="erroreAzioneCliente"
               x-text="erroreAzioneCliente">
             </span>
+
+            <button type="button" class="retry-btn" x-show="retryAzioneCliente" @click="retryAzioneCliente && retryAzioneCliente.fn()">Riprova</button>
           </div>
 
           <button
@@ -5595,6 +5603,8 @@
               x-show="erroreAzioneCliente"
               x-text="erroreAzioneCliente">
             </span>
+
+            <button type="button" class="retry-btn" x-show="retryAzioneCliente" @click="retryAzioneCliente && retryAzioneCliente.fn()">Riprova</button>
           </div>
 
           <div class="client-action-date-actions">

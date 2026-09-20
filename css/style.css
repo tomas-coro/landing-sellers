@@ -88,6 +88,13 @@ h2{font-size:14px;font-weight:800;letter-spacing:-.005em;margin:22px 0 10px}
 .field input:focus,.field textarea:focus{outline:none;border-color:var(--ink)}
 .field textarea{resize:vertical;min-height:64px;font-weight:400}
 .err{font-size:12px;font-weight:600;color:#a8321f;margin-top:5px}
+.retry-btn{
+  display:inline-flex;align-items:center;vertical-align:middle;
+  font-family:var(--sans);font-size:10.5px;font-weight:750;
+  padding:4px 11px;border-radius:999px;border:1.5px solid var(--line);
+  background:var(--card);color:var(--ink-soft);cursor:pointer;margin-left:8px;
+}
+.retry-btn:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 
 /* --- bottoni --- */
 .btn{font-family:var(--sans);font-weight:700;font-size:13.5px;letter-spacing:.005em;
@@ -8034,7 +8041,12 @@ html[data-theme="dark"] .client-action-symbol{
   margin-top:7px;
   font-size:10.5px;
   font-weight:650;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
 }
+.client-action-feedback .retry-btn{margin-left:0}
 
 .client-action-success{
   color:var(--ink-soft);
