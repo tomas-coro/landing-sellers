@@ -455,8 +455,9 @@
                   <strong>Venduto per mese</strong>
                 </div>
                 <div class="metrics-trend-chips">
-                  <button type="button" :class="{ active: trendRangeVenditore === 12 }" @click="trendRangeVenditore = 12">12 mesi</button>
+                  <button type="button" :class="{ active: trendRangeVenditore === 3 }" @click="trendRangeVenditore = 3">3 mesi</button>
                   <button type="button" :class="{ active: trendRangeVenditore === 6 }" @click="trendRangeVenditore = 6">6 mesi</button>
+                  <button type="button" :class="{ active: trendRangeVenditore === 12 }" @click="trendRangeVenditore = 12">12 mesi</button>
                 </div>
               </div>
 
@@ -465,10 +466,10 @@
               <template x-if="!caricandoStatistiche">
                 <div>
                   <div class="metrics-trend-empty" x-show="!trendDatiVenditore.some(p => p.valore > 0)">
-                    Nessuna vendita registrata negli ultimi 12 mesi.
+                    <span x-text="'Nessuna vendita registrata negli ultimi ' + trendRangeVenditore + ' mesi.'"></span>
                   </div>
                   <div class="metrics-chart-area" x-show="trendDatiVenditore.some(p => p.valore > 0)">
-                    <svg viewBox="0 0 640 200" preserveAspectRatio="xMidYMid meet" x-html="trendMarkupVenditore()"></svg>
+                    <svg viewBox="0 0 640 218" preserveAspectRatio="xMidYMid meet" x-html="trendMarkupVenditore()"></svg>
                   </div>
                 </div>
               </template>
@@ -1616,8 +1617,9 @@
               <strong>Venduto per mese</strong>
             </div>
             <div class="metrics-trend-chips">
-              <button type="button" :class="{ active: trendRangeAdmin === 12 }" @click="trendRangeAdmin = 12">12 mesi</button>
+              <button type="button" :class="{ active: trendRangeAdmin === 3 }" @click="trendRangeAdmin = 3">3 mesi</button>
               <button type="button" :class="{ active: trendRangeAdmin === 6 }" @click="trendRangeAdmin = 6">6 mesi</button>
+              <button type="button" :class="{ active: trendRangeAdmin === 12 }" @click="trendRangeAdmin = 12">12 mesi</button>
             </div>
           </div>
 
@@ -1631,11 +1633,11 @@
           </div>
 
           <div class="metrics-trend-empty" x-show="!trendDatiAdmin.some(s => s.punti.some(p => p.valore > 0))">
-            Nessuna vendita registrata negli ultimi 12 mesi.
+            <span x-text="'Nessuna vendita registrata negli ultimi ' + trendRangeAdmin + ' mesi.'"></span>
           </div>
 
           <div class="metrics-chart-area" x-show="trendDatiAdmin.some(s => s.punti.some(p => p.valore > 0))">
-            <svg viewBox="0 0 640 200" preserveAspectRatio="xMidYMid meet" x-html="trendMarkupAdmin()"></svg>
+            <svg viewBox="0 0 640 218" preserveAspectRatio="xMidYMid meet" x-html="trendMarkupAdmin()"></svg>
           </div>
         </section>
 

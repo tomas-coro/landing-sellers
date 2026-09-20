@@ -241,6 +241,7 @@ function ultimiMesiTrend(n = 12) {
 function serieMensileValore(vendite = [], clientiPerId = {}, filtroVenditoreId = null) {
   const mesi = ultimiMesiTrend(12);
   const somme = Object.fromEntries(mesi.map(m => [m.chiave, 0]));
+  const conteggi = Object.fromEntries(mesi.map(m => [m.chiave, 0]));
   const clientiContatiPerMese = {};
 
   vendite
@@ -254,9 +255,10 @@ function serieMensileValore(vendite = [], clientiPerId = {}, filtroVenditoreId =
       if (contati.has(chiaveCliente)) return;
       contati.add(chiaveCliente);
       somme[chiaveMese] += valoreContrattoVendita(v, clientiPerId);
+      conteggi[chiaveMese] += 1;
     });
 
-  return mesi.map(m => ({ ...m, valore: somme[m.chiave] }));
+  return mesi.map(m => ({ ...m, valore: somme[m.chiave], numero: conteggi[m.chiave] }));
 }
 
 function calcolaStatisticheVenditore(
@@ -4554,7 +4556,19 @@ costiPerMotoreRataEconomia() {
     // viewBox fisso 640x200, preserveAspectRatio uniforme (mai "none":
     // deforma le etichette quando la card e' piu' stretta di 640px).
     trendVisibile(datiCompleti, range) {
-      return range === 6 ? datiCompleti.slice(-6) : datiCompleti;
+      return range < 12 ? datiCompleti.slice(-range) : datiCompleti;
+    },
+
+    // Formato compatto per le etichette sempre visibili sopra i punti
+    // (a differenza di formattaEuro, qui serve corto: "12k" non "12.000 €").
+    formattaEuroCompatto(valore) {
+      const v = Number(valore) || 0;
+      if (!v) return '0€';
+      if (v >= 1000) {
+        const k = v / 1000;
+        return (Number.isInteger(k) ? k : k.toFixed(1)) + 'k€';
+      }
+      return Math.round(v) + '€';
     },
 
     trendPuntiSerie(punti) {
@@ -4566,6 +4580,7 @@ costiPerMotoreRataEconomia() {
         x: pad + i * stepX,
         y: h - pad - (p.valore / maxVal) * (h - pad * 2 - 20),
         valore: p.valore,
+        numero: p.numero || 0,
         label: p.label,
         chiave: p.chiave
       }));
@@ -4626,7 +4641,7 @@ costiPerMotoreRataEconomia() {
       const passo = pts.length > 8 ? 2 : 1;
       return pts
         .filter((_, i) => i % passo === 0 || i === pts.length - 1)
-        .map(p => ({ x: p.x, text: p.label }));
+        .map(p => ({ x: p.x, text: p.label, numero: p.numero }));
     },
 
     // ===== Rendering SVG dei due grafici trend =====
@@ -4656,11 +4671,17 @@ costiPerMotoreRataEconomia() {
         svg += `<line class="metrics-grid-line metrics-grid-line-dark" x1="28" y1="${y}" x2="632" y2="${y}"></line>`;
       });
       this.trendEtichetteAsse(punti).forEach(a => {
-        svg += `<text class="metrics-axis-label metrics-axis-label-dark" x="${a.x}" y="194" text-anchor="middle">${a.text}</text>`;
+        svg += `<text class="metrics-axis-label metrics-axis-label-dark" x="${a.x}" y="191" text-anchor="middle">${a.text}</text>`;
+        svg += `<text class="metrics-count-label metrics-count-label-dark" x="${a.x}" y="205" text-anchor="middle">${a.numero} sit${a.numero === 1 ? 'o' : 'i'}</text>`;
       });
 
       svg += `<path class="metrics-trend-area" d="${this.trendPathArea(punti)}"></path>`;
       svg += `<path class="metrics-trend-line" d="${this.trendPathLinea(punti)}"></path>`;
+
+      pts.forEach(p => {
+        if (!p.valore) return;
+        svg += `<text class="metrics-point-label metrics-point-label-dark" x="${p.x}" y="${Math.max(11, p.y - 9)}" text-anchor="middle">${this.formattaEuroCompatto(p.valore)}</text>`;
+      });
 
       pts.forEach((p, i) => {
         svg += `<circle class="metrics-trend-dot" cx="${p.x}" cy="${p.y}" r="4"
@@ -4672,8 +4693,8 @@ costiPerMotoreRataEconomia() {
       if (this.trendHoverVenditore !== null && pts[this.trendHoverVenditore]) {
         const p = pts[this.trendHoverVenditore];
         const x = Math.max(50, Math.min(590, p.x));
-        const y = Math.max(14, p.y - 10);
-        svg += `<text class="metrics-tooltip metrics-tooltip-dark" x="${x}" y="${y}" text-anchor="middle">${p.label} · ${formattaEuro(p.valore)}</text>`;
+        const y = Math.max(14, p.y - 20);
+        svg += `<text class="metrics-tooltip metrics-tooltip-dark" x="${x}" y="${y}" text-anchor="middle">${p.label} · ${formattaEuro(p.valore)} · ${p.numero} sit${p.numero === 1 ? 'o' : 'i'}</text>`;
       }
 
       return svg;
@@ -4688,8 +4709,13 @@ costiPerMotoreRataEconomia() {
       this.trendGridLineY().forEach(y => {
         svg += `<line class="metrics-grid-line" x1="28" y1="${y}" x2="632" y2="${y}"></line>`;
       });
-      this.trendEtichetteAsse(serie[0] ? serie[0].puntiVisibili : []).forEach(a => {
-        svg += `<text class="metrics-axis-label" x="${a.x}" y="194" text-anchor="middle">${a.text}</text>`;
+      // Il conteggio siti sotto il mese usa sempre la serie "totale" (prima
+      // serie): sotto ogni venditore avrebbe contato solo le sue vendite,
+      // qui interessa quante vendite ci sono state in azienda quel mese.
+      const serieTotale = serie.find(s => s.id === 'totale') || serie[0];
+      this.trendEtichetteAsse(serieTotale ? serieTotale.puntiVisibili : []).forEach(a => {
+        svg += `<text class="metrics-axis-label" x="${a.x}" y="191" text-anchor="middle">${a.text}</text>`;
+        svg += `<text class="metrics-count-label" x="${a.x}" y="205" text-anchor="middle">${a.numero} sit${a.numero === 1 ? 'o' : 'i'}</text>`;
       });
 
       serie.forEach(s => {
@@ -4716,7 +4742,7 @@ costiPerMotoreRataEconomia() {
           const x = Math.max(50, Math.min(590, p.x));
           const y = Math.max(14, p.y - 10);
           const nomeSerie = s.id !== 'totale' ? ' · ' + s.nome : '';
-          svg += `<text class="metrics-tooltip" x="${x}" y="${y}" text-anchor="middle">${p.label}${nomeSerie} · ${formattaEuro(p.valore)}</text>`;
+          svg += `<text class="metrics-tooltip" x="${x}" y="${y}" text-anchor="middle">${p.label}${nomeSerie} · ${formattaEuro(p.valore)} · ${p.numero} sit${p.numero === 1 ? 'o' : 'i'}</text>`;
         }
       }
 
