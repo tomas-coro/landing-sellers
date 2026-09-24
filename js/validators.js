@@ -2,8 +2,8 @@
 const ETICHETTE_STATO = {
   contattato: 'Contattato',
   brief_mandato: 'Brief mandato',
-  vinto: 'Vinto',
-  perso: 'Perso',
+  vinto: 'Convertito',
+  perso: 'Mancato',
   in_lavorazione: 'In lavorazione',
   pubblicato: 'Pubblicato'
 };

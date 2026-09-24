@@ -4571,8 +4571,8 @@ costiPerMotoreRataEconomia() {
       return [
         { valore: 'contattato', label: 'Contattato' },
         { valore: 'brief_mandato', label: 'Brief mandato' },
-        { valore: 'vinto', label: 'Vinto' },
-        { valore: 'perso', label: 'Perso' }
+        { valore: 'vinto', label: 'Convertito' },
+        { valore: 'perso', label: 'Mancato' }
       ];
     },
 
