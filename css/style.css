@@ -3588,6 +3588,26 @@ html[data-theme="dark"] .client-status-strip{
   opacity:.3;
 }
 
+.economy-invoice-choice-readonly > strong{
+  font-size:12px;
+  font-weight:700;
+}
+
+.economy-payment-details-note{
+  margin:0 0 8px;
+  font-size:11px;
+  color:var(--muted);
+}
+
+.economy-details-readonly > div,
+.economy-details-readonly > .economy-config-snapshot{
+  margin-top:14px;
+}
+
+.economy-details-readonly .economy-payment-person{
+  margin-bottom:10px;
+}
+
 .economy-person-calc{
   padding-top:8px;
 }

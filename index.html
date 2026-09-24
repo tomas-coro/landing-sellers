@@ -3401,9 +3401,13 @@
               </strong>
 
               <small
-                x-text="pagamentoPrevistoId
-                  ? 'Stai incassando una rata già programmata'
-                  : 'Registra un incasso oppure pianifica una rata'">
+                x-text="
+                  modalitaEconomia !== 'incasso'
+                    ? 'Facoltativo: se il cliente ha già pagato, indica qui l\'importo'
+                    : pagamentoPrevistoId
+                      ? 'Stai incassando una rata già programmata'
+                      : 'Registra un incasso oppure pianifica una rata'
+                ">
               </small>
             </div>
           </div>
@@ -3625,62 +3629,23 @@
       </button>
     </div>
 
-    <div class="economy-invoice-choice">
+    <div class="economy-invoice-choice economy-invoice-choice-readonly">
       <span>Alessandro fattura questa rata</span>
-
-      <div>
-        <button
-          type="button"
-          :class="{
-            active:
-              venditaEconomicaForm.modalitaFatturazioneAdminRata === 'totale'
-          }"
-          @click="
-            venditaEconomicaForm.modalitaFatturazioneAdminRata = 'totale';
-            venditaEconomicaForm.importoFatturatoAdminRata = 0;
-          ">
-          Totale
-        </button>
-
-        <button
-          type="button"
-          :class="{
-            active:
-              venditaEconomicaForm.modalitaFatturazioneAdminRata === 'mista'
-          }"
-          @click="
-            venditaEconomicaForm.modalitaFatturazioneAdminRata = 'mista'
-          ">
-          Mista
-        </button>
-
-        <button
-          type="button"
-          :class="{
-            active:
-              venditaEconomicaForm.modalitaFatturazioneAdminRata === 'nessuna'
-          }"
-          @click="
-            venditaEconomicaForm.modalitaFatturazioneAdminRata = 'nessuna';
-            venditaEconomicaForm.importoFatturatoAdminRata = 0;
-          ">
-          Nessuna
-        </button>
-      </div>
+      <strong
+        x-text="
+          venditaEconomicaForm.modalitaFatturazioneAdmin === 'totale'
+            ? 'Totale'
+            : venditaEconomicaForm.modalitaFatturazioneAdmin === 'mista'
+              ? 'Mista'
+              : 'Nessuna'
+        ">
+      </strong>
     </div>
 
-    <input
-      type="number"
-      min="0"
-      step="0.01"
-      inputmode="decimal"
-      placeholder="Importo fatturato su questa rata €"
-      x-show="
-        venditaEconomicaForm.modalitaFatturazioneAdminRata === 'mista'
-      "
-      x-model.number="
-        venditaEconomicaForm.importoFatturatoAdminRata
-      ">
+    <p class="economy-payment-details-note">
+      Configurazione di fatturazione e quote decisa alla registrazione
+      della vendita: qui puoi solo consultarla, non modificarla.
+    </p>
 
     <template
       x-for="partecipante in venditaEconomicaForm.partecipanti.filter(
@@ -3692,81 +3657,25 @@
 
         <strong x-text="partecipante.nome"></strong>
 
-        <div class="economy-invoice-choice">
+        <div class="economy-invoice-choice economy-invoice-choice-readonly">
           <span>Fattura ad Alessandro</span>
-
-          <div>
-            <button
-              type="button"
-              :class="{
-                active:
-                  partecipante.modalitaFatturazioneRata === 'totale'
-              }"
-              @click="
-                partecipante.modalitaFatturazioneRata = 'totale';
-                partecipante.importoFatturatoRata = 0;
-              ">
-              Totale
-            </button>
-
-            <button
-              type="button"
-              :class="{
-                active:
-                  partecipante.modalitaFatturazioneRata === 'mista'
-              }"
-              @click="
-                partecipante.modalitaFatturazioneRata = 'mista'
-              ">
-              Mista
-            </button>
-
-            <button
-              type="button"
-              :class="{
-                active:
-                  partecipante.modalitaFatturazioneRata === 'nessuna'
-              }"
-              @click="
-                partecipante.modalitaFatturazioneRata = 'nessuna';
-                partecipante.importoFatturatoRata = 0;
-              ">
-              Nessuna
-            </button>
-          </div>
+          <strong
+            x-text="
+              partecipante.modalitaFatturazione === 'totale'
+                ? 'Totale'
+                : partecipante.modalitaFatturazione === 'mista'
+                  ? 'Mista'
+                  : 'Nessuna'
+            ">
+          </strong>
         </div>
 
-        <div class="economy-invoice-choice">
-  <span>Quota della rata</span>
-
-  <div>
-    <button
-      type="button"
-      :class="{ active: !partecipante.quotaOverrideRata }"
-      @click="
-        partecipante.quotaOverrideRata = false;
-        partecipante.quotaEffettivaRata = null;
-      ">
-      Automatica
-    </button>
-
-    <button
-      type="button"
-      :class="{ active: partecipante.quotaOverrideRata }"
-      @click="partecipante.quotaOverrideRata = true">
-      Manuale
-    </button>
-  </div>
-</div>
-
-<input
-  type="number"
-  min="0"
-  step="0.01"
-  inputmode="decimal"
-  placeholder="Quota effettiva rata €"
-  x-show="partecipante.quotaOverrideRata"
-  x-model.number="partecipante.quotaEffettivaRata">
+        <div class="economy-invoice-choice economy-invoice-choice-readonly">
+          <span>Quota consolidata</span>
+          <strong
+            x-text="formattaEuroEconomia(partecipante.quotaEffettiva)">
+          </strong>
+        </div>
 
       </div>
     </template>
@@ -4903,6 +4812,107 @@
           </div>
         </div>
 
+        <div class="accordion-section" x-show="venditaClienteAttiva">
+          <button type="button" class="accordion-header" :class="{ open: schedaAperture.economia }" @click="toggleAccordion('economia')">
+            <span>Dettagli economici</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="accordion-body economy-details-readonly" x-show="schedaAperture.economia">
+
+            <p class="economy-payment-details-note" x-show="caricandoDettagliEconomici">
+              Caricamento...
+            </p>
+
+            <p class="economy-payment-details-note" x-show="erroreDettagliEconomici" x-text="erroreDettagliEconomici"></p>
+
+            <dl class="client-payment-contract-data">
+              <dt>Servizio</dt>
+              <dd x-text="venditaClienteAttiva?.servizio || 'Non disponibile nello storico'"></dd>
+
+              <dt>Importo vendita</dt>
+              <dd x-text="formattaEuro(venditaClienteAttiva?.importo_vendita || 0)"></dd>
+
+              <dt>Data vendita</dt>
+              <dd x-text="venditaClienteAttiva?.data_vendita ? formattaData(venditaClienteAttiva.data_vendita) : 'Non disponibile nello storico'"></dd>
+            </dl>
+
+            <template x-if="configurazioneCommercialeClienteAttiva()">
+              <div class="economy-config-snapshot">
+                <span class="client-payment-history-title">Configurazione commerciale</span>
+                <dl class="client-payment-contract-data">
+                  <template x-if="configurazioneCommercialeClienteAttiva().formula">
+                    <dt>Formula</dt>
+                  </template>
+                  <template x-if="configurazioneCommercialeClienteAttiva().formula">
+                    <dd x-text="configurazioneCommercialeClienteAttiva().formula"></dd>
+                  </template>
+
+                  <template x-if="configurazioneCommercialeClienteAttiva().periodicita_contratto">
+                    <dt>Periodicità</dt>
+                  </template>
+                  <template x-if="configurazioneCommercialeClienteAttiva().periodicita_contratto">
+                    <dd x-text="configurazioneCommercialeClienteAttiva().periodicita_contratto"></dd>
+                  </template>
+
+                  <template x-if="configurazioneCommercialeClienteAttiva().durata_contratto_anni">
+                    <dt>Durata contratto</dt>
+                  </template>
+                  <template x-if="configurazioneCommercialeClienteAttiva().durata_contratto_anni">
+                    <dd x-text="configurazioneCommercialeClienteAttiva().durata_contratto_anni + ' anni'"></dd>
+                  </template>
+
+                  <template x-if="configurazioneCommercialeClienteAttiva().sconto_tipo">
+                    <dt>Sconto</dt>
+                  </template>
+                  <template x-if="configurazioneCommercialeClienteAttiva().sconto_tipo">
+                    <dd x-text="configurazioneCommercialeClienteAttiva().sconto_tipo + ' - ' + configurazioneCommercialeClienteAttiva().sconto_valore"></dd>
+                  </template>
+                </dl>
+              </div>
+            </template>
+
+            <div x-show="dettagliEconomiciCosti.length">
+              <span class="client-payment-history-title">Costi</span>
+              <template x-for="costo in dettagliEconomiciCosti" :key="'dettaglio-costo-' + costo.descrizione">
+                <div class="economy-cost-row">
+                  <span x-text="costo.descrizione"></span>
+                  <strong x-text="formattaEuro(costo.importo)"></strong>
+                </div>
+              </template>
+              <div class="economy-cost-row">
+                <span>Totale costi</span>
+                <strong x-text="formattaEuro(totaleCostiVenditaCliente())"></strong>
+              </div>
+            </div>
+
+            <div x-show="dettagliEconomiciPartecipanti.length">
+              <span class="client-payment-history-title">Partecipanti e quote</span>
+              <template x-for="partecipante in dettagliEconomiciPartecipanti" :key="'dettaglio-partecipante-' + partecipante.nome + partecipante.ruolo">
+                <div class="economy-payment-person">
+                  <strong x-text="partecipante.nome + ' (' + partecipante.ruolo + ')'"></strong>
+                  <div class="economy-invoice-choice economy-invoice-choice-readonly">
+                    <span>Modalità fatturazione</span>
+                    <strong x-text="partecipante.modalitaFatturazione"></strong>
+                  </div>
+                  <div class="economy-invoice-choice economy-invoice-choice-readonly">
+                    <span>Importo fatturato</span>
+                    <strong x-text="formattaEuro(partecipante.importoFatturato)"></strong>
+                  </div>
+                  <div class="economy-invoice-choice economy-invoice-choice-readonly" x-show="partecipante.quotaOverride">
+                    <span>Quota (override manuale)</span>
+                    <strong x-text="formattaEuro(partecipante.quotaEffettiva)"></strong>
+                  </div>
+                  <div class="economy-invoice-choice economy-invoice-choice-readonly">
+                    <span>Quota finale</span>
+                    <strong x-text="formattaEuro(partecipante.quotaFinale)"></strong>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+          </div>
+        </div>
+
         <div class="accordion-section">
           <button type="button" class="accordion-header" :class="{ open: schedaAperture.crm }" @click="toggleAccordion('crm')">
             <span>Brief e prossima azione</span>
@@ -6004,7 +6014,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=120', {
+      navigator.serviceWorker.register('./service-worker.js?v=121', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

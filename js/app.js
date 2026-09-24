@@ -389,12 +389,12 @@ function formVenditaEconomicaVuoto() {
     metodoPagamento: '',
     notePagamento: '',
 
-    // Snapshot economico specifico della singola rata.
+    // Costi propri della singola rata (es. commissioni di incasso):
+    // concetto distinto dai costi della vendita, non vengono applicati
+    // automaticamente da una rata all'altra.
     costiRata: [],
     costoRataDescrizione: '',
     costoRataImporto: null,
-    modalitaFatturazioneAdminRata: 'nessuna',
-    importoFatturatoAdminRata: 0,
 
     partecipanti: [],
     venditoriDisponibili: [],
@@ -557,7 +557,14 @@ function appState() {
     scadenzePagamentoPerCliente: {},
     riepilogoPagamentiPerCliente: {},
 
-    schedaAperture: { stato: true, crm: true, pacchetto: false, contatti: false, attivita: true, note: false },
+    // PROBLEMA 3: consultazione read-only della configurazione economica
+    // consolidata della vendita, dalla scheda cliente.
+    dettagliEconomiciPartecipanti: [],
+    dettagliEconomiciCosti: [],
+    caricandoDettagliEconomici: false,
+    erroreDettagliEconomici: '',
+
+    schedaAperture: { stato: true, crm: true, pacchetto: false, contatti: false, attivita: true, note: false, economia: false },
 
     aggiornamentoDisponibile: false,
     aggiornamentoStato: 'controllo', // controllo | aggiornato | disponibile | errore
@@ -1243,7 +1250,7 @@ function appState() {
         const { data, error } = await window.supabaseClient
           .from('vendite')
           .select(
-            'id,cliente_id,servizio,importo_vendita,data_vendita,creato_il'
+            'id,cliente_id,servizio,importo_vendita,data_vendita,creato_il,applica_bonus_venditore'
           )
           .eq('cliente_id', cliente.id)
           .eq('stato', 'attiva')
@@ -1361,7 +1368,12 @@ function appState() {
         pagamentoPrevisto?.note || '';
       this.venditaEconomicaForm.dataScadenza =
         pagamentoPrevisto?.data_scadenza || '';
-      this.venditaEconomicaForm.importoFatturatoAdminRata = 0;
+
+      // Condizione economica consolidata alla registrazione della vendita:
+      // non è un default del form, deve restare identica per ogni pagamento
+      // di questa vendita.
+      this.venditaEconomicaForm.applicaBonusVenditore =
+        vendita.applica_bonus_venditore !== false;
 
       this.pagamentoPrevistoId =
         pagamentoPrevisto?.id || null;
@@ -1450,16 +1462,7 @@ function appState() {
           noteQuota: partecipante.note_quota || '',
           saldato: !!partecipante.saldato,
           dataSaldo: partecipante.data_saldo || null,
-          bloccato: true,
-
-          // La modalità viene ereditata; gli importi no.
-          modalitaFatturazioneRata:
-            partecipante.modalita_fatturazione ||
-            (partecipante.fa_fattura ? 'totale' : 'nessuna'),
-
-          importoFatturatoRata: 0,
-          quotaOverrideRata: false,
-          quotaEffettivaRata: null
+          bloccato: true
         }));
 
       const referenteSnapshot =
@@ -1475,12 +1478,6 @@ function appState() {
 
         this.venditaEconomicaForm.importoFatturatoAdmin =
           Number(referenteSnapshot.importo_fatturato) || 0;
-
-        this.venditaEconomicaForm.modalitaFatturazioneAdminRata =
-          referenteSnapshot.modalita_fatturazione ||
-          (referenteSnapshot.fa_fattura ? 'totale' : 'nessuna');
-
-        this.venditaEconomicaForm.importoFatturatoAdminRata = 0;
       }
 
       this.venditaEconomicaForm.clienteId =
@@ -2682,61 +2679,94 @@ function appState() {
        */
 
       /*
-       * Pagamenti e rate vengono validati nel flusso Incassa.
-       * La registrazione della vendita non richiede un incasso iniziale.
+       * Il pagamento iniziale è facoltativo: importoIncassato > 0 è il
+       * segnale che l'utente vuole registrarlo insieme alla vendita.
+       * Se lasciato vuoto/0 non viene creato alcun pagamento.
        */
+      const importoIniziale =
+        Number(this.venditaEconomicaForm.importoIncassato) || 0;
+
+      if (importoIniziale > 0) {
+        const totaleVendita =
+          Number(this.venditaEconomicaForm.importoVendita) || 0;
+
+        if (importoIniziale > totaleVendita) {
+          return 'Il pagamento iniziale non può superare l\'importo della vendita.';
+        }
+      }
 
       return '';
     },
 
+    // Deriva la configurazione economica di una rata dalla configurazione
+    // CONSOLIDATA della vendita (modalità di fatturazione, importo fatturato,
+    // quota override), scalando gli importi assoluti nella stessa proporzione
+    // importoRata/importoVendita. Non permette di ridefinire chi fattura o
+    // le quote per il singolo pagamento: quelle restano decise alla
+    // registrazione della vendita (vedi PROBLEMA 2 - Incassa non deve
+    // modificare la configurazione economica della vendita).
+    derivaPartecipantiRataDaConsolidato(
+      partecipantiConsolidati,
+      importoRata,
+      importoVenditaTotale
+    ) {
+      const engine = economicEngineApi();
+      const arrotonda = engine?.arrotonda ||
+        (n => Math.round((Number(n) || 0) * 100) / 100);
+
+      const fattore = importoVenditaTotale > 0
+        ? importoRata / importoVenditaTotale
+        : 0;
+
+      return (partecipantiConsolidati || []).map(partecipante => {
+        const referente = partecipante.ruolo === 'referente';
+
+        const modalita =
+          ['totale', 'mista', 'nessuna'].includes(
+            partecipante.modalitaFatturazione
+          )
+            ? partecipante.modalitaFatturazione
+            : 'nessuna';
+
+        // Per i collaboratori l'importo fatturato al referente in modalità
+        // "mista" è calcolato in automatico dal motore economico: qui serve
+        // solo per il referente, che fattura davvero il cliente e la cui
+        // parte fatturata va scalata sulla singola rata.
+        let importoFatturato = 0;
+
+        if (modalita === 'totale') {
+          importoFatturato = importoRata;
+        } else if (modalita === 'mista' && referente) {
+          importoFatturato = arrotonda(
+            (Number(partecipante.importoFatturato) || 0) * fattore
+          );
+        }
+
+        return {
+          ...partecipante,
+          modalitaFatturazione: modalita,
+          importoFatturato,
+
+          quotaOverride:
+            referente ? false : !!partecipante.quotaOverride,
+
+          quotaEffettiva:
+            referente || !partecipante.quotaOverride
+              ? null
+              : arrotonda(
+                  (Number(partecipante.quotaEffettiva) || 0) * fattore
+                )
+        };
+      });
+    },
+
     partecipantiPerMotoreRataEconomia() {
-  const importoRata =
-    Number(this.venditaEconomicaForm.importoIncassato) || 0;
-
-  return this.venditaEconomicaForm.partecipanti.map(partecipante => {
-    const referente = partecipante.ruolo === 'referente';
-
-    const modalita = referente
-      ? this.venditaEconomicaForm.modalitaFatturazioneAdminRata
-      : partecipante.modalitaFatturazioneRata;
-
-    // Per i collaboratori l'importo fatturato al referente in modalità
-    // "mista" è calcolato in automatico dal motore economico (non è più
-    // un dato manuale): qui serve solo per il referente, che fattura
-    // davvero il cliente e per cui l'importo resta un fatto reale.
-    let importoFatturato = 0;
-
-    if (modalita === 'totale') {
-      importoFatturato = importoRata;
-    } else if (modalita === 'mista' && referente) {
-      importoFatturato =
-        Number(
-          this.venditaEconomicaForm.importoFatturatoAdminRata
-        ) || 0;
-    }
-
-    return {
-      ...partecipante,
-
-      modalitaFatturazione:
-        ['totale', 'mista', 'nessuna'].includes(modalita)
-          ? modalita
-          : 'nessuna',
-
-      importoFatturato,
-
-      quotaOverride:
-        referente
-          ? false
-          : !!partecipante.quotaOverrideRata,
-
-      quotaEffettiva:
-        referente || !partecipante.quotaOverrideRata
-          ? null
-          : Number(partecipante.quotaEffettivaRata) || 0
-    };
-  });
-},
+      return this.derivaPartecipantiRataDaConsolidato(
+        this.venditaEconomicaForm.partecipanti,
+        Number(this.venditaEconomicaForm.importoIncassato) || 0,
+        Number(this.venditaEconomicaForm.importoVendita) || 0
+      );
+    },
 
 costiPerMotoreRataEconomia() {
   return (this.venditaEconomicaForm.costiRata || [])
@@ -2786,7 +2816,14 @@ costiPerMotoreRataEconomia() {
         percentualeRiduzioneNoFattura:
           Number(
             this.venditaEconomicaForm.percentualeRiduzioneNoFattura
-          ) || 0
+          ) || 0,
+
+        // Deve restare la stessa scelta fatta alla registrazione della
+        // vendita (vedi caricamento in selezionaVenditaIncasso), non il
+        // default del form vuoto: altrimenti due pagamenti della stessa
+        // vendita userebbero condizioni economiche diverse.
+        applicaBonusVenditore:
+          this.venditaEconomicaForm.applicaBonusVenditore !== false
       });
     },
 
@@ -3104,10 +3141,84 @@ costiPerMotoreRataEconomia() {
       });
 
       /*
-       * Vendita e incasso sono due operazioni distinte.
-       * Il primo pagamento verrà registrato dal flusso Incassa.
+       * Pagamento iniziale opzionale (PROBLEMA 1): se l'utente ha indicato
+       * un importo già incassato, viene registrato nella stessa
+       * transazione della vendita, con lo stesso snapshot economico
+       * (calcolo + partecipanti) usato dal flusso Incassa - stessa logica,
+       * derivata dalla configurazione consolidata appena costruita sopra
+       * (vedi derivaPartecipantiRataDaConsolidato), non da campi "rata"
+       * editabili a parte.
        */
-      const pagamento = null;
+      const importoPagamentoIniziale =
+        Number(this.venditaEconomicaForm.importoIncassato) || 0;
+
+      let pagamento = null;
+
+      if (importoPagamentoIniziale > 0) {
+        const partecipantiConsolidatiEngine =
+          this.venditaEconomicaForm.partecipanti.map(p => {
+            const calcolo = this.calcoloPartecipanteEconomia(p);
+            const modalita = p.ruolo === 'referente'
+              ? this.modalitaFatturazioneAdminEconomia()
+              : this.modalitaFatturazionePartecipanteEconomia(p);
+
+            return {
+              id: p.id,
+              nome: p.nome,
+              ruolo: p.ruolo,
+              haVenduto: !!p.haVenduto,
+              modalitaFatturazione: modalita,
+              importoFatturato: calcolo.importoFatturato,
+              quotaOverride: !!p.quotaOverride,
+              quotaEffettiva: calcolo.quotaEffettiva
+            };
+          });
+
+        const partecipantiRata = this.derivaPartecipantiRataDaConsolidato(
+          partecipantiConsolidatiEngine,
+          importoPagamentoIniziale,
+          Number(this.venditaEconomicaForm.importoVendita) || 0
+        );
+
+        const engine = economicEngineApi();
+        const snapshot = engine.calcolaSnapshotPagamento({
+          importoPagamento: importoPagamentoIniziale,
+          costiApplicati: [],
+          partecipanti: partecipantiRata,
+          percentualeRiduzioneNoFattura:
+            Number(
+              this.venditaEconomicaForm.percentualeRiduzioneNoFattura
+            ) || 0,
+          applicaBonusVenditore:
+            this.venditaEconomicaForm.applicaBonusVenditore !== false
+        });
+
+        if (!snapshot.valido) {
+          this.erroreEconomia =
+            snapshot.errore ||
+            'La ripartizione del pagamento iniziale non quadra.';
+          return;
+        }
+
+        const payloadEconomico =
+          this.payloadSnapshotPagamentoEconomia(snapshot);
+
+        pagamento = {
+          importo: importoPagamentoIniziale,
+          stato: 'incassato',
+          data_pagamento:
+            this.venditaEconomicaForm.dataPagamento ||
+            this.dataISOOggi(),
+          metodo:
+            (this.venditaEconomicaForm.metodoPagamento || '').trim() ||
+            null,
+          note:
+            (this.venditaEconomicaForm.notePagamento || '').trim() ||
+            null,
+          calcolo: payloadEconomico.calcolo,
+          partecipanti: payloadEconomico.partecipanti
+        };
+      }
 
       const payloadVendita = {
         cliente_id: this.venditaEconomicaForm.clienteId,
@@ -3124,7 +3235,9 @@ costiPerMotoreRataEconomia() {
         importo_fatturato_admin: this.importoFatturatoAdminEconomia(),
         percentuale_tasse_admin: percentualeTasseEconomia(
           this.venditaEconomicaForm.partecipanti
-        )
+        ),
+        applica_bonus_venditore:
+          this.venditaEconomicaForm.applicaBonusVenditore !== false
       };
 
       const costi = this.venditaEconomicaForm.costi.map(c => ({
@@ -5929,7 +6042,7 @@ costiPerMotoreRataEconomia() {
             await window.supabaseClient
               .from('vendite')
               .select(
-                'id,cliente_id,importo_vendita,servizio,data_vendita,creato_il'
+                'id,cliente_id,importo_vendita,servizio,data_vendita,creato_il,configurazione_commerciale'
               )
               .eq('id', venditaId)
               .eq('cliente_id', clienteId)
@@ -5966,7 +6079,13 @@ costiPerMotoreRataEconomia() {
 
         this.venditaClienteAttiva = vendita;
 
-        if (!vendita?.id) return;
+        if (!vendita?.id) {
+          this.dettagliEconomiciPartecipanti = [];
+          this.dettagliEconomiciCosti = [];
+          return;
+        }
+
+        this.caricaDettagliEconomiciVendita(vendita.id);
 
         const { data, error } =
           await window.supabaseClient
@@ -5992,6 +6111,89 @@ costiPerMotoreRataEconomia() {
       } finally {
         this.caricandoPagamentiCliente = false;
       }
+    },
+
+    // PROBLEMA 3: legge la configurazione economica CONSOLIDATA della
+    // vendita (vendita_partecipanti + costi_vendita) per la sezione
+    // read-only "Dettagli economici" nella scheda cliente. Nessun
+    // ricalcolo: mostra solo ciò che è stato realmente salvato.
+    async caricaDettagliEconomiciVendita(venditaId) {
+      this.dettagliEconomiciPartecipanti = [];
+      this.dettagliEconomiciCosti = [];
+      this.erroreDettagliEconomici = '';
+
+      if (!venditaId) return;
+
+      this.caricandoDettagliEconomici = true;
+
+      try {
+        const [partecipantiResult, costiResult] = await Promise.all([
+          window.supabaseClient
+            .from('vendita_partecipanti')
+            .select(
+              'profilo_id,ruolo,modalita_fatturazione,fa_fattura,importo_fatturato,quota_calcolata,quota_effettiva,quota_finale,quota_override,note_quota,saldato,data_saldo'
+            )
+            .eq('vendita_id', venditaId),
+
+          window.supabaseClient
+            .from('costi_vendita')
+            .select('descrizione,importo')
+            .eq('vendita_id', venditaId)
+        ]);
+
+        if (partecipantiResult.error) {
+          this.erroreDettagliEconomici =
+            partecipantiResult.error.message;
+          return;
+        }
+
+        if (costiResult.error) {
+          this.erroreDettagliEconomici = costiResult.error.message;
+          return;
+        }
+
+        this.dettagliEconomiciPartecipanti =
+          (partecipantiResult.data || []).map(partecipante => ({
+            nome:
+              partecipante.ruolo === 'referente'
+                ? 'Alessandro'
+                : partecipante.ruolo === 'produzione'
+                  ? 'Tomas'
+                  : 'Venditore',
+            ruolo: partecipante.ruolo,
+            modalitaFatturazione:
+              partecipante.modalita_fatturazione ||
+              (partecipante.fa_fattura ? 'totale' : 'nessuna'),
+            importoFatturato: Number(partecipante.importo_fatturato) || 0,
+            quotaCalcolata: Number(partecipante.quota_calcolata) || 0,
+            quotaOverride: !!partecipante.quota_override,
+            quotaEffettiva:
+              partecipante.quota_effettiva != null
+                ? Number(partecipante.quota_effettiva)
+                : null,
+            quotaFinale: Number(partecipante.quota_finale) || 0
+          }));
+
+        this.dettagliEconomiciCosti =
+          (costiResult.data || []).map(costo => ({
+            descrizione: costo.descrizione || 'Costo',
+            importo: Number(costo.importo) || 0
+          }));
+      } finally {
+        this.caricandoDettagliEconomici = false;
+      }
+    },
+
+    totaleCostiVenditaCliente() {
+      return (this.dettagliEconomiciCosti || []).reduce(
+        (totale, costo) => totale + (Number(costo.importo) || 0),
+        0
+      );
+    },
+
+    configurazioneCommercialeClienteAttiva() {
+      const config = this.venditaClienteAttiva?.configurazione_commerciale;
+      return config && typeof config === 'object' ? config : null;
     },
 
     async caricaAttivitaCliente(clienteId) {
@@ -6189,7 +6391,8 @@ costiPerMotoreRataEconomia() {
         ),
         contatti: false,
         attivita: false,
-        note: false
+        note: false,
+        economia: false
       };
       const { data, error } = await window.supabaseClient
         .from('note').select('*').eq('cliente_id', clienteId)
