@@ -222,10 +222,14 @@ function clientiDelVenditoreRiferimento(profiloId, clienti = [], vendite = []) {
   );
 }
 
+function valoreAnnualeCliente(cliente) {
+  const importo = Number(cliente?.importo_abbonamento) || 0;
+  return cliente?.periodicita_contratto === 'mensile' ? importo * 12 : importo;
+}
+
 function valoreContrattoVendita(vendita, clientiPerId = {}) {
   const cliente = clientiPerId[vendita?.cliente_id];
-  const importo = Number(cliente?.importo_abbonamento ?? vendita?.importo_vendita) || 0;
-  return cliente?.periodicita_contratto === 'mensile' ? importo * 12 : importo;
+  return valoreAnnualeCliente(cliente) || (Number(vendita?.importo_vendita) || 0);
 }
 
 const MESI_LABEL_TREND = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
@@ -915,7 +919,8 @@ function appState() {
 
       if (this.isAdmin) { await this.caricaDashboardAdmin(); this.view = 'admin'; }
       else {
-        await Promise.all([this.caricaClienti(), this.caricaStatisticheVenditore()]);
+        await this.caricaClienti();
+        await this.caricaStatisticheVenditore();
         this.view = 'lista';
       }
 
@@ -980,7 +985,8 @@ function appState() {
       if (!this.confermaUscitaFormCliente()) return;
       this.view = this.isAdmin ? 'admin' : 'lista';
       if (!this.isAdmin) {
-        await Promise.all([this.caricaClienti(), this.caricaStatisticheVenditore()]);
+        await this.caricaClienti();
+        await this.caricaStatisticheVenditore();
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
@@ -1075,7 +1081,17 @@ function appState() {
     },
 
     totaleVenditaCliente() {
-      return Number(this.venditaClienteAttiva?.importo_vendita) || 0;
+      const cliente = this.clienteEconomiaSelezionato?.id
+        ? this.clienteEconomiaSelezionato
+        : this.clienteSelezionato();
+
+      return valoreAnnualeCliente(cliente) ||
+        (Number(this.venditaClienteAttiva?.importo_vendita) || 0);
+    },
+
+    valoreAnnualeVenditaEconomia(vendita) {
+      return valoreAnnualeCliente(this.clienteEconomiaSelezionato) ||
+        (Number(vendita?.importo_vendita) || 0);
     },
 
     residuoCliente() {
@@ -3058,10 +3074,8 @@ costiPerMotoreRataEconomia() {
         if (this.isAdmin) {
           await this.caricaDashboardAdmin();
         } else {
-          await Promise.all([
-            this.caricaClienti(),
-            this.caricaStatisticheVenditore()
-          ]);
+          await this.caricaClienti();
+          await this.caricaStatisticheVenditore();
         }
       } finally {
         this.salvandoVenditaEconomica = false;
@@ -3182,10 +3196,8 @@ costiPerMotoreRataEconomia() {
         if (this.isAdmin) {
           await this.caricaDashboardAdmin();
         } else {
-          await Promise.all([
-            this.caricaClienti(),
-            this.caricaStatisticheVenditore()
-          ]);
+          await this.caricaClienti();
+          await this.caricaStatisticheVenditore();
         }
 
         if (clienteId) {
@@ -4018,13 +4030,23 @@ costiPerMotoreRataEconomia() {
     },
 
     riepilogoPagamentoListaCliente(cliente) {
-      return this.riepilogoPagamentiPerCliente[cliente?.id] || {
+      const riepilogo = this.riepilogoPagamentiPerCliente[cliente?.id] || {
         numeroVendite: 0,
         totaleVendite: 0,
         incassato: 0,
         rateIncassate: 0,
         ratePreviste: 0,
         percentualeIncassata: 0
+      };
+      const totaleAnnuale = valoreAnnualeCliente(cliente);
+      const totaleVendite = totaleAnnuale || riepilogo.totaleVendite;
+
+      return {
+        ...riepilogo,
+        totaleVendite,
+        percentualeIncassata: totaleVendite > 0
+          ? Math.max(0, Math.min(100, riepilogo.incassato / totaleVendite * 100))
+          : 0
       };
     },
 
@@ -5849,10 +5871,8 @@ costiPerMotoreRataEconomia() {
         this.nuovoClienteForm = formModuloVuoto();
         this.clienteFormSnapshot = null;
 
-        await Promise.all([
-          this.caricaClienti(),
-          this.caricaStatisticheVenditore()
-        ]);
+        await this.caricaClienti();
+        await this.caricaStatisticheVenditore();
 
         if (idModificato) {
           this.clienteSelezionatoId = idModificato;
@@ -6682,6 +6702,7 @@ if (typeof module !== 'undefined') {
     appState,
     calcolaStatisticheVenditore,
     valoreContrattoVendita,
+    valoreAnnualeCliente,
     clientiAttribuitiAlProfilo,
     clientiDelVenditoreRiferimento,
     ordinaClassificaVenditori,

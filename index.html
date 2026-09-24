@@ -704,7 +704,7 @@
 
                 <strong
                   x-show="
-                    riepilogoPagamentoListaCliente(cliente).numeroVendite > 0
+                    riepilogoPagamentoListaCliente(cliente).totaleVendite > 0
                   ">
                   <span
                     x-text="
@@ -725,7 +725,7 @@
 
                 <strong
                   x-show="
-                    riepilogoPagamentoListaCliente(cliente).numeroVendite === 0
+                    riepilogoPagamentoListaCliente(cliente).totaleVendite === 0
                   ">
                   -
                 </strong>
@@ -733,7 +733,7 @@
                 <div
                   class="client-payment-progress"
                   x-show="
-                    riepilogoPagamentoListaCliente(cliente).numeroVendite > 0
+                    riepilogoPagamentoListaCliente(cliente).totaleVendite > 0
                   ">
                   <i
                     :style="{
@@ -746,14 +746,14 @@
 
                 <small
                   x-text="
-                    riepilogoPagamentoListaCliente(cliente).numeroVendite > 0
+                    riepilogoPagamentoListaCliente(cliente).totaleVendite > 0
                       ? (
                           Math.round(
                             riepilogoPagamentoListaCliente(cliente)
                               .percentualeIncassata
                           ) + '% pagato'
                         )
-                      : 'Nessuna vendita'
+                      : 'Importo non indicato'
                   ">
                 </small>
               </div>
@@ -2534,7 +2534,7 @@
 
                 <b
                   x-text="formattaEuroEconomia(
-                    vendita.importo_vendita
+                    valoreAnnualeVenditaEconomia(vendita)
                   )">
                 </b>
 
@@ -2602,7 +2602,7 @@
               <span>Totale</span>
               <strong
                 x-text="formattaEuroEconomia(
-                  venditaEconomicaForm.importoVendita
+                  totaleVenditaCliente()
                 )">
               </strong>
             </div>

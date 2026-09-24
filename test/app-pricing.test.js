@@ -251,6 +251,20 @@ test('totale e residuo cliente derivano dalla vendita attiva', () => {
   assert.strictEqual(stato.residuoCliente(), 375);
 });
 
+test('anche nel dettaglio economico il totale mensile viene mostrato su base annuale', () => {
+  const stato = appState();
+  stato.clienteEconomiaSelezionato = {
+    id: 'mr-smoky',
+    importo_abbonamento: 20,
+    periodicita_contratto: 'mensile'
+  };
+  stato.venditaClienteAttiva = { importo_vendita: 20 };
+
+  assert.strictEqual(stato.totaleVenditaCliente(), 240);
+  assert.strictEqual(stato.residuoCliente(), 240);
+  assert.strictEqual(stato.valoreAnnualeVenditaEconomia(stato.venditaClienteAttiva), 240);
+});
+
 test('senza vendita attiva non mostra un pagamento da saldare', () => {
   const stato = appState();
 
@@ -347,6 +361,36 @@ test('il venduto annualizza i mensili ma non moltiplica per gli anni di contratt
 
   assert.strictEqual(valoreContrattoVendita({ cliente_id: 'mensile' }, clienti), 240);
   assert.strictEqual(valoreContrattoVendita({ cliente_id: 'biennale' }, clienti), 750);
+});
+
+test('la card cliente mostra sempre il valore annuale, anche senza vendita economica', () => {
+  const stato = appState();
+  const cliente = {
+    id: 'mr-smoky',
+    importo_abbonamento: 20,
+    periodicita_contratto: 'mensile'
+  };
+
+  assert.deepStrictEqual(stato.riepilogoPagamentoListaCliente(cliente), {
+    numeroVendite: 0,
+    totaleVendite: 240,
+    incassato: 0,
+    rateIncassate: 0,
+    ratePreviste: 0,
+    percentualeIncassata: 0
+  });
+
+  stato.riepilogoPagamentiPerCliente[cliente.id] = {
+    numeroVendite: 1,
+    totaleVendite: 20,
+    incassato: 20,
+    rateIncassate: 1,
+    ratePreviste: 0,
+    percentualeIncassata: 100
+  };
+
+  assert.strictEqual(stato.riepilogoPagamentoListaCliente(cliente).totaleVendite, 240);
+  assert.strictEqual(stato.riepilogoPagamentoListaCliente(cliente).percentualeIncassata, 20 / 240 * 100);
 });
 
 test('il venduto conta ogni cliente una volta e include quelli non pubblicati', () => {

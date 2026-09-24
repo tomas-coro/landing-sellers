@@ -7,6 +7,7 @@
   --ink-soft:#3a3a37;
   --lime:#C8FF3D;
   --lime-deep:#a9e214;
+  --on-lime:#111111;
   --muted:#6a6a61;
   --line:#D8D4CB;
   --radius:14px;
@@ -68,7 +69,7 @@ html[data-theme="dark"] .app-launch-brand{color:#fff}
   display:flex;align-items:center;justify-content:center;color:var(--ink-soft);cursor:pointer}
 .iconbtn svg{width:15px;height:15px}
 .iconbtn:disabled{opacity:.45;cursor:default}
-.iconbtn-active{background:var(--lime);border-color:var(--lime-deep);color:var(--ink)}
+.iconbtn-active{background:var(--lime);border-color:var(--lime-deep);color:var(--on-lime)}
 
 /* --- topbar app (titolo pagina o link indietro, sotto il brandbar) --- */
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 14px;flex:none}
@@ -105,7 +106,7 @@ h2{font-size:14px;font-weight:800;letter-spacing:-.005em;margin:22px 0 10px}
 .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
 .btn svg{width:15px;height:15px;flex:none}
 .btn-primary{background:var(--ink);color:var(--paper)}
-.btn-lime{background:var(--lime);color:var(--ink)}
+.btn-lime{background:var(--lime);color:var(--on-lime)}
 .btn-ghost{border-color:var(--line);color:var(--ink);background:transparent}
 .btn-row{display:flex;gap:10px;margin-top:4px}
 .btn-row .btn{width:auto;flex:1}
@@ -384,8 +385,8 @@ html[data-theme="dark"] .skeleton-payment-row{border-bottom-color:var(--line)}
 .pill.s-brief i{background:#d9a900}
 .pill.s-lavorazione{background:#F0E6FB;color:#5b3a8f}
 .pill.s-lavorazione i{background:#8b5ce0}
-.pill.s-pubblicato,.pill.s-vinto{background:var(--lime);color:var(--ink)}
-.pill.s-pubblicato i,.pill.s-vinto i{background:var(--ink)}
+.pill.s-pubblicato,.pill.s-vinto{background:var(--lime);color:var(--on-lime)}
+.pill.s-pubblicato i,.pill.s-vinto i{background:var(--on-lime)}
 .pill.s-perso{background:#fdecea;color:#9f2d25}
 .pill.s-perso i{background:#c74b42}
 
@@ -1155,7 +1156,7 @@ html[data-theme="dark"] .client-status-strip{
 .contract-summary-total span{font-size:10px;font-weight:800}
 .contract-summary-total strong{font-size:16px!important}
 
-.contract-summary-grand-total{background:var(--lime);padding:12px 14px;display:grid!important;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+.contract-summary-grand-total{background:var(--lime);color:var(--on-lime);padding:12px 14px;display:grid!important;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
 .contract-summary-grand-total>span{font-size:10px;font-weight:850}
 .contract-summary-grand-total>strong{font-size:17px!important}
 .contract-summary-grand-total>small{grid-column:1/-1;font-size:7.8px;line-height:1.3;font-weight:650;color:#495315}
@@ -1333,11 +1334,11 @@ html[data-theme="dark"] .client-status-strip{
 
 .profile-menu .profile-push-toggle.is-active{
   background:var(--lime);
-  color:var(--ink);
+  color:var(--on-lime);
 }
 
 .profile-menu .profile-push-toggle.is-active strong{
-  color:var(--ink);
+  color:var(--on-lime);
   font-weight:850;
 }
 
@@ -3125,11 +3126,11 @@ html[data-theme="dark"] .client-status-strip{
 
 .profile-menu .profile-update-row.is-available{
   background:var(--lime);
-  color:var(--ink);
+  color:var(--on-lime);
 }
 
 .profile-menu .profile-update-row.is-available strong{
-  color:var(--ink);
+  color:var(--on-lime);
 }
 
 .profile-menu .profile-update-row.is-error strong{
@@ -5930,6 +5931,7 @@ html[data-theme="dark"]{
 
   --lime:#C8FF3D;
   --lime-deep:#a9e214;
+  --on-lime:#111111;
 
   --danger:#ff8a7a;
   --danger-bg:#3a1d19;
@@ -8138,6 +8140,8 @@ html[data-theme="dark"] .client-action-save{
 /* Lime controls: contrasto testo garantito */
 .btn-lime,
 .btn-lime *,
+.iconbtn-active,
+.iconbtn-active *,
 .client-action-save,
 .client-action-save *,
 .profile-name-save,
@@ -8152,15 +8156,21 @@ html[data-theme="dark"] .client-action-save{
 .discount-duration-choice.on *,
 .renewal-notice-grid button.on,
 .renewal-notice-grid button.on *,
-.home-flow-stages .stage-pubblicato,
-.home-flow-stages .stage-pubblicato *,
+.contract-summary-grand-total,
+.contract-summary-grand-total *,
+.pill.s-pubblicato,
+.pill.s-pubblicato *,
+.pill.s-vinto,
+.pill.s-vinto *,
+.home-flow-stages button:last-child,
+.home-flow-stages button:last-child *,
 .assistant-compose button,
 .assistant-compose button *,
 .metrics-funnel-fill-2,
 .metrics-funnel-fill-2 *,
 .metrics-funnel-fill-3,
 .metrics-funnel-fill-3 *{
-  color:#111 !important;
+  color:var(--on-lime) !important;
 }
 
 /* ==========================================================
