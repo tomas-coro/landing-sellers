@@ -33,8 +33,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<!-- TODO: @supabase/supabase-js@2 è un file "dynamically generated" - jsdelivr consiglia di NON usare SRI -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1" defer></script>
 <script src="js/config.js" defer></script>
 <script src="js/auth-logic.js" defer></script>
 <script src="js/supabase-client.js" defer></script>
@@ -45,8 +44,7 @@
 <script src="js/assistente.js" defer></script>
 <script src="js/economic-engine.js" defer></script>
 <script src="js/app.js" defer></script>
-<!-- TODO: aggiungere integrity SRI per Alpine.js@3, vedi https://www.jsdelivr.com/package/npm/alpinejs -->
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.17.4/dist/cdn.min.js"></script>
 
 <style>
 /* V5.4 - fatturazione mista: riga essenziale */
@@ -314,21 +312,21 @@
         <h1>Area <span class="hl">venditori</span></h1>
         <p class="sub">Accedi per gestire i tuoi clienti e la pipeline.</p>
       </div>
-      <form @submit.prevent="fareLogin()" class="login-card">
+      <form @submit.prevent="fareLogin()" class="login-card" aria-label="Accesso venditori">
         <div class="field field-icon">
-          <label>Email</label>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M4 7l8 6 8-6"/></svg>
-          <input type="email" x-model="emailInput" required>
+          <label for="login-email">Email</label>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M4 7l8 6 8-6"/></svg>
+          <input id="login-email" name="email" type="email" x-model="emailInput" autocomplete="username" required>
         </div>
         <div class="field field-icon pw" x-data="{ mostraPw: false }">
-          <label>Password</label>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-          <input :type="mostraPw ? 'text' : 'password'" x-model="passwordInput" required>
+          <label for="login-password">Password</label>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          <input id="login-password" name="password" :type="mostraPw ? 'text' : 'password'" x-model="passwordInput" autocomplete="current-password" required>
           <button type="button" class="eye" @click="mostraPw = !mostraPw" :aria-label="mostraPw ? 'Nascondi password' : 'Mostra password'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
         </div>
-        <p x-show="erroreLogin" x-text="erroreLogin" class="err"></p>
+        <p x-show="erroreLogin" x-text="erroreLogin" class="err" role="alert" aria-live="assertive"></p>
         <button type="submit" class="btn btn-primary" :disabled="accedendo">
           <span x-text="accedendo ? 'Accesso...' : 'Entra'"></span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>

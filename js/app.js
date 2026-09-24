@@ -3146,9 +3146,11 @@ costiPerMotoreRataEconomia() {
 
       try {
         const { data, error } = await window.supabaseClient.rpc(
-          'registra_vendita_economica',
+          'registra_vendita_completa',
           {
             p_vendita: payloadVendita,
+            p_configurazione:
+              this.venditaEconomicaForm.configurazioneCommerciale,
             p_costi: costi,
             p_partecipanti: partecipanti,
             p_pagamento: pagamento

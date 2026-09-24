@@ -58,6 +58,12 @@ test('una vendita attiva duplicata mostra un errore chiaro', () => {
   assert.match(js, /Questo cliente ha già una vendita attiva/);
 });
 
+test('la vendita salva anche lo snapshot della configurazione commerciale', () => {
+  const js = fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8');
+  assert.match(js, /'registra_vendita_completa'/);
+  assert.match(js, /p_configurazione:\s*this\.venditaEconomicaForm\.configurazioneCommerciale/);
+});
+
 test('il prezzo finale manuale sostituisce il prezzo di catalogo', () => {
   assert.strictEqual(prezzoRicorrenteDaForm(576, {
     sconto_tipo: 'prezzo_fisso',

@@ -19,6 +19,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Run tests
+        run: node --test test/*.test.js
+
       - name: Check app.js
         run: node --check js/app.js
 

@@ -1,10 +1,10 @@
 -- Landing Sellers
--- Più vendite attive per cliente + snapshot configurazione commerciale.
---
--- Non modifica né cancella i campi legacy presenti su clienti.
--- Le nuove vendite salvano la propria configurazione commerciale.
+-- Snapshot della configurazione commerciale per vendita.
+-- Mantiene una sola vendita attiva per cliente.
 
-drop index if exists public.vendite_unica_attiva_cliente_idx;
+create unique index if not exists vendite_unica_attiva_cliente_idx
+on public.vendite (cliente_id)
+where stato = 'attiva';
 
 alter table public.vendite
   add column if not exists configurazione_commerciale jsonb
