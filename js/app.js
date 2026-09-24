@@ -11,7 +11,7 @@ function formModuloVuoto() {
     sconto_tipo: '', sconto_valore: 0, sconto_durata_anni: null,
     pagine_extra: 0, lingue_extra: 0,
     cliente_ha_dominio: true,
-    dominio_it: false, dominio_com: false, email_5_caselle: false,
+    dominio_it: 0, dominio_com: 0, email_5_caselle: 0,
     pacchetto_sicurezza: false };
 }
 
@@ -86,22 +86,31 @@ function totaleContrattoDaForm(canone, extra, form) {
 function costiGestioneCliente(cliente, rinnovo = false) {
   const costi = [{ descrizione: 'Gestione sito', importo: 30 }];
   if (cliente.cliente_ha_dominio === false) {
-    if (cliente.dominio_it) {
+    const qtaIt = Number(cliente.dominio_it) || 0;
+    if (qtaIt > 0) {
       costi.push({
-        descrizione: rinnovo ? 'Dominio .it - rinnovo' : 'Dominio .it - primo anno',
-        importo: rinnovo ? 15 : 10
+        descrizione:
+          (rinnovo ? 'Dominio .it - rinnovo' : 'Dominio .it - primo anno') +
+          (qtaIt > 1 ? ` x${qtaIt}` : ''),
+        importo: (rinnovo ? 15 : 10) * qtaIt
       });
     }
-    if (cliente.dominio_com) {
+    const qtaCom = Number(cliente.dominio_com) || 0;
+    if (qtaCom > 0) {
       costi.push({
-        descrizione: rinnovo ? 'Dominio .com - rinnovo' : 'Dominio .com - primo anno',
-        importo: rinnovo ? 20 : 15
+        descrizione:
+          (rinnovo ? 'Dominio .com - rinnovo' : 'Dominio .com - primo anno') +
+          (qtaCom > 1 ? ` x${qtaCom}` : ''),
+        importo: (rinnovo ? 20 : 15) * qtaCom
       });
     }
-    if (cliente.email_5_caselle) {
+    const qtaEmail = Number(cliente.email_5_caselle) || 0;
+    if (qtaEmail > 0) {
       costi.push({
-        descrizione: rinnovo ? 'Email 5 caselle - rinnovo' : 'Email 5 caselle - primo anno',
-        importo: rinnovo ? 10 : 5
+        descrizione:
+          (rinnovo ? 'Email 5 caselle - rinnovo' : 'Email 5 caselle - primo anno') +
+          (qtaEmail > 1 ? ` x${qtaEmail}` : ''),
+        importo: (rinnovo ? 10 : 5) * qtaEmail
       });
     }
   }
@@ -355,9 +364,9 @@ function formVenditaEconomicaVuoto() {
       sconto_durata_anni: null,
 
       cliente_ha_dominio: true,
-      dominio_it: false,
-      dominio_com: false,
-      email_5_caselle: false,
+      dominio_it: 0,
+      dominio_com: 0,
+      email_5_caselle: 0,
 
       pacchetto_sicurezza: false
     },
@@ -368,6 +377,7 @@ function formVenditaEconomicaVuoto() {
 
     // Regole economiche attualmente definite.
     percentualeRiduzioneNoFattura: 20,
+    applicaBonusVenditore: true,
 
     modalitaFatturazioneAdmin: 'nessuna',
     importoFatturatoAdmin: 0,
@@ -606,6 +616,7 @@ function appState() {
     historyPronta: false,
     historyRipristino: false,
     historyUltimaChiave: '',
+    posizioniScroll: {},
 
     statoHistoryCorrente() {
       return {
@@ -648,6 +659,19 @@ function appState() {
       history.replaceState(iniziale, '', location.href);
       this.historyUltimaChiave = this.chiaveHistory(iniziale);
       this.historyPronta = true;
+
+      const appEl = document.getElementById('app');
+      if (appEl) {
+        let scrollTick = false;
+        appEl.addEventListener('scroll', () => {
+          if (scrollTick) return;
+          scrollTick = true;
+          requestAnimationFrame(() => {
+            this.posizioniScroll[this.historyUltimaChiave] = appEl.scrollTop;
+            scrollTick = false;
+          });
+        }, { passive: true });
+      }
 
       window.addEventListener('popstate', async event => {
         const stato = event.state;
@@ -699,8 +723,9 @@ function appState() {
           this.historyUltimaChiave = this.chiaveHistory(stato);
 
           requestAnimationFrame(() => {
+            const scrollSalvato = this.posizioniScroll[this.historyUltimaChiave] || 0;
             document.getElementById('app')?.scrollTo({
-              top: 0,
+              top: scrollSalvato,
               behavior: 'auto'
             });
           });
@@ -1784,17 +1809,11 @@ function appState() {
       const annuali = this.catalogoPrezzi().annuali;
 
       return (
-        (cfg.dominio_it
-          ? Number(annuali.dominioIt.prezzo) || 0
-          : 0)
+        (Number(cfg.dominio_it) || 0) * (Number(annuali.dominioIt.prezzo) || 0)
         +
-        (cfg.dominio_com
-          ? Number(annuali.dominioCom.prezzo) || 0
-          : 0)
+        (Number(cfg.dominio_com) || 0) * (Number(annuali.dominioCom.prezzo) || 0)
         +
-        (cfg.email_5_caselle
-          ? Number(annuali.email5.prezzo) || 0
-          : 0)
+        (Number(cfg.email_5_caselle) || 0) * (Number(annuali.email5.prezzo) || 0)
       );
     },
 
@@ -2164,7 +2183,9 @@ function appState() {
         percentualeRiduzioneNoFattura:
           Number(
             this.venditaEconomicaForm.percentualeRiduzioneNoFattura
-          ) || 0
+          ) || 0,
+        applicaBonusVenditore:
+          this.venditaEconomicaForm.applicaBonusVenditore !== false
       });
     },
 
@@ -5510,9 +5531,9 @@ costiPerMotoreRataEconomia() {
         pagine_extra: Number(c.pagine_extra) || 0,
         lingue_extra: Number(c.lingue_extra) || 0,
         cliente_ha_dominio: c.cliente_ha_dominio !== false,
-        dominio_it: !!c.dominio_it,
-        dominio_com: !!c.dominio_com,
-        email_5_caselle: !!c.email_5_caselle,
+        dominio_it: Number(c.dominio_it) || 0,
+        dominio_com: Number(c.dominio_com) || 0,
+        email_5_caselle: Number(c.email_5_caselle) || 0,
         pacchetto_sicurezza: !!c.pacchetto_sicurezza
       };
       this.ripristinaSelezionePrezzo(c);
@@ -5638,9 +5659,9 @@ costiPerMotoreRataEconomia() {
     totaleAnnualiSeparati() {
       if (this.nuovoClienteForm.cliente_ha_dominio !== false) return 0;
       const a = this.catalogoPrezzi().annuali;
-      return (this.nuovoClienteForm.dominio_it ? a.dominioIt.prezzo : 0)
-        + (this.nuovoClienteForm.dominio_com ? a.dominioCom.prezzo : 0)
-        + (this.nuovoClienteForm.email_5_caselle ? a.email5.prezzo : 0);
+      return (Number(this.nuovoClienteForm.dominio_it) || 0) * a.dominioIt.prezzo
+        + (Number(this.nuovoClienteForm.dominio_com) || 0) * a.dominioCom.prezzo
+        + (Number(this.nuovoClienteForm.email_5_caselle) || 0) * a.email5.prezzo;
     },
 
     totaleUnaTantum() {
@@ -5682,9 +5703,12 @@ costiPerMotoreRataEconomia() {
       d.push(`Durata contratto: ${durataContratto} ${durataContratto === 1 ? 'anno' : 'anni'}`);
       if (this.nuovoClienteForm.cliente_ha_dominio === false) {
         const annuali = [];
-        if (this.nuovoClienteForm.dominio_it) annuali.push('Dominio .it');
-        if (this.nuovoClienteForm.dominio_com) annuali.push('Dominio .com');
-        if (this.nuovoClienteForm.email_5_caselle) annuali.push('Email 5 caselle');
+        const qtaIt = Number(this.nuovoClienteForm.dominio_it) || 0;
+        const qtaCom = Number(this.nuovoClienteForm.dominio_com) || 0;
+        const qtaEmail = Number(this.nuovoClienteForm.email_5_caselle) || 0;
+        if (qtaIt > 0) annuali.push(`Dominio .it${qtaIt > 1 ? ` x${qtaIt}` : ''}`);
+        if (qtaCom > 0) annuali.push(`Dominio .com${qtaCom > 1 ? ` x${qtaCom}` : ''}`);
+        if (qtaEmail > 0) annuali.push(`Email 5 caselle${qtaEmail > 1 ? ` x${qtaEmail}` : ''}`);
         if (annuali.length) d.push(`Annuali: ${annuali.join(', ')}`);
       }
       if (f.id === 'mensile' && this.nuovoClienteForm.pacchetto_sicurezza) d.push('Pacchetto sicurezza 100 € una tantum');

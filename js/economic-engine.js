@@ -75,7 +75,8 @@
     importoVendita = 0,
     costi = [],
     partecipanti = [],
-    percentualeRiduzioneNoFattura = 20
+    percentualeRiduzioneNoFattura = 20,
+    applicaBonusVenditore = true
   } = {}) {
     const vendita = Math.max(0, numero(importoVendita));
     const costiNormalizzati = normalizzaCosti(costi);
@@ -137,7 +138,7 @@
 
     const venditore = persone.find(p => p.haVenduto);
     const bonusVenditore =
-      numeroPartecipanti === 2 && venditore
+      applicaBonusVenditore && numeroPartecipanti === 2 && venditore
         ? quotaBase * 0.12
         : 0;
 
@@ -303,13 +304,15 @@
     importoPagamento = 0,
     costiApplicati = [],
     partecipanti = [],
-    percentualeRiduzioneNoFattura = 20
+    percentualeRiduzioneNoFattura = 20,
+    applicaBonusVenditore = true
   } = {}) {
     const base = calcolaRipartizioneEconomica({
       importoVendita: importoPagamento,
       costi: costiApplicati,
       partecipanti,
-      percentualeRiduzioneNoFattura
+      percentualeRiduzioneNoFattura,
+      applicaBonusVenditore
     });
 
     const risultati = base.partecipanti.map(

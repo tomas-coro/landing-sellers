@@ -344,10 +344,10 @@
             type="button"
             class="home-search-trigger"
             @click="apriAssistente()"
-            aria-label="Assistente app">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12a8 8 0 01-8 8H6l-4 2 1.4-4.2A8 8 0 1112 20"/>
-              <path d="M8 12h.01M12 12h.01M16 12h.01"/>
+            aria-label="Assistente AI">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <path d="m11 2 1.55 4.2a4 4 0 0 0 2.25 2.25L19 10l-4.2 1.55a4 4 0 0 0-2.25 2.25L11 18l-1.55-4.2a4 4 0 0 0-2.25-2.25L3 10l4.2-1.55a4 4 0 0 0 2.25-2.25L11 2Z"/>
+              <path d="m18.5 13 .75 1.75L21 15.5l-1.75.75-.75 1.75-.75-1.75L16 15.5l1.75-.75.75-1.75Z"/>
             </svg>
           </button>
 
@@ -2356,9 +2356,9 @@
                     :class="{ selected: venditaEconomicaForm.configurazioneCommerciale.cliente_ha_dominio === true }"
                     @click="
                       venditaEconomicaForm.configurazioneCommerciale.cliente_ha_dominio = true;
-                      venditaEconomicaForm.configurazioneCommerciale.dominio_it = false;
-                      venditaEconomicaForm.configurazioneCommerciale.dominio_com = false;
-                      venditaEconomicaForm.configurazioneCommerciale.email_5_caselle = false;
+                      venditaEconomicaForm.configurazioneCommerciale.dominio_it = 0;
+                      venditaEconomicaForm.configurazioneCommerciale.dominio_com = 0;
+                      venditaEconomicaForm.configurazioneCommerciale.email_5_caselle = 0;
                       aggiornaConfigurazioneVendita();
                     ">
 
@@ -2405,46 +2405,88 @@
                 class="sale-domain-services"
                 x-show="venditaEconomicaForm.configurazioneCommerciale.cliente_ha_dominio === false">
 
-                <label
-                  :class="{ selected: venditaEconomicaForm.configurazioneCommerciale.dominio_it }">
-                  <input
-                    type="checkbox"
-                    x-model="venditaEconomicaForm.configurazioneCommerciale.dominio_it"
-                    @change="aggiornaConfigurazioneVendita()">
-
-                  <span>
+                <div class="upgrade-qty-card">
+                  <div>
                     <strong>Dominio .it</strong>
-                    <small>30 €/anno</small>
-                  </span>
-                </label>
+                    <small>30 €/anno cad. · max 10</small>
+                  </div>
+                  <div class="qty-stepper">
+                    <button
+                      type="button"
+                      @click="setQuantitaExtraVendita('dominio_it', -1, 10)"
+                      :disabled="venditaEconomicaForm.configurazioneCommerciale.dominio_it <= 0">
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      max="10"
+                      x-model.number="venditaEconomicaForm.configurazioneCommerciale.dominio_it"
+                      @change="normalizzaQuantitaExtraVendita('dominio_it',10)">
+                    <button
+                      type="button"
+                      @click="setQuantitaExtraVendita('dominio_it', 1, 10)"
+                      :disabled="venditaEconomicaForm.configurazioneCommerciale.dominio_it >= 10">
+                      +
+                    </button>
+                  </div>
+                </div>
 
 
-                <label
-                  :class="{ selected: venditaEconomicaForm.configurazioneCommerciale.dominio_com }">
-                  <input
-                    type="checkbox"
-                    x-model="venditaEconomicaForm.configurazioneCommerciale.dominio_com"
-                    @change="aggiornaConfigurazioneVendita()">
-
-                  <span>
+                <div class="upgrade-qty-card">
+                  <div>
                     <strong>Dominio .com</strong>
-                    <small>45 €/anno</small>
-                  </span>
-                </label>
+                    <small>45 €/anno cad. · max 10</small>
+                  </div>
+                  <div class="qty-stepper">
+                    <button
+                      type="button"
+                      @click="setQuantitaExtraVendita('dominio_com', -1, 10)"
+                      :disabled="venditaEconomicaForm.configurazioneCommerciale.dominio_com <= 0">
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      max="10"
+                      x-model.number="venditaEconomicaForm.configurazioneCommerciale.dominio_com"
+                      @change="normalizzaQuantitaExtraVendita('dominio_com',10)">
+                    <button
+                      type="button"
+                      @click="setQuantitaExtraVendita('dominio_com', 1, 10)"
+                      :disabled="venditaEconomicaForm.configurazioneCommerciale.dominio_com >= 10">
+                      +
+                    </button>
+                  </div>
+                </div>
 
 
-                <label
-                  :class="{ selected: venditaEconomicaForm.configurazioneCommerciale.email_5_caselle }">
-                  <input
-                    type="checkbox"
-                    x-model="venditaEconomicaForm.configurazioneCommerciale.email_5_caselle"
-                    @change="aggiornaConfigurazioneVendita()">
-
-                  <span>
+                <div class="upgrade-qty-card">
+                  <div>
                     <strong>Email</strong>
-                    <small>5 caselle · 35 €/anno</small>
-                  </span>
-                </label>
+                    <small>5 caselle · 35 €/anno cad. · max 10</small>
+                  </div>
+                  <div class="qty-stepper">
+                    <button
+                      type="button"
+                      @click="setQuantitaExtraVendita('email_5_caselle', -1, 10)"
+                      :disabled="venditaEconomicaForm.configurazioneCommerciale.email_5_caselle <= 0">
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      max="10"
+                      x-model.number="venditaEconomicaForm.configurazioneCommerciale.email_5_caselle"
+                      @change="normalizzaQuantitaExtraVendita('email_5_caselle',10)">
+                    <button
+                      type="button"
+                      @click="setQuantitaExtraVendita('email_5_caselle', 1, 10)"
+                      :disabled="venditaEconomicaForm.configurazioneCommerciale.email_5_caselle >= 10">
+                      +
+                    </button>
+                  </div>
+                </div>
 
               </div>
 
@@ -3011,6 +3053,26 @@
                       :class="{ active: partecipante.haVenduto }"
                       @click="impostaVenditoreEconomia(partecipante)">
                       <span x-text="partecipante.haVenduto ? 'Selezionato' : 'Imposta'"></span>
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  class="economy-invoice-choice"
+                  x-show="partecipante.haVenduto && venditaEconomicaForm.partecipanti.length === 2">
+                  <span>Applica bonus vendita +12%</span>
+                  <div>
+                    <button
+                      type="button"
+                      :class="{ active: venditaEconomicaForm.applicaBonusVenditore !== false }"
+                      @click="venditaEconomicaForm.applicaBonusVenditore = true">
+                      Sì
+                    </button>
+                    <button
+                      type="button"
+                      :class="{ active: venditaEconomicaForm.applicaBonusVenditore === false }"
+                      @click="venditaEconomicaForm.applicaBonusVenditore = false">
+                      No
                     </button>
                   </div>
                 </div>
@@ -4123,7 +4185,11 @@
               </div>
             </div>
 
-            <div class="commercial-section"><div class="commercial-section-title">Dominio e posta</div><div class="domain-choice-grid"><button type="button" :class="{ on: nuovoClienteForm.cliente_ha_dominio === true }" @click="nuovoClienteForm.cliente_ha_dominio=true; nuovoClienteForm.dominio_it=false; nuovoClienteForm.dominio_com=false; nuovoClienteForm.email_5_caselle=false; aggiornaPrezzoCliente()"><strong>Sì, ce l'ha già</strong><small>Colleghiamo quello esistente</small></button><button type="button" :class="{ on: nuovoClienteForm.cliente_ha_dominio === false }" @click="nuovoClienteForm.cliente_ha_dominio=false; aggiornaPrezzoCliente()"><strong>No, non ancora</strong><small>Lo gestiamo noi</small></button></div><div x-show="nuovoClienteForm.cliente_ha_dominio === false" class="annual-extras"><label><input type="checkbox" x-model="nuovoClienteForm.dominio_it" @change="aggiornaPrezzoCliente()"><span><strong>Dominio .it</strong><small>30 €/anno</small></span></label><label><input type="checkbox" x-model="nuovoClienteForm.dominio_com" @change="aggiornaPrezzoCliente()"><span><strong>Dominio .com</strong><small>45 €/anno</small></span></label><label><input type="checkbox" x-model="nuovoClienteForm.email_5_caselle" @change="aggiornaPrezzoCliente()"><span><strong>Email - 5 caselle da 1 GB</strong><small>35 €/anno</small></span></label></div></div>
+            <div class="commercial-section"><div class="commercial-section-title">Dominio e posta</div><div class="domain-choice-grid"><button type="button" :class="{ on: nuovoClienteForm.cliente_ha_dominio === true }" @click="nuovoClienteForm.cliente_ha_dominio=true; nuovoClienteForm.dominio_it=0; nuovoClienteForm.dominio_com=0; nuovoClienteForm.email_5_caselle=0; aggiornaPrezzoCliente()"><strong>Sì, ce l'ha già</strong><small>Colleghiamo quello esistente</small></button><button type="button" :class="{ on: nuovoClienteForm.cliente_ha_dominio === false }" @click="nuovoClienteForm.cliente_ha_dominio=false; aggiornaPrezzoCliente()"><strong>No, non ancora</strong><small>Lo gestiamo noi</small></button></div><div x-show="nuovoClienteForm.cliente_ha_dominio === false" class="annual-extras">
+              <div class="upgrade-qty-card"><div><strong>Dominio .it</strong><small>30 €/anno cad. · max 10</small></div><div class="qty-stepper"><button type="button" @click="setQuantitaExtra('dominio_it',-1,10)" :disabled="nuovoClienteForm.dominio_it <= 0">−</button><input type="number" min="0" max="10" x-model.number="nuovoClienteForm.dominio_it" @change="normalizzaQuantitaExtra('dominio_it',10)"><button type="button" @click="setQuantitaExtra('dominio_it',1,10)" :disabled="nuovoClienteForm.dominio_it >= 10">+</button></div></div>
+              <div class="upgrade-qty-card"><div><strong>Dominio .com</strong><small>45 €/anno cad. · max 10</small></div><div class="qty-stepper"><button type="button" @click="setQuantitaExtra('dominio_com',-1,10)" :disabled="nuovoClienteForm.dominio_com <= 0">−</button><input type="number" min="0" max="10" x-model.number="nuovoClienteForm.dominio_com" @change="normalizzaQuantitaExtra('dominio_com',10)"><button type="button" @click="setQuantitaExtra('dominio_com',1,10)" :disabled="nuovoClienteForm.dominio_com >= 10">+</button></div></div>
+              <div class="upgrade-qty-card"><div><strong>Email - 5 caselle da 1 GB</strong><small>35 €/anno cad. · max 10</small></div><div class="qty-stepper"><button type="button" @click="setQuantitaExtra('email_5_caselle',-1,10)" :disabled="nuovoClienteForm.email_5_caselle <= 0">−</button><input type="number" min="0" max="10" x-model.number="nuovoClienteForm.email_5_caselle" @change="normalizzaQuantitaExtra('email_5_caselle',10)"><button type="button" @click="setQuantitaExtra('email_5_caselle',1,10)" :disabled="nuovoClienteForm.email_5_caselle >= 10">+</button></div></div>
+            </div></div>
 
             <div x-show="selezionePrezzo.formula === 'mensile'" class="commercial-section security-section"><div class="commercial-section-title">Pacchetto sicurezza</div><label class="security-choice"><input type="checkbox" x-model="nuovoClienteForm.pacchetto_sicurezza" @change="aggiornaPrezzoCliente()"><span><strong>Conservazione garantita per 12 mesi</strong><small>100 € una tantum</small></span></label><small class="security-warning">Senza pacchetto sicurezza, dopo un mese dalla sospensione dei pagamenti sito, dominio e dati possono essere eliminati definitivamente.</small></div>
 
@@ -5434,17 +5500,17 @@
 
           <div>
             <span>Dominio .it</span>
-            <strong x-text="clienteEconomiaSelezionato?.dominio_it ? 'Sì' : 'No'"></strong>
+            <strong x-text="Number(clienteEconomiaSelezionato?.dominio_it) || 0"></strong>
           </div>
 
           <div>
             <span>Dominio .com</span>
-            <strong x-text="clienteEconomiaSelezionato?.dominio_com ? 'Sì' : 'No'"></strong>
+            <strong x-text="Number(clienteEconomiaSelezionato?.dominio_com) || 0"></strong>
           </div>
 
           <div>
             <span>Email</span>
-            <strong x-text="clienteEconomiaSelezionato?.email_5_caselle ? 'Sì' : 'No'"></strong>
+            <strong x-text="Number(clienteEconomiaSelezionato?.email_5_caselle) || 0"></strong>
           </div>
 
           <div>
