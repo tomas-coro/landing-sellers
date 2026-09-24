@@ -788,6 +788,39 @@ test('la migrazione conserva i vecchi stati nella nuova struttura CRM', () => {
   assert.match(sql, /imposta_stato_produzione/);
 });
 
+test('lo storico registra prezzo e scadenza nel database', () => {
+  const sql = fs.readFileSync(
+    path.join(__dirname, '..', 'supabase', 'migrations', '20260924170000_storico_modifiche_cliente.sql'),
+    'utf8'
+  );
+
+  assert.match(sql, /'prezzo'/);
+  assert.match(sql, /new\.importo_abbonamento is distinct from old\.importo_abbonamento/i);
+  assert.match(sql, /'scadenza'/);
+  assert.match(sql, /new\.data_rinnovo is distinct from old\.data_rinnovo/i);
+  assert.match(sql, /auth\.uid\(\)/i);
+});
+
+test('la timeline mostra prezzo, scadenza e autore della modifica', () => {
+  global.formattaData = data => `data:${data}`;
+  global.formattaStato = stato => `stato:${stato}`;
+
+  const stato = appState();
+  stato.attivitaCliente = [
+    { id: '1', tipo: 'prezzo', creata_il: '2026-09-23', valore_precedente: '300', valore_nuovo: '400', attore: { nome: 'Tomas' } },
+    { id: '2', tipo: 'scadenza', creata_il: '2026-09-24', valore_precedente: '2026-10-01', valore_nuovo: '2026-11-01', attore: { username: 'tom' } }
+  ];
+
+  const eventi = stato.timelineCliente();
+  assert.deepStrictEqual(eventi.map(({ titolo, dettaglio, attore }) => ({ titolo, dettaglio, attore })), [
+    { titolo: 'Scadenza aggiornata', dettaglio: 'data:2026-10-01 → data:2026-11-01', attore: 'tom' },
+    { titolo: 'Prezzo aggiornato', dettaglio: '300,00 € → 400,00 €', attore: 'Tomas' }
+  ]);
+
+  delete global.formattaData;
+  delete global.formattaStato;
+});
+
 test('la timeline formatta le attività senza metodi Alpine inesistenti', () => {
   global.formattaData = data => `data:${data}`;
   global.formattaStato = stato => `stato:${stato}`;

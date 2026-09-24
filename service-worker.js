@@ -1,5 +1,5 @@
 // service-worker.js
-const CACHE_NAME = 'venditori-le-shell-v119';
+const CACHE_NAME = 'venditori-le-shell-v120';
 
 const APP_SHELL = [
   './',
@@ -9,6 +9,8 @@ const APP_SHELL = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',
+  './js/vendor/supabase-2.117.1.min.js',
+  './js/vendor/alpine-3.17.4.min.js',
   './js/config.js',
   './js/supabase-client.js',
   './js/auth-logic.js',

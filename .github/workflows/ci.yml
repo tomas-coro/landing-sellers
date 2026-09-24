@@ -22,26 +22,5 @@ jobs:
       - name: Run tests
         run: node --test test/*.test.js
 
-      - name: Check app.js
-        run: node --check js/app.js
-
-      - name: Check catalogo-prezzi.js
-        run: node --check js/catalogo-prezzi.js
-
-      - name: Check auth.js
-        run: node --check js/auth.js
-
-      - name: Check auth-logic.js
-        run: node --check js/auth-logic.js
-
-      - name: Check economic-engine.js
-        run: node --check js/economic-engine.js
-
-      - name: Check assistente.js
-        run: node --check js/assistente.js
-
-      - name: Check validators.js
-        run: node --check js/validators.js
-
-      - name: Check web-push.js
-        run: node --check js/web-push.js
+      - name: Check JavaScript syntax
+        run: for file in js/*.js; do node --check "$file"; done

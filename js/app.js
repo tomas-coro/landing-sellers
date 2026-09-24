@@ -6034,7 +6034,7 @@ costiPerMotoreRataEconomia() {
       try {
         const { data, error } = await window.supabaseClient
           .from('attivita_clienti')
-          .select('*')
+          .select('*,attore:profili!attivita_clienti_attore_id_fkey(nome,username)')
           .eq('cliente_id', clienteId)
           .order('creata_il', { ascending: false });
 
@@ -6092,10 +6092,15 @@ costiPerMotoreRataEconomia() {
       });
 
       this.attivitaCliente.forEach(attivita => {
+        const eventoBase = {
+          id: 'attivita-' + attivita.id,
+          data: attivita.creata_il,
+          attore: attivita.attore?.username || attivita.attore?.nome || ''
+        };
+
         if (attivita.tipo === 'stato') {
           eventi.push({
-            id: 'attivita-' + attivita.id,
-            data: attivita.creata_il,
+            ...eventoBase,
             tipo: 'stato',
             titolo: 'Stato aggiornato',
             dettaglio:
@@ -6106,8 +6111,7 @@ costiPerMotoreRataEconomia() {
 
         if (attivita.tipo === 'stato_produzione') {
           eventi.push({
-            id: 'attivita-' + attivita.id,
-            data: attivita.creata_il,
+            ...eventoBase,
             tipo: 'stato',
             titolo: 'Produzione aggiornata',
             dettaglio:
@@ -6118,8 +6122,7 @@ costiPerMotoreRataEconomia() {
 
         if (attivita.tipo === 'brief') {
           eventi.push({
-            id: 'attivita-' + attivita.id,
-            data: attivita.creata_il,
+            ...eventoBase,
             tipo: 'nota',
             titolo: 'Brief cliente aggiornato',
             dettaglio: attivita.valore_nuovo || ''
@@ -6128,8 +6131,7 @@ costiPerMotoreRataEconomia() {
 
         if (attivita.tipo === 'prossima_azione') {
           eventi.push({
-            id: 'attivita-' + attivita.id,
-            data: attivita.creata_il,
+            ...eventoBase,
             tipo: 'contatto',
             titolo: 'Prossima azione aggiornata',
             dettaglio: attivita.valore_nuovo || 'Rimossa'
@@ -6138,8 +6140,7 @@ costiPerMotoreRataEconomia() {
 
         if (attivita.tipo === 'contatto_completato') {
           eventi.push({
-            id: 'attivita-' + attivita.id,
-            data: attivita.creata_il,
+            ...eventoBase,
             tipo: 'completato',
             titolo: 'Contatto completato',
             dettaglio: attivita.valore_precedente
@@ -6152,8 +6153,7 @@ costiPerMotoreRataEconomia() {
           const nuovaData = attivita.valore_nuovo;
 
           eventi.push({
-            id: 'attivita-' + attivita.id,
-            data: attivita.creata_il,
+            ...eventoBase,
             tipo: 'contatto',
             titolo: nuovaData
               ? 'Prossimo contatto impostato'
@@ -6161,6 +6161,29 @@ costiPerMotoreRataEconomia() {
             dettaglio: nuovaData
               ? formattaData(nuovaData)
               : ''
+          });
+        }
+
+        if (attivita.tipo === 'prezzo') {
+          eventi.push({
+            ...eventoBase,
+            tipo: 'pagamento',
+            titolo: 'Prezzo aggiornato',
+            dettaglio:
+              `${this.formattaNumeroEuro(attivita.valore_precedente)} → ` +
+              `${this.formattaNumeroEuro(attivita.valore_nuovo)}`
+          });
+        }
+
+        if (attivita.tipo === 'scadenza') {
+          const formattaScadenza = valore => valore ? formattaData(valore) : 'Nessuna';
+          eventi.push({
+            ...eventoBase,
+            tipo: 'contatto',
+            titolo: 'Scadenza aggiornata',
+            dettaglio:
+              `${formattaScadenza(attivita.valore_precedente)} → ` +
+              `${formattaScadenza(attivita.valore_nuovo)}`
           });
         }
       });

@@ -33,7 +33,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1" defer></script>
+<script src="js/vendor/supabase-2.117.1.min.js" defer></script>
 <script src="js/config.js" defer></script>
 <script src="js/auth-logic.js" defer></script>
 <script src="js/supabase-client.js" defer></script>
@@ -44,7 +44,7 @@
 <script src="js/assistente.js" defer></script>
 <script src="js/economic-engine.js" defer></script>
 <script src="js/app.js" defer></script>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.17.4/dist/cdn.min.js"></script>
+<script defer src="js/vendor/alpine-3.17.4.min.js"></script>
 
 <style>
 /* V5.4 - fatturazione mista: riga essenziale */
@@ -4969,7 +4969,7 @@
                   </div>
 
                   <div class="client-timeline-content">
-                    <time x-text="formattaData(evento.data)"></time>
+                    <time x-text="formattaData(evento.data) + (evento.attore ? ' · ' + evento.attore : '')"></time>
                     <strong x-text="evento.titolo"></strong>
 
                     <p
@@ -5957,7 +5957,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=108', {
+      navigator.serviceWorker.register('./service-worker.js?v=120', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
