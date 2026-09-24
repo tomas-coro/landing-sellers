@@ -606,6 +606,7 @@ html[data-theme="dark"] .client-detail-dashboard{
 .profile-trigger{width:40px;height:40px;border:1px solid var(--line);border-radius:50%;overflow:hidden;background:var(--card,#fff);display:grid;place-items:center;font:inherit;font-weight:800;color:inherit;padding:0}
 .profile-trigger img{width:100%;height:100%;object-fit:cover;object-position:var(--avatar-x,50%) var(--avatar-y,50%);transform:scale(var(--avatar-zoom,1));transform-origin:var(--avatar-x,50%) var(--avatar-y,50%);display:block}
 .profile-content{display:grid;gap:16px}
+.personal-profile-settings{display:grid;gap:10px}
 .profile-hero-card{display:flex;align-items:center;gap:16px;padding:18px;border:1px solid var(--line);border-radius:20px;background:var(--card,#fff)}
 .profile-hero-card>div{display:grid;gap:4px;min-width:0}
 .profile-hero-card strong{font-size:18px}
@@ -1108,7 +1109,7 @@ html[data-theme="dark"] .client-status-strip{
 
 
 .home-empty{margin-top:26px;padding:28px 20px;border:1px solid var(--line);border-radius:20px;text-align:center;background:var(--card);display:flex;flex-direction:column;align-items:center}
-.home-empty-icon{width:52px;height:52px;border-radius:16px;background:var(--lime);display:grid;place-items:center;margin-bottom:15px}
+.home-empty-icon{width:52px;height:52px;border-radius:16px;background:var(--lime);color:#111;display:grid;place-items:center;margin-bottom:15px}
 .home-empty-icon svg{width:25px;height:25px}
 .home-empty>span{font-size:9px;text-transform:uppercase;letter-spacing:.09em;font-weight:800;color:var(--muted)}
 .home-empty h2{font-size:19px;margin:5px 0 7px}
@@ -1554,7 +1555,7 @@ html[data-theme="dark"] .client-status-strip{
   height:14px;
   border-radius:7px;
   background:var(--lime);
-  color:var(--ink);
+  color:#111;
   font-style:normal;
   font-size:8px;
   font-weight:900;
@@ -7647,7 +7648,7 @@ html[data-theme="dark"] .assistant-category summary small{background:#292d26}htm
 }
 .profile-name-editor button{height:44px;padding:0 12px;border-radius:12px;font:750 11px var(--sans);cursor:pointer}
 .profile-name-cancel{border:1px solid var(--line);background:transparent;color:var(--ink)}
-.profile-name-save{border:0;background:var(--ink);color:var(--paper)}
+.profile-name-save{border:0;background:var(--lime);color:#111}
 html[data-theme="dark"] .profile-name-save{background:var(--lime);color:#111}
 .profile-name-editor .err{margin:0}
 .profile-crop-panel .avatar-position-controls{margin:0;padding:0;border:0}
@@ -8154,7 +8155,11 @@ html[data-theme="dark"] .client-action-save{
 .home-flow-stages .stage-pubblicato,
 .home-flow-stages .stage-pubblicato *,
 .assistant-compose button,
-.assistant-compose button *{
+.assistant-compose button *,
+.metrics-funnel-fill-2,
+.metrics-funnel-fill-2 *,
+.metrics-funnel-fill-3,
+.metrics-funnel-fill-3 *{
   color:#111 !important;
 }
 
@@ -15104,13 +15109,17 @@ html[data-theme="dark"] .economy-create-client{
   }
 
   /* IMPOSTAZIONI DESTRA */
-  .profile-view.is-personal-profile .profile-menu{
+  .profile-view.is-personal-profile .personal-profile-settings{
     grid-area:menu;
+    align-self:stretch;
+  }
+
+  .profile-view.is-personal-profile .personal-profile-settings .profile-menu{
+    grid-area:auto;
     margin:0;
     padding:0;
     overflow:hidden;
     border-radius:22px;
-    align-self:stretch;
   }
 
   .profile-view.is-personal-profile .profile-menu button{
@@ -15140,8 +15149,19 @@ html[data-theme="dark"] .economy-create-client{
     grid-area:crop;
   }
 
-  .profile-view.is-personal-profile .profile-menu + .err{
+  .profile-view.is-personal-profile .personal-profile-settings + .err{
     grid-area:error;
+  }
+}
+
+@media (max-width:720px){
+  .profile-view.is-personal-profile{
+    overflow-y:auto;
+    overscroll-behavior-y:contain;
+  }
+
+  .personal-profile-settings{
+    gap:7px;
   }
 }
 
@@ -15450,7 +15470,7 @@ html[data-theme="dark"]{
 .metrics-funnel-track{flex:1;min-width:0;height:32px;background:var(--paper-2);border-radius:8px;position:relative}
 .metrics-funnel-fill{
   height:100%;min-width:34px;border:0;border-radius:8px;display:flex;align-items:center;justify-content:flex-end;
-  padding-right:10px;transition:width .4s var(--ease);cursor:pointer;font:inherit;
+  padding-right:10px;transition:width .4s var(--ease);cursor:pointer;font:inherit;color:#111;
 }
 .metrics-funnel-fill span{font-size:12px;font-weight:800;color:#16210a}
 .metrics-funnel-fill-0{background:#eaffb8}

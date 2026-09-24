@@ -1197,76 +1197,80 @@
 
 
         <!-- MENU PERSONALE -->
-        <div
-          x-show="!isAdmin"
-          class="stack-card profile-menu">
+        <section x-show="!isAdmin" class="personal-profile-settings">
+          <div class="admin-profile-group-title">
+            <span>PREFERENZE</span>
+            <strong>App e account</strong>
+          </div>
 
-          <button
-            type="button"
-            class="profile-push-toggle"
-            :class="{ 'is-active': pushStato === 'attivo' }"
-            @click="togglePush()"
-            :disabled="pushInCorso || pushStato === 'non-supportato'">
+          <div class="stack-card profile-menu">
+            <button
+              type="button"
+              class="profile-push-toggle"
+              :class="{ 'is-active': pushStato === 'attivo' }"
+              @click="togglePush()"
+              :disabled="pushInCorso || pushStato === 'non-supportato'">
 
-            <span>Notifiche</span>
+              <span>Notifiche</span>
 
-            <strong
-              x-text="pushInCorso
-                ? 'Attendi...'
-                : etichettaPush()">
-            </strong>
-          </button>
+              <strong
+                x-text="pushInCorso
+                  ? 'Attendi...'
+                  : etichettaPush()">
+              </strong>
+            </button>
 
-          <button
-            type="button"
-            class="profile-update-row"
-            :class="{
-              'is-available': aggiornamentoDisponibile,
-              'is-ok': aggiornamentoStato === 'aggiornato' && !aggiornamentoDisponibile,
-              'is-error': aggiornamentoStato === 'errore'
-            }"
-            @click="controllaAggiornamenti()"
-            :disabled="aggiornamentoStato === 'controllo'">
+            <button
+              type="button"
+              class="profile-update-row"
+              :class="{
+                'is-available': aggiornamentoDisponibile,
+                'is-ok': aggiornamentoStato === 'aggiornato' && !aggiornamentoDisponibile,
+                'is-error': aggiornamentoStato === 'errore'
+              }"
+              @click="controllaAggiornamenti()"
+              :disabled="aggiornamentoStato === 'controllo'">
 
-            <span>Aggiornamenti</span>
+              <span>Aggiornamenti</span>
 
-            <strong>
-              <i
-                class="update-status-dot"
-                :class="{
-                  available: aggiornamentoDisponibile,
-                  ok: aggiornamentoStato === 'aggiornato' && !aggiornamentoDisponibile,
-                  error: aggiornamentoStato === 'errore'
-                }">
-              </i>
+              <strong>
+                <i
+                  class="update-status-dot"
+                  :class="{
+                    available: aggiornamentoDisponibile,
+                    ok: aggiornamentoStato === 'aggiornato' && !aggiornamentoDisponibile,
+                    error: aggiornamentoStato === 'errore'
+                  }">
+                </i>
 
-              <span x-text="etichettaAggiornamento()"></span>
-            </strong>
-          </button>
+                <span x-text="etichettaAggiornamento()"></span>
+              </strong>
+            </button>
 
-          <button
-            type="button"
-            @click="apriCestino()">
+            <button
+              type="button"
+              @click="apriCestino()">
 
-            <span>Cestino</span>
-            <strong>Apri</strong>
-          </button>
+              <span>Cestino</span>
+              <strong>Apri</strong>
+            </button>
 
-          <button
-            type="button"
-            class="profile-account-row"
-            @click="apriAccountSwitcher()">
+            <button
+              type="button"
+              class="profile-account-row"
+              @click="apriAccountSwitcher()">
 
-            <span>Account</span>
+              <span>Account</span>
 
-            <strong>
-              <span
-                x-text="profilo.username || profilo.nome || 'Personale'">
-              </span>
-              <i>›</i>
-            </strong>
-          </button>
-        </div>
+              <strong>
+                <span
+                  x-text="profilo.username || profilo.nome || 'Personale'">
+                </span>
+                <i>›</i>
+              </strong>
+            </button>
+          </div>
+        </section>
 
         <p
           x-show="pushErrore"
