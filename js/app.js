@@ -416,6 +416,16 @@ function appState() {
     toasts: [],
     _toastId: 0,
 
+    // modal di conferma generico: sostituisce window.confirm() nativo per
+    // azioni distruttive o con perdita di dati, restando coerente con lo
+    // stile dell'app. risolve la Promise quando l'utente sceglie.
+    confermaGenerica: {
+      aperto: false,
+      messaggio: '',
+      testoConferma: 'Conferma',
+      _risolvi: null
+    },
+
     accountSlot: globalThis.window?.AccountSessions?.getActiveSlot() || 'personale',
     accountSwitcherAperto: false,
     accountSwitchInCorso: false,
@@ -540,11 +550,14 @@ function appState() {
     cestino: [],
     erroreCestino: '',
     filtroTestoCestino: '',
+    ripristinandoClienteId: null,
 
     note: [],
     nuovaNotaTesto: '',
     aggiungendoNota: false,
     erroreScheda: '',
+    cambiandoStato: false,
+    cambiandoStatoProduzione: false,
 
     attivitaCliente: [],
     caricandoAttivitaCliente: false,
@@ -684,7 +697,7 @@ function appState() {
         const stato = event.state;
         if (!stato?.le) return;
 
-        if (!this.confermaUscitaFormCliente()) {
+        if (!(await this.confermaUscitaFormCliente())) {
           const corrente = this.statoHistoryCorrente();
 
           history.pushState(
@@ -758,6 +771,28 @@ function appState() {
       window.setTimeout(() => {
         this.toasts = this.toasts.filter(t => t.id !== id);
       }, 200);
+    },
+
+    chiediConferma(messaggio, testoConferma = 'Conferma') {
+      return new Promise(risolvi => {
+        this.confermaGenerica = {
+          aperto: true,
+          messaggio,
+          testoConferma,
+          _risolvi: risolvi
+        };
+      });
+    },
+
+    rispondiConferma(esito) {
+      const risolvi = this.confermaGenerica._risolvi;
+      this.confermaGenerica = {
+        aperto: false,
+        messaggio: '',
+        testoConferma: 'Conferma',
+        _risolvi: null
+      };
+      if (risolvi) risolvi(esito);
     },
 
     async init() {
@@ -1014,7 +1049,7 @@ function appState() {
     },
 
     async vaiHome() {
-      if (!this.confermaUscitaFormCliente()) return;
+      if (!(await this.confermaUscitaFormCliente())) return;
       this.view = this.isAdmin ? 'admin' : 'lista';
       if (!this.isAdmin) {
         await this.caricaClienti();
@@ -1023,14 +1058,14 @@ function appState() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
-    vaiNuovoCliente() {
-      if (this.isAdmin || !this.confermaUscitaFormCliente()) return;
+    async vaiNuovoCliente() {
+      if (this.isAdmin || !(await this.confermaUscitaFormCliente())) return;
       this.apriNuovoCliente();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
-    apriAgenda() {
-      if (!this.confermaUscitaFormCliente()) return;
+    async apriAgenda() {
+      if (!(await this.confermaUscitaFormCliente())) return;
       this.agendaVista = 'oggi';
       this.agendaDataSelezionata = this.dataISOOggi();
       this.agendaMese = this.dataISOOggi().slice(0, 7);
@@ -1038,8 +1073,8 @@ function appState() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
-    apriPipeline(stato) {
-      if (!this.confermaUscitaFormCliente()) return;
+    async apriPipeline(stato) {
+      if (!(await this.confermaUscitaFormCliente())) return;
       const indice = stato ? this.statiPipeline().findIndex(s => s.valore === stato) : 0;
       this.pipelineIndice = indice >= 0 ? indice : 0;
       this.view = 'pipeline';
@@ -1514,7 +1549,7 @@ function appState() {
     },
 
     async apriEconomia(modalita = 'vendita') {
-      if (!this.confermaUscitaFormCliente()) return;
+      if (!(await this.confermaUscitaFormCliente())) return;
       this.venditaEconomicaForm = formVenditaEconomicaVuoto();
       this.modalitaEconomia = modalita;
       this.venditaEconomicaAttiva = null;
@@ -3526,8 +3561,8 @@ costiPerMotoreRataEconomia() {
       this.swipeElement = null;
     },
 
-    apriProfilo() {
-      if (!this.confermaUscitaFormCliente()) return;
+    async apriProfilo() {
+      if (!(await this.confermaUscitaFormCliente())) return;
       this.profiloErrore = '';
       this.profiloForm.username = this.profilo.username || '';
       this.view = 'profilo';
@@ -3850,7 +3885,8 @@ costiPerMotoreRataEconomia() {
     },
 
     async cambiaAccountRapido(slot) {
-      if (this.accountSwitchInCorso || !this.confermaUscitaFormCliente()) return;
+      if (this.accountSwitchInCorso) return;
+      if (!(await this.confermaUscitaFormCliente())) return;
 
       if (slot === this.accountSlot) {
         this.accountSwitcherAperto = false;
@@ -3891,7 +3927,7 @@ costiPerMotoreRataEconomia() {
     },
 
     async fareLogout() {
-      if (!this.confermaUscitaFormCliente()) return;
+      if (!(await this.confermaUscitaFormCliente())) return;
       const slotUscente = this.accountSlot;
 
       if (slotUscente === 'personale') {
@@ -4945,17 +4981,24 @@ costiPerMotoreRataEconomia() {
     },
 
     async cambiaStatoProduzione(stato) {
+      if (this.cambiandoStatoProduzione) return;
+      this.cambiandoStatoProduzione = true;
       this.erroreScheda = '';
-      const errore = await this.impostaStatoProduzione(this.clienteSelezionatoId, stato);
-      if (errore) {
-        this.erroreScheda = 'Produzione non aggiornata: ' + errore;
-        return;
+
+      try {
+        const errore = await this.impostaStatoProduzione(this.clienteSelezionatoId, stato);
+        if (errore) {
+          this.erroreScheda = 'Produzione non aggiornata: ' + errore;
+          return;
+        }
+        await Promise.all([
+          this.caricaClienti(),
+          this.caricaAttivitaCliente(this.clienteSelezionatoId)
+        ]);
+        this.mostraToast('success', 'Produzione aggiornata');
+      } finally {
+        this.cambiandoStatoProduzione = false;
       }
-      await Promise.all([
-        this.caricaClienti(),
-        this.caricaAttivitaCliente(this.clienteSelezionatoId)
-      ]);
-      this.mostraToast('success', 'Produzione aggiornata');
     },
 
     async cambiaStatoDaPipeline(clienteId, stato) {
@@ -5494,21 +5537,23 @@ costiPerMotoreRataEconomia() {
       this.economiaFormSnapshot = this.snapshotFormEconomia();
     },
 
-    confermaUscitaFormCliente() {
+    async confermaUscitaFormCliente() {
       if (
         this.clienteFormModificato() &&
-        !globalThis.confirm(
-          'Hai modifiche non salvate. Se esci perderai quanto inserito. Vuoi uscire?'
-        )
+        !(await this.chiediConferma(
+          'Hai modifiche non salvate. Se esci perderai quanto inserito. Vuoi uscire?',
+          'Esci senza salvare'
+        ))
       ) {
         return false;
       }
 
       if (
         this.economiaFormModificato() &&
-        !globalThis.confirm(
-          'Hai modifiche non salvate nella vendita o nell’incasso. Se esci perderai quanto inserito. Vuoi uscire?'
-        )
+        !(await this.chiediConferma(
+          'Hai modifiche non salvate nella vendita o nell’incasso. Se esci perderai quanto inserito. Vuoi uscire?',
+          'Esci senza salvare'
+        ))
       ) {
         return false;
       }
@@ -5517,7 +5562,7 @@ costiPerMotoreRataEconomia() {
     },
 
     async annullaFormCliente() {
-      if (!this.confermaUscitaFormCliente()) return;
+      if (!(await this.confermaUscitaFormCliente())) return;
 
       if (
         !this.clienteInModificaId &&
@@ -6448,23 +6493,29 @@ costiPerMotoreRataEconomia() {
     },
 
     async cambiaStato(nuovoStato) {
+      if (this.cambiandoStato) return;
+      this.cambiandoStato = true;
       this.erroreScheda = '';
 
-      const errore = await this.impostaStatoCliente(
-        this.clienteSelezionatoId,
-        nuovoStato
-      );
+      try {
+        const errore = await this.impostaStatoCliente(
+          this.clienteSelezionatoId,
+          nuovoStato
+        );
 
-      if (errore) {
-        this.erroreScheda = 'Stato non aggiornato: ' + errore;
-        return;
+        if (errore) {
+          this.erroreScheda = 'Stato non aggiornato: ' + errore;
+          return;
+        }
+
+        await Promise.all([
+          this.caricaClienti(),
+          this.caricaAttivitaCliente(this.clienteSelezionatoId)
+        ]);
+        this.mostraToast('success', 'Stato commerciale aggiornato');
+      } finally {
+        this.cambiandoStato = false;
       }
-
-      await Promise.all([
-        this.caricaClienti(),
-        this.caricaAttivitaCliente(this.clienteSelezionatoId)
-      ]);
-      this.mostraToast('success', 'Stato commerciale aggiornato');
     },
 
     async confermaEliminaCliente() {
@@ -6520,18 +6571,25 @@ costiPerMotoreRataEconomia() {
     },
 
     async ripristinaCliente(clienteId) {
-      const { error } = await window.supabaseClient
-        .rpc('ripristina_cliente_dal_cestino', {
-          p_cliente_id: clienteId
-        });
+      if (this.ripristinandoClienteId) return;
+      this.ripristinandoClienteId = clienteId;
 
-      if (error) {
-        this.erroreCestino = 'Ripristino fallito: ' + error.message;
-        return;
+      try {
+        const { error } = await window.supabaseClient
+          .rpc('ripristina_cliente_dal_cestino', {
+            p_cliente_id: clienteId
+          });
+
+        if (error) {
+          this.erroreCestino = 'Ripristino fallito: ' + error.message;
+          return;
+        }
+        await this.caricaCestino();
+        // se questa fallisce, l'errore va in erroreClienti e si vede solo tornando alla vista lista
+        await this.caricaClienti();
+      } finally {
+        this.ripristinandoClienteId = null;
       }
-      await this.caricaCestino();
-      // se questa fallisce, l'errore va in erroreClienti e si vede solo tornando alla vista lista
-      await this.caricaClienti();
     },
 
     // --- dashboard admin ---

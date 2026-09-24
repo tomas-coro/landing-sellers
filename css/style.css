@@ -567,6 +567,7 @@ html[data-theme="dark"] .client-detail-dashboard{
 .stato-chip{font-family:var(--sans);font-size:12px;font-weight:700;letter-spacing:.01em;text-align:center;
   padding:11px 10px;border-radius:11px;border:1.5px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer}
 .stato-chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.stato-chip:disabled{opacity:.5;cursor:not-allowed}
 
 /* --- accordion scheda cliente --- */
 .accordion-section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}

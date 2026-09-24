@@ -288,28 +288,25 @@ test('la Pipeline seleziona lo stato reale del cliente', () => {
   assert.match(html, /:selected="opzione\.valore === cliente\.stato"/);
 });
 
-test('il form cliente chiede conferma solo se contiene modifiche non salvate', () => {
+test('il form cliente chiede conferma solo se contiene modifiche non salvate', async () => {
   const stato = appState();
   stato.view = 'nuovo';
   stato.clienteFormSnapshot = stato.snapshotFormCliente();
 
-  let conferme = 0;
-  const confirmOriginale = global.confirm;
-  global.confirm = () => { conferme += 1; return false; };
+  assert.strictEqual(await stato.confermaUscitaFormCliente(), true);
 
-  try {
-    assert.strictEqual(stato.confermaUscitaFormCliente(), true);
-    stato.nuovoClienteForm.nome = 'Cliente non salvato';
-    stato.annullaFormCliente();
-    assert.strictEqual(stato.view, 'nuovo');
-    assert.strictEqual(conferme, 1);
+  stato.nuovoClienteForm.nome = 'Cliente non salvato';
+  const uscita1 = stato.annullaFormCliente();
+  assert.strictEqual(stato.confermaGenerica.aperto, true);
+  stato.rispondiConferma(false);
+  await uscita1;
+  assert.strictEqual(stato.view, 'nuovo');
 
-    global.confirm = () => true;
-    stato.annullaFormCliente();
-    assert.strictEqual(stato.view, 'lista');
-  } finally {
-    global.confirm = confirmOriginale;
-  }
+  const uscita2 = stato.annullaFormCliente();
+  assert.strictEqual(stato.confermaGenerica.aperto, true);
+  stato.rispondiConferma(true);
+  await uscita2;
+  assert.strictEqual(stato.view, 'lista');
 });
 
 test('un cliente condiviso viene contato per ogni partecipante alla vendita', () => {

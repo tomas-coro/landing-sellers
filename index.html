@@ -4782,7 +4782,7 @@
             </div>
             <div class="stato-grid">
               <template x-for="stato in statiPipeline()" :key="'detail-' + stato.valore">
-                <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === stato.valore }" @click="cambiaStato(stato.valore)" x-text="stato.label"></button>
+                <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === stato.valore }" :disabled="cambiandoStato" @click="cambiaStato(stato.valore)" x-text="stato.label"></button>
               </template>
             </div>
 
@@ -4805,7 +4805,7 @@
               </div>
               <div class="stato-grid production-grid">
                 <template x-for="stato in statiProduzione()" :key="'production-' + stato.valore">
-                  <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato_produzione === stato.valore }" @click="cambiaStatoProduzione(stato.valore)" x-text="stato.label"></button>
+                  <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato_produzione === stato.valore }" :disabled="cambiandoStatoProduzione" @click="cambiaStatoProduzione(stato.valore)" x-text="stato.label"></button>
                 </template>
               </div>
             </div>
@@ -5969,7 +5969,7 @@
           <div class="card-cliente">
             <div class="cc-top">
               <strong x-text="cliente.nome"></strong>
-              <button type="button" class="btn btn-ghost" style="width:auto;padding:8px 14px;font-size:12.5px" @click="ripristinaCliente(cliente.id)">Ripristina</button>
+              <button type="button" class="btn btn-ghost" style="width:auto;padding:8px 14px;font-size:12.5px" :disabled="ripristinandoClienteId === cliente.id" @click="ripristinaCliente(cliente.id)" x-text="ripristinandoClienteId === cliente.id ? 'Ripristino...' : 'Ripristina'"></button>
             </div>
             <span class="cc-next">Eliminato il <span x-text="formattaData(cliente.cancellato_il)"></span> - <span x-text="giorniResiduiCestino(cliente.cancellato_il) === 0 ? 'rimosso: ultimo giorno' : 'rimosso tra ' + etichettaGiorniResidui(giorniResiduiCestino(cliente.cancellato_il))"></span></span>
           </div>
@@ -5998,6 +5998,17 @@
           <button type="button" class="btn btn-ghost" :disabled="eliminandoCliente" @click="confermaEliminazione = false">Annulla</button>
           <button type="button" class="btn btn-primary" :disabled="eliminandoCliente" @click="confermaEliminaCliente()"
             x-text="eliminandoCliente ? 'Eliminazione...' : 'Elimina'"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- POPUP CONFERMA GENERICO: sostituisce window.confirm() nativo (es. uscita da form con modifiche non salvate) -->
+    <div x-show="confermaGenerica.aperto" x-cloak class="modal-overlay" @click.self="rispondiConferma(false)">
+      <div class="modal-card">
+        <p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:20px" x-text="confermaGenerica.messaggio"></p>
+        <div class="btn-row">
+          <button type="button" class="btn btn-ghost" @click="rispondiConferma(false)">Annulla</button>
+          <button type="button" class="btn btn-primary" @click="rispondiConferma(true)" x-text="confermaGenerica.testoConferma"></button>
         </div>
       </div>
     </div>
