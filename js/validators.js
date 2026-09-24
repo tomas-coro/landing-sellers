@@ -2,6 +2,8 @@
 const ETICHETTE_STATO = {
   contattato: 'Contattato',
   brief_mandato: 'Brief mandato',
+  vinto: 'Vinto',
+  perso: 'Perso',
   in_lavorazione: 'In lavorazione',
   pubblicato: 'Pubblicato'
 };
@@ -13,6 +15,8 @@ function formattaStato(stato) {
 const CLASSE_STATO = {
   contattato: 'contattato',
   brief_mandato: 'brief',
+  vinto: 'vinto',
+  perso: 'perso',
   in_lavorazione: 'lavorazione',
   pubblicato: 'pubblicato'
 };

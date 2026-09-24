@@ -31,7 +31,11 @@ test('il salvataggio converte sconto e date vuote in null', () => {
     nome: 'ZDE',
     sconto_tipo: null,
     data_attivazione: null,
-    data_rinnovo: null
+    data_rinnovo: null,
+    prossimo_contatto: null,
+    brief_cliente: null,
+    prossima_azione: null,
+    esito_motivazione: null
   });
   assert.strictEqual(form.sconto_tipo, '');
   assert.strictEqual(form.data_attivazione, '');
@@ -712,6 +716,32 @@ test('l’azione cliente apre incasso con vendita attiva e vendita negli altri c
     ['vendita'],
     ['cliente', 'c2']
   ]);
+});
+
+test('pipeline commerciale e produzione restano separate', () => {
+  const stato = appState();
+  stato.clienti = [
+    { id: '1', nome: 'A', stato: 'vinto', stato_produzione: 'in_lavorazione' },
+    { id: '2', nome: 'B', stato: 'perso', stato_produzione: null },
+    { id: '3', nome: 'C', stato: 'vinto', stato_produzione: 'pubblicato' }
+  ];
+
+  assert.deepStrictEqual(stato.statiPipeline().map(s => s.valore), [
+    'contattato', 'brief_mandato', 'vinto', 'perso'
+  ]);
+  assert.deepStrictEqual(stato.clientiPipeline('vinto').map(c => c.id), ['1', '3']);
+  assert.deepStrictEqual(stato.clientiPubblicati().map(c => c.id), ['3']);
+  assert.ok(stato.funnelPipeline().every(s => !('conversione' in s)));
+});
+
+test('la migrazione conserva i vecchi stati nella nuova struttura CRM', () => {
+  const sql = fs.readFileSync(
+    path.join(__dirname, '..', 'supabase', 'migrations', '20260922120000_pipeline_commerciale_produzione.sql'),
+    'utf8'
+  );
+  assert.match(sql, /when 'in_lavorazione' then 'in_lavorazione'/);
+  assert.match(sql, /when stato in \('in_lavorazione', 'pubblicato'\) then 'vinto'/);
+  assert.match(sql, /imposta_stato_produzione/);
 });
 
 test('la timeline formatta le attività senza metodi Alpine inesistenti', () => {

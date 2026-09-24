@@ -3,6 +3,8 @@ function formModuloVuoto() {
   return { nome: '', referente: '', telefono: '', email: '',
     piva: '', iban: '', sito_url: '', importo_abbonamento: null,
     nome_pacchetto: '', note_prezzo: '', data_rinnovo: null,
+    brief_cliente: '', prossima_azione: '', prossimo_contatto: '',
+    esito_motivazione: '',
     data_attivazione: '', periodicita_contratto: 'mensile',
     durata_contratto_anni: 1,
     giorni_preavviso_notifica: 7,
@@ -28,7 +30,11 @@ function normalizzaClientePerSalvataggio(form) {
     ...form,
     sconto_tipo: form.sconto_tipo || null,
     data_attivazione: form.data_attivazione || null,
-    data_rinnovo: form.data_rinnovo || null
+    data_rinnovo: form.data_rinnovo || null,
+    prossimo_contatto: form.prossimo_contatto || null,
+    brief_cliente: (form.brief_cliente || '').trim() || null,
+    prossima_azione: (form.prossima_azione || '').trim() || null,
+    esito_motivazione: (form.esito_motivazione || '').trim() || null
   };
 }
 
@@ -40,7 +46,11 @@ function normalizzaAnagraficaClientePerSalvataggio(form) {
     email: (form.email || '').trim() || null,
     piva: (form.piva || '').trim() || null,
     iban: (form.iban || '').trim() || null,
-    sito_url: (form.sito_url || '').trim() || null
+    sito_url: (form.sito_url || '').trim() || null,
+    brief_cliente: (form.brief_cliente || '').trim() || null,
+    prossima_azione: (form.prossima_azione || '').trim() || null,
+    prossimo_contatto: form.prossimo_contatto || null,
+    esito_motivazione: (form.esito_motivazione || '').trim() || null
   };
 }
 
@@ -533,7 +543,7 @@ function appState() {
     scadenzePagamentoPerCliente: {},
     riepilogoPagamentiPerCliente: {},
 
-    schedaAperture: { stato: true, pacchetto: false, contatti: false, attivita: true, note: false },
+    schedaAperture: { stato: true, crm: true, pacchetto: false, contatti: false, attivita: true, note: false },
 
     aggiornamentoDisponibile: false,
     aggiornamentoStato: 'controllo', // controllo | aggiornato | disponibile | errore
@@ -4531,34 +4541,43 @@ costiPerMotoreRataEconomia() {
         .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
     },
 
+    clientiProduzione(stato) {
+      return this.clienti.filter(c => c.stato_produzione === stato);
+    },
+
     statiPipeline() {
       return [
         { valore: 'contattato', label: 'Contattato' },
         { valore: 'brief_mandato', label: 'Brief mandato' },
+        { valore: 'vinto', label: 'Vinto' },
+        { valore: 'perso', label: 'Perso' }
+      ];
+    },
+
+    statiProduzione() {
+      return [
+        { valore: 'da_avviare', label: 'Da avviare' },
         { valore: 'in_lavorazione', label: 'In lavorazione' },
         { valore: 'pubblicato', label: 'Pubblicato' }
       ];
     },
 
-    // Funnel pipeline Home: barra proporzionale al numero massimo di
-    // clienti tra gli stadi, + tasso di passaggio allo stadio successivo.
+    formattaStatoProduzione(stato) {
+      return this.statiProduzione().find(s => s.valore === stato)?.label || '-';
+    },
+
+    // Le barre confrontano i volumi correnti, non fingono conversioni tra
+    // gruppi che non sono coorti storiche dello stesso periodo.
     funnelPipeline() {
       const stadi = this.statiPipeline().map(stato => ({
         ...stato,
         count: this.clientiPipeline(stato.valore).length
       }));
       const max = Math.max(1, ...stadi.map(s => s.count));
-      return stadi.map((stadio, indice) => {
-        const successivo = stadi[indice + 1];
-        const conversione = successivo && stadio.count > 0
-          ? Math.round((successivo.count / stadio.count) * 100)
-          : null;
-        return {
-          ...stadio,
-          larghezza: Math.round((stadio.count / max) * 100),
-          conversione
-        };
-      });
+      return stadi.map(stadio => ({
+        ...stadio,
+        larghezza: Math.round((stadio.count / max) * 100)
+      }));
     },
 
     // ===== Grafici a linea (trend vendite) - geometria condivisa =====
@@ -4789,7 +4808,7 @@ costiPerMotoreRataEconomia() {
     },
 
     async impostaStatoCliente(clienteId, stato) {
-      const consentiti = ['contattato', 'brief_mandato', 'in_lavorazione', 'pubblicato'];
+      const consentiti = ['contattato', 'brief_mandato', 'vinto', 'perso'];
       if (!clienteId || !consentiti.includes(stato)) {
         return 'Stato non valido';
       }
@@ -4806,6 +4825,36 @@ costiPerMotoreRataEconomia() {
         console.error('Errore impostaStatoCliente:', err);
         return 'Errore di connessione.';
       }
+    },
+
+    async impostaStatoProduzione(clienteId, stato) {
+      if (!clienteId || !this.statiProduzione().some(s => s.valore === stato)) {
+        return 'Stato produzione non valido';
+      }
+      try {
+        const { error } = await window.supabaseClient.rpc(
+          'imposta_stato_produzione',
+          { p_cliente_id: clienteId, p_stato: stato }
+        );
+        return error ? error.message : '';
+      } catch (err) {
+        console.error('Errore impostaStatoProduzione:', err);
+        return 'Errore di connessione.';
+      }
+    },
+
+    async cambiaStatoProduzione(stato) {
+      this.erroreScheda = '';
+      const errore = await this.impostaStatoProduzione(this.clienteSelezionatoId, stato);
+      if (errore) {
+        this.erroreScheda = 'Produzione non aggiornata: ' + errore;
+        return;
+      }
+      await Promise.all([
+        this.caricaClienti(),
+        this.caricaAttivitaCliente(this.clienteSelezionatoId)
+      ]);
+      this.mostraToast('success', 'Produzione aggiornata');
     },
 
     async cambiaStatoDaPipeline(clienteId, stato) {
@@ -5275,11 +5324,11 @@ costiPerMotoreRataEconomia() {
 
     // --- statistiche venditore (home) ---
     clientiPubblicati() {
-      return this.clienti.filter(c => c.stato === 'pubblicato');
+      return this.clienti.filter(c => c.stato_produzione === 'pubblicato');
     },
 
     conteggiPerStato() {
-      const conteggi = { contattato: 0, brief_mandato: 0, in_lavorazione: 0, pubblicato: 0 };
+      const conteggi = { contattato: 0, brief_mandato: 0, vinto: 0, perso: 0 };
       for (const c of this.clienti) {
         if (conteggi[c.stato] !== undefined) conteggi[c.stato] += 1;
       }
@@ -5417,6 +5466,10 @@ costiPerMotoreRataEconomia() {
         sito_url: c.sito_url || '', importo_abbonamento: c.importo_abbonamento,
         nome_pacchetto: c.nome_pacchetto || '', note_prezzo: c.note_prezzo || '',
         data_rinnovo: c.data_rinnovo || null,
+        brief_cliente: c.brief_cliente || '',
+        prossima_azione: c.prossima_azione || '',
+        prossimo_contatto: c.prossimo_contatto || '',
+        esito_motivazione: c.esito_motivazione || '',
         data_attivazione: c.data_attivazione || '',
         periodicita_contratto: c.periodicita_contratto || (
           c.nome_pacchetto === 'Start annuale' ? 'annuale' :
@@ -6031,6 +6084,38 @@ costiPerMotoreRataEconomia() {
           });
         }
 
+        if (attivita.tipo === 'stato_produzione') {
+          eventi.push({
+            id: 'attivita-' + attivita.id,
+            data: attivita.creata_il,
+            tipo: 'stato',
+            titolo: 'Produzione aggiornata',
+            dettaglio:
+              `${this.formattaStatoProduzione(attivita.valore_precedente)} → ` +
+              `${this.formattaStatoProduzione(attivita.valore_nuovo)}`
+          });
+        }
+
+        if (attivita.tipo === 'brief') {
+          eventi.push({
+            id: 'attivita-' + attivita.id,
+            data: attivita.creata_il,
+            tipo: 'nota',
+            titolo: 'Brief cliente aggiornato',
+            dettaglio: attivita.valore_nuovo || ''
+          });
+        }
+
+        if (attivita.tipo === 'prossima_azione') {
+          eventi.push({
+            id: 'attivita-' + attivita.id,
+            data: attivita.creata_il,
+            tipo: 'contatto',
+            titolo: 'Prossima azione aggiornata',
+            dettaglio: attivita.valore_nuovo || 'Rimossa'
+          });
+        }
+
         if (attivita.tipo === 'contatto_completato') {
           eventi.push({
             id: 'attivita-' + attivita.id,
@@ -6084,7 +6169,8 @@ costiPerMotoreRataEconomia() {
       this.confermaEliminazione = false;
       const cliente = this.clienteSelezionato();
       this.schedaAperture = {
-        stato: false,
+        stato: true,
+        crm: true,
         pacchetto: !!(
           cliente.importo_abbonamento != null ||
           cliente.nome_pacchetto
@@ -6159,7 +6245,11 @@ costiPerMotoreRataEconomia() {
         return;
       }
 
-      await this.caricaClienti();
+      await Promise.all([
+        this.caricaClienti(),
+        this.caricaAttivitaCliente(this.clienteSelezionatoId)
+      ]);
+      this.mostraToast('success', 'Stato commerciale aggiornato');
     },
 
     async confermaEliminaCliente() {
@@ -6247,7 +6337,7 @@ costiPerMotoreRataEconomia() {
 
         window.supabaseClient
           .from('clienti')
-          .select('id,nome,venditore_id,stato,pubblicato_il,prossimo_contatto,data_rinnovo,periodicita_contratto,durata_contratto_anni,importo_abbonamento,nome_pacchetto')
+          .select('id,nome,venditore_id,stato,stato_produzione,pubblicato_il,prossimo_contatto,data_rinnovo,periodicita_contratto,durata_contratto_anni,importo_abbonamento,nome_pacchetto')
           .is('cancellato_il', null),
 
         window.supabaseClient
@@ -6363,7 +6453,7 @@ costiPerMotoreRataEconomia() {
         );
       })();
 
-      const pubblicati = clienti.filter(c => c.stato === 'pubblicato');
+      const pubblicati = clienti.filter(c => c.stato_produzione === 'pubblicato');
 
       const pubblicatiQuestoMese = pubblicati.filter(c => {
         if (!c.pubblicato_il) return false;
@@ -6398,7 +6488,7 @@ costiPerMotoreRataEconomia() {
         clienti: clienti.length,
         pubblicati: pubblicati.length,
         pubblicatiMese: pubblicatiQuestoMese.length,
-        inLavorazione: clienti.filter(c => c.stato === 'in_lavorazione').length
+        inLavorazione: clienti.filter(c => c.stato_produzione === 'in_lavorazione').length
       };
 
       this.adminClientiPerVenditore = {};
@@ -6433,7 +6523,7 @@ costiPerMotoreRataEconomia() {
           suoiClienti.map(cliente => cliente.id);
 
         const suoiPubblicati =
-          suoiClienti.filter(cliente => cliente.stato === 'pubblicato');
+          suoiClienti.filter(cliente => cliente.stato_produzione === 'pubblicato');
 
         const suoiPubblicatiMese = suoiPubblicati.filter(cliente => {
           if (!cliente.pubblicato_il) return false;
@@ -6477,7 +6567,7 @@ costiPerMotoreRataEconomia() {
             ? idsVenditePartecipate.size
             : statistiche.numeroVendite,
           nClientiTotali: suoiClienti.length,
-          nInLavorazione: suoiClienti.filter(cliente => cliente.stato === 'in_lavorazione').length,
+          nInLavorazione: suoiClienti.filter(cliente => cliente.stato_produzione === 'in_lavorazione').length,
           nPubblicati: suoiPubblicati.length,
           nPubblicatiMese: suoiPubblicatiMese.length
         };

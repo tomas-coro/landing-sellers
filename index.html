@@ -406,7 +406,7 @@
                   <small>
                     <span x-text="clientiPubblicati().length"></span>
                     pubblicati ·
-                    <span x-text="clientiPipeline('in_lavorazione').length"></span>
+                    <span x-text="clientiProduzione('in_lavorazione').length"></span>
                     in lavorazione
                   </small>
                 </div>
@@ -498,7 +498,6 @@
                       <span x-text="stadio.count"></span>
                     </button>
                   </div>
-                  <div class="metrics-funnel-conv" x-text="stadio.conversione !== null ? ('→ ' + stadio.conversione + '%') : ''"></div>
                 </div>
               </template>
             </div>
@@ -615,7 +614,7 @@
         </div>
         <div class="filtro-stati home-filter-scroll" x-show="(isAdmin || view === 'clienti') && clienti.length > 0">
           <button type="button" class="chip-stato" :class="{ on: filtroStato === '' }" @click="filtroStato = ''; paginaClienti = 1">Tutti · <span x-text="clienti.length"></span></button>
-          <template x-for="s in ['contattato','brief_mandato','in_lavorazione','pubblicato']" :key="s">
+          <template x-for="s in ['contattato','brief_mandato','vinto','perso']" :key="s">
             <button type="button" class="chip-stato" :class="{ on: filtroStato === s }" @click="filtroStato = filtroStato === s ? '' : s; paginaClienti = 1">
               <span x-text="formattaStato(s)"></span> · <span x-text="conteggiPerStato()[s]"></span>
             </button>
@@ -3946,6 +3945,35 @@
             </div>
           </section>
 
+          <section class="client-form-section">
+            <div class="client-form-section-head">
+              <span>CRM</span>
+              <div>
+                <strong>Brief e prossima azione</strong>
+                <small>Contesto cliente e passo concreto da eseguire</small>
+              </div>
+            </div>
+
+            <div class="client-fields-grid">
+              <div class="field field-full">
+                <label>Brief cliente</label>
+                <textarea x-model="nuovoClienteForm.brief_cliente" placeholder="Obiettivi, pubblico, offerta e vincoli del cliente"></textarea>
+              </div>
+              <div class="field field-full">
+                <label>Prossima azione</label>
+                <input x-model="nuovoClienteForm.prossima_azione" placeholder="Es. Inviare preventivo aggiornato">
+              </div>
+              <div class="field">
+                <label>Data prossima azione</label>
+                <input type="date" x-model="nuovoClienteForm.prossimo_contatto">
+              </div>
+              <div class="field">
+                <label>Motivazione esito</label>
+                <input x-model="nuovoClienteForm.esito_motivazione" placeholder="Perché è stato vinto o perso">
+              </div>
+            </div>
+          </section>
+
           <div x-show="clienteInModificaId && selezionePrezzo.modalita === 'legacy'" class="price-legacy">
             <div>
               <strong>Prezzo storico</strong>
@@ -4784,20 +4812,62 @@
 
         <div class="accordion-section">
           <button type="button" class="accordion-header" :class="{ open: schedaAperture.stato }" @click="toggleAccordion('stato')">
-            <span>Stato cliente</span>
+            <span>Commerciale e produzione</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="accordion-body" x-show="schedaAperture.stato">
             <div class="stato-current">
-              <span class="lbl">Stato attuale</span>
+              <span class="lbl">Pipeline commerciale</span>
               <span class="pill" :class="'s-' + classeStato(clienteSelezionato().stato)"><i></i><span x-text="formattaStato(clienteSelezionato().stato)"></span></span>
             </div>
-            <div class="stato-grid" style="margin-bottom:0">
-              <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'contattato' }" @click="cambiaStato('contattato')">Contattato</button>
-              <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'brief_mandato' }" @click="cambiaStato('brief_mandato')">Brief mandato</button>
-              <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'in_lavorazione' }" @click="cambiaStato('in_lavorazione')">In lavorazione</button>
-              <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === 'pubblicato' }" @click="cambiaStato('pubblicato')">Pubblicato</button>
+            <div class="stato-grid">
+              <template x-for="stato in statiPipeline()" :key="'detail-' + stato.valore">
+                <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === stato.valore }" @click="cambiaStato(stato.valore)" x-text="stato.label"></button>
+              </template>
             </div>
+
+            <div class="crm-outcome-note" x-show="clienteSelezionato().esito_motivazione">
+              <span>Motivazione</span>
+              <p x-text="clienteSelezionato().esito_motivazione"></p>
+            </div>
+            <button
+              type="button"
+              class="btn btn-ghost crm-outcome-action"
+              x-show="clienteSelezionato().stato === 'perso' && !clienteSelezionato().esito_motivazione"
+              @click="apriModificaCliente(clienteSelezionatoId)">
+              Aggiungi motivazione
+            </button>
+
+            <div class="production-status" x-show="clienteSelezionato().stato === 'vinto'">
+              <div class="stato-current">
+                <span class="lbl">Produzione</span>
+                <strong x-text="formattaStatoProduzione(clienteSelezionato().stato_produzione)"></strong>
+              </div>
+              <div class="stato-grid production-grid">
+                <template x-for="stato in statiProduzione()" :key="'production-' + stato.valore">
+                  <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato_produzione === stato.valore }" @click="cambiaStatoProduzione(stato.valore)" x-text="stato.label"></button>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-section">
+          <button type="button" class="accordion-header" :class="{ open: schedaAperture.crm }" @click="toggleAccordion('crm')">
+            <span>Brief e prossima azione</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="accordion-body crm-detail" x-show="schedaAperture.crm">
+            <div>
+              <span>Brief cliente</span>
+              <p x-text="clienteSelezionato().brief_cliente || 'Da compilare'"></p>
+            </div>
+            <div>
+              <span>Prossima azione</span>
+              <strong x-text="clienteSelezionato().prossima_azione || 'Da definire'"></strong>
+              <small x-text="clienteSelezionato().prossimo_contatto ? formattaDataCompleta(clienteSelezionato().prossimo_contatto) : 'Nessuna data'"></small>
+            </div>
+            <button type="button" class="btn btn-ghost" @click="apriModificaCliente(clienteSelezionatoId)">Modifica brief e azione</button>
           </div>
         </div>
 
@@ -5160,7 +5230,7 @@
                   </button>
                   <div class="pipeline-card-info">
                     <div><span>Valore</span><strong x-text="etichettaImportoCliente(cliente)"></strong></div>
-                    <div><span>Prossimo contatto</span><strong x-text="cliente.prossimo_contatto ? formattaData(cliente.prossimo_contatto) : 'Da fissare'"></strong></div>
+                    <div><span>Prossima azione</span><strong x-text="cliente.prossima_azione || (cliente.prossimo_contatto ? formattaData(cliente.prossimo_contatto) : 'Da definire')"></strong></div>
                   </div>
                   <div class="pipeline-card-footer">
                     <span class="pipeline-status-pill" x-text="stato.label"></span>

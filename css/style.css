@@ -384,8 +384,10 @@ html[data-theme="dark"] .skeleton-payment-row{border-bottom-color:var(--line)}
 .pill.s-brief i{background:#d9a900}
 .pill.s-lavorazione{background:#F0E6FB;color:#5b3a8f}
 .pill.s-lavorazione i{background:#8b5ce0}
-.pill.s-pubblicato{background:var(--lime);color:var(--ink)}
-.pill.s-pubblicato i{background:var(--ink)}
+.pill.s-pubblicato,.pill.s-vinto{background:var(--lime);color:var(--ink)}
+.pill.s-pubblicato i,.pill.s-vinto i{background:var(--ink)}
+.pill.s-perso{background:#fdecea;color:#9f2d25}
+.pill.s-perso i{background:#c74b42}
 
 .fab{margin-top:2px}
 
@@ -15522,4 +15524,29 @@ html[data-theme="dark"]{
 @media (max-width:600px){
   .metrics-funnel-label{width:62px;font-size:8.5px}
   .metrics-chart-area{height:170px}
+}
+
+/* CRM: pipeline commerciale separata dalla produzione. */
+.production-status{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.production-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.crm-outcome-note,.crm-detail>div{margin-top:14px;padding:13px;border-radius:13px;background:var(--paper-2)}
+.crm-outcome-note span,.crm-detail>div>span{display:block;margin-bottom:6px;color:var(--muted);font-size:9px;font-weight:800}
+.crm-outcome-note p,.crm-detail p{margin:0;font-size:12px;line-height:1.5;white-space:pre-wrap}
+.crm-detail{padding-bottom:14px}
+.crm-detail strong,.crm-detail small{display:block}
+.crm-detail strong{font-size:13px}
+.crm-detail small{margin-top:5px;color:var(--muted);font-size:10px}
+.crm-detail .btn{margin-top:14px}
+.crm-outcome-action{margin-top:12px}
+html[data-theme="dark"] .pill.s-perso{background:#3a1d19;color:#ff9b91}
+
+@media(max-width:719px){
+  .home-today-v3{order:1}
+  .home-performance-v4{order:2}
+  .home-flow{order:3}
+}
+
+@media(max-width:390px){
+  .home-attention-row{grid-template-columns:8px minmax(0,1fr) auto;gap:8px}
+  .event-done-action{min-width:58px;padding:0 8px;font-size:10px}
 }
