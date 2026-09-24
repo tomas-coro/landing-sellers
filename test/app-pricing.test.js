@@ -542,62 +542,59 @@ test('in modalità incasso i costi storici non vengono applicati automaticamente
   );
 });
 
-test('la fatturazione della rata ha importi propri separati dalla vendita', () => {
+test('PROBLEMA 2: la fatturazione della rata è derivata da quella consolidata della vendita, non impostabile a parte', () => {
   const stato = appState();
 
-  stato.venditaEconomicaForm.importoFatturatoAdmin = 300;
-  stato.venditaEconomicaForm.importoFatturatoAdminRata = 0;
-
-  assert.equal(
-    stato.venditaEconomicaForm.importoFatturatoAdmin,
-    300
-  );
-
-  assert.equal(
-    stato.venditaEconomicaForm.importoFatturatoAdminRata,
-    0
-  );
-});
-
-test('un override della vendita non viene ereditato automaticamente dalla rata', () => {
-  const stato = appState();
-
-  stato.venditaEconomicaForm.importoIncassato = 375;
+  stato.venditaEconomicaForm.importoVendita = 1000;
+  stato.venditaEconomicaForm.importoIncassato = 500;
 
   stato.venditaEconomicaForm.partecipanti = [
     {
       id: 'a',
       ruolo: 'referente',
-      modalitaFatturazioneRata: 'totale',
-      quotaOverride: false,
-      quotaOverrideRata: false
-    },
-    {
-      id: 't',
-      ruolo: 'produzione',
-      modalitaFatturazioneRata: 'nessuna',
-
-      // Override storico della vendita.
-      quotaOverride: true,
-      quotaEffettiva: 50,
-
-      // Ma nessun override sulla nuova rata.
-      quotaOverrideRata: false,
-      quotaEffettivaRata: null
+      // Modalità e importo fatturato decisi alla registrazione della
+      // vendita (consolidati sull'importo TOTALE della vendita).
+      modalitaFatturazione: 'mista',
+      importoFatturato: 400
     }
   ];
 
-  stato.venditaEconomicaForm.modalitaFatturazioneAdminRata =
-    'totale';
+  const [referente] = stato.partecipantiPerMotoreRataEconomia();
 
-  const partecipanti =
-    stato.partecipantiPerMotoreRataEconomia();
+  assert.equal(referente.modalitaFatturazione, 'mista');
 
-  const tomas =
-    partecipanti.find(p => p.id === 't');
+  // Stessa proporzione fatturato/vendita (400/1000) applicata
+  // all'importo di questa rata (500): 200.
+  assert.equal(referente.importoFatturato, 200);
+});
 
-  assert.equal(tomas.quotaOverride, false);
-  assert.equal(tomas.quotaEffettiva, null);
+test('PROBLEMA 2: un override consolidato della vendita viene applicato automaticamente alla rata, scalato in proporzione', () => {
+  const stato = appState();
+
+  stato.venditaEconomicaForm.importoVendita = 375;
+  stato.venditaEconomicaForm.importoIncassato = 187.5;
+
+  stato.venditaEconomicaForm.partecipanti = [
+    { id: 'a', ruolo: 'referente', modalitaFatturazione: 'totale' },
+    {
+      id: 't',
+      ruolo: 'produzione',
+      modalitaFatturazione: 'nessuna',
+
+      // Override consolidato deciso alla registrazione della vendita
+      // (50 euro sull'intera vendita da 375).
+      quotaOverride: true,
+      quotaEffettiva: 50
+    }
+  ];
+
+  const partecipanti = stato.partecipantiPerMotoreRataEconomia();
+  const tomas = partecipanti.find(p => p.id === 't');
+
+  // Nessun controllo "manuale" sulla rata: l'override consolidato
+  // si applica sempre, scalato sulla proporzione della rata (187.5/375).
+  assert.equal(tomas.quotaOverride, true);
+  assert.equal(tomas.quotaEffettiva, 25);
 });
 
 test('un costo della rata viene salvato separatamente dai costi della vendita', () => {
