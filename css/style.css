@@ -13370,7 +13370,7 @@ html[data-theme="dark"] .flow-choice-card{
   /* fatturazione più orizzontale */
 
   .economy-invoice-choice{
-    display:grid !important;
+    display:grid;
     grid-template-columns:minmax(125px,.55fr) minmax(0,1fr);
     align-items:center;
 
