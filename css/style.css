@@ -12128,6 +12128,10 @@ html[data-theme="dark"] .flow-choice-card{
   height:19px;
 }
 
+.qty-stepper{
+  grid-template-columns:36px 34px 36px !important;
+}
+
 .qty-stepper button{
   width:36px !important;
   height:38px !important;
