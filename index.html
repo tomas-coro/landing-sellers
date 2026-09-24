@@ -3138,7 +3138,7 @@
                       x-text="formattaEuroEconomia(
                         Math.max(
                           0,
-                          margineEconomia() -
+                          Number(venditaEconomicaForm.importoVendita || 0) -
                           Number(venditaEconomicaForm.importoFatturatoAdmin || 0)
                         )
                       )">
@@ -3192,27 +3192,20 @@
                     modalitaFatturazionePartecipanteEconomia(partecipante) === 'mista'
                   ">
                   <div class="economy-mixed-row">
-                    <label class="economy-mixed-label">Parte fatturata ad Alessandro</label>
+                    <label class="economy-mixed-label">Fatturato ad Alessandro (calcolato)</label>
 
-                    <input
-                      class="economy-mixed-input"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      inputmode="decimal"
-                      placeholder="Importo €"
-                      x-model.number="partecipante.importoFatturato">
+                    <strong
+                      x-text="formattaEuroEconomia(
+                        calcoloPartecipanteEconomia(partecipante).importoFatturato
+                      )">
+                    </strong>
                   </div>
 
                   <div class="economy-mixed-residual-line">
                     <span>Non fatturato:</span>
                     <strong
                       x-text="formattaEuroEconomia(
-                        Math.max(
-                          0,
-                          calcoloPartecipanteEconomia(partecipante).quotaTeorica -
-                          Number(partecipante.importoFatturato || 0)
-                        )
+                        calcoloPartecipanteEconomia(partecipante).importoNonFatturato
                       )">
                     </strong>
                   </div>
@@ -3743,18 +3736,6 @@
           </div>
         </div>
 
-        <input
-          type="number"
-          min="0"
-          step="0.01"
-          inputmode="decimal"
-          placeholder="Importo fatturato su questa rata €"
-          x-show="
-            partecipante.modalitaFatturazioneRata === 'mista'
-          "
-          x-model.number="
-            partecipante.importoFatturatoRata
-          ">
         <div class="economy-invoice-choice">
   <span>Quota della rata</span>
 

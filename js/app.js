@@ -2323,57 +2323,6 @@ function appState() {
         : 'nessuna';
     },
 
-    importoFatturatoPartecipanteEconomia(
-      partecipante,
-      quota = null
-    ) {
-      if (quota == null) {
-        return (
-          this.risultatoPartecipanteMotoreEconomia(partecipante)
-            ?.importoFatturato || 0
-        );
-      }
-
-      const riferimento = Math.max(
-        0,
-        Number(quota) || 0
-      );
-
-      const modalita =
-        this.modalitaFatturazionePartecipanteEconomia(
-          partecipante
-        );
-
-      if (modalita === 'totale') return riferimento;
-      if (modalita === 'nessuna') return 0;
-
-      return Math.min(
-        riferimento,
-        Math.max(
-          0,
-          Number(partecipante.importoFatturato) || 0
-        )
-      );
-    },
-
-    percentualeNonFatturataPartecipanteEconomia(partecipante) {
-      const risultato =
-        this.risultatoPartecipanteMotoreEconomia(
-          partecipante
-        );
-
-      if (!risultato?.quotaTeorica) return 0;
-
-      return Math.max(
-        0,
-        Math.min(
-          1,
-          risultato.importoNonFatturato /
-            risultato.quotaTeorica
-        )
-      );
-    },
-
     riduzioneNoFatturaPartecipanteEconomia(partecipante) {
       return (
         this.risultatoPartecipanteMotoreEconomia(partecipante)
@@ -2725,23 +2674,12 @@ function appState() {
         }
       }
 
-      for (const partecipante of this.venditaEconomicaForm.partecipanti) {
-        if (
-          partecipante.ruolo !== 'referente' &&
-          this.modalitaFatturazionePartecipanteEconomia(partecipante) ===
-            'mista'
-        ) {
-          const quota =
-            this.calcoloPartecipanteEconomia(partecipante).quotaTeorica;
-          const fatturato = Number(partecipante.importoFatturato) || 0;
-          if (!(fatturato > 0 && fatturato < quota)) {
-            return (
-              'Per ' + partecipante.nome +
-              ' la fattura mista deve essere maggiore di 0 e minore della quota.'
-            );
-          }
-        }
-      }
+      /*
+       * L'importo fatturato dai collaboratori ad Alessandro in modalità
+       * "mista" è calcolato in automatico dal motore economico (vedi
+       * economic-engine.js -> importoFatturatoCollaboratore): non è più
+       * un dato inserito a mano, quindi qui non c'è nulla da validare.
+       */
 
       /*
        * Pagamenti e rate vengono validati nel flusso Incassa.
@@ -2762,16 +2700,19 @@ function appState() {
       ? this.venditaEconomicaForm.modalitaFatturazioneAdminRata
       : partecipante.modalitaFatturazioneRata;
 
+    // Per i collaboratori l'importo fatturato al referente in modalità
+    // "mista" è calcolato in automatico dal motore economico (non è più
+    // un dato manuale): qui serve solo per il referente, che fattura
+    // davvero il cliente e per cui l'importo resta un fatto reale.
     let importoFatturato = 0;
 
     if (modalita === 'totale') {
       importoFatturato = importoRata;
-    } else if (modalita === 'mista') {
-      importoFatturato = referente
-        ? Number(
-            this.venditaEconomicaForm.importoFatturatoAdminRata
-          ) || 0
-        : Number(partecipante.importoFatturatoRata) || 0;
+    } else if (modalita === 'mista' && referente) {
+      importoFatturato =
+        Number(
+          this.venditaEconomicaForm.importoFatturatoAdminRata
+        ) || 0;
     }
 
     return {
@@ -2945,7 +2886,11 @@ costiPerMotoreRataEconomia() {
     this.partecipantiPerMotoreRataEconomia();
 
   for (const partecipante of partecipanti) {
+    // Solo il referente fattura davvero il cliente: per i collaboratori
+    // l'importo fatturato ad Alessandro in modalità "mista" è calcolato
+    // in automatico dal motore economico, quindi non va validato qui.
     if (
+      partecipante.ruolo === 'referente' &&
       partecipante.modalitaFatturazione === 'mista' &&
       !(
         partecipante.importoFatturato > 0 &&

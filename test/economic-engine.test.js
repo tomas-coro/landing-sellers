@@ -161,16 +161,32 @@ test('admin misto -> tassazione proporzionale alla parte fatturata', () => {
   assert.equal(r.nettoDistribuibile, 182);
 });
 
-test('fatturazione mista collaboratore agisce solo sulla parte non fatturata', () => {
+test('fatturazione mista collaboratore: l\'importo fatturato ad Alessandro è calcolato in automatico, non inserito a mano', () => {
   const r = calcolaRipartizioneEconomica({
-    importoVendita: 300,
+    importoVendita: 340,
     costi: [{ importo: 40 }],
-    partecipanti: partecipanti({
-      admin: 'totale',
-      tomas: 'mista',
-      tomasImporto: 26,
-      venditore: 'totale'
-    })
+    partecipanti: [
+      {
+        id: 'alessandro',
+        ruolo: 'referente',
+        modalitaFatturazione: 'mista',
+        importoFatturato: 170
+      },
+      {
+        id: 'tomas',
+        ruolo: 'produzione',
+        modalitaFatturazione: 'mista',
+        // Anche se qui c'è un valore, il motore lo ignora per i
+        // collaboratori: l'importo fatturato è sempre auto-calcolato.
+        importoFatturato: 999
+      },
+      {
+        id: 'venditore',
+        ruolo: 'venditore',
+        modalitaFatturazione: 'nessuna',
+        haVenduto: true
+      }
+    ]
   });
 
   const tomas = r.partecipanti.find(
@@ -178,11 +194,103 @@ test('fatturazione mista collaboratore agisce solo sulla parte non fatturata', (
   );
 
   assert.equal(r.percentualeTasse, 40);
-  assert.equal(tomas.quotaTeorica, 52);
-  assert.equal(tomas.importoFatturato, 26);
-  assert.equal(tomas.importoNonFatturato, 26);
-  assert.equal(tomas.riduzioneNoFattura, 5.2);
-  assert.equal(tomas.quotaCalcolata, 46.8);
+  assert.equal(tomas.quotaTeorica, 80);
+  assert.equal(tomas.importoFatturato, 30);
+  assert.equal(tomas.importoNonFatturato, 50);
+  assert.equal(tomas.riduzioneNoFattura, 0);
+  assert.equal(tomas.quotaCalcolata, 80);
+});
+
+test('collaboratore che non fattura per niente perde -20% solo sulla parte che Alessandro ha fatturato al cliente', () => {
+  const r = calcolaRipartizioneEconomica({
+    importoVendita: 340,
+    costi: [{ importo: 40 }],
+    partecipanti: [
+      {
+        id: 'alessandro',
+        ruolo: 'referente',
+        modalitaFatturazione: 'mista',
+        importoFatturato: 170
+      },
+      {
+        id: 'tomas',
+        ruolo: 'produzione',
+        modalitaFatturazione: 'nessuna'
+      },
+      {
+        id: 'venditore',
+        ruolo: 'venditore',
+        modalitaFatturazione: 'totale',
+        haVenduto: true
+      }
+    ]
+  });
+
+  const tomas = r.partecipanti.find(
+    p => p.id === 'tomas'
+  );
+
+  assert.equal(r.percentualeTasse, 40);
+  assert.equal(tomas.quotaTeorica, 80);
+  assert.equal(tomas.importoFatturato, 0);
+  assert.equal(tomas.importoNonFatturato, 80);
+  assert.equal(tomas.riduzioneNoFattura, 6);
+  assert.equal(tomas.quotaCalcolata, 74);
+});
+
+test('con un solo collaboratore su "no", la tassa resta al 40% e scatta il -20% individuale (non il 60% forfettario)', () => {
+  const r = calcolaRipartizioneEconomica({
+    importoVendita: 540,
+    costi: [{ importo: 50 }],
+    partecipanti: [
+      {
+        id: 'alessandro',
+        ruolo: 'referente',
+        modalitaFatturazione: 'mista',
+        importoFatturato: 270
+      },
+      {
+        id: 'tomas',
+        ruolo: 'produzione',
+        modalitaFatturazione: 'nessuna',
+        haVenduto: true
+      }
+    ],
+    applicaBonusVenditore: false
+  });
+
+  const tomas = r.partecipanti.find(p => p.id === 'tomas');
+  const alessandro = r.partecipanti.find(p => p.id === 'alessandro');
+
+  assert.equal(r.percentualeTasse, 40);
+  assert.equal(tomas.quotaFinale, 181.3);
+  assert.equal(alessandro.quotaFinale, 210.7);
+});
+
+test('il "non fatturato" del referente è calcolato sul lordo della vendita, non sul margine dopo i costi', () => {
+  const r = calcolaRipartizioneEconomica({
+    importoVendita: 540,
+    costi: [{ importo: 50 }],
+    partecipanti: [
+      {
+        id: 'alessandro',
+        ruolo: 'referente',
+        modalitaFatturazione: 'mista',
+        importoFatturato: 270
+      },
+      {
+        id: 'tomas',
+        ruolo: 'produzione',
+        modalitaFatturazione: 'nessuna'
+      }
+    ],
+    applicaBonusVenditore: false
+  });
+
+  const alessandro = r.partecipanti.find(p => p.id === 'alessandro');
+
+  // 540 lordi - 270 fatturati = 270 non fatturati (non 490 - 270 = 220).
+  assert.equal(alessandro.importoNonFatturato, 270);
 });
 
 test('con tre partecipanti non esiste bonus venditore 12%', () => {

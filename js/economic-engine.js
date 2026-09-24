@@ -61,7 +61,11 @@
       partecipante => partecipante.ruolo !== 'referente'
     );
 
-    if (!collaboratori.length) return 40;
+    // La tassa piena al 60% scatta solo quando ci sono almeno due
+    // collaboratori e nessuno di loro fattura al referente. Con un
+    // solo collaboratore resta al 40%: se non fattura, ci pensa la
+    // riduzione -20% individuale (vedi riduzioneNoFattura) a penalizzarlo.
+    if (collaboratori.length < 2) return 40;
 
     return collaboratori.every(
       partecipante =>
@@ -69,6 +73,39 @@
     )
       ? 60
       : 40;
+  }
+
+  // Frazione della quota teorica di un collaboratore che corrisponde
+  // alla parte della vendita che il referente ha fatturato al cliente,
+  // già al netto della tassa applicata su quella parte. È il valore che
+  // il collaboratore fattura automaticamente al referente in modalità
+  // "mista" (nessun importo manuale), ed è la base su cui si calcola
+  // la riduzione -20% quando il collaboratore non fattura per niente.
+  function frazioneFatturataComponente(
+    percentualeFatturataAdmin,
+    tassePercentuali
+  ) {
+    const t = tassePercentuali / 100;
+    const p = limita(numero(percentualeFatturataAdmin), 0, 1);
+    const denominatore = 1 - t * p;
+
+    if (denominatore <= 0) return 0;
+
+    return limita((p * (1 - t)) / denominatore, 0, 1);
+  }
+
+  function importoFatturatoCollaboratore(
+    partecipante,
+    quotaTeorica,
+    frazioneFatturataAdAlessandro
+  ) {
+    const quota = Math.max(0, numero(quotaTeorica));
+    const modalita = modalitaValida(partecipante?.modalitaFatturazione);
+
+    if (modalita === 'totale') return quota;
+    if (modalita === 'nessuna') return 0;
+
+    return quota * frazioneFatturataAdAlessandro;
   }
 
   function calcolaRipartizioneEconomica({
@@ -123,6 +160,11 @@
     const incidenzaTasse =
       (tassePercentuali / 100) * percentualeFatturataAdmin;
 
+    const frazioneFatturataAdAlessandro = frazioneFatturataComponente(
+      percentualeFatturataAdmin,
+      tassePercentuali
+    );
+
     const nettoDistribuibile = Math.max(
       0,
       margine * (1 - incidenzaTasse)
@@ -152,25 +194,11 @@
         : Math.max(0, quotaBase - bonusVenditore);
     }
 
-    function percentualeNonFatturata(partecipante, quota) {
-      if (!quota) return 0;
-
-      const fatturato = importoFatturatoSoggetto(
-        partecipante,
-        quota
-      );
-
-      return limita(
-        (quota - fatturato) / quota,
-        0,
-        1
-      );
-    }
-
     function riduzioneNoFattura(partecipante, quota) {
       if (
         partecipante.ruolo === 'referente' ||
-        tassePercentuali === 60
+        tassePercentuali === 60 ||
+        partecipante.modalitaFatturazione !== 'nessuna'
       ) {
         return 0;
       }
@@ -183,8 +211,7 @@
 
       return (
         quota *
-        percentualeFatturataAdmin *
-        percentualeNonFatturata(partecipante, quota) *
+        frazioneFatturataAdAlessandro *
         (riduzione / 100)
       );
     }
@@ -193,7 +220,11 @@
       const teorica = quotaTeorica(partecipante);
       const fatturato = partecipante.ruolo === 'referente'
         ? importoFatturatoAdmin
-        : importoFatturatoSoggetto(partecipante, teorica);
+        : importoFatturatoCollaboratore(
+            partecipante,
+            teorica,
+            frazioneFatturataAdAlessandro
+          );
 
       const riduzione = riduzioneNoFattura(
         partecipante,
@@ -208,7 +239,7 @@
         importoFatturato: fatturato,
         importoNonFatturato:
           partecipante.ruolo === 'referente'
-            ? Math.max(0, margine - importoFatturatoAdmin)
+            ? Math.max(0, vendita - importoFatturatoAdmin)
             : Math.max(0, teorica - fatturato),
         riduzioneNoFattura: riduzione
       };
