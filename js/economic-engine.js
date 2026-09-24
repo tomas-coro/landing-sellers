@@ -208,7 +208,7 @@
         importoFatturato: fatturato,
         importoNonFatturato:
           partecipante.ruolo === 'referente'
-            ? Math.max(0, vendita - importoFatturatoAdmin)
+            ? Math.max(0, margine - importoFatturatoAdmin)
             : Math.max(0, teorica - fatturato),
         riduzioneNoFattura: riduzione
       };
