@@ -136,6 +136,32 @@ function economicEngineApi() {
   return null;
 }
 
+function validatorsApi() {
+  if (
+    typeof globalThis !== 'undefined' &&
+    typeof globalThis.formattaStato === 'function' &&
+    typeof globalThis.classeStato === 'function'
+  ) {
+    return {
+      formattaStato: globalThis.formattaStato,
+      classeStato: globalThis.classeStato
+    };
+  }
+
+  if (
+    typeof module === 'object' &&
+    module.exports &&
+    typeof require === 'function'
+  ) {
+    return require('./validators.js');
+  }
+
+  return {
+    formattaStato: stato => stato,
+    classeStato: () => 'contattato'
+  };
+}
+
 function appEconomiaMixinApi() {
   if (
     typeof globalThis !== 'undefined' &&
@@ -2707,11 +2733,31 @@ costiPerMotoreRataEconomia(
         ratePreviste: 0,
         percentualeIncassata: 0
       };
-      const totaleAnnuale =
-        this.riepilogoContrattoCliente(cliente).valoreAnnuale;
+      /*
+       * Il valore annuale serve solo alla label VALORE ANNUALE.
+       * L'avanzamento incassi deve invece usare il valore complessivo
+       * della vendita attiva, altrimenti un contratto pluriennale
+       * risulterebbe saldato troppo presto.
+       */
+      const vendita =
+        this.pacchettoVenditaPerCliente[
+          cliente?.id
+        ] || null;
+
+      const totaleVenditaAttiva =
+        Number(vendita?.importoVendita) || 0;
+
+      const totaleAnnualeLegacy =
+        Number(
+          this.riepilogoContrattoCliente(cliente)
+            .valoreAnnuale
+        ) || 0;
 
       const totaleVendite =
-        totaleAnnuale || riepilogo.totaleVendite;
+        totaleVenditaAttiva ||
+        totaleAnnualeLegacy ||
+        Number(riepilogo.totaleVendite) ||
+        0;
 
       return {
         ...riepilogo,
@@ -2860,6 +2906,165 @@ costiPerMotoreRataEconomia(
         month: '2-digit',
         year: 'numeric'
       }).format(new Date(Date.UTC(anno, mese - 1, giorno)));
+    },
+
+    schedaClienteCompleta(cliente) {
+      const c = cliente || {};
+
+      const contratto =
+        this.riepilogoContrattoCliente(c);
+
+      const pagamento =
+        this.riepilogoPagamentoListaCliente(c);
+
+      const prossima =
+        this.prossimaScadenzaCliente(c);
+
+      const valoreAnnuale =
+        Number(contratto?.valoreAnnuale) || 0;
+
+      const durata =
+        Number(contratto?.durataContrattoAnni) || 0;
+
+      const periodicita =
+        contratto?.periodicitaContratto || null;
+
+      const totalePagamento =
+        Number(pagamento?.totaleVendite) || 0;
+
+      const incassato =
+        Number(pagamento?.incassato) || 0;
+
+      const percentualeIncassata =
+        totalePagamento > 0
+          ? Math.max(
+              0,
+              Math.min(
+                100,
+                Number(
+                  pagamento?.percentualeIncassata
+                ) || 0
+              )
+            )
+          : 0;
+
+      const validators = validatorsApi();
+
+      return {
+        id: c.id || null,
+
+        nome:
+          String(c.nome || '').trim() ||
+          'Cliente senza nome',
+
+        stato:
+          c.stato || null,
+
+        statoLabel:
+          validators.formattaStato(c.stato),
+
+        statoClasse:
+          validators.classeStato(c.stato),
+
+        pacchetto:
+          this.etichettaPacchettoCliente(c),
+
+        valoreAnnuale,
+
+        valoreAnnualeLabel:
+          valoreAnnuale > 0
+            ? `${this.formattaNumeroEuro(
+                valoreAnnuale
+              )}/anno`
+            : '-',
+
+        durataContrattoAnni:
+          durata || null,
+
+        durataContrattoLabel:
+          durata > 0
+            ? (
+                durata === 1
+                  ? '1 anno'
+                  : `${durata} anni`
+              )
+            : '-',
+
+        periodicitaContratto:
+          periodicita,
+
+        periodicitaContrattoLabel:
+          periodicita === 'mensile'
+            ? 'Mensile'
+            : periodicita === 'annuale'
+              ? 'Annuale'
+              : 'Non indicata',
+
+        prossimaScadenza:
+          prossima || null,
+
+        prossimaScadenzaLabel:
+          prossima
+            ? (
+                prossima.tipo === 'rata' &&
+                Number(prossima.importo) > 0
+                  ? `Rata ${this.formattaNumeroEuro(
+                      prossima.importo
+                    )}`
+                  : prossima.label || 'Scadenza'
+              )
+            : 'Nessuna',
+
+        prossimaScadenzaDataLabel:
+          prossima?.data
+            ? this.formattaDataCompleta(
+                prossima.data
+              )
+            : 'Nessuna scadenza',
+
+        incassato,
+
+        totalePagamento,
+
+        incassatoLabel:
+          totalePagamento > 0
+            ? this.formattaNumeroEuro(incassato)
+            : '-',
+
+        totalePagamentoLabel:
+          totalePagamento > 0
+            ? this.formattaNumeroEuro(
+                totalePagamento
+              )
+            : '-',
+
+        percentualeIncassata,
+
+        percentualeIncassataLabel:
+          totalePagamento > 0
+            ? `${Math.round(
+                percentualeIncassata
+              )}% pagato`
+            : 'Importo non indicato',
+
+        prossimoContatto:
+          c.prossimo_contatto || null,
+
+        contattoInRitardo:
+          Boolean(
+            c.prossimo_contatto &&
+            classeUrgenza(
+              c.prossimo_contatto
+            ) === 'ritardo'
+          ),
+
+        prossimoContattoLabel:
+          c.prossimo_contatto
+            ? this.formattaDataCompleta(
+                c.prossimo_contatto
+              )
+            : '-'
+      };
     },
 
     clientiRecenti() {
