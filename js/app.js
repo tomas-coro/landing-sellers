@@ -4340,19 +4340,91 @@ costiPerMotoreRataEconomia(
     },
 
     ripristinaSelezionePrezzo(c) {
-      const pacchetto = (c.nome_pacchetto || '').trim();
-      const eCatalogo = pacchetto === 'Start mensile' || pacchetto === 'Start annuale';
-      if (!eCatalogo) {
-        this.selezionePrezzo = { modalita: 'legacy', formula: 'mensile', upgrade: [] };
+      const vendita =
+        this.pacchettoVenditaPerCliente?.[c.id] || null;
+
+      const cfg =
+        vendita?.configurazioneCommerciale &&
+        typeof vendita.configurazioneCommerciale === 'object'
+          ? vendita.configurazioneCommerciale
+          : {};
+
+      const periodicita =
+        cfg.formula ||
+        cfg.periodicita_contratto ||
+        c.periodicita_contratto ||
+        '';
+
+      const pacchetto =
+        String(
+          vendita?.nomePacchetto ||
+          c.nome_pacchetto ||
+          ''
+        ).trim();
+
+      const formula =
+        periodicita === 'annuale'
+          ? 'annuale'
+          : periodicita === 'mensile'
+            ? 'mensile'
+            : pacchetto.toLowerCase().includes('annuale')
+              ? 'annuale'
+              : pacchetto.toLowerCase().includes('mensile')
+                ? 'mensile'
+                : '';
+
+      if (!formula) {
+        this.selezionePrezzo = {
+          modalita: 'legacy',
+          formula: 'mensile',
+          upgrade: []
+        };
         return;
       }
-      const n = c.note_prezzo || '';
-      const f = pacchetto === 'Start annuale' ? 'annuale' : 'mensile';
-      const cat = this.catalogoPrezzi();
-      const u = cat.upgrade.filter(x => n.includes(x.nome)).map(x => x.id);
-      this.selezionePrezzo = { modalita: 'catalogo', formula: f, upgrade: u };
-      this.nuovoClienteForm.pagine_extra = Number(c.pagine_extra) || 0;
-      this.nuovoClienteForm.lingue_extra = Number(c.lingue_extra) || 0;
+
+      let upgrade =
+        Array.isArray(cfg.upgrade)
+          ? [...cfg.upgrade]
+          : [];
+
+      /*
+       * Fallback solo per legacy che non hanno ancora uno snapshot:
+       * appena salvati, la vendita attiva diventa la fonte canonica.
+       */
+      if (!upgrade.length && !Object.prototype.hasOwnProperty.call(cfg, 'upgrade')) {
+        const testoStorico = [
+          vendita?.nomePacchetto,
+          c.nome_pacchetto,
+          c.note_prezzo
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+        upgrade = this.catalogoPrezzi().upgrade
+          .filter(item =>
+            testoStorico.includes(
+              String(item.nome || '').toLowerCase()
+            )
+          )
+          .map(item => item.id);
+      }
+
+      this.selezionePrezzo = {
+        modalita: 'catalogo',
+        formula,
+        upgrade
+      };
+
+      this.nuovoClienteForm.pagine_extra =
+        cfg.pagine_extra != null
+          ? Number(cfg.pagine_extra) || 0
+          : Number(c.pagine_extra) || 0;
+
+      this.nuovoClienteForm.lingue_extra =
+        cfg.lingue_extra != null
+          ? Number(cfg.lingue_extra) || 0
+          : Number(c.lingue_extra) || 0;
     },
 
     passaAlCatalogoPrezzi() {

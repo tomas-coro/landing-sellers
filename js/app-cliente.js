@@ -564,6 +564,140 @@
             this.retryNuovoCliente = { fn: () => this.salvaCliente() };
             return;
           }
+
+          /*
+           * Gli upgrade non hanno colonne dedicate su clienti.
+           * In modalità catalogo vanno quindi salvati anche nello
+           * snapshot canonico della vendita attiva.
+           *
+           * La RPC aggiorna SOLO i dati descrittivi/commerciali:
+           * non modifica importo_vendita, pagamenti, quote o costi.
+           */
+          if (this.selezionePrezzo.modalita === 'catalogo') {
+            const configurazioneServizi = {
+              formula:
+                this.selezionePrezzo.formula,
+
+              periodicita_contratto:
+                this.selezionePrezzo.formula,
+
+              upgrade:
+                Array.isArray(
+                  this.selezionePrezzo.upgrade
+                )
+                  ? [...this.selezionePrezzo.upgrade]
+                  : [],
+
+              data_attivazione:
+                this.nuovoClienteForm.data_attivazione || null,
+
+              durata_contratto_anni:
+                Number(
+                  this.nuovoClienteForm
+                    .durata_contratto_anni
+                ) || 1,
+
+              sconto_tipo:
+                this.nuovoClienteForm.sconto_tipo || null,
+
+              sconto_valore:
+                Number(
+                  this.nuovoClienteForm.sconto_valore
+                ) || 0,
+
+              sconto_durata_anni:
+                this.nuovoClienteForm
+                  .sconto_durata_anni == null
+                  ? null
+                  : Number(
+                      this.nuovoClienteForm
+                        .sconto_durata_anni
+                    ),
+
+              pagine_extra:
+                Number(
+                  this.nuovoClienteForm.pagine_extra
+                ) || 0,
+
+              lingue_extra:
+                Number(
+                  this.nuovoClienteForm.lingue_extra
+                ) || 0,
+
+              cliente_ha_dominio:
+                this.nuovoClienteForm
+                  .cliente_ha_dominio !== false,
+
+              dominio_it:
+                this.nuovoClienteForm
+                  .cliente_ha_dominio === false
+                  ? Number(
+                      this.nuovoClienteForm.dominio_it
+                    ) || 0
+                  : 0,
+
+              dominio_com:
+                this.nuovoClienteForm
+                  .cliente_ha_dominio === false
+                  ? Number(
+                      this.nuovoClienteForm.dominio_com
+                    ) || 0
+                  : 0,
+
+              email_5_caselle:
+                this.nuovoClienteForm
+                  .cliente_ha_dominio === false
+                  ? Number(
+                      this.nuovoClienteForm
+                        .email_5_caselle
+                    ) || 0
+                  : 0,
+
+              pacchetto_sicurezza:
+                this.selezionePrezzo.formula ===
+                'mensile'
+                  ? Boolean(
+                      this.nuovoClienteForm
+                        .pacchetto_sicurezza
+                    )
+                  : false
+            };
+
+            const descrizioneServizi =
+              this.descrizioneConfigurazioneCommerciale(
+                configurazioneServizi,
+                this.nuovoClienteForm
+                  .nome_pacchetto || '',
+                false
+              );
+
+            const { error: serviziError } =
+              await window.supabaseClient.rpc(
+                'aggiorna_servizi_cliente',
+                {
+                  p_cliente_id:
+                    this.clienteInModificaId,
+
+                  p_configurazione:
+                    configurazioneServizi,
+
+                  p_descrizione:
+                    descrizioneServizi
+                }
+              );
+
+            if (serviziError) {
+              this.erroriNuovoCliente.generale =
+                'Cliente salvato, ma servizi non sincronizzati: ' +
+                serviziError.message;
+
+              this.retryNuovoCliente = {
+                fn: () => this.salvaCliente()
+              };
+
+              return;
+            }
+          }
         } else {
           const { data, error } = await window.supabaseClient
             .from('clienti')

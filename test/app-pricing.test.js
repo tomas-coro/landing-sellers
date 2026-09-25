@@ -1798,3 +1798,55 @@ test('v129 modifica servizi rilegge DB prima di aggiornare la UI', () => {
     /async salvaServiziCliente\(\)[\s\S]*rpc\([\s\S]*aggiorna_servizi_cliente[\s\S]*await this\.caricaClienti\(\)[\s\S]*await this\.caricaPagamentiCliente/
   );
 });
+
+test('modifica servizi rigenera la descrizione ignorando quella precedente', () => {
+  const migration = fs.readFileSync(
+    path.join(
+      __dirname,
+      '..',
+      'supabase',
+      'migrations',
+      '20260925171000_fix_service_description_sync.sql'
+    ),
+    'utf8'
+  );
+
+  assert.match(
+    migration,
+    /v_cfg_nuova\s*-\s*'descrizione_pacchetto'/
+  );
+
+  assert.match(
+    migration,
+    /configurazione_commerciale\s*=\s*v_cfg_nuova/
+  );
+
+  assert.match(
+    migration,
+    /servizio\s*=\s*v_descrizione/
+  );
+});
+
+test('modifica cliente salva gli upgrade nella vendita attiva tramite RPC', () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, '..', 'js', 'app-cliente.js'),
+    'utf8'
+  );
+
+  assert.match(
+    source,
+    /selezionePrezzo\.modalita === 'catalogo'[\s\S]*upgrade:[\s\S]*selezionePrezzo\.upgrade[\s\S]*aggiorna_servizi_cliente/
+  );
+});
+
+test('modifica cliente ripristina gli upgrade dallo snapshot della vendita attiva', () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, '..', 'js', 'app.js'),
+    'utf8'
+  );
+
+  assert.match(
+    source,
+    /ripristinaSelezionePrezzo\(c\)[\s\S]*pacchettoVenditaPerCliente[\s\S]*configurazioneCommerciale[\s\S]*cfg\.upgrade/
+  );
+});
