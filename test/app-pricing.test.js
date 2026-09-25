@@ -1850,3 +1850,63 @@ test('modifica cliente ripristina gli upgrade dallo snapshot della vendita attiv
     /ripristinaSelezionePrezzo\(c\)[\s\S]*pacchettoVenditaPerCliente[\s\S]*configurazioneCommerciale[\s\S]*cfg\.upgrade/
   );
 });
+
+test('editor servizi preserva quantità dominio ed email superiori a uno', () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, '..', 'js', 'app-cliente.js'),
+    'utf8'
+  );
+
+  assert.doesNotMatch(
+    source,
+    /numeroStorico\('dominio_it'\)\s*>\s*0\s*\?\s*1\s*:\s*0/
+  );
+
+  assert.doesNotMatch(
+    source,
+    /numeroStorico\('dominio_com'\)\s*>\s*0\s*\?\s*1\s*:\s*0/
+  );
+
+  assert.doesNotMatch(
+    source,
+    /numeroStorico\('email_5_caselle'\)\s*>\s*0\s*\?\s*1\s*:\s*0/
+  );
+
+  assert.match(
+    source,
+    /Math\.min\(10,\s*numeroStorico\('dominio_it'\)\)/
+  );
+
+  assert.match(
+    source,
+    /Math\.min\(10,\s*numeroStorico\('email_5_caselle'\)\)/
+  );
+});
+
+test('modifica pagamento usa la configurazione consolidata della vendita', () => {
+  const migration = fs.readFileSync(
+    path.join(
+      __dirname,
+      '..',
+      'supabase',
+      'migrations',
+      '20260925183000_allinea_modifica_pagamento_consolidato.sql'
+    ),
+    'utf8'
+  );
+
+  assert.match(
+    migration,
+    /vp\.modalita_fatturazione/
+  );
+
+  assert.match(
+    migration,
+    /vp\.quota_override/
+  );
+
+  assert.match(
+    migration,
+    /Partecipante non coerente con la configurazione consolidata della vendita/
+  );
+});
