@@ -731,6 +731,234 @@ test('il venduto annualizza i mensili ma non moltiplica per gli anni di contratt
   assert.strictEqual(valoreContrattoVendita({ cliente_id: 'biennale' }, clienti), 750);
 });
 
+
+
+test('un contratto pluriennale usa il totale vendita per la percentuale incassata', () => {
+  const stato = appState();
+
+  stato.pacchettoVenditaPerCliente = {
+    c1: {
+      venditaId: 'v1',
+      importoVendita: 1500,
+      periodicitaContratto: 'annuale',
+      durataContrattoAnni: 2,
+      dataVendita: '2026-09-25'
+    }
+  };
+
+  stato.riepilogoPagamentiPerCliente = {
+    c1: {
+      numeroVendite: 1,
+      totaleVendite: 1500,
+      incassato: 750,
+      rateIncassate: 1,
+      ratePreviste: 1,
+      percentualeIncassata: 50
+    }
+  };
+
+  const cliente = {
+    id: 'c1',
+    nome: 'Contratto biennale'
+  };
+
+  assert.equal(
+    stato.riepilogoContrattoCliente(cliente).valoreAnnuale,
+    750
+  );
+
+  assert.equal(
+    stato.riepilogoPagamentoListaCliente(cliente).totaleVendite,
+    1500
+  );
+
+  assert.equal(
+    stato.riepilogoPagamentoListaCliente(cliente).percentualeIncassata,
+    50
+  );
+
+  const summary =
+    stato.schedaClienteCompleta(cliente);
+
+  assert.equal(summary.valoreAnnuale, 750);
+  assert.equal(summary.totalePagamento, 1500);
+  assert.equal(summary.incassato, 750);
+  assert.equal(summary.percentualeIncassata, 50);
+});
+
+test('schedaClienteCompleta normalizza sempre gli stessi campi', () => {
+  const stato = appState();
+
+  stato.pacchettoVenditaPerCliente = {
+    c1: {
+      venditaId: 'v1',
+      nomePacchetto: 'Start annuale',
+      importoVendita: 540,
+      periodicitaContratto: 'annuale',
+      durataContrattoAnni: 1,
+      dataVendita: '2026-09-25'
+    }
+  };
+
+  stato.riepilogoPagamentiPerCliente = {
+    c1: {
+      numeroVendite: 1,
+      totaleVendite: 540,
+      incassato: 270,
+      rateIncassate: 1,
+      ratePreviste: 0,
+      percentualeIncassata: 50
+    }
+  };
+
+  const summary =
+    stato.schedaClienteCompleta({
+      id: 'c1',
+      nome: 'Spazio52',
+      stato: 'vinto',
+      prossimo_contatto: null
+    });
+
+  assert.equal(summary.nome, 'Spazio52');
+  assert.equal(summary.pacchetto, 'Start annuale');
+  assert.equal(summary.valoreAnnuale, 540);
+  assert.equal(summary.durataContrattoLabel, '1 anno');
+  assert.equal(summary.periodicitaContrattoLabel, 'Annuale');
+  assert.equal(summary.incassato, 270);
+  assert.equal(summary.totalePagamento, 540);
+  assert.equal(summary.percentualeIncassata, 50);
+
+  assert.ok(
+    Object.hasOwn(summary, 'prossimaScadenzaLabel')
+  );
+
+  assert.ok(
+    Object.hasOwn(summary, 'prossimaScadenzaDataLabel')
+  );
+});
+
+test('schedaClienteCompleta usa fallback grafici standard senza inventare dati', () => {
+  const stato = appState();
+
+  const summary =
+    stato.schedaClienteCompleta({
+      id: 'legacy-vuoto',
+      nome: 'Legacy',
+      stato: 'contattato'
+    });
+
+  assert.equal(summary.nome, 'Legacy');
+  assert.equal(
+    summary.pacchetto,
+    'Pacchetto non specificato'
+  );
+  assert.equal(summary.valoreAnnualeLabel, '-');
+  assert.equal(summary.durataContrattoLabel, '-');
+  assert.equal(
+    summary.periodicitaContrattoLabel,
+    'Non indicata'
+  );
+  assert.equal(
+    summary.prossimaScadenzaLabel,
+    'Nessuna'
+  );
+  assert.equal(
+    summary.prossimaScadenzaDataLabel,
+    'Nessuna scadenza'
+  );
+  assert.equal(
+    summary.percentualeIncassataLabel,
+    'Importo non indicato'
+  );
+});
+
+test('schedaClienteCompleta usa automaticamente rata prima del rinnovo', () => {
+  const stato = appState();
+
+  stato.pacchettoVenditaPerCliente = {
+    c1: {
+      importoVendita: 540,
+      periodicitaContratto: 'annuale',
+      durataContrattoAnni: 1,
+      dataVendita: '2026-09-25'
+    }
+  };
+
+  stato.scadenzePagamentoPerCliente = {
+    c1: [{
+      id: 'r1',
+      tipo: 'rata',
+      label: 'Rata',
+      data: '2027-02-15',
+      importo: 270
+    }]
+  };
+
+  const originale = stato.dataISOOggi;
+  stato.dataISOOggi = () => '2026-09-25';
+
+  const summary =
+    stato.schedaClienteCompleta({
+      id: 'c1',
+      nome: 'Cliente',
+      data_rinnovo: null,
+      prossimo_contatto: null
+    });
+
+  stato.dataISOOggi = originale;
+
+  assert.match(
+    summary.prossimaScadenzaLabel,
+    /^Rata/
+  );
+
+  assert.equal(
+    summary.prossimaScadenza.data,
+    '2027-02-15'
+  );
+});
+
+test('la pagina Clienti usa solo la scheda cliente normalizzata per i dati principali', () => {
+  const html = require('fs').readFileSync(
+    require('path').join(
+      __dirname,
+      '..',
+      'index.html'
+    ),
+    'utf8'
+  );
+
+  assert.match(
+    html,
+    /schedaClienteCompleta\(cliente\)\.pacchetto/
+  );
+
+  assert.match(
+    html,
+    /schedaClienteCompleta\(cliente\)\.valoreAnnualeLabel/
+  );
+
+  assert.match(
+    html,
+    /schedaClienteCompleta\(cliente\)\.durataContrattoLabel/
+  );
+
+  assert.match(
+    html,
+    /schedaClienteCompleta\(cliente\)\.periodicitaContrattoLabel/
+  );
+
+  assert.match(
+    html,
+    /schedaClienteCompleta\(cliente\)\.prossimaScadenzaLabel/
+  );
+
+  assert.match(
+    html,
+    /schedaClienteCompleta\(cliente\)\.totalePagamento/
+  );
+});
+
 test('la card cliente mostra sempre il valore annuale, anche senza vendita economica', () => {
   const stato = appState();
   const cliente = {
