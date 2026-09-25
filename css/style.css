@@ -15619,16 +15619,25 @@ html[data-theme="dark"]{
   font-size:14.5px;color:var(--muted);border:1px dashed var(--line);
 }
 
-/* ---- Trend come tabella (sostituisce lo SVG a linee: niente etichette che
-   si sovrappongono, lettura diretta mese/valore) ---- */
-.metrics-trend-table{margin-top:10px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
-.metrics-trend-table-row{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:11px 14px;font-size:14.5px;
+/* ---- Grafico a barre mensile: sostituisce linea+pallini nel trend Home
+   e nella vista "Il tuo incassato" - ogni mese ha uno slot a larghezza
+   fissa, quindi etichette e valori non si accavallano mai. ---- */
+.metrics-bar{cursor:pointer;transition:opacity .15s}
+.metrics-bar:hover{opacity:.82}
+.metrics-bar-value{font-size:23px;font-weight:800;font-family:var(--sans);fill:var(--ink)}
+.metrics-bar-label{font-size:21px;font-weight:700;font-family:var(--sans);fill:var(--ink-soft)}
+.metrics-bar-value.metrics-bar-dark{fill:#f2f2f2}
+.metrics-bar-label.metrics-bar-dark{fill:#a8a8a8}
+
+/* Totale nell'intestazione del grafico (vista "Il tuo incassato") */
+.metrics-trend-total{text-align:right}
+.metrics-trend-total span{
+  display:block;font-size:12px;font-weight:800;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted);
 }
-.metrics-trend-table-row:not(:last-child){border-bottom:1px solid var(--line)}
-.metrics-trend-table-row span{color:var(--ink-soft);font-weight:700}
-.metrics-trend-table-row strong{font-variant-numeric:tabular-nums;font-size:15px;color:var(--ink)}
+.metrics-trend-total strong{
+  display:block;margin-top:3px;font-size:19px;font-variant-numeric:tabular-nums;color:var(--ink);
+}
 
 /* ---- Trend admin: card normale a token, tra overview e classifica ---- */
 .metrics-trend-admin{
@@ -15656,11 +15665,6 @@ html[data-theme="dark"]{
 .metrics-trend-venditore .metrics-trend-dot{fill:var(--lime);stroke:#1d201c}
 .metrics-tooltip-dark{fill:#fff}
 .metrics-trend-venditore .metrics-trend-empty{background:#1e1e1e;border-color:#3a3a3a;color:#9b9b9b}
-.metrics-trend-venditore .metrics-trend-table{border-color:#363636}
-.metrics-trend-venditore .metrics-trend-table-row{border-color:#363636}
-.metrics-trend-venditore .metrics-trend-table-row span{color:#a8a8a8}
-.metrics-trend-venditore .metrics-trend-table-row strong{color:#f2f2f2}
-.metrics-trend-venditore .metrics-trend-table-row:first-child strong{color:var(--lime)}
 
 @media (prefers-reduced-motion: reduce){
   .metrics-funnel-fill{transition:none}

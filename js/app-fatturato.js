@@ -253,6 +253,15 @@
       return this.disegnaMarkupTrendFatturato(serie, 'fatturatoHoverAzienda');
     },
 
+    // Grafico a barre della vista "Il tuo incassato" (tile Home): stesso
+    // generatore condiviso del trend Home (this.disegnaMarkupBarreMensili,
+    // definito in app.js), niente lista di 12 righe.
+    incassatoMarkupMensile() {
+      return this.disegnaMarkupBarreMensili(this.fatturatoGuadagniMensile(), 'incassatoHoverMensile', {
+        colore: 'var(--lime-deep)'
+      });
+    },
+
     fatturatoMarkupGuadagni() {
       const punti = this.fatturatoGuadagniMensile();
       if (!punti.some(p => p.valore > 0)) return '';

@@ -474,13 +474,8 @@
                   <div class="metrics-trend-empty" x-show="!trendDatiVenditore.some(p => p.valore > 0)">
                     <span x-text="'Nessuna vendita registrata negli ultimi ' + trendRangeVenditore + ' mesi.'"></span>
                   </div>
-                  <div class="metrics-trend-table" x-show="trendDatiVenditore.some(p => p.valore > 0)">
-                    <template x-for="p in [...trendVisibile(trendDatiVenditore, trendRangeVenditore)].reverse()" :key="'trend-home-' + p.chiave">
-                      <div class="metrics-trend-table-row">
-                        <span x-text="p.label + ' ' + p.chiave.slice(0, 4)"></span>
-                        <strong x-text="formattaEuro(p.valore)"></strong>
-                      </div>
-                    </template>
+                  <div class="metrics-chart-area" x-show="trendDatiVenditore.some(p => p.valore > 0)">
+                    <svg viewBox="0 0 640 248" preserveAspectRatio="xMidYMid meet" x-html="trendMarkupVenditore()"></svg>
                   </div>
                 </div>
               </template>
@@ -6213,20 +6208,15 @@
           </template>
         </div>
 
-        <section class="admin-overview-card" style="margin-top:14px">
-          <div class="admin-overview-top">
-            <div>
-              <span x-text="'Incassato · ' + fatturatoAnno"></span>
-              <strong x-text="formattaEuro(fatturatoTotaleAnno(fatturatoGuadagniRighe))"></strong>
-            </div>
-          </div>
-        </section>
-
-        <section class="admin-ranking" style="margin-top:14px">
-          <div class="admin-section-heading">
+        <section class="metrics-trend metrics-trend-admin" style="margin-top:14px">
+          <div class="metrics-trend-head">
             <div>
               <span x-text="'ANNO ' + fatturatoAnno"></span>
               <strong>Incassato per mese</strong>
+            </div>
+            <div class="metrics-trend-total">
+              <span>Totale anno</span>
+              <strong x-text="formattaEuro(fatturatoTotaleAnno(fatturatoGuadagniRighe))"></strong>
             </div>
           </div>
 
@@ -6234,13 +6224,8 @@
             <span x-text="'Nessun incasso a tuo nome registrato nel ' + fatturatoAnno + '.'"></span>
           </div>
 
-          <div class="admin-ranking-list admin-ranking-list-flat" x-show="fatturatoGuadagniMensile().some(p => p.valore > 0)">
-            <template x-for="p in fatturatoGuadagniMensile()" :key="'incassato-mese-' + p.chiave">
-              <div class="admin-ranking-list-row">
-                <span class="admin-ranking-name"><strong x-text="p.label"></strong></span>
-                <strong class="admin-ranking-total" x-text="formattaEuro(p.valore)"></strong>
-              </div>
-            </template>
+          <div class="metrics-chart-area" x-show="fatturatoGuadagniMensile().some(p => p.valore > 0)">
+            <svg viewBox="0 0 640 248" preserveAspectRatio="xMidYMid meet" x-html="incassatoMarkupMensile()"></svg>
           </div>
         </section>
 

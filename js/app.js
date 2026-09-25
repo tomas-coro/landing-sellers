@@ -658,6 +658,7 @@ function appState() {
     fatturatoBreakdownRighe: [], // admin: [{ profiloId, nome, data, valore }] - guadagni per persona
     fatturatoGuadagniRighe: [],  // utente corrente: [{ data, valore }]
     fatturatoHover: null,
+    incassatoHoverMensile: null, // indice barra evidenziata nel grafico "Il tuo incassato"
 
     ricercaGlobale: '',
     indiceNoteRicerca: [],
@@ -3269,6 +3270,73 @@ costiPerMotoreRataEconomia(
         .map(p => ({ x: p.x, text: p.label, numero: p.numero }));
     },
 
+    // ===== Grafico a barre mensile: condiviso tra il trend Home venditore
+    // e la vista "Il tuo incassato". A differenza di linea+pallini ogni
+    // mese occupa uno slot di larghezza fissa, quindi etichette e valori
+    // non si accavallano mai anche con i font ingranditi in questa app
+    // (era proprio quello il problema della linea con 12 punti ravvicinati).
+    barrePuntiMensili(punti) {
+      const w = 640, h = 248, padTop = 46, padBottom = 46, padSide = 16;
+      const area = h - padTop - padBottom;
+      const baseline = h - padBottom;
+      const n = Math.max(1, punti.length);
+      const slotW = (w - padSide * 2) / n;
+      const barW = Math.min(slotW * 0.56, 36);
+      const maxVal = Math.max(1, ...punti.map(p => p.valore));
+
+      return punti.map((p, i) => {
+        const altezza = p.valore > 0 ? Math.max(3, (p.valore / maxVal) * area) : 0;
+        const x = padSide + i * slotW + (slotW - barW) / 2;
+        return {
+          x, w: barW, y: baseline - altezza, h: altezza, cx: x + barW / 2, baseline,
+          valore: p.valore, label: p.label, chiave: p.chiave, numero: p.numero || 0
+        };
+      });
+    },
+
+    barreEtichetteVisibili(punti) {
+      const passo = punti.length > 8 ? 2 : 1;
+      return new Set(
+        punti.filter((_, i) => i % passo === 0 || i === punti.length - 1).map(p => p.chiave)
+      );
+    },
+
+    disegnaMarkupBarreMensili(punti, statoHoverProp, opzioni = {}) {
+      if (!punti.some(p => p.valore > 0)) return '';
+
+      const barre = this.barrePuntiMensili(punti);
+      const etichetteVisibili = this.barreEtichetteVisibili(punti);
+      const dark = opzioni.dark ? ' metrics-bar-dark' : '';
+      const gridClass = opzioni.dark ? ' metrics-grid-line-dark' : '';
+      const colore = opzioni.colore || 'var(--lime-deep)';
+      let svg = `<line class="metrics-grid-line${gridClass}" x1="16" y1="${barre[0].baseline}" x2="624" y2="${barre[0].baseline}"></line>`;
+
+      barre.forEach((b, i) => {
+        svg += `<rect class="metrics-bar${dark}" x="${b.x.toFixed(1)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(1)}" height="${Math.max(b.h, 1).toFixed(1)}" rx="5" style="fill:${colore}"
+          onmouseenter="Alpine.$data(document.getElementById('app')).${statoHoverProp}=${i}"
+          onmouseleave="Alpine.$data(document.getElementById('app')).${statoHoverProp}=null"
+          onclick="const __d=Alpine.$data(document.getElementById('app'));__d.${statoHoverProp}=(__d.${statoHoverProp}===${i}?null:${i})"></rect>`;
+
+        if (b.valore > 0) {
+          svg += `<text class="metrics-bar-value${dark}" x="${b.cx.toFixed(1)}" y="${Math.max(20, b.y - 10).toFixed(1)}" text-anchor="middle">${this.formattaEuroCompatto(b.valore)}</text>`;
+        }
+        if (etichetteVisibili.has(b.chiave)) {
+          svg += `<text class="metrics-bar-label${dark}" x="${b.cx.toFixed(1)}" y="${(b.baseline + 26).toFixed(1)}" text-anchor="middle">${b.label}</text>`;
+        }
+      });
+
+      const hoverIndex = this[statoHoverProp];
+      if (Number.isInteger(hoverIndex) && barre[hoverIndex]) {
+        const b = barre[hoverIndex];
+        const x = Math.max(60, Math.min(580, b.cx));
+        const y = Math.max(20, b.y - 26);
+        const dettaglio = b.numero ? (' · ' + b.numero + ' sit' + (b.numero === 1 ? 'o' : 'i')) : '';
+        svg += `<text class="metrics-tooltip${dark}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle">${b.label} · ${formattaEuro(b.valore)}${dettaglio}</text>`;
+      }
+
+      return svg;
+    },
+
     // ===== Rendering SVG dei due grafici trend =====
     // Alpine x-for/x-if con <template> DENTRO <svg> non funziona (verificato:
     // il parser HTML non popola .content sul <template> in contesto SVG
@@ -3287,42 +3355,10 @@ costiPerMotoreRataEconomia(
 
     trendMarkupVenditore() {
       const punti = this.trendVisibile(this.trendDatiVenditore, this.trendRangeVenditore);
-      if (!punti.some(p => p.valore > 0)) return '';
-
-      const pts = this.trendPuntiSerie(punti);
-      let svg = '';
-
-      this.trendGridLineY().forEach(y => {
-        svg += `<line class="metrics-grid-line metrics-grid-line-dark" x1="28" y1="${y}" x2="632" y2="${y}"></line>`;
+      return this.disegnaMarkupBarreMensili(punti, 'trendHoverVenditore', {
+        dark: true,
+        colore: 'var(--lime)'
       });
-      this.trendEtichetteAsse(punti).forEach(a => {
-        svg += `<text class="metrics-axis-label metrics-axis-label-dark" x="${a.x}" y="196" text-anchor="middle">${a.text}</text>`;
-        svg += `<text class="metrics-count-label metrics-count-label-dark" x="${a.x}" y="234" text-anchor="middle">${a.numero} sit${a.numero === 1 ? 'o' : 'i'}</text>`;
-      });
-
-      svg += `<path class="metrics-trend-area" d="${this.trendPathArea(punti)}"></path>`;
-      svg += `<path class="metrics-trend-line" d="${this.trendPathLinea(punti)}"></path>`;
-
-      pts.forEach(p => {
-        if (!p.valore) return;
-        svg += `<text class="metrics-point-label metrics-point-label-dark" x="${p.x}" y="${Math.max(28, p.y - 22)}" text-anchor="middle">${this.formattaEuroCompatto(p.valore)}</text>`;
-      });
-
-      pts.forEach((p, i) => {
-        svg += `<circle class="metrics-trend-dot" cx="${p.x}" cy="${p.y}" r="4"
-          onmouseenter="Alpine.$data(document.getElementById('app')).trendHoverVenditore=${i}"
-          onmouseleave="Alpine.$data(document.getElementById('app')).trendHoverVenditore=null"
-          onclick="const __d=Alpine.$data(document.getElementById('app'));__d.trendHoverVenditore=(__d.trendHoverVenditore===${i}?null:${i})"></circle>`;
-      });
-
-      if (this.trendHoverVenditore !== null && pts[this.trendHoverVenditore]) {
-        const p = pts[this.trendHoverVenditore];
-        const x = Math.max(50, Math.min(590, p.x));
-        const y = Math.max(28, p.y - 24);
-        svg += `<text class="metrics-tooltip metrics-tooltip-dark" x="${x}" y="${y}" text-anchor="middle">${p.label} · ${formattaEuro(p.valore)} · ${p.numero} sit${p.numero === 1 ? 'o' : 'i'}</text>`;
-      }
-
-      return svg;
     },
 
     trendMarkupAdmin() {
