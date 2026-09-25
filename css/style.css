@@ -1012,8 +1012,9 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 .home-client-main{display:grid;gap:1px;min-width:0}
 .home-client-main>strong{font-size:17px}
 .home-client-main>small{font-size:14px;color:var(--muted);font-weight:650}
-.home-client-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding-top:8px;font-size:14px;color:var(--muted);font-weight:700}
-.home-client-meta strong{color:var(--ink)}
+.home-client-meta{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:9px}
+.home-client-value-label{font-size:11px;line-height:1.2;color:var(--muted);font-weight:800;letter-spacing:.055em}
+.home-client-meta strong{color:var(--ink);font-size:16px;line-height:1.15;font-weight:850;text-align:right}
 
 /* Badge stato ("Convertito", ecc.) piu' compatto solo qui: nella card
    cliente compete con tanti altri dati sulla stessa riga, mentre nella

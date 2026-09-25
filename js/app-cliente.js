@@ -351,29 +351,48 @@
 
       return this.clienti
         .filter(c => {
-          if (!c.data_rinnovo) return false;
-          const data = Date.parse(`${c.data_rinnovo}T00:00:00Z`);
-          const diff = Math.ceil((data - oggiUTC) / 86400000);
+          const rinnovo =
+            typeof this.rinnovoCalcolatoCliente === 'function'
+              ? this.rinnovoCalcolatoCliente(c)
+              : c.data_rinnovo;
+
+          if (!rinnovo) return false;
+
+          const data = Date.parse(`${rinnovo}T00:00:00Z`);
+          const diff = Math.ceil(
+            (data - oggiUTC) / 86400000
+          );
+
           return diff >= 0 && diff <= giorni;
         })
-        .sort((a, b) => (a.data_rinnovo || '').localeCompare(b.data_rinnovo || ''));
+        .sort((a, b) => {
+          const dataA =
+            this.rinnovoCalcolatoCliente?.(a) ||
+            a.data_rinnovo ||
+            '';
+
+          const dataB =
+            this.rinnovoCalcolatoCliente?.(b) ||
+            b.data_rinnovo ||
+            '';
+
+          return dataA.localeCompare(dataB);
+        });
     },
 
     etichettaImportoCliente(cliente) {
-      if (cliente.importo_abbonamento == null) return '-';
+      const contratto =
+        typeof this.riepilogoContrattoCliente === 'function'
+          ? this.riepilogoContrattoCliente(cliente)
+          : null;
 
-      const importo = this.formattaNumeroEuro(cliente.importo_abbonamento);
-      const durata = Number(cliente.durata_contratto_anni) || 0;
+      const annuale =
+        Number(contratto?.valoreAnnuale) ||
+        valoreAnnualeCliente(cliente);
 
-      if (cliente.periodicita_contratto === 'mensile') return `${importo}/mese`;
-      if (cliente.periodicita_contratto === 'annuale') return `${importo}/anno`;
+      if (!(annuale > 0)) return '-';
 
-      // Contratti legacy/custom senza periodicità esplicita:
-      // se la durata è nota, mostra il valore sull'intero periodo.
-      if (durata > 1) return `${importo}/${durata} anni`;
-      if (durata === 1) return `${importo}/anno`;
-
-      return importo;
+      return `${this.formattaNumeroEuro(annuale)}/anno`;
     },
 
     // --- form cliente: nuovo + modifica condividono la stessa vista ---

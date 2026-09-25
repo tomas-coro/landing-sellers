@@ -689,7 +689,12 @@
             </div>
 
             <div class="home-client-meta">
-              <span x-text="etichettaImportoCliente(cliente)"></span>
+              <span class="home-client-value-label">
+                VALORE ANNUALE
+              </span>
+              <strong
+                x-text="etichettaImportoCliente(cliente)">
+              </strong>
             </div>
 
             <div class="client-status-strip">
@@ -6291,7 +6296,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=123', {
+      navigator.serviceWorker.register('./service-worker.js?v=124', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

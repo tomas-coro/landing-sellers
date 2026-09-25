@@ -205,6 +205,206 @@ test('inquadratura e zoom avatar vengono salvati nell’URL e riletti', () => {
   assert.match(stato.avatarPersonaleStile(), /object-position:25% 80%/);
 });
 
+
+test('la Home usa la vendita attiva per valore annuale e durata contratto', () => {
+  const stato = appState();
+
+  stato.pacchettoVenditaPerCliente = {
+    c1: {
+      venditaId: 'v1',
+      nomePacchetto: 'Start annuale',
+      importoVendita: 540,
+      periodicitaContratto: 'annuale',
+      durataContrattoAnni: 1,
+      dataVendita: '2026-09-25'
+    }
+  };
+
+  const cliente = {
+    id: 'c1',
+    nome: 'Spazio52',
+    importo_abbonamento: 0,
+    periodicita_contratto: null,
+    durata_contratto_anni: null
+  };
+
+  assert.equal(
+    stato.riepilogoContrattoCliente(cliente).valoreAnnuale,
+    540
+  );
+
+  assert.equal(
+    stato.etichettaImportoCliente(cliente),
+    new Intl.NumberFormat('it-IT', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(540) + '/anno'
+  );
+
+  assert.equal(
+    stato.etichettaDurataContrattoCliente(cliente),
+    '1 anno'
+  );
+
+  assert.equal(
+    stato.etichettaPeriodicitaContrattoCliente(cliente),
+    'Annuale'
+  );
+});
+
+test('un contratto pluriennale mostra il valore medio annuale senza usare il catalogo corrente', () => {
+  const stato = appState();
+
+  stato.pacchettoVenditaPerCliente = {
+    c1: {
+      venditaId: 'v1',
+      importoVendita: 1500,
+      periodicitaContratto: 'annuale',
+      durataContrattoAnni: 2,
+      dataVendita: '2026-09-25'
+    }
+  };
+
+  const cliente = {
+    id: 'c1',
+    importo_abbonamento: null
+  };
+
+  assert.equal(
+    stato.riepilogoContrattoCliente(cliente).valoreAnnuale,
+    750
+  );
+
+  assert.equal(
+    stato.etichettaDurataContrattoCliente(cliente),
+    '2 anni'
+  );
+});
+
+test('la Home deriva automaticamente il rinnovo annuale dalla data vendita', () => {
+  const stato = appState();
+
+  stato.pacchettoVenditaPerCliente = {
+    c1: {
+      venditaId: 'v1',
+      importoVendita: 540,
+      periodicitaContratto: 'annuale',
+      durataContrattoAnni: 1,
+      dataVendita: '2026-09-25'
+    }
+  };
+
+  const cliente = {
+    id: 'c1',
+    data_rinnovo: null,
+    data_attivazione: null
+  };
+
+  assert.equal(
+    stato.rinnovoCalcolatoCliente(
+      cliente,
+      '2026-09-25'
+    ),
+    '2027-09-25'
+  );
+});
+
+test('una scadenza rinnovo esplicita resta prioritaria sul calcolo automatico', () => {
+  const stato = appState();
+
+  stato.pacchettoVenditaPerCliente = {
+    c1: {
+      periodicitaContratto: 'annuale',
+      durataContrattoAnni: 1,
+      dataVendita: '2026-09-25'
+    }
+  };
+
+  const cliente = {
+    id: 'c1',
+    data_rinnovo: '2027-10-10'
+  };
+
+  assert.equal(
+    stato.rinnovoCalcolatoCliente(
+      cliente,
+      '2026-09-25'
+    ),
+    '2027-10-10'
+  );
+});
+
+test('una rata precedente al rinnovo resta la prossima scadenza della card', () => {
+  const stato = appState();
+
+  stato.pacchettoVenditaPerCliente = {
+    c1: {
+      periodicitaContratto: 'annuale',
+      durataContrattoAnni: 1,
+      dataVendita: '2026-09-25'
+    }
+  };
+
+  stato.scadenzePagamentoPerCliente = {
+    c1: [{
+      id: 'p1',
+      tipo: 'rata',
+      label: 'Rata',
+      data: '2027-02-15',
+      importo: 270
+    }]
+  };
+
+  const cliente = {
+    id: 'c1',
+    data_rinnovo: null,
+    prossimo_contatto: null
+  };
+
+  const scadenza =
+    stato.prossimaScadenzaCliente(
+      cliente,
+      '2026-09-25'
+    );
+
+  assert.equal(scadenza.tipo, 'rata');
+  assert.equal(scadenza.data, '2027-02-15');
+  assert.equal(scadenza.importo, 270);
+});
+
+test('i clienti legacy continuano a usare i dati storici senza ricalcolo dal catalogo', () => {
+  const stato = appState();
+
+  const cliente = {
+    id: 'legacy',
+    importo_abbonamento: 35,
+    periodicita_contratto: 'mensile',
+    durata_contratto_anni: 1,
+    data_rinnovo: '2026-12-01'
+  };
+
+  assert.equal(
+    stato.riepilogoContrattoCliente(cliente).valoreAnnuale,
+    420
+  );
+
+  assert.equal(
+    stato.etichettaImportoCliente(cliente),
+    new Intl.NumberFormat('it-IT', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(420) + '/anno'
+  );
+
+  assert.equal(
+    stato.rinnovoCalcolatoCliente(
+      cliente,
+      '2026-09-25'
+    ),
+    '2026-12-01'
+  );
+});
+
 test('il calendario admin riunisce le scadenze di tutti i venditori', () => {
   const stato = appState();
   stato.isAdmin = true;

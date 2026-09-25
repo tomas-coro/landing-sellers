@@ -2455,7 +2455,7 @@ costiPerMotoreRataEconomia(
 
       const { data: vendite, error: venditeError } = await window.supabaseClient
         .from('vendite')
-        .select('id,cliente_id,importo_vendita,servizio,configurazione_commerciale')
+        .select('id,cliente_id,importo_vendita,servizio,configurazione_commerciale,data_vendita,creato_il')
         .in('cliente_id', clienteIds)
         .eq('stato', 'attiva');
 
@@ -2479,11 +2479,22 @@ costiPerMotoreRataEconomia(
         (vendite || []).map(vendita => [
           vendita.cliente_id,
           {
+            venditaId: vendita.id,
             nomePacchetto: (vendita.servizio || '').trim() || null,
+            importoVendita: Number(vendita.importo_vendita) || 0,
             periodicitaContratto:
               vendita.configurazione_commerciale?.periodicita_contratto ||
               vendita.configurazione_commerciale?.formula ||
-              null
+              null,
+            durataContrattoAnni:
+              Number(
+                vendita.configurazione_commerciale
+                  ?.durata_contratto_anni
+              ) || null,
+            dataVendita:
+              this.normalizzaDataAgenda(
+                vendita.data_vendita || vendita.creato_il
+              )
           }
         ])
       );
@@ -2594,6 +2605,93 @@ costiPerMotoreRataEconomia(
       this.riepilogoPagamentiPerCliente = riepiloghi;
     },
 
+    riepilogoContrattoCliente(cliente) {
+      const vendita =
+        this.pacchettoVenditaPerCliente[cliente?.id] || null;
+
+      const durataVendita =
+        Number(vendita?.durataContrattoAnni) || 0;
+
+      const durataCliente =
+        Number(cliente?.durata_contratto_anni) || 0;
+
+      const durataContrattoAnni =
+        durataVendita > 0
+          ? durataVendita
+          : durataCliente > 0
+            ? durataCliente
+            : null;
+
+      const periodicitaContratto =
+        vendita?.periodicitaContratto ||
+        cliente?.periodicita_contratto ||
+        null;
+
+      const importoVendita =
+        Number(vendita?.importoVendita) || 0;
+
+      /*
+       * Le vendite nuove salvano l'importo complessivo del contratto.
+       * Per la Home mostriamo il valore annuale medio del contratto,
+       * senza ricostruirlo dal catalogo prezzi corrente.
+       */
+      const valoreAnnuale =
+        importoVendita > 0
+          ? importoVendita /
+            Math.max(1, durataContrattoAnni || 1)
+          : valoreAnnualeCliente(cliente);
+
+      return {
+        venditaId: vendita?.venditaId || null,
+        valoreAnnuale,
+        periodicitaContratto,
+        durataContrattoAnni,
+        dataVendita:
+          vendita?.dataVendita ||
+          this.normalizzaDataAgenda(cliente?.data_attivazione) ||
+          this.normalizzaDataAgenda(cliente?.creato_il)
+      };
+    },
+
+    rinnovoCalcolatoCliente(
+      cliente,
+      oggiIso = this.dataISOOggi()
+    ) {
+      const esplicito =
+        this.normalizzaDataAgenda(cliente?.data_rinnovo);
+
+      /*
+       * Una scadenza salvata esplicitamente resta prioritaria:
+       * preserva storico e compatibilità legacy.
+       */
+      if (esplicito) return esplicito;
+
+      const contratto =
+        this.riepilogoContrattoCliente(cliente);
+
+      const periodicita =
+        contratto.periodicitaContratto;
+
+      if (
+        !['mensile', 'annuale'].includes(periodicita)
+      ) {
+        return null;
+      }
+
+      const dataBase =
+        this.normalizzaDataAgenda(cliente?.data_attivazione) ||
+        contratto.dataVendita ||
+        this.normalizzaDataAgenda(cliente?.creato_il);
+
+      if (!dataBase) return null;
+
+      return this.calcolaProssimoRinnovo(
+        dataBase,
+        periodicita,
+        oggiIso
+      );
+    },
+
     riepilogoPagamentoListaCliente(cliente) {
       const riepilogo = this.riepilogoPagamentiPerCliente[cliente?.id] || {
         numeroVendite: 0,
@@ -2603,8 +2701,11 @@ costiPerMotoreRataEconomia(
         ratePreviste: 0,
         percentualeIncassata: 0
       };
-      const totaleAnnuale = valoreAnnualeCliente(cliente);
-      const totaleVendite = totaleAnnuale || riepilogo.totaleVendite;
+      const totaleAnnuale =
+        this.riepilogoContrattoCliente(cliente).valoreAnnuale;
+
+      const totaleVendite =
+        totaleAnnuale || riepilogo.totaleVendite;
 
       return {
         ...riepilogo,
@@ -2616,7 +2717,11 @@ costiPerMotoreRataEconomia(
     },
 
     etichettaDurataContrattoCliente(cliente) {
-      const durata = Number(cliente?.durata_contratto_anni);
+      const durata =
+        Number(
+          this.riepilogoContrattoCliente(cliente)
+            .durataContrattoAnni
+        );
 
       if (!(durata > 0)) return '-';
 
@@ -2626,8 +2731,9 @@ costiPerMotoreRataEconomia(
     },
 
     etichettaPeriodicitaContrattoCliente(cliente) {
-      const periodicita = cliente?.periodicita_contratto ||
-        this.pacchettoVenditaPerCliente[cliente?.id]?.periodicitaContratto;
+      const periodicita =
+        this.riepilogoContrattoCliente(cliente)
+          .periodicitaContratto;
 
       if (periodicita === 'mensile') {
         return 'Mensile';
@@ -2663,13 +2769,16 @@ costiPerMotoreRataEconomia(
       return scadenza.label || 'Scadenza';
     },
 
-    prossimaScadenzaCliente(cliente) {
+    prossimaScadenzaCliente(
+      cliente,
+      oggiIso = this.dataISOOggi()
+    ) {
       if (!cliente?.id) return null;
 
       const scadenze = [];
 
       const rinnovo =
-        this.normalizzaDataAgenda(cliente.data_rinnovo);
+        this.rinnovoCalcolatoCliente(cliente, oggiIso);
 
       if (rinnovo) {
         scadenze.push({
@@ -3877,15 +3986,39 @@ costiPerMotoreRataEconomia(
     riepilogoSetupPrezzo() { return this.selezionePrezzo.formula==='annuale'?'Setup incluso':'Setup: 150 € una tantum'; },
     riepilogoUpgradePrezzo() { const m=this.prezzoUpgradeMensile(); if(!m)return ''; return this.selezionePrezzo.formula==='annuale'?`Upgrade: +${this.formattaNumeroEuro(m*12)}/anno`:`Upgrade: +${this.formattaNumeroEuro(m)}/mese`; },
     formattaNumeroEuro(v) { return new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(v)||0); },
-    calcolaProssimoRinnovo(dataAttivazione, periodicita) {
-      if (!dataAttivazione || !['mensile','annuale'].includes(periodicita)) return null;
+    calcolaProssimoRinnovo(
+      dataAttivazione,
+      periodicita,
+      oggiIso = this.dataISOOggi()
+    ) {
+      if (
+        !dataAttivazione ||
+        !['mensile','annuale'].includes(periodicita)
+      ) return null;
 
       const parti = dataAttivazione.split('-').map(Number);
-      if (parti.length !== 3 || parti.some(Number.isNaN)) return null;
+      if (
+        parti.length !== 3 ||
+        parti.some(Number.isNaN)
+      ) return null;
 
       const [annoBase, meseBase, giornoBase] = parti;
-      const oggi = new Date();
-      const oggiUTC = Date.UTC(oggi.getFullYear(), oggi.getMonth(), oggi.getDate());
+
+      const oggiParti =
+        String(oggiIso || '')
+          .split('-')
+          .map(Number);
+
+      if (
+        oggiParti.length !== 3 ||
+        oggiParti.some(Number.isNaN)
+      ) return null;
+
+      const oggiUTC = Date.UTC(
+        oggiParti[0],
+        oggiParti[1] - 1,
+        oggiParti[2]
+      );
 
       for (let n = 1; n <= 2400; n += 1) {
         let anno = annoBase;
