@@ -1835,6 +1835,7 @@
         <p
           x-show="erroreEconomia"
           x-text="erroreEconomia"
+          x-effect="if (erroreEconomia) $el.scrollIntoView({ behavior: 'smooth', block: 'center' })"
           class="err"
           style="margin-bottom:14px">
         </p>

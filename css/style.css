@@ -11494,18 +11494,17 @@ html[data-theme="dark"] .flow-choice-card{
   white-space:nowrap;
 }
 
-@media (min-width:1000px){
-  .sale-live-price{
-    position:sticky;
-    top:12px;
-    z-index:6;
-    box-shadow:0 8px 30px rgba(0,0,0,.08);
-  }
+.sale-live-price{
+  position:sticky;
+  top:12px;
+  z-index:6;
+  box-shadow:0 8px 30px rgba(0,0,0,.08);
 }
 
 @media (max-width:900px){
   .sale-live-price{
     grid-template-columns:1fr;
+    top:8px;
   }
 
   .sale-live-price-meta{
