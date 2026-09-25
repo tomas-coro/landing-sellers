@@ -2020,7 +2020,7 @@ html[data-theme="dark"] .client-status-strip{
 .home-attention-row{
   width:100%;
   display:grid;
-  grid-template-columns:9px minmax(0,1fr) 15px;
+  grid-template-columns:9px minmax(0,1fr) auto;
   gap:11px;
   align-items:center;
   min-height:58px;
@@ -2330,7 +2330,7 @@ html[data-theme="dark"] .client-status-strip{
 .home-attention-row{
   width:100%;
   display:grid;
-  grid-template-columns:9px minmax(0,1fr) 15px;
+  grid-template-columns:9px minmax(0,1fr) auto;
   gap:11px;
   align-items:center;
   min-height:58px;
@@ -2640,7 +2640,7 @@ html[data-theme="dark"] .client-status-strip{
 .home-attention-row{
   width:100%;
   display:grid;
-  grid-template-columns:9px minmax(0,1fr) 15px;
+  grid-template-columns:9px minmax(0,1fr) auto;
   gap:11px;
   align-items:center;
   min-height:58px;
@@ -7799,6 +7799,12 @@ html[data-theme="dark"] .profile-name-save{background:var(--lime);color:#111}
   min-height:54px;
 }
 
+.home-today-v3 .home-attention-list{
+  max-height:270px;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
 .home-attention-dot.type-rinnovo{
   background:var(--lime);
 }
@@ -7829,15 +7835,6 @@ html[data-theme="dark"] .profile-name-save{background:var(--lime);color:#111}
 
 html[data-theme="dark"] .home-today-clear{
   background:rgba(255,255,255,.045);
-}
-
-/* Home v3 - centro operativo Oggi */
-.home-today-v3{
-  position:relative;
-}
-
-.home-today-v3 .home-attention-row{
-  min-height:54px;
 }
 
 .home-attention-dot.type-rinnovo{
