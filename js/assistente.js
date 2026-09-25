@@ -178,7 +178,7 @@ const FAQ_ASSISTENTE = [
     "categoria": "Offerte e rinnovi",
     "domanda": "Cosa significa prezzo storico?",
     "cerca": "prezzo storico precedente personalizzato legacy catalogo attuale",
-    "risposta": "È un prezzo precedente o personalizzato. Puoi mantenerlo oppure premere “Passa al catalogo attuale”."
+    "risposta": "È il prezzo già concordato con un cliente precedente o personalizzato. Rimane invariato finché non scegli esplicitamente di passare al catalogo attuale. I servizi possono essere corretti dalla scheda cliente senza ricalcolare il prezzo storico."
   },
   {
     "categoria": "Offerte e rinnovi",
