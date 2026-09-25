@@ -3948,55 +3948,74 @@
             </div>
           </section>
 
-          <section class="client-form-section">
-            <div class="client-form-section-head">
-              <span>CRM</span>
+          <div
+            x-show="clienteInModificaId && selezionePrezzo.modalita === 'legacy'"
+            class="price-legacy price-legacy-v2">
+
+            <div class="legacy-price-head">
               <div>
-                <strong>Brief e prossima azione</strong>
-                <small>Contesto cliente e passo concreto da eseguire</small>
+                <span class="legacy-price-kicker">CONDIZIONI ESISTENTI</span>
+                <strong>Prezzo storico</strong>
+              </div>
+
+              <span class="legacy-price-status">
+                Prezzo preservato
+              </span>
+            </div>
+
+            <p class="legacy-price-intro">
+              Questo cliente mantiene il prezzo concordato in passato.
+              Puoi aggiornare i servizi dalla scheda cliente senza modificare
+              l'importo o le condizioni economiche.
+            </p>
+
+            <div class="legacy-price-grid">
+              <label class="legacy-price-main">
+                <span>Importo concordato</span>
+
+                <div class="legacy-price-input">
+                  <span>€</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputmode="decimal"
+                    x-model.number="nuovoClienteForm.importo_abbonamento"
+                    aria-label="Prezzo contratto personalizzato">
+                </div>
+              </label>
+
+              <div class="legacy-price-item">
+                <span>Pacchetto salvato</span>
+                <strong
+                  x-text="nuovoClienteForm.nome_pacchetto || 'Non specificato'">
+                </strong>
+              </div>
+
+              <div class="legacy-price-item legacy-price-note">
+                <span>Accordo</span>
+                <strong
+                  x-text="nuovoClienteForm.note_prezzo || 'Nessuna nota salvata'">
+                </strong>
               </div>
             </div>
 
-            <div class="client-fields-grid">
-              <div class="field field-full">
-                <label>Brief cliente</label>
-                <textarea x-model="nuovoClienteForm.brief_cliente" placeholder="Obiettivi, pubblico, offerta e vincoli del cliente"></textarea>
+            <div class="legacy-price-switch">
+              <div>
+                <strong>Vuoi usare il listino attuale?</strong>
+                <small>
+                  Fallo solo se stai sostituendo le condizioni storiche con
+                  una nuova configurazione commerciale.
+                </small>
               </div>
-              <div class="field field-full">
-                <label>Prossima azione</label>
-                <input x-model="nuovoClienteForm.prossima_azione" placeholder="Es. Inviare preventivo aggiornato">
-              </div>
-              <div class="field">
-                <label>Data prossima azione</label>
-                <input type="date" x-model="nuovoClienteForm.prossimo_contatto">
-              </div>
-              <div class="field">
-                <label>Motivazione esito</label>
-                <input x-model="nuovoClienteForm.esito_motivazione" placeholder="Perché è stato convertito o mancato">
-              </div>
-            </div>
-          </section>
 
-          <div x-show="clienteInModificaId && selezionePrezzo.modalita === 'legacy'" class="price-legacy">
-            <div>
-              <strong>Prezzo storico</strong>
-              <span>Questo cliente usa un prezzo precedente o personalizzato. Verrà mantenuto finché non scegli di passare al catalogo attuale.</span>
+              <button
+                type="button"
+                class="btn btn-ghost"
+                @click="passaAlCatalogoPrezzi()">
+                Passa al catalogo attuale
+              </button>
             </div>
-            <dl>
-              <dt>Importo</dt>
-              <dd>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  inputmode="decimal"
-                  x-model.number="nuovoClienteForm.importo_abbonamento"
-                  aria-label="Prezzo contratto personalizzato">
-              </dd>
-              <dt>Pacchetto</dt><dd x-text="nuovoClienteForm.nome_pacchetto || '-'"></dd>
-              <dt>Note prezzo</dt><dd x-text="nuovoClienteForm.note_prezzo || '-'"></dd>
-            </dl>
-            <button type="button" class="btn btn-ghost" @click="passaAlCatalogoPrezzi()">Passa al catalogo attuale</button>
           </div>
 
           <div
@@ -4227,59 +4246,109 @@
             <div class="client-form-section-head">
               <span>03</span>
               <div>
-                <strong>Rinnovi e notifiche</strong>
-                <small>Attivazione, prossimo rinnovo e avviso automatico</small>
+                <strong>Rinnovo e avvisi</strong>
+                <small>Definisci quando parte il contratto e se vuoi ricevere un promemoria.</small>
               </div>
             </div>
 
             <div class="contract-renewal-card">
-            <div class="field activation-date-field">
-              <label for="data-attivazione">Data attivazione <span>Obbligatoria</span></label>
-              <input id="data-attivazione" type="date" :required="!!clienteInModificaId" aria-describedby="data-attivazione-hint" x-model="nuovoClienteForm.data_attivazione" @change="aggiornaPreviewRinnovo()">
-              <small id="data-attivazione-hint">Serve per calcolare il primo rinnovo.</small>
-              <p x-show="erroriNuovoCliente.data_attivazione" x-text="erroriNuovoCliente.data_attivazione" class="err"></p>
+            <div class="field renewal-core-field activation-date-field">
+              <div class="renewal-field-heading">
+                <div>
+                  <span class="renewal-field-step">1</span>
+                  <label for="data-attivazione">Data di attivazione</label>
+                </div>
+                <span class="renewal-required">Obbligatoria</span>
+              </div>
+
+              <input
+                id="data-attivazione"
+                type="date"
+                :required="!!clienteInModificaId"
+                aria-describedby="data-attivazione-hint"
+                x-model="nuovoClienteForm.data_attivazione"
+                @change="aggiornaPreviewRinnovo()">
+
+              <small id="data-attivazione-hint">
+                È il giorno da cui parte il contratto. Il prossimo rinnovo
+                viene calcolato automaticamente.
+              </small>
+
+              <p
+                x-show="erroriNuovoCliente.data_attivazione"
+                x-text="erroriNuovoCliente.data_attivazione"
+                class="err">
+              </p>
             </div>
 
-            <div class="field" x-show="selezionePrezzo.modalita === 'legacy'">
-              <label>Periodicità contratto</label>
-              <select x-model="nuovoClienteForm.periodicita_contratto" @change="aggiornaPreviewRinnovo()">
-                <option value="">Seleziona</option>
-                <option value="mensile">Mensile</option>
-                <option value="annuale">Annuale</option>
+            <div
+              class="field renewal-core-field"
+              x-show="selezionePrezzo.modalita === 'legacy'">
+
+              <div class="renewal-field-heading">
+                <div>
+                  <span class="renewal-field-step">2</span>
+                  <label>Frequenza di rinnovo</label>
+                </div>
+              </div>
+
+              <select
+                x-model="nuovoClienteForm.periodicita_contratto"
+                @change="aggiornaPreviewRinnovo()">
+                <option value="">Seleziona frequenza</option>
+                <option value="mensile">Ogni mese</option>
+                <option value="annuale">Ogni anno</option>
               </select>
-              <p x-show="erroriNuovoCliente.periodicita_contratto" x-text="erroriNuovoCliente.periodicita_contratto" class="err"></p>
+
+              <small>
+                Indica ogni quanto il contratto deve rinnovarsi.
+              </small>
+
+              <p
+                x-show="erroriNuovoCliente.periodicita_contratto"
+                x-text="erroriNuovoCliente.periodicita_contratto"
+                class="err">
+              </p>
             </div>
 
             <div class="field field-full renewal-alert-config">
-              <label>Avvisi scadenza</label>
+              <div class="renewal-alert-heading">
+                <div>
+                  <span class="renewal-field-step">3</span>
+                  <div>
+                    <strong>Promemoria rinnovo</strong>
+                    <small>Scegli quali scadenze vuoi ricevere come notifica.</small>
+                  </div>
+                </div>
+              </div>
 
               <div class="renewal-mode-grid" x-show="nuovoClienteForm.periodicita_contratto === 'mensile'">
                 <button type="button"
                   :class="{ on: nuovoClienteForm.modalita_notifica_rinnovo === 'nessuna' }"
                   @click="setModalitaNotificaRinnovo('nessuna')">
-                  <strong>Nessuno</strong>
-                  <small>Nessuna push</small>
+                  <strong>Nessun avviso</strong>
+                  <small>Non ricevere notifiche</small>
                 </button>
 
                 <button type="button"
                   :class="{ on: nuovoClienteForm.modalita_notifica_rinnovo === 'mensile' }"
                   @click="setModalitaNotificaRinnovo('mensile')">
-                  <strong>Mensilità</strong>
-                  <small>Ogni scadenza mensile</small>
+                  <strong>Ogni mese</strong>
+                  <small>Avviso a ogni rinnovo mensile</small>
                 </button>
 
                 <button type="button"
                   :class="{ on: nuovoClienteForm.modalita_notifica_rinnovo === 'annuale' }"
                   @click="setModalitaNotificaRinnovo('annuale')">
-                  <strong>Annualità</strong>
-                  <small>Solo anniversario</small>
+                  <strong>Ogni anno</strong>
+                  <small>Solo alla scadenza annuale</small>
                 </button>
 
                 <button type="button"
                   :class="{ on: nuovoClienteForm.modalita_notifica_rinnovo === 'entrambe' }"
                   @click="setModalitaNotificaRinnovo('entrambe')">
-                  <strong>Entrambe</strong>
-                  <small>Mensile + annuale</small>
+                  <strong>Mensile + annuale</strong>
+                  <small>Ricevi entrambi gli avvisi</small>
                 </button>
               </div>
 
@@ -4287,20 +4356,20 @@
                 <button type="button"
                   :class="{ on: nuovoClienteForm.modalita_notifica_rinnovo === 'nessuna' }"
                   @click="setModalitaNotificaRinnovo('nessuna')">
-                  <strong>Nessuno</strong>
-                  <small>Nessuna push</small>
+                  <strong>Nessun avviso</strong>
+                  <small>Non ricevere notifiche</small>
                 </button>
 
                 <button type="button"
                   :class="{ on: nuovoClienteForm.modalita_notifica_rinnovo === 'annuale' }"
                   @click="setModalitaNotificaRinnovo('annuale')">
                   <strong>Rinnovo annuale</strong>
-                  <small>Avviso alla scadenza</small>
+                  <small>Ricevi una notifica alla scadenza</small>
                 </button>
               </div>
 
               <div class="renewal-notice-block" x-show="notificheRinnovoAttive()">
-                <span>Quanto prima vuoi essere avvisato?</span>
+                <span>Quando vuoi ricevere la notifica?</span>
                 <div class="renewal-notice-grid">
                   <template x-for="giorni in [30,7,2,1]" :key="giorni">
                     <button type="button"
@@ -4315,7 +4384,7 @@
             </div>
 
             <div class="renewal-preview" x-show="nuovoClienteForm.data_attivazione && nuovoClienteForm.periodicita_contratto">
-              <span>Prossimo rinnovo</span>
+              <span>Prossimo rinnovo calcolato</span>
               <strong x-text="nuovoClienteForm.data_rinnovo ? formattaData(nuovoClienteForm.data_rinnovo) : '-'"></strong>
               <small>
                 <span x-text="nuovoClienteForm.periodicita_contratto === 'annuale' ? 'Contratto annuale' : 'Contratto mensile'"></span>
@@ -6643,7 +6712,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=127', {
+      navigator.serviceWorker.register('./service-worker.js?v=128', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

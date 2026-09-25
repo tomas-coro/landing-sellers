@@ -15700,3 +15700,333 @@ html[data-theme="dark"] .pill.s-perso{background:#3a1d19;color:#ff9b91}
   .home-attention-row{grid-template-columns:8px minmax(0,1fr) auto;gap:8px}
   .event-done-action{min-width:58px;padding:0 8px;font-size:13.5px}
 }
+
+/* ============================================================
+   CLIENT FORM CLARITY v128
+   Prezzo storico + rinnovi
+   ============================================================ */
+
+.price-legacy-v2{
+  gap:16px;
+  padding:18px;
+}
+
+.price-legacy-v2 .legacy-price-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+}
+
+.price-legacy-v2 .legacy-price-head>div{
+  display:grid;
+  gap:3px;
+}
+
+.price-legacy-v2 .legacy-price-kicker{
+  font-size:11px;
+  font-weight:850;
+  letter-spacing:.09em;
+  color:var(--muted);
+}
+
+.price-legacy-v2 .legacy-price-head strong{
+  font-size:23px;
+  line-height:1.1;
+}
+
+.price-legacy-v2 .legacy-price-status{
+  flex:0 0 auto;
+  padding:6px 9px;
+  border-radius:999px;
+  background:var(--lime);
+  color:var(--on-lime);
+  font-size:11.5px;
+  line-height:1;
+  font-weight:850;
+}
+
+.price-legacy-v2 .legacy-price-intro{
+  margin:0;
+  max-width:68ch;
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.5;
+}
+
+.price-legacy-v2 .legacy-price-grid{
+  display:grid;
+  grid-template-columns:minmax(180px,.75fr) minmax(0,1fr);
+  gap:9px;
+}
+
+.price-legacy-v2 .legacy-price-main,
+.price-legacy-v2 .legacy-price-item{
+  min-width:0;
+  padding:13px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:var(--card);
+}
+
+.price-legacy-v2 .legacy-price-main{
+  grid-row:span 2;
+  display:grid;
+  align-content:start;
+  gap:9px;
+}
+
+.price-legacy-v2 .legacy-price-main>span,
+.price-legacy-v2 .legacy-price-item>span{
+  color:var(--muted);
+  font-size:12.5px;
+  font-weight:750;
+}
+
+.price-legacy-v2 .legacy-price-item{
+  display:grid;
+  gap:4px;
+}
+
+.price-legacy-v2 .legacy-price-item strong{
+  font-size:15px;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+
+.price-legacy-v2 .legacy-price-input{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  align-items:center;
+  gap:7px;
+}
+
+.price-legacy-v2 .legacy-price-input>span{
+  font-size:24px;
+  font-weight:850;
+}
+
+.price-legacy-v2 .legacy-price-input input{
+  width:100%;
+  min-width:0;
+  margin:0;
+  font-size:25px;
+  font-weight:850;
+}
+
+.price-legacy-v2 .legacy-price-switch{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding-top:13px;
+  border-top:1px solid var(--line);
+}
+
+.price-legacy-v2 .legacy-price-switch>div{
+  display:grid;
+  gap:3px;
+}
+
+.price-legacy-v2 .legacy-price-switch strong{
+  font-size:14px;
+}
+
+.price-legacy-v2 .legacy-price-switch small{
+  max-width:56ch;
+  color:var(--muted);
+  font-size:12.5px;
+  line-height:1.4;
+}
+
+.price-legacy-v2 .legacy-price-switch .btn{
+  flex:0 0 auto;
+  width:auto;
+  margin:0;
+}
+
+/* rinnovi */
+
+.renewal-form-section .contract-renewal-card{
+  align-items:stretch;
+  gap:10px;
+}
+
+.renewal-core-field{
+  min-width:0;
+  padding:13px!important;
+  border:1px solid var(--line)!important;
+  border-radius:14px!important;
+  background:var(--card)!important;
+}
+
+.renewal-core-field.activation-date-field{
+  border-color:var(--lime-deep)!important;
+  box-shadow:inset 0 0 0 1px var(--lime-deep);
+}
+
+.renewal-field-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:9px;
+}
+
+.renewal-field-heading>div{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+}
+
+.renewal-field-heading label{
+  display:block!important;
+  margin:0;
+  font-size:14px;
+  font-weight:850;
+}
+
+.renewal-field-step{
+  width:22px;
+  height:22px;
+  flex:0 0 22px;
+  display:grid;
+  place-items:center;
+  border-radius:7px;
+  background:var(--ink);
+  color:var(--paper);
+  font-size:11px;
+  font-weight:850;
+}
+
+.renewal-required{
+  flex:0 0 auto;
+  padding:4px 7px;
+  border-radius:999px;
+  background:var(--lime);
+  color:var(--on-lime);
+  font-size:10.5px;
+  font-weight:850;
+}
+
+.renewal-core-field input,
+.renewal-core-field select{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  margin:0;
+}
+
+.renewal-core-field>small{
+  display:block;
+  margin-top:7px;
+  color:var(--muted);
+  font-size:12.5px;
+  line-height:1.4;
+  font-weight:600;
+}
+
+.renewal-alert-config{
+  margin-top:2px!important;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--card);
+}
+
+.renewal-alert-heading{
+  margin-bottom:10px;
+}
+
+.renewal-alert-heading>div{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+}
+
+.renewal-alert-heading>div>div{
+  display:grid;
+  gap:2px;
+}
+
+.renewal-alert-heading strong{
+  font-size:14px;
+}
+
+.renewal-alert-heading small{
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.35;
+}
+
+.renewal-mode-grid button{
+  min-height:62px;
+  padding:10px 11px;
+}
+
+.renewal-mode-grid button strong{
+  font-size:13.5px;
+}
+
+.renewal-mode-grid button small{
+  line-height:1.25;
+}
+
+.renewal-preview{
+  padding:14px 15px;
+  border-color:var(--lime-deep);
+  background:rgba(200,255,61,.08);
+}
+
+.renewal-preview>span{
+  font-size:11px;
+}
+
+.renewal-preview strong{
+  margin-top:2px;
+  font-size:22px;
+}
+
+@media(max-width:640px){
+  .price-legacy-v2{
+    padding:14px;
+  }
+
+  .price-legacy-v2 .legacy-price-head,
+  .price-legacy-v2 .legacy-price-switch{
+    align-items:stretch;
+    flex-direction:column;
+  }
+
+  .price-legacy-v2 .legacy-price-status{
+    align-self:flex-start;
+  }
+
+  .price-legacy-v2 .legacy-price-grid{
+    grid-template-columns:1fr;
+  }
+
+  .price-legacy-v2 .legacy-price-main{
+    grid-row:auto;
+  }
+
+  .price-legacy-v2 .legacy-price-switch .btn{
+    width:100%;
+  }
+
+  .contract-renewal-card{
+    grid-template-columns:1fr!important;
+  }
+
+  .renewal-core-field,
+  .renewal-alert-config,
+  .renewal-preview{
+    grid-column:1!important;
+    min-width:0;
+  }
+
+  .renewal-mode-grid{
+    grid-template-columns:1fr 1fr;
+  }
+}
