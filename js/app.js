@@ -874,6 +874,11 @@ function appState() {
 
       if (chiave === this.historyUltimaChiave) return;
 
+      const appEl = document.getElementById('app');
+      if (appEl) {
+        this.posizioniScroll[this.historyUltimaChiave] = appEl.scrollTop;
+      }
+
       history.pushState(stato, '', location.href);
       this.historyUltimaChiave = chiave;
     },
