@@ -363,6 +363,55 @@ function calcolaStatisticheVenditore(
   return totali;
 }
 
+// ===== Sezione Fatturato: aggregazione per anno/mese =====
+// Righe di input nella forma { data: 'YYYY-MM-DD', valore: number }.
+// A differenza di serieMensileValore (finestra fissa ultimi 12 mesi) questi
+// helper lavorano su un anno solare specifico e su tutto lo storico, per la
+// vista "Fatturato" (mensile + confronto tra anni).
+function mesiAnnoFatturato(anno) {
+  return MESI_LABEL_TREND.map((label, i) => ({
+    chiave: anno + '-' + String(i + 1).padStart(2, '0'),
+    label
+  }));
+}
+
+function serieMensileAnno(righe = [], anno) {
+  const mesi = mesiAnnoFatturato(anno);
+  const somme = Object.fromEntries(mesi.map(m => [m.chiave, 0]));
+
+  righe.forEach(riga => {
+    if (!riga?.data) return;
+    const chiave = String(riga.data).slice(0, 7);
+    if (!(chiave in somme)) return;
+    somme[chiave] += Number(riga.valore) || 0;
+  });
+
+  return mesi.map(m => ({ ...m, valore: somme[m.chiave] }));
+}
+
+function totaliPerAnno(righe = []) {
+  const totali = {};
+  righe.forEach(riga => {
+    if (!riga?.data) return;
+    const anno = Number(String(riga.data).slice(0, 4));
+    if (!Number.isFinite(anno)) return;
+    totali[anno] = (totali[anno] || 0) + (Number(riga.valore) || 0);
+  });
+  return totali;
+}
+
+function anniDisponibiliFatturato(gruppiRighe = []) {
+  const anni = new Set([new Date().getFullYear()]);
+  gruppiRighe.forEach(righe => {
+    (righe || []).forEach(riga => {
+      if (!riga?.data) return;
+      const anno = Number(String(riga.data).slice(0, 4));
+      if (Number.isFinite(anno)) anni.add(anno);
+    });
+  });
+  return [...anni].sort((a, b) => b - a);
+}
+
 function formVenditaEconomicaVuoto() {
   return {
     clienteRicerca: '',
@@ -495,6 +544,25 @@ function appAdminMixinApi() {
   return null;
 }
 
+function appFatturatoMixinApi() {
+  if (
+    typeof globalThis !== 'undefined' &&
+    globalThis.appFatturatoMixin
+  ) {
+    return globalThis.appFatturatoMixin;
+  }
+
+  if (
+    typeof module === 'object' &&
+    module.exports &&
+    typeof require === 'function'
+  ) {
+    return require('./app-fatturato.js');
+  }
+
+  return null;
+}
+
 function appState() {
   return Object.assign({
     view: '',
@@ -578,6 +646,18 @@ function appState() {
     trendDatiAdmin: [], // [{ id, nome, color, punti: [{chiave,label,valore}] }]
     trendRangeAdmin: 12,
     trendHoverAdmin: null,
+
+    // Vista Fatturato: caricata a richiesta (apriFatturato), mai in cache -
+    // così resta sempre coerente con l'ultimo incasso/vendita registrati.
+    caricandoFatturato: false,
+    erroreFatturato: '',
+    fatturatoAnno: new Date().getFullYear(),
+    fatturatoAnniDisponibili: [new Date().getFullYear()],
+    fatturatoVenditeRighe: [],   // admin: [{ data, valore }] - venduto azienda
+    fatturatoIncassiRighe: [],   // admin: [{ data, valore }] - incassato azienda
+    fatturatoBreakdownRighe: [], // admin: [{ profiloId, nome, data, valore }] - guadagni per persona
+    fatturatoGuadagniRighe: [],  // utente corrente: [{ data, valore }]
+    fatturatoHover: null,
 
     ricercaGlobale: '',
     indiceNoteRicerca: [],
@@ -3842,7 +3922,7 @@ costiPerMotoreRataEconomia(
       this.filtroTestoAdmin = '';
       this.view = 'admin';
     }
-  }, appEconomiaMixinApi(), appVenditaMixinApi(), appClienteMixinApi(), appAdminMixinApi());
+  }, appEconomiaMixinApi(), appVenditaMixinApi(), appClienteMixinApi(), appAdminMixinApi(), appFatturatoMixinApi());
 }
 
 if (typeof module !== 'undefined') {
@@ -3864,6 +3944,9 @@ if (typeof module !== 'undefined') {
     ordinaClassificaVenditori,
     ordinaTeamEconomico,
     posizioneAvatarDaUrl,
-    avatarUrlConPosizione
+    avatarUrlConPosizione,
+    serieMensileAnno,
+    totaliPerAnno,
+    anniDisponibiliFatturato
   };
 }

@@ -7596,6 +7596,19 @@ html[data-theme="dark"] .assistant-category summary small{background:#292d26}htm
 .admin-ranking-name small{color:var(--muted);font-size:8.5px;font-weight:650}
 .admin-ranking-total{font-size:14px;font-variant-numeric:tabular-nums}
 
+/* Variante senza numero di posizione (2 colonne invece di 3): usata dalla
+   vista Fatturato per righe persona/anno che non sono una classifica. */
+.admin-ranking-list-flat button,
+.admin-ranking-list-flat .admin-ranking-list-row{
+  width:100%;min-height:56px;padding:10px 14px;border:0;border-bottom:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;gap:11px;
+  background:transparent;color:var(--ink);font:inherit;text-align:left;
+}
+.admin-ranking-list-flat button{cursor:pointer}
+.admin-ranking-list-flat .admin-ranking-list-row{cursor:default}
+.admin-ranking-list-flat button:last-child,
+.admin-ranking-list-flat .admin-ranking-list-row:last-child{border-bottom:0}
+
 @media(max-width:380px){
   .home-contract-metric{padding:14px!important}
   .home-contract-metric>strong{font-size:18px}
