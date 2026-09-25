@@ -3553,12 +3553,16 @@
             <label class="payment-field">
               <span>METODO</span>
 
-              <input
-                type="text"
-                placeholder="Bonifico, contanti..."
-                x-model="
-                  venditaEconomicaForm.metodoPagamento
-                ">
+              <select
+                required
+                x-model="venditaEconomicaForm.metodoPagamento">
+                <option value="" disabled>Seleziona metodo</option>
+                <option value="Bonifico">Bonifico</option>
+                <option value="Contanti">Contanti</option>
+                <option value="Carta">Carta</option>
+                <option value="PayPal">PayPal</option>
+                <option value="Assegno">Assegno</option>
+              </select>
             </label>
 
             <label class="payment-field">
@@ -3589,7 +3593,7 @@
       <div>
         <strong>Costi applicati a questa rata</strong>
         <small>
-          I costi storici della vendita non vengono applicati automaticamente.
+          I costi della vendita sono applicati in proporzione alla rata.
         </small>
       </div>
     </div>

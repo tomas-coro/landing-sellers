@@ -92,7 +92,39 @@ test('prima rata Adioro rispetta 50 euro Tomas e 50 euro Nicola e assegna il res
   assert.equal(risultato.valido, true);
 });
 
-test('seconda rata Adioro non riapplica automaticamente i costi della prima', () => {
+test('Spazio52: 270 euro in contanti, 25 euro di costi proporzionali, danno 122,50 euro ciascuno', () => {
+  const risultato = calcolaSnapshotPagamento({
+    importoPagamento: 270,
+    costiApplicati: [{ descrizione: 'Costi proporzionali', importo: 25 }],
+    partecipanti: [
+      {
+        id: 'alessandro',
+        nome: 'Alessandro',
+        ruolo: 'referente',
+        modalitaFatturazione: 'mista',
+        importoFatturato: 135
+      },
+      {
+        id: 'tomas',
+        nome: 'Tomas',
+        ruolo: 'produzione',
+        modalitaFatturazione: 'nessuna'
+      }
+    ],
+    applicaBonusVenditore: false,
+    esenteTasse: true
+  });
+
+  assert.equal(risultato.importoTasse, 0);
+  assert.equal(risultato.nettoDistribuibile, 245);
+  assert.deepEqual(
+    risultato.partecipanti.map(p => p.quotaFinale),
+    [122.5, 122.5]
+  );
+  assert.equal(risultato.valido, true);
+});
+
+test('il motore non applica costi che il chiamante non passa alla rata', () => {
   const risultato = calcolaSnapshotPagamento({
     importoPagamento: 375,
     costiApplicati: [],

@@ -813,6 +813,10 @@
         if (importoIniziale > totaleVendita) {
           return 'Il pagamento iniziale non può superare l\'importo della vendita.';
         }
+
+        if (!this.venditaEconomicaForm.metodoPagamento) {
+          return 'Seleziona il metodo di pagamento.';
+        }
       }
 
       return '';
@@ -871,7 +875,10 @@
         // default del form vuoto: altrimenti due pagamenti della stessa
         // vendita userebbero condizioni economiche diverse.
         applicaBonusVenditore:
-          this.venditaEconomicaForm.applicaBonusVenditore !== false
+          this.venditaEconomicaForm.applicaBonusVenditore !== false,
+
+        esenteTasse:
+          this.venditaEconomicaForm.metodoPagamento === 'Contanti'
       });
     },
 
@@ -962,6 +969,12 @@
       if (!(importo > 0 && importo <= massimo)) return 'Inserisci un importo non superiore al residuo.';
       if (this.venditaEconomicaForm.statoIncasso === 'previsto' && !this.venditaEconomicaForm.dataScadenza) {
         return 'Inserisci la scadenza della rata.';
+      }
+      if (
+        this.venditaEconomicaForm.statoIncasso !== 'previsto' &&
+        !this.venditaEconomicaForm.metodoPagamento
+      ) {
+        return 'Seleziona il metodo di pagamento.';
       }
 
     if (this.venditaEconomicaForm.statoIncasso !== 'previsto') {
@@ -1231,14 +1244,18 @@
         const engine = economicEngineApi();
         const snapshot = engine.calcolaSnapshotPagamento({
           importoPagamento: importoPagamentoIniziale,
-          costiApplicati: [],
+          costiApplicati: this.costiPerMotoreRataEconomia(
+            this.venditaEconomicaForm.costi
+          ),
           partecipanti: partecipantiRata,
           percentualeRiduzioneNoFattura:
             Number(
               this.venditaEconomicaForm.percentualeRiduzioneNoFattura
             ) || 0,
           applicaBonusVenditore:
-            this.venditaEconomicaForm.applicaBonusVenditore !== false
+            this.venditaEconomicaForm.applicaBonusVenditore !== false,
+          esenteTasse:
+            this.venditaEconomicaForm.metodoPagamento === 'Contanti'
         });
 
         if (!snapshot.valido) {

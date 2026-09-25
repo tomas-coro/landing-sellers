@@ -13876,7 +13876,8 @@ html[data-theme="dark"] .flow-choice-card{
   padding-left:2px;
 }
 
-.payment-field input{
+.payment-field input,
+.payment-field select{
   width:100%;
   min-width:0;
   min-height:46px;

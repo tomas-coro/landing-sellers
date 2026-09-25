@@ -113,7 +113,8 @@
     costi = [],
     partecipanti = [],
     percentualeRiduzioneNoFattura = 20,
-    applicaBonusVenditore = true
+    applicaBonusVenditore = true,
+    esenteTasse = false
   } = {}) {
     const vendita = Math.max(0, numero(importoVendita));
     const costiNormalizzati = normalizzaCosti(costi);
@@ -147,7 +148,9 @@
       };
     }
 
-    const tassePercentuali = percentualeTasse(persone);
+    const tassePercentuali = esenteTasse
+      ? 0
+      : percentualeTasse(persone);
 
     const importoFatturatoAdmin = referente
       ? importoFatturatoSoggetto(referente, vendita)
@@ -196,6 +199,7 @@
 
     function riduzioneNoFattura(partecipante, quota) {
       if (
+        esenteTasse ||
         partecipante.ruolo === 'referente' ||
         tassePercentuali === 60 ||
         partecipante.modalitaFatturazione !== 'nessuna'
@@ -336,14 +340,16 @@
     costiApplicati = [],
     partecipanti = [],
     percentualeRiduzioneNoFattura = 20,
-    applicaBonusVenditore = true
+    applicaBonusVenditore = true,
+    esenteTasse = false
   } = {}) {
     const base = calcolaRipartizioneEconomica({
       importoVendita: importoPagamento,
       costi: costiApplicati,
       partecipanti,
       percentualeRiduzioneNoFattura,
-      applicaBonusVenditore
+      applicaBonusVenditore,
+      esenteTasse
     });
 
     const risultati = base.partecipanti.map(

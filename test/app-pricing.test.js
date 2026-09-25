@@ -523,23 +523,18 @@ test('il motore economico riconosce partecipanti legacy senza id o nome', () => 
   }
 });
 
-test('in modalità incasso i costi storici non vengono applicati automaticamente alla rata', () => {
+test('in modalità incasso i costi della vendita sono applicati in proporzione alla rata', () => {
   const stato = appState();
 
   stato.costiVenditaRiferimento = [
-    { descrizione: 'Costo storico', importo: 40 }
+    { descrizione: 'Costo vendita', importo: 50 }
   ];
-
-  stato.venditaEconomicaForm.costi = [];
-
-  assert.equal(
-    stato.costiVenditaRiferimento.length,
-    1
-  );
+  stato.venditaEconomicaForm.importoVendita = 540;
+  stato.venditaEconomicaForm.importoIncassato = 270;
 
   assert.deepEqual(
-    stato.venditaEconomicaForm.costi,
-    []
+    stato.costiPerMotoreRataEconomia(),
+    [{ descrizione: 'Costo vendita', importo: 25 }]
   );
 });
 

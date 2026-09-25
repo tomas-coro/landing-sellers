@@ -1646,8 +1646,31 @@ function appState() {
       });
     },
 
-costiPerMotoreRataEconomia() {
-  return (this.venditaEconomicaForm.costiRata || [])
+costiPerMotoreRataEconomia(
+  costiVendita = this.costiVenditaRiferimento
+) {
+  const importoVendita =
+    Number(this.venditaEconomicaForm.importoVendita) || 0;
+  const importoRata =
+    Number(this.venditaEconomicaForm.importoIncassato) || 0;
+  const fattore = importoVendita > 0
+    ? Math.min(1, importoRata / importoVendita)
+    : 0;
+
+  const proporzionali = (costiVendita || [])
+    .map(costo => ({
+      descrizione:
+        (costo.descrizione || '').trim() || 'Costo vendita',
+      importo:
+        Math.round(
+          Math.max(0, Number(costo.importo) || 0) * fattore * 100
+        ) / 100
+    }));
+
+  return [
+    ...proporzionali,
+    ...(this.venditaEconomicaForm.costiRata || [])
+  ]
     .map(costo => ({
       descrizione:
         (costo.descrizione || '').trim() || 'Costo',
