@@ -1427,3 +1427,133 @@ test('la timeline formatta le attività senza metodi Alpine inesistenti', () => 
   delete global.formattaData;
   delete global.formattaStato;
 });
+
+test('la scheda cliente permette di correggere i servizi senza passare al catalogo corrente', () => {
+  const html = fs.readFileSync(
+    path.join(__dirname, '..', 'index.html'),
+    'utf8'
+  );
+
+  assert.match(
+    html,
+    /Modifica servizi/
+  );
+
+  assert.match(
+    html,
+    /salvaServiziCliente\(\)/
+  );
+
+  assert.match(
+    html,
+    /non ricalcola il prezzo storico/
+  );
+});
+
+test('la modifica servizi usa una RPC dedicata e non aggiorna importo vendita', () => {
+  const js = fs.readFileSync(
+    path.join(
+      __dirname,
+      '..',
+      'js',
+      'app-cliente.js'
+    ),
+    'utf8'
+  );
+
+  const sql = fs.readFileSync(
+    path.join(
+      __dirname,
+      '..',
+      'supabase',
+      'migration_2026_09_25_01_aggiorna_servizi_cliente.sql'
+    ),
+    'utf8'
+  );
+
+  assert.match(
+    js,
+    /\.rpc\(\s*'aggiorna_servizi_cliente'/
+  );
+
+  assert.match(
+    sql,
+    /configurazione_commerciale\s*=\s*v_configurazione_nuova/
+  );
+
+  assert.match(
+    sql,
+    /servizio\s*=\s*v_descrizione/
+  );
+
+  assert.doesNotMatch(
+    sql,
+    /set\s+importo_vendita\s*=/i
+  );
+
+  assert.doesNotMatch(
+    sql,
+    /update\s+public\.pagamenti/i
+  );
+
+  assert.doesNotMatch(
+    sql,
+    /update\s+public\.vendita_partecipanti/i
+  );
+
+  assert.doesNotMatch(
+    sql,
+    /update\s+public\.costi_vendita/i
+  );
+});
+
+test('il caricamento standard della vendita include sempre lo snapshot commerciale', () => {
+  const js = fs.readFileSync(
+    path.join(
+      __dirname,
+      '..',
+      'js',
+      'app-cliente.js'
+    ),
+    'utf8'
+  );
+
+  const occorrenze =
+    js.match(
+      /id,cliente_id,importo_vendita,servizio,data_vendita,creato_il,configurazione_commerciale/g
+    ) || [];
+
+  assert.ok(
+    occorrenze.length >= 2
+  );
+});
+
+test('l editor servizi recupera automaticamente extra storici dal cliente', () => {
+  const stato = appState();
+
+  const form =
+    stato.formServiziClienteDaStorico(
+      {
+        nome_pacchetto: 'Start annuale',
+        periodicita_contratto: 'annuale',
+        pagine_extra: 2,
+        lingue_extra: 1,
+        cliente_ha_dominio: false,
+        dominio_it: 1,
+        dominio_com: 0,
+        email_5_caselle: 1,
+        pacchetto_sicurezza: false
+      },
+      {
+        servizio: 'Start annuale',
+        configurazione_commerciale: null
+      }
+    );
+
+  assert.equal(form.formula, 'annuale');
+  assert.equal(form.pagine_extra, 2);
+  assert.equal(form.lingue_extra, 1);
+  assert.equal(form.cliente_ha_dominio, false);
+  assert.equal(form.dominio_it, 1);
+  assert.equal(form.email_5_caselle, 1);
+});

@@ -659,6 +659,396 @@
       return this.clienti.find(c => c.id === this.clienteSelezionatoId) || {};
     },
 
+    serviziClienteEditorAperto: false,
+    salvandoServiziCliente: false,
+    erroreServiziCliente: '',
+    successoServiziCliente: '',
+
+    serviziClienteForm: {
+      formula: '',
+      upgrade: [],
+      pagine_extra: 0,
+      lingue_extra: 0,
+      cliente_ha_dominio: true,
+      dominio_it: 0,
+      dominio_com: 0,
+      email_5_caselle: 0,
+      pacchetto_sicurezza: false
+    },
+
+    formServiziClienteDaStorico(cliente, vendita) {
+      const c = cliente || {};
+      const v = vendita || {};
+
+      const cfg =
+        v.configurazione_commerciale &&
+        typeof v.configurazione_commerciale === 'object'
+          ? v.configurazione_commerciale
+          : {};
+
+      const testoStorico = [
+        v.servizio,
+        c.nome_pacchetto
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      let formula =
+        cfg.formula ||
+        cfg.periodicita_contratto ||
+        c.periodicita_contratto ||
+        '';
+
+      if (
+        formula !== 'mensile' &&
+        formula !== 'annuale'
+      ) {
+        if (testoStorico.includes('start annuale')) {
+          formula = 'annuale';
+        } else if (
+          testoStorico.includes('start mensile')
+        ) {
+          formula = 'mensile';
+        } else {
+          formula = '';
+        }
+      }
+
+      let upgrade =
+        Array.isArray(cfg.upgrade)
+          ? [...cfg.upgrade]
+          : [];
+
+      const catalogo =
+        typeof this.catalogoPrezzi === 'function'
+          ? this.catalogoPrezzi()
+          : null;
+
+      if (!upgrade.length && catalogo?.upgrade) {
+        upgrade = catalogo.upgrade
+          .filter(item =>
+            testoStorico.includes(
+              String(item.nome || '')
+                .trim()
+                .toLowerCase()
+            )
+          )
+          .map(item => item.id);
+      }
+
+      const numeroStorico = (campo, fallback = 0) => {
+        if (cfg[campo] != null) {
+          return Number(cfg[campo]) || 0;
+        }
+        return Number(c[campo]) || fallback;
+      };
+
+      const booleanStorico = (campo, fallback = false) => {
+        if (cfg[campo] != null) {
+          return Boolean(cfg[campo]);
+        }
+        if (c[campo] != null) {
+          return Boolean(c[campo]);
+        }
+        return fallback;
+      };
+
+      return {
+        formula,
+
+        upgrade,
+
+        pagine_extra:
+          Math.max(
+            0,
+            Math.min(
+              15,
+              numeroStorico('pagine_extra')
+            )
+          ),
+
+        lingue_extra:
+          Math.max(
+            0,
+            Math.min(
+              5,
+              numeroStorico('lingue_extra')
+            )
+          ),
+
+        cliente_ha_dominio:
+          booleanStorico(
+            'cliente_ha_dominio',
+            true
+          ),
+
+        dominio_it:
+          numeroStorico('dominio_it') > 0 ? 1 : 0,
+
+        dominio_com:
+          numeroStorico('dominio_com') > 0 ? 1 : 0,
+
+        email_5_caselle:
+          numeroStorico('email_5_caselle') > 0 ? 1 : 0,
+
+        pacchetto_sicurezza:
+          booleanStorico(
+            'pacchetto_sicurezza',
+            false
+          )
+      };
+    },
+
+    apriEditorServiziCliente() {
+      this.erroreServiziCliente = '';
+      this.successoServiziCliente = '';
+
+      this.serviziClienteForm =
+        this.formServiziClienteDaStorico(
+          this.clienteSelezionato(),
+          this.venditaClienteAttiva
+        );
+
+      this.serviziClienteEditorAperto = true;
+    },
+
+    chiudiEditorServiziCliente() {
+      this.serviziClienteEditorAperto = false;
+      this.erroreServiziCliente = '';
+      this.successoServiziCliente = '';
+    },
+
+    selezionaFormulaServiziCliente(formula) {
+      this.serviziClienteForm.formula =
+        formula === 'annuale'
+          ? 'annuale'
+          : 'mensile';
+
+      if (
+        this.serviziClienteForm.formula ===
+        'annuale'
+      ) {
+        this.serviziClienteForm
+          .pacchetto_sicurezza = false;
+      }
+    },
+
+    toggleUpgradeServiziCliente(id) {
+      const attuali =
+        Array.isArray(
+          this.serviziClienteForm.upgrade
+        )
+          ? this.serviziClienteForm.upgrade
+          : [];
+
+      this.serviziClienteForm.upgrade =
+        attuali.includes(id)
+          ? attuali.filter(x => x !== id)
+          : [...attuali, id];
+    },
+
+    setQuantitaServiziCliente(campo, delta, max) {
+      const valore =
+        Number(
+          this.serviziClienteForm[campo]
+        ) || 0;
+
+      this.serviziClienteForm[campo] =
+        Math.max(
+          0,
+          Math.min(
+            max,
+            valore + Number(delta || 0)
+          )
+        );
+    },
+
+    descrizioneServiziClienteForm() {
+      if (
+        !['mensile', 'annuale'].includes(
+          this.serviziClienteForm.formula
+        )
+      ) {
+        return 'Seleziona la formula';
+      }
+
+      const fallback =
+        this.venditaClienteAttiva?.servizio ||
+        this.clienteSelezionato()
+          ?.nome_pacchetto ||
+        '';
+
+      return (
+        this.descrizioneConfigurazioneCommerciale(
+          this.serviziClienteForm,
+          fallback,
+          false
+        ) ||
+        fallback ||
+        'Pacchetto non specificato'
+      );
+    },
+
+    async salvaServiziCliente() {
+      if (this.salvandoServiziCliente) return;
+
+      const cliente =
+        this.clienteSelezionato();
+
+      if (!cliente?.id) {
+        this.erroreServiziCliente =
+          'Cliente non disponibile.';
+        return;
+      }
+
+      if (
+        !['mensile', 'annuale'].includes(
+          this.serviziClienteForm.formula
+        )
+      ) {
+        this.erroreServiziCliente =
+          'Seleziona Start mensile o Start annuale.';
+        return;
+      }
+
+      const descrizione =
+        this.descrizioneServiziClienteForm();
+
+      this.salvandoServiziCliente = true;
+      this.erroreServiziCliente = '';
+      this.successoServiziCliente = '';
+
+      try {
+        const payload = {
+          ...this.serviziClienteForm,
+
+          periodicita_contratto:
+            this.serviziClienteForm.formula,
+
+          dominio_it:
+            this.serviziClienteForm
+              .cliente_ha_dominio
+              ? 0
+              : Number(
+                  this.serviziClienteForm
+                    .dominio_it
+                ) || 0,
+
+          dominio_com:
+            this.serviziClienteForm
+              .cliente_ha_dominio
+              ? 0
+              : Number(
+                  this.serviziClienteForm
+                    .dominio_com
+                ) || 0,
+
+          email_5_caselle:
+            this.serviziClienteForm
+              .cliente_ha_dominio
+              ? 0
+              : Number(
+                  this.serviziClienteForm
+                    .email_5_caselle
+                ) || 0,
+
+          pacchetto_sicurezza:
+            this.serviziClienteForm.formula ===
+            'mensile'
+              ? Boolean(
+                  this.serviziClienteForm
+                    .pacchetto_sicurezza
+                )
+              : false
+        };
+
+        const { error } =
+          await window.supabaseClient.rpc(
+            'aggiorna_servizi_cliente',
+            {
+              p_cliente_id: cliente.id,
+              p_configurazione: payload,
+              p_descrizione: descrizione
+            }
+          );
+
+        if (error) {
+          this.erroreServiziCliente =
+            'Servizi non salvati: ' +
+            error.message;
+          return;
+        }
+
+        this.successoServiziCliente =
+          'Servizi aggiornati. Il prezzo storico non è stato modificato.';
+
+        await this.caricaPagamentiCliente(
+          cliente.id
+        );
+
+        const locale =
+          this.clienti.find(
+            c => c.id === cliente.id
+          );
+
+        if (locale) {
+          locale.nome_pacchetto =
+            descrizione;
+
+          locale.pagine_extra =
+            payload.pagine_extra;
+
+          locale.lingue_extra =
+            payload.lingue_extra;
+
+          locale.cliente_ha_dominio =
+            payload.cliente_ha_dominio;
+
+          locale.dominio_it =
+            payload.dominio_it;
+
+          locale.dominio_com =
+            payload.dominio_com;
+
+          locale.email_5_caselle =
+            payload.email_5_caselle;
+
+          locale.pacchetto_sicurezza =
+            payload.pacchetto_sicurezza;
+        }
+
+        if (
+          this.pacchettoVenditaPerCliente[
+            cliente.id
+          ]
+        ) {
+          const vendita =
+            this.pacchettoVenditaPerCliente[
+              cliente.id
+            ];
+
+          vendita.nomePacchetto =
+            descrizione;
+
+          vendita.configurazioneCommerciale =
+            {
+              ...(vendita
+                .configurazioneCommerciale ||
+                {}),
+              ...payload,
+              descrizione_pacchetto:
+                descrizione
+            };
+        }
+
+        this.serviziClienteEditorAperto =
+          false;
+      } finally {
+        this.salvandoServiziCliente = false;
+      }
+    },
+
     async caricaPagamentiCliente(
       clienteId,
       venditaId = null
@@ -698,7 +1088,7 @@
             await window.supabaseClient
               .from('vendite')
               .select(
-                'id,cliente_id,importo_vendita,servizio,data_vendita,creato_il'
+                'id,cliente_id,importo_vendita,servizio,data_vendita,creato_il,configurazione_commerciale'
               )
               .eq('cliente_id', clienteId)
               .eq('stato', 'attiva')

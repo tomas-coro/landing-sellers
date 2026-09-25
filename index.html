@@ -4654,6 +4654,333 @@
 
           <div class="accordion-body" x-show="schedaAperture.pacchetto">
 
+            <div class="economy-config-snapshot">
+              <div class="economy-section-head">
+                <div>
+                  <span class="client-payment-history-title">
+                    Servizi e pacchetto
+                  </span>
+                  <strong
+                    x-text="
+                      schedaClienteCompleta(
+                        clienteSelezionato()
+                      ).pacchetto
+                    ">
+                  </strong>
+                </div>
+
+                <button
+                  type="button"
+                  class="btn btn-ghost"
+                  @click="apriEditorServiziCliente()">
+                  Modifica servizi
+                </button>
+              </div>
+
+              <small>
+                La modifica dei servizi aggiorna la descrizione
+                del pacchetto ma non ricalcola il prezzo storico.
+              </small>
+            </div>
+
+            <div
+              class="price-builder client-form-section"
+              x-show="serviziClienteEditorAperto">
+
+              <div class="client-form-section-head">
+                <span>01</span>
+                <div>
+                  <strong>Formula</strong>
+                  <small>
+                    Seleziona la formula realmente concordata
+                  </small>
+                </div>
+              </div>
+
+              <div class="duration-choice-grid">
+                <button
+                  type="button"
+                  class="duration-choice"
+                  :class="{
+                    on:
+                      serviziClienteForm.formula ===
+                      'mensile'
+                  }"
+                  @click="
+                    selezionaFormulaServiziCliente(
+                      'mensile'
+                    )
+                  ">
+                  <strong>Start mensile</strong>
+                </button>
+
+                <button
+                  type="button"
+                  class="duration-choice"
+                  :class="{
+                    on:
+                      serviziClienteForm.formula ===
+                      'annuale'
+                  }"
+                  @click="
+                    selezionaFormulaServiziCliente(
+                      'annuale'
+                    )
+                  ">
+                  <strong>Start annuale</strong>
+                </button>
+              </div>
+
+              <div class="client-form-section-head">
+                <span>02</span>
+                <div>
+                  <strong>Servizi</strong>
+                  <small>
+                    Aggiungi o rimuovi gli extra realmente venduti
+                  </small>
+                </div>
+              </div>
+
+              <div class="upgrade-compact-grid">
+                <template
+                  x-for="u in catalogoPrezzi().upgrade"
+                  :key="'edit-servizio-' + u.id">
+
+                  <label class="upgrade-compact-toggle">
+                    <input
+                      type="checkbox"
+                      :checked="
+                        serviziClienteForm.upgrade
+                          .includes(u.id)
+                      "
+                      @change="
+                        toggleUpgradeServiziCliente(
+                          u.id
+                        )
+                      ">
+
+                    <span>
+                      <strong x-text="u.nome"></strong>
+                    </span>
+                  </label>
+                </template>
+
+                <div class="upgrade-qty-card">
+                  <div>
+                    <strong>Pagine extra</strong>
+                  </div>
+
+                  <div class="qty-stepper">
+                    <button
+                      type="button"
+                      @click="
+                        setQuantitaServiziCliente(
+                          'pagine_extra',
+                          -1,
+                          15
+                        )
+                      ">
+                      −
+                    </button>
+
+                    <input
+                      type="number"
+                      min="0"
+                      max="15"
+                      x-model.number="
+                        serviziClienteForm.pagine_extra
+                      ">
+
+                    <button
+                      type="button"
+                      @click="
+                        setQuantitaServiziCliente(
+                          'pagine_extra',
+                          1,
+                          15
+                        )
+                      ">
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div class="upgrade-qty-card">
+                  <div>
+                    <strong>Multilingua</strong>
+                  </div>
+
+                  <div class="qty-stepper">
+                    <button
+                      type="button"
+                      @click="
+                        setQuantitaServiziCliente(
+                          'lingue_extra',
+                          -1,
+                          5
+                        )
+                      ">
+                      −
+                    </button>
+
+                    <input
+                      type="number"
+                      min="0"
+                      max="5"
+                      x-model.number="
+                        serviziClienteForm.lingue_extra
+                      ">
+
+                    <button
+                      type="button"
+                      @click="
+                        setQuantitaServiziCliente(
+                          'lingue_extra',
+                          1,
+                          5
+                        )
+                      ">
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="client-form-section-head">
+                <span>03</span>
+                <div>
+                  <strong>Dominio e accessori</strong>
+                </div>
+              </div>
+
+              <label class="upgrade-compact-toggle">
+                <input
+                  type="checkbox"
+                  x-model="
+                    serviziClienteForm.cliente_ha_dominio
+                  ">
+                <span>
+                  <strong>
+                    Il cliente ha già il dominio
+                  </strong>
+                </span>
+              </label>
+
+              <div
+                class="upgrade-compact-grid"
+                x-show="
+                  !serviziClienteForm.cliente_ha_dominio
+                ">
+
+                <label class="upgrade-compact-toggle">
+                  <input
+                    type="checkbox"
+                    :checked="
+                      serviziClienteForm.dominio_it > 0
+                    "
+                    @change="
+                      serviziClienteForm.dominio_it =
+                        $event.target.checked ? 1 : 0
+                    ">
+                  <span><strong>Dominio .it</strong></span>
+                </label>
+
+                <label class="upgrade-compact-toggle">
+                  <input
+                    type="checkbox"
+                    :checked="
+                      serviziClienteForm.dominio_com > 0
+                    "
+                    @change="
+                      serviziClienteForm.dominio_com =
+                        $event.target.checked ? 1 : 0
+                    ">
+                  <span><strong>Dominio .com</strong></span>
+                </label>
+
+                <label class="upgrade-compact-toggle">
+                  <input
+                    type="checkbox"
+                    :checked="
+                      serviziClienteForm.email_5_caselle > 0
+                    "
+                    @change="
+                      serviziClienteForm.email_5_caselle =
+                        $event.target.checked ? 1 : 0
+                    ">
+                  <span>
+                    <strong>
+                      Email - 5 caselle da 1 GB
+                    </strong>
+                  </span>
+                </label>
+              </div>
+
+              <label
+                class="upgrade-compact-toggle"
+                x-show="
+                  serviziClienteForm.formula ===
+                  'mensile'
+                ">
+                <input
+                  type="checkbox"
+                  x-model="
+                    serviziClienteForm.pacchetto_sicurezza
+                  ">
+                <span>
+                  <strong>
+                    Conservazione garantita per 12 mesi
+                  </strong>
+                </span>
+              </label>
+
+              <div class="economy-config-snapshot">
+                <span class="client-payment-history-title">
+                  Anteprima
+                </span>
+
+                <strong
+                  x-text="
+                    descrizioneServiziClienteForm()
+                  ">
+                </strong>
+              </div>
+
+              <p
+                class="err"
+                x-show="erroreServiziCliente"
+                x-text="erroreServiziCliente">
+              </p>
+
+              <p
+                class="economy-payment-details-note"
+                x-show="successoServiziCliente"
+                x-text="successoServiziCliente">
+              </p>
+
+              <div class="form-actions">
+                <button
+                  type="button"
+                  class="btn btn-ghost"
+                  :disabled="salvandoServiziCliente"
+                  @click="chiudiEditorServiziCliente()">
+                  Annulla
+                </button>
+
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  :disabled="salvandoServiziCliente"
+                  @click="salvaServiziCliente()"
+                  x-text="
+                    salvandoServiziCliente
+                      ? 'Salvataggio...'
+                      : 'Salva servizi'
+                  ">
+                </button>
+              </div>
+            </div>
+
             <div class="client-payment-summary">
 
               <div>
@@ -6316,7 +6643,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=126', {
+      navigator.serviceWorker.register('./service-worker.js?v=127', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
