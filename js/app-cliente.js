@@ -983,6 +983,17 @@
         this.successoServiziCliente =
           'Servizi aggiornati. Il prezzo storico non è stato modificato.';
 
+        /*
+         * Rileggi immediatamente le fonti canoniche dopo la RPC:
+         * la scheda corrente e la Home non devono dipendere da
+         * copie locali potenzialmente obsolete.
+         */
+        if (this.isAdmin) {
+          await this.caricaDashboardAdmin();
+        }
+
+        await this.caricaClienti();
+
         await this.caricaPagamentiCliente(
           cliente.id
         );
@@ -1432,7 +1443,18 @@
       ]);
     },
 
-    tornaDaScheda() {
+    async tornaDaScheda() {
+      /*
+       * Prima di tornare alla vista precedente rileggiamo cliente,
+       * vendita attiva e riepiloghi. In questo modo anche un back
+       * via history mostra subito la card aggiornata.
+       */
+      if (this.isAdmin) {
+        await this.caricaDashboardAdmin();
+      }
+
+      await this.caricaClienti();
+
       if (
         this._historyInizializzata &&
         history.state?.le

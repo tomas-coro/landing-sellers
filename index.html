@@ -2295,6 +2295,21 @@
               </div>
 
 
+              <div class="sale-control-card sale-control-activation">
+                <div class="sale-control-copy">
+                  <span>ATTIVAZIONE</span>
+                  <strong>Data inizio</strong>
+                  <small>
+                    Verrà usata automaticamente per rinnovi e scadenze.
+                  </small>
+                </div>
+
+                <input
+                  type="date"
+                  x-model="venditaEconomicaForm.configurazioneCommerciale.data_attivazione">
+              </div>
+
+
               <div class="sale-control-card sale-control-discount">
                 <div class="sale-control-copy">
                   <span>CONDIZIONI</span>
@@ -6712,7 +6727,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=128', {
+      navigator.serviceWorker.register('./service-worker.js?v=129', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

@@ -457,6 +457,10 @@ function formVenditaEconomicaVuoto() {
       sconto_valore: 0,
       sconto_durata_anni: null,
 
+      // Inserita una sola volta durante la vendita e sincronizzata
+      // automaticamente con la scheda cliente.
+      data_attivazione: '',
+
       cliente_ha_dominio: true,
       dominio_it: 0,
       dominio_com: 0,
@@ -1253,11 +1257,20 @@ function appState() {
 
     async vaiHome() {
       if (!(await this.confermaUscitaFormCliente())) return;
-      this.view = this.isAdmin ? 'admin' : 'lista';
-      if (!this.isAdmin) {
+
+      /*
+       * La Home deve riflettere sempre l'ultimo stato salvato nel DB.
+       * Evita card obsolete dopo modifiche a servizi, contratto o cliente.
+       */
+      if (this.isAdmin) {
+        await this.caricaDashboardAdmin();
+        await this.caricaClienti();
+      } else {
         await this.caricaClienti();
         await this.caricaStatisticheVenditore();
       }
+
+      this.view = this.isAdmin ? 'admin' : 'lista';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
