@@ -13,10 +13,9 @@ const migration = fs.readFileSync(
   'utf8'
 );
 
-const app = fs.readFileSync(
-  path.join(root, 'js/app.js'),
-  'utf8'
-);
+const app =
+  fs.readFileSync(path.join(root, 'js/app.js'), 'utf8') +
+  fs.readFileSync(path.join(root, 'js/app-economia.js'), 'utf8');
 
 test('esiste la RPC atomica per il pagamento economico', () => {
   assert.match(

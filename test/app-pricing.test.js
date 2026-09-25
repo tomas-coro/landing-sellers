@@ -57,13 +57,17 @@ test('il database impedisce due vendite attive per lo stesso cliente', () => {
 });
 
 test('una vendita attiva duplicata mostra un errore chiaro', () => {
-  const js = fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8');
+  const js =
+    fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8') +
+    fs.readFileSync(path.join(__dirname, '..', 'js', 'app-economia.js'), 'utf8');
   assert.match(js, /error\.code === '23505'/);
   assert.match(js, /Questo cliente ha già una vendita attiva/);
 });
 
 test('la vendita salva anche lo snapshot della configurazione commerciale', () => {
-  const js = fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8');
+  const js =
+    fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8') +
+    fs.readFileSync(path.join(__dirname, '..', 'js', 'app-economia.js'), 'utf8');
   assert.match(js, /'registra_vendita_completa'/);
   assert.match(js, /p_configurazione:\s*this\.venditaEconomicaForm\.configurazioneCommerciale/);
 });

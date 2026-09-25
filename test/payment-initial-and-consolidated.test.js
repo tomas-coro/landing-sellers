@@ -16,7 +16,9 @@ const migrazioneConsolidato = fs.readFileSync(
   'utf8'
 );
 
-const app = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
+const app =
+  fs.readFileSync(path.join(root, 'js/app.js'), 'utf8') +
+  fs.readFileSync(path.join(root, 'js/app-economia.js'), 'utf8');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 
 // ============================================================

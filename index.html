@@ -43,6 +43,10 @@
 <script src="js/catalogo-prezzi.js" defer></script>
 <script src="js/assistente.js" defer></script>
 <script src="js/economic-engine.js" defer></script>
+<script src="js/app-economia.js" defer></script>
+<script src="js/app-vendita.js" defer></script>
+<script src="js/app-cliente.js" defer></script>
+<script src="js/app-admin.js" defer></script>
 <script src="js/app.js" defer></script>
 <script defer src="js/vendor/alpine-3.17.4.min.js"></script>
 
@@ -6025,7 +6029,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=121', {
+      navigator.serviceWorker.register('./service-worker.js?v=122', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
