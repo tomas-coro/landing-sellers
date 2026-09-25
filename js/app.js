@@ -3672,6 +3672,7 @@ costiPerMotoreRataEconomia(
       const dark = opzioni.dark ? ' metrics-bar-dark' : '';
       const gridClass = opzioni.dark ? ' metrics-grid-line-dark' : '';
       const colore = opzioni.colore || 'var(--lime-deep)';
+      const hoverIndex = this[statoHoverProp];
       let svg = `<line class="metrics-grid-line${gridClass}" x1="16" y1="${barre[0].baseline}" x2="624" y2="${barre[0].baseline}"></line>`;
 
       barre.forEach((b, i) => {
@@ -3680,7 +3681,9 @@ costiPerMotoreRataEconomia(
           onmouseleave="Alpine.$data(document.getElementById('app')).${statoHoverProp}=null"
           onclick="const __d=Alpine.$data(document.getElementById('app'));__d.${statoHoverProp}=(__d.${statoHoverProp}===${i}?null:${i})"></rect>`;
 
-        if (b.valore > 0) {
+        // Etichetta valore di default: nascosta sulla barra col tooltip attivo
+        // (i===hoverIndex), altrimenti si sovrappone al testo del tooltip.
+        if (b.valore > 0 && i !== hoverIndex) {
           svg += `<text class="metrics-bar-value${dark}" x="${b.cx.toFixed(1)}" y="${Math.max(20, b.y - 10).toFixed(1)}" text-anchor="middle">${this.formattaEuroCompatto(b.valore)}</text>`;
         }
         if (etichetteVisibili.has(b.chiave)) {
@@ -3688,7 +3691,6 @@ costiPerMotoreRataEconomia(
         }
       });
 
-      const hoverIndex = this[statoHoverProp];
       if (Number.isInteger(hoverIndex) && barre[hoverIndex]) {
         const b = barre[hoverIndex];
         const x = Math.max(60, Math.min(580, b.cx));
