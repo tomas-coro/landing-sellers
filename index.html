@@ -5442,12 +5442,12 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="accordion-body" x-show="schedaAperture.contatti">
-            <dl>
-              <dt>Referente</dt><dd x-text="clienteSelezionato().referente"></dd>
-              <dt>Telefono</dt><dd x-text="clienteSelezionato().telefono"></dd>
-              <dt>Email</dt><dd x-text="clienteSelezionato().email"></dd>
-              <dt>P.IVA</dt><dd x-text="clienteSelezionato().piva"></dd>
-              <dt>IBAN</dt><dd x-text="clienteSelezionato().iban"></dd>
+            <dl class="client-contact-data">
+              <dt>Referente</dt><dd x-text="clienteSelezionato().referente || '-'"></dd>
+              <dt>Telefono</dt><dd x-text="clienteSelezionato().telefono || '-'"></dd>
+              <dt>Email</dt><dd x-text="clienteSelezionato().email || '-'"></dd>
+              <dt>P.IVA</dt><dd x-text="clienteSelezionato().piva || '-'"></dd>
+              <dt>IBAN</dt><dd x-text="clienteSelezionato().iban || '-'"></dd>
             </dl>
             <a x-show="clienteSelezionato().sito_url" :href="clienteSelezionato().sito_url" target="_blank" rel="noopener" class="btn btn-ghost" style="margin-top:12px">
               Apri il sito

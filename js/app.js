@@ -2676,15 +2676,25 @@ costiPerMotoreRataEconomia(
         Number(vendita?.importoVendita) || 0;
 
       /*
-       * Le vendite nuove salvano l'importo complessivo del contratto.
-       * Per la Home mostriamo il valore annuale medio del contratto,
-       * senza ricostruirlo dal catalogo prezzi corrente.
+       * importo_vendita e' un importo congelato al momento della vendita:
+       * l'RPC aggiorna_servizi_cliente lo lascia intatto quando si modifica
+       * il prezzo di un cliente gia' venduto (per non alterare pagamenti/
+       * quote gia' registrati - vedi salvaCliente in app-cliente.js), quindi
+       * dopo una modifica di canone/periodicita' resterebbe disallineato.
+       * Il valore live su clienti.importo_abbonamento/periodicita_contratto
+       * e' invece sempre aggiornato ad ogni salvataggio: ha priorita' quando
+       * disponibile (>0), altrimenti si ricade sull'importo_vendita storico
+       * (vendite senza abbonamento ricorrente, es. progetti una tantum).
        */
+      const valoreAnnualeVivo = valoreAnnualeCliente(cliente);
+
       const valoreAnnuale =
-        importoVendita > 0
-          ? importoVendita /
-            Math.max(1, durataContrattoAnni || 1)
-          : valoreAnnualeCliente(cliente);
+        valoreAnnualeVivo > 0
+          ? valoreAnnualeVivo
+          : importoVendita > 0
+            ? importoVendita /
+              Math.max(1, durataContrattoAnni || 1)
+            : 0;
 
       return {
         venditaId: vendita?.venditaId || null,
