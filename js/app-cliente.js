@@ -1599,7 +1599,7 @@
       await this.caricaClienti();
 
       if (
-        this._historyInizializzata &&
+        this.historyPronta &&
         history.state?.le
       ) {
         history.back();
