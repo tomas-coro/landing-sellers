@@ -31,7 +31,14 @@
 
 
     residuoCliente() {
-      return Math.max(0, this.totaleVenditaCliente() - this.totaleIncassatoCliente());
+      // Un pagamento in modifica non deve contarsi due volte nel residuo:
+      // il suo importo vecchio va escluso, altrimenti il massimo consentito
+      // risulterebbe più basso di quanto sia in realtà.
+      const totaleIncassato = this.pagamentiCliente
+        .filter(p => p.stato === 'incassato' && p.id !== this.pagamentoInModificaId)
+        .reduce((totale, p) => totale + (Number(p.importo) || 0), 0);
+
+      return Math.max(0, this.totaleVenditaCliente() - totaleIncassato);
     },
 
     statoPagamentoCliente() {

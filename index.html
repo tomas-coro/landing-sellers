@@ -3810,11 +3810,19 @@
             @click="salvaEconomia()">
             <span
               x-text="salvandoVenditaEconomica
-                ? 'Registrazione...'
+                ? 'Salvataggio...'
                 : modalitaEconomia === 'incasso'
-                  ? (venditaEconomicaForm.statoIncasso === 'previsto' ? 'Registra rata prevista' : 'Incassa')
+                  ? (pagamentoInModificaId ? 'Salva modifiche' : (venditaEconomicaForm.statoIncasso === 'previsto' ? 'Registra rata prevista' : 'Incassa'))
                   : 'Registra nuova vendita'">
             </span>
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-ghost"
+            x-show="modalitaEconomia === 'incasso' && pagamentoInModificaId"
+            @click="annullaModificaPagamento()">
+            Annulla modifica
           </button>
 
           <p class="economy-preview-note" x-show="modalitaEconomia === 'vendita'">
@@ -4675,6 +4683,14 @@
               Registra pagamento
             </button>
 
+            <p
+              x-show="errorePagamentiCliente"
+              x-text="errorePagamentiCliente"
+              x-effect="if (errorePagamentiCliente) $el.scrollIntoView({ behavior: 'smooth', block: 'center' })"
+              class="err"
+              style="margin:10px 0">
+            </p>
+
             <div class="skeleton-payment-history" x-show="caricandoPagamentiCliente" aria-hidden="true">
               <div class="skeleton-payment-row">
                 <div>
@@ -4716,17 +4732,43 @@
                     </small>
                   </div>
 
-                  <button
-                    type="button"
-                    x-show="p.stato === 'previsto'"
-                    @click="apriPagamentoCliente(clienteSelezionato(), p)">
-                    Incassa
-                  </button>
+                  <div class="client-payment-actions">
+                    <button
+                      type="button"
+                      x-show="p.stato === 'previsto'"
+                      @click="apriPagamentoCliente(clienteSelezionato(), p)">
+                      Incassa
+                    </button>
 
-                  <span
-                    x-show="p.stato !== 'previsto'"
-                    x-text="p.stato === 'incassato' ? 'Incassato' : 'Annullato'">
-                  </span>
+                    <span
+                      x-show="p.stato !== 'previsto'"
+                      x-text="p.stato === 'incassato' ? 'Incassato' : 'Annullato'">
+                    </span>
+
+                    <button
+                      type="button"
+                      class="client-payment-icon-btn"
+                      x-show="p.stato !== 'annullato'"
+                      aria-label="Modifica pagamento"
+                      title="Modifica pagamento"
+                      @click="modificaPagamentoCliente(clienteSelezionato(), p)">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                      </svg>
+                    </button>
+
+                    <button
+                      type="button"
+                      class="client-payment-icon-btn client-payment-icon-danger"
+                      :disabled="eliminandoPagamentoId === p.id"
+                      aria-label="Elimina pagamento"
+                      title="Elimina pagamento"
+                      @click="eliminaPagamentoCliente(clienteSelezionato(), p)">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                        <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/>
+                      </svg>
+                    </button>
+                  </div>
 
                 </div>
               </template>

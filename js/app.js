@@ -608,6 +608,8 @@ function appState() {
 
     costiVenditaRiferimento: [],
     pagamentoPrevistoId: null,
+    pagamentoInModificaId: null,
+    eliminandoPagamentoId: null,
     clienteEconomiaSelezionato: null,
     anagraficaEconomiaAperta: false,
     menuAzioneAperto: false,

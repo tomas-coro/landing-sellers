@@ -4032,6 +4032,36 @@ html[data-theme="dark"] .client-status-strip{
   opacity:.55;
 }
 
+.client-payment-actions{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex:0 0 auto;
+}
+
+.client-payment-icon-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:26px;
+  height:26px;
+  flex:0 0 auto;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--card,#fff);
+  color:var(--ink-soft,#555);
+  padding:0;
+}
+
+.client-payment-icon-btn:disabled{
+  opacity:.5;
+}
+
+.client-payment-icon-danger{
+  color:#c0392b;
+  border-color:rgba(192,57,43,.35);
+}
+
 .client-payment-empty{
   margin-top:12px;
   padding:12px;

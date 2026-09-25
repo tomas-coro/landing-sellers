@@ -31,6 +31,7 @@
 
       this.costiVenditaRiferimento = [];
       this.pagamentoPrevistoId = null;
+      this.pagamentoInModificaId = null;
       this.clienteEconomiaSelezionato = null;
       this.anagraficaEconomiaAperta = false;
       this.erroreEconomia = '';
@@ -657,6 +658,121 @@
       this.selezionaClienteEconomia(cliente);
     },
 
+    // Riapre lo stesso configuratore usato per registrare un pagamento,
+    // precompilato con i dati del pagamento esistente: sull'invio si va a
+    // correggere quel pagamento (RPC modifica_pagamento_economico) invece
+    // di crearne uno nuovo. Così il ricalcolo delle quote usa lo stesso
+    // motore economico della registrazione originale.
+    async modificaPagamentoCliente(cliente, pagamento) {
+      if (!cliente?.id || !pagamento?.id || pagamento.stato === 'annullato') return;
+
+      await this.apriEconomia('incasso');
+      this.clienteEconomiaSelezionato = cliente;
+      this.erroreEconomia = '';
+      this.successoEconomia = '';
+      this.caricandoVenditeIncasso = true;
+
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('vendite')
+          .select('id,cliente_id,servizio,importo_vendita,data_vendita,creato_il,applica_bonus_venditore')
+          .eq('id', pagamento.vendita_id)
+          .maybeSingle();
+
+        if (error || !data) {
+          this.erroreEconomia = 'Vendita collegata al pagamento non disponibile.';
+          return;
+        }
+
+        this.venditeClienteIncasso = [data];
+        await this.selezionaVenditaIncasso(data.id);
+
+        // pagamentoInModificaId segna "sono qui per correggere questo
+        // pagamento" (label e pulsante Annulla in UI). pagamentoPrevistoId
+        // resta solo l'instradamento RPC per le rate previste: è lo stesso
+        // campo che apriPagamentoCliente() usa per il flusso "Incassa" già
+        // esistente, che NON deve ereditare l'etichetta di modifica.
+        this.pagamentoInModificaId = pagamento.id;
+
+        if (pagamento.stato === 'previsto') {
+          this.pagamentoPrevistoId = pagamento.id;
+          this.venditaEconomicaForm.statoIncasso = 'previsto';
+        } else {
+          this.pagamentoPrevistoId = null;
+          this.venditaEconomicaForm.statoIncasso = 'incassato';
+        }
+
+        this.venditaEconomicaForm.importoIncassato = Number(pagamento.importo) || null;
+        this.venditaEconomicaForm.metodoPagamento = pagamento.metodo || '';
+        this.venditaEconomicaForm.notePagamento = pagamento.note || '';
+        this.venditaEconomicaForm.dataPagamento = pagamento.data_pagamento || this.dataISOOggi();
+        this.venditaEconomicaForm.dataScadenza = pagamento.data_scadenza || '';
+
+        this.aggiornaSnapshotEconomia();
+      } finally {
+        this.caricandoVenditeIncasso = false;
+      }
+
+      this.view = 'economia';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    annullaModificaPagamento() {
+      this.cambiaClienteEconomia();
+    },
+
+    // Elimina un pagamento: il DB rimuove in cascata lo snapshot economico
+    // collegato (pagamento_calcoli/pagamento_partecipanti). I permessi sono
+    // quelli già impostati dalla RLS di public.pagamenti. Chiamata dalla
+    // scheda cliente, non dalla vista Economia: l'errore va in
+    // errorePagamentiCliente (visibile lì), non in erroreEconomia.
+    async eliminaPagamentoCliente(cliente, pagamento) {
+      if (!cliente?.id || !pagamento?.id || this.eliminandoPagamentoId) return;
+
+      const messaggio = pagamento.stato === 'incassato'
+        ? `Stai eliminando un incasso di ${formattaEuro(pagamento.importo)} già conteggiato nelle statistiche. Le quote dei partecipanti collegate verranno rimosse. Confermi?`
+        : `Eliminare questa rata prevista da ${formattaEuro(pagamento.importo)}?`;
+
+      const confermato = await this.chiediConferma(messaggio, 'Elimina');
+      if (!confermato) return;
+
+      this.eliminandoPagamentoId = pagamento.id;
+      this.errorePagamentiCliente = '';
+
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('pagamenti')
+          .delete()
+          .eq('id', pagamento.id)
+          .select('id');
+
+        if (error) {
+          this.errorePagamentiCliente = 'Pagamento non eliminato: ' + error.message;
+          return;
+        }
+
+        // La RLS filtra in silenzio: se non torna alcuna riga il permesso
+        // manca, ma error resta null. Senza questo controllo l'utente non
+        // saprebbe perché il pagamento è ancora lì dopo aver confermato.
+        if (!data || data.length === 0) {
+          this.errorePagamentiCliente =
+            'Pagamento non eliminato: non hai i permessi per eliminare questo pagamento.';
+          return;
+        }
+
+        await this.caricaPagamentiCliente(cliente.id, pagamento.vendita_id);
+
+        if (this.isAdmin) {
+          await this.caricaDashboardAdmin();
+        } else {
+          await this.caricaClienti();
+          await this.caricaStatisticheVenditore();
+        }
+      } finally {
+        this.eliminandoPagamentoId = null;
+      }
+    },
+
     cambiaClienteEconomia() {
       this.clienteEconomiaSelezionato = null;
       this.anagraficaEconomiaAperta = false;
@@ -669,6 +785,7 @@
         this.pagamentiCliente = [];
         this.costiVenditaRiferimento = [];
         this.pagamentoPrevistoId = null;
+        this.pagamentoInModificaId = null;
         this.erroreEconomia = '';
         this.successoEconomia = '';
       }
@@ -1033,6 +1150,8 @@
         const previsto =
           this.venditaEconomicaForm.statoIncasso === 'previsto';
 
+        const modificaId = this.pagamentoInModificaId;
+
         let rpcNome;
         let rpcPayload;
 
@@ -1078,38 +1197,75 @@
           const payloadEconomico =
             this.payloadSnapshotPagamentoEconomia(snapshot);
 
-          rpcNome = 'registra_pagamento_economico';
+          // Se pagamentoPrevistoId è ancora impostato, questo pagamento è
+          // una rata prevista che sta passando a incassato ora: deve
+          // seguire il percorso di conversione esistente (che scrive anche
+          // lo snapshot per la prima volta), non la RPC di modifica - che
+          // per un pagamento ancora 'previsto' salterebbe lo snapshot e
+          // lascerebbe lo stato invariato.
+          if (modificaId && !this.pagamentoPrevistoId) {
+            rpcNome = 'modifica_pagamento_economico';
 
-          rpcPayload = {
-            p_vendita_id:
-              this.venditaEconomicaAttiva.id,
+            rpcPayload = {
+              p_pagamento_id: modificaId,
 
-            p_importo:
-              Number(
-                this.venditaEconomicaForm.importoIncassato
-              ),
+              p_importo:
+                Number(
+                  this.venditaEconomicaForm.importoIncassato
+                ),
 
-            p_data_pagamento:
-              this.venditaEconomicaForm.dataPagamento ||
-              this.dataISOOggi(),
+              p_data_pagamento:
+                this.venditaEconomicaForm.dataPagamento ||
+                this.dataISOOggi(),
 
-            p_metodo:
-              (this.venditaEconomicaForm.metodoPagamento || '')
-                .trim() || null,
+              p_metodo:
+                (this.venditaEconomicaForm.metodoPagamento || '')
+                  .trim() || null,
 
-            p_note:
-              (this.venditaEconomicaForm.notePagamento || '')
-                .trim() || null,
+              p_note:
+                (this.venditaEconomicaForm.notePagamento || '')
+                  .trim() || null,
 
-            p_pagamento_previsto_id:
-              this.pagamentoPrevistoId,
+              p_calcolo:
+                payloadEconomico.calcolo,
 
-            p_calcolo:
-              payloadEconomico.calcolo,
+              p_partecipanti:
+                payloadEconomico.partecipanti
+            };
+          } else {
+            rpcNome = 'registra_pagamento_economico';
 
-            p_partecipanti:
-              payloadEconomico.partecipanti
-          };
+            rpcPayload = {
+              p_vendita_id:
+                this.venditaEconomicaAttiva.id,
+
+              p_importo:
+                Number(
+                  this.venditaEconomicaForm.importoIncassato
+                ),
+
+              p_data_pagamento:
+                this.venditaEconomicaForm.dataPagamento ||
+                this.dataISOOggi(),
+
+              p_metodo:
+                (this.venditaEconomicaForm.metodoPagamento || '')
+                  .trim() || null,
+
+              p_note:
+                (this.venditaEconomicaForm.notePagamento || '')
+                  .trim() || null,
+
+              p_pagamento_previsto_id:
+                this.pagamentoPrevistoId,
+
+              p_calcolo:
+                payloadEconomico.calcolo,
+
+              p_partecipanti:
+                payloadEconomico.partecipanti
+            };
+          }
         }
 
         const { error } =
@@ -1124,9 +1280,13 @@
           return;
         }
 
-        this.successoEconomia = previsto
-          ? 'Rata prevista registrata.'
-          : 'Incasso registrato.';
+        this.successoEconomia = modificaId
+          ? 'Pagamento aggiornato.'
+          : previsto
+            ? 'Rata prevista registrata.'
+            : 'Incasso registrato.';
+
+        this.pagamentoInModificaId = null;
 
         await this.caricaPagamentiCliente(
           this.venditaEconomicaAttiva.cliente_id,
