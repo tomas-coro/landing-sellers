@@ -1557,3 +1557,244 @@ test('l editor servizi recupera automaticamente extra storici dal cliente', () =
   assert.equal(form.dominio_it, 1);
   assert.equal(form.email_5_caselle, 1);
 });
+
+test('v129 sincronizza automaticamente cliente e vendita commerciale', () => {
+  const sql = fs.readFileSync(
+    path.join(
+      __dirname,
+      '..',
+      'supabase',
+      'migrations',
+      '20260925164500_commercial_single_source.sql'
+    ),
+    'utf8'
+  );
+
+  assert.match(
+    sql,
+    /sincronizza_cliente_da_configurazione/
+  );
+
+  assert.match(
+    sql,
+    /create or replace function public\.registra_vendita_completa/
+  );
+
+  assert.match(
+    sql,
+    /perform public\.sincronizza_cliente_da_configurazione/
+  );
+
+  assert.match(
+    sql,
+    /create or replace function public\.aggiorna_servizi_cliente/
+  );
+});
+
+test('v129 non ricalcola dati economici storici nel backfill', () => {
+  const sql = fs.readFileSync(
+    path.join(
+      __dirname,
+      '..',
+      'supabase',
+      'migrations',
+      '20260925164500_commercial_single_source.sql'
+    ),
+    'utf8'
+  );
+
+  assert.doesNotMatch(
+    sql,
+    /update\s+public\.pagamenti/i
+  );
+
+  assert.doesNotMatch(
+    sql,
+    /update\s+public\.vendita_partecipanti/i
+  );
+
+  assert.doesNotMatch(
+    sql,
+    /update\s+public\.costi_vendita/i
+  );
+
+  assert.doesNotMatch(
+    sql,
+    /set\s+importo_vendita\s*=/i
+  );
+});
+
+test('v129 supporta quantita dominio ed email fino a 10', () => {
+  const sql = fs.readFileSync(
+    path.join(
+      __dirname,
+      '..',
+      'supabase',
+      'migrations',
+      '20260925164500_commercial_single_source.sql'
+    ),
+    'utf8'
+  );
+
+  assert.match(
+    sql,
+    /least\(\s*10,\s*coalesce\(\s*\(v_cfg ->> 'dominio_it'\)::integer/s
+  );
+
+  assert.match(
+    sql,
+    /least\(\s*10,\s*coalesce\(\s*\(v_cfg ->> 'dominio_com'\)::integer/s
+  );
+
+  assert.match(
+    sql,
+    /least\(\s*10,\s*coalesce\(\s*\(v_cfg ->> 'email_5_caselle'\)::integer/s
+  );
+});
+
+test('v129 backfill ricostruisce descrizione dai dati cliente senza inventare servizi', () => {
+  const sql = fs.readFileSync(
+    path.join(
+      __dirname,
+      '..',
+      'supabase',
+      'migrations',
+      '20260925164500_commercial_single_source.sql'
+    ),
+    'utf8'
+  );
+
+  assert.match(sql, /Start annuale/);
+  assert.match(sql, /pagina extra/);
+  assert.match(sql, /Dominio \.it/);
+
+  assert.match(
+    sql,
+    /v_testo like '%gallery dinamica%'/
+  );
+});
+
+test('v129 propaga le modifiche commerciali cliente alla vendita attiva', () => {
+  const sql = fs.readFileSync(
+    path.join(
+      __dirname,
+      '..',
+      'supabase',
+      'migrations',
+      '20260925164500_commercial_single_source.sql'
+    ),
+    'utf8'
+  );
+
+  assert.match(
+    sql,
+    /create or replace function public\.sincronizza_vendita_da_cliente/
+  );
+
+  assert.match(
+    sql,
+    /create trigger trg_sincronizza_vendita_da_cliente/
+  );
+
+  assert.match(
+    sql,
+    /after update of[\s\S]*pagine_extra[\s\S]*dominio_it[\s\S]*pacchetto_sicurezza/
+  );
+});
+
+test('v129 data attivazione si inserisce nella vendita e arriva al cliente', () => {
+  const app = fs.readFileSync(
+    path.join(__dirname, '..', 'js', 'app.js'),
+    'utf8'
+  );
+
+  const html = fs.readFileSync(
+    path.join(__dirname, '..', 'index.html'),
+    'utf8'
+  );
+
+  const sql = fs.readFileSync(
+    path.join(
+      __dirname,
+      '..',
+      'supabase',
+      'migrations',
+      '20260925164500_commercial_single_source.sql'
+    ),
+    'utf8'
+  );
+
+  assert.match(
+    app,
+    /configurazioneCommerciale:[\s\S]*data_attivazione:\s*''/
+  );
+
+  assert.match(
+    html,
+    /venditaEconomicaForm\.configurazioneCommerciale\.data_attivazione/
+  );
+
+  assert.match(
+    sql,
+    /data_attivazione\s*=\s*case/
+  );
+});
+
+test('v129 rigenera le descrizioni legacy da configurazione consolidata', () => {
+  const sql = fs.readFileSync(
+    path.join(
+      __dirname,
+      '..',
+      'supabase',
+      'migrations',
+      '20260925164500_commercial_single_source.sql'
+    ),
+    'utf8'
+  );
+
+  assert.match(
+    sql,
+    /v_cfg - 'descrizione_pacchetto'/
+  );
+
+  assert.match(
+    sql,
+    /descrizione_configurazione_commerciale/
+  );
+});
+
+test('v129 Home admin ricarica dashboard e clienti prima di mostrare le card', () => {
+  const app = fs.readFileSync(
+    path.join(__dirname, '..', 'js', 'app.js'),
+    'utf8'
+  );
+
+  assert.match(
+    app,
+    /async vaiHome\(\)[\s\S]*if \(this\.isAdmin\)[\s\S]*await this\.caricaDashboardAdmin\(\)[\s\S]*await this\.caricaClienti\(\)/
+  );
+});
+
+test('v129 ritorno dalla scheda rilegge i clienti prima della navigazione', () => {
+  const cliente = fs.readFileSync(
+    path.join(__dirname, '..', 'js', 'app-cliente.js'),
+    'utf8'
+  );
+
+  assert.match(
+    cliente,
+    /async tornaDaScheda\(\)[\s\S]*await this\.caricaClienti\(\)[\s\S]*history\.back\(\)/
+  );
+});
+
+test('v129 modifica servizi rilegge DB prima di aggiornare la UI', () => {
+  const cliente = fs.readFileSync(
+    path.join(__dirname, '..', 'js', 'app-cliente.js'),
+    'utf8'
+  );
+
+  assert.match(
+    cliente,
+    /async salvaServiziCliente\(\)[\s\S]*rpc\([\s\S]*aggiorna_servizi_cliente[\s\S]*await this\.caricaClienti\(\)[\s\S]*await this\.caricaPagamentiCliente/
+  );
+});
