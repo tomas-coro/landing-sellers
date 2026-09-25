@@ -206,6 +206,173 @@ test('inquadratura e zoom avatar vengono salvati nell’URL e riletti', () => {
 });
 
 
+
+test('la descrizione commerciale usa una sola fonte per formula, upgrade ed extra', () => {
+  const stato = appState();
+
+  global.window ||= {};
+  global.window.CATALOGO_PREZZI_LE = {
+    formule: {
+      mensile: {
+        id: 'mensile',
+        nome: 'Start mensile'
+      },
+      annuale: {
+        id: 'annuale',
+        nome: 'Start annuale'
+      }
+    },
+    upgrade: [
+      {
+        id: 'gallery_dinamica',
+        nome: 'Gallery dinamica'
+      },
+      {
+        id: 'chatbot_ai',
+        nome: 'Chatbot AI personalizzato'
+      }
+    ],
+    annuali: {
+      dominioIt: { nome: 'Dominio .it' },
+      dominioCom: { nome: 'Dominio .com' },
+      email5: { nome: 'Email - 5 caselle da 1 GB' }
+    },
+    sicurezza: {
+      nome: 'Conservazione garantita per 12 mesi'
+    }
+  };
+
+  assert.equal(
+    stato.descrizioneConfigurazioneCommerciale({
+      formula: 'annuale',
+      periodicita_contratto: 'annuale',
+      upgrade: ['gallery_dinamica'],
+      pagine_extra: 1,
+      lingue_extra: 0,
+      cliente_ha_dominio: false,
+      dominio_it: 0,
+      dominio_com: 1,
+      email_5_caselle: 0
+    }),
+    'Start annuale + Gallery dinamica + 1 pagina extra + Dominio .com'
+  );
+});
+
+test('la descrizione salvata nello snapshot resta prioritaria per lo storico', () => {
+  const stato = appState();
+
+  assert.equal(
+    stato.descrizioneConfigurazioneCommerciale(
+      {
+        formula: 'annuale',
+        descrizione_pacchetto:
+          'Start annuale + Gallery storica'
+      },
+      'Sito web',
+      true
+    ),
+    'Start annuale + Gallery storica'
+  );
+});
+
+test('una vendita storica con servizio generico usa le scelte gia salvate nello snapshot', () => {
+  const stato = appState();
+
+  global.window ||= {};
+  global.window.CATALOGO_PREZZI_LE = {
+    formule: {
+      mensile: {
+        id: 'mensile',
+        nome: 'Start mensile'
+      },
+      annuale: {
+        id: 'annuale',
+        nome: 'Start annuale'
+      }
+    },
+    upgrade: [
+      {
+        id: 'gallery_dinamica',
+        nome: 'Gallery dinamica'
+      }
+    ],
+    annuali: {
+      dominioIt: { nome: 'Dominio .it' },
+      dominioCom: { nome: 'Dominio .com' },
+      email5: { nome: 'Email - 5 caselle da 1 GB' }
+    },
+    sicurezza: {
+      nome: 'Conservazione garantita per 12 mesi'
+    }
+  };
+
+  stato.pacchettoVenditaPerCliente = {
+    c1: {
+      nomePacchetto: 'Sito web',
+      configurazioneCommerciale: {
+        formula: 'annuale',
+        periodicita_contratto: 'annuale',
+        upgrade: ['gallery_dinamica'],
+        pagine_extra: 1,
+        lingue_extra: 0,
+        cliente_ha_dominio: true,
+        dominio_it: 0,
+        dominio_com: 0,
+        email_5_caselle: 0
+      }
+    }
+  };
+
+  assert.equal(
+    stato.etichettaPacchettoCliente({
+      id: 'c1',
+      nome_pacchetto: ''
+    }),
+    'Start annuale + Gallery dinamica + 1 pagina extra'
+  );
+});
+
+test('senza snapshot commerciale la descrizione legacy non viene inventata', () => {
+  const stato = appState();
+
+  stato.pacchettoVenditaPerCliente = {
+    legacy: {
+      nomePacchetto: 'Sito web',
+      configurazioneCommerciale: null
+    }
+  };
+
+  assert.equal(
+    stato.etichettaPacchettoCliente({
+      id: 'legacy',
+      nome_pacchetto: 'Vecchio pacchetto'
+    }),
+    'Sito web'
+  );
+});
+
+test('le nuove vendite congelano la descrizione commerciale dentro lo snapshot', () => {
+  const js = require('fs').readFileSync(
+    require('path').join(
+      __dirname,
+      '..',
+      'js',
+      'app-vendita.js'
+    ),
+    'utf8'
+  );
+
+  assert.match(
+    js,
+    /cfg\.descrizione_pacchetto\s*=\s*descrizionePacchetto/
+  );
+
+  assert.match(
+    js,
+    /this\.venditaEconomicaForm\.servizio\s*=\s*descrizionePacchetto/
+  );
+});
+
 test('la Home usa la vendita attiva per valore annuale e durata contratto', () => {
   const stato = appState();
 

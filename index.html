@@ -4900,7 +4900,22 @@
 
             <dl class="client-payment-contract-data">
               <dt>Servizio</dt>
-              <dd x-text="venditaClienteAttiva?.servizio || 'Non disponibile nello storico'"></dd>
+              <dd
+                x-text="
+                  venditaClienteAttiva
+                    ? (
+                        descrizioneConfigurazioneCommerciale(
+                          configurazioneCommercialeClienteAttiva(),
+                          venditaClienteAttiva.servizio ||
+                            'Non disponibile nello storico',
+                          true
+                        ) ||
+                        venditaClienteAttiva.servizio ||
+                        'Non disponibile nello storico'
+                      )
+                    : 'Non disponibile nello storico'
+                ">
+              </dd>
 
               <dt>Importo vendita</dt>
               <dd x-text="formattaEuro(venditaClienteAttiva?.importo_vendita || 0)"></dd>
@@ -6296,7 +6311,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=124', {
+      navigator.serviceWorker.register('./service-worker.js?v=125', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
