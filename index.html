@@ -66,7 +66,7 @@
 .economy-mixed-label{
   display:block;
   margin:0;
-  font-size:13px;
+  font-size:16px;
   font-weight:700;
   line-height:1.25;
   color:#707070;
@@ -80,7 +80,7 @@
   border-radius:13px;
   background:#fafafa;
   font:inherit;
-  font-size:14px;
+  font-size:17px;
   color:#111;
   box-sizing:border-box;
 }
@@ -103,13 +103,13 @@
   align-items:baseline;
   gap:6px;
   margin-top:5px;
-  font-size:11.5px;
+  font-size:15px;
   line-height:1.2;
   color:#8d8d8d;
 }
 .economy-mixed-residual-line strong{
   color:#111;
-  font-size:12px;
+  font-size:15.5px;
 }
 @media (max-width:520px){
   .economy-mixed-row{
@@ -117,13 +117,13 @@
     gap:10px;
   }
   .economy-mixed-label{
-    font-size:12.5px;
+    font-size:16px;
   }
   .economy-mixed-input{
     height:40px;
     min-height:40px;
     padding:0 12px;
-    font-size:13.5px;
+    font-size:16.5px;
   }
 }
 
@@ -138,7 +138,7 @@
   border-top:1px solid #ececec;
 }
 .economy-history-row > span{
-  font-size:12.5px;
+  font-size:16px;
   font-weight:700;
   color:#707070;
 }
@@ -149,7 +149,7 @@
   color:#111;
   padding:8px 12px;
   font:inherit;
-  font-size:12px;
+  font-size:15.5px;
   font-weight:700;
   cursor:pointer;
 }
@@ -173,7 +173,7 @@
   border-radius:12px;
   background:#fafafa;
   font:inherit;
-  font-size:13.5px;
+  font-size:16.5px;
   box-sizing:border-box;
 }
 .economy-history-editor input::-webkit-outer-spin-button,
@@ -382,7 +382,7 @@
         <button x-show="!isAdmin && view === 'clienti'" type="button" class="linkback" @click="vaiHome()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Home
         </button>
-        <h1 style="font-size:19px" x-text="isAdmin ? filtroVenditoreNome : (view === 'clienti' ? 'Clienti' : 'Home')"></h1>
+        <h1 style="font-size:21px" x-text="isAdmin ? filtroVenditoreNome : (view === 'clienti' ? 'Clienti' : 'Home')"></h1>
       </div>
       <div class="content">
         <p x-show="erroreClienti" style="margin-bottom:14px">
@@ -5148,7 +5148,7 @@
                 <p x-text="n.testo"></p>
               </div>
             </template>
-            <p x-show="note.length === 0" style="color:var(--muted);font-size:13.5px">Nessuna nota ancora.</p>
+            <p x-show="note.length === 0" style="color:var(--muted);font-size:16.5px">Nessuna nota ancora.</p>
           </div>
         </div>
         <div class="client-detail-footer-action">
@@ -5184,7 +5184,7 @@
           </svg>
           Home
         </button>
-        <h1 style="font-size:19px" x-text="isAdmin ? 'Agenda rete' : 'Agenda'"></h1>
+        <h1 style="font-size:21px" x-text="isAdmin ? 'Agenda rete' : 'Agenda'"></h1>
       </div>
 
       <div
@@ -5409,7 +5409,7 @@
           </svg>
           Indietro
         </button>
-        <h1 style="font-size:19px">Ricerca</h1>
+        <h1 style="font-size:21px">Ricerca</h1>
       </div>
 
       <div class="content crm-content">
@@ -6035,7 +6035,7 @@
         <button type="button" class="linkback" @click="view = 'lista'">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Torna alla lista
         </button>
-        <h1 style="font-size:19px">Cestino</h1>
+        <h1 style="font-size:21px">Cestino</h1>
       </div>
       <div class="content">
         <p x-show="erroreCestino" x-text="erroreCestino" class="err" style="margin-bottom:14px"></p>
@@ -6048,7 +6048,7 @@
           <div class="card-cliente">
             <div class="cc-top">
               <strong x-text="cliente.nome"></strong>
-              <button type="button" class="btn btn-ghost" style="width:auto;padding:8px 14px;font-size:12.5px" :disabled="ripristinandoClienteId === cliente.id" @click="ripristinaCliente(cliente.id)" x-text="ripristinandoClienteId === cliente.id ? 'Ripristino...' : 'Ripristina'"></button>
+              <button type="button" class="btn btn-ghost" style="width:auto;padding:8px 14px;font-size:16px" :disabled="ripristinandoClienteId === cliente.id" @click="ripristinaCliente(cliente.id)" x-text="ripristinandoClienteId === cliente.id ? 'Ripristino...' : 'Ripristina'"></button>
             </div>
             <span class="cc-next">Eliminato il <span x-text="formattaData(cliente.cancellato_il)"></span> - <span x-text="giorniResiduiCestino(cliente.cancellato_il) === 0 ? 'rimosso: ultimo giorno' : 'rimosso tra ' + etichettaGiorniResidui(giorniResiduiCestino(cliente.cancellato_il))"></span></span>
           </div>
@@ -6075,7 +6075,7 @@
         <button type="button" class="linkback" @click="view = 'profilo'">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Torna al profilo
         </button>
-        <h1 style="font-size:19px">Fatturato</h1>
+        <h1 style="font-size:21px">Fatturato</h1>
       </div>
       <div class="content">
         <p x-show="erroreFatturato" x-text="erroreFatturato" class="err" style="margin-bottom:14px"></p>
@@ -6203,7 +6203,7 @@
     <div x-show="confermaEliminazione" x-cloak class="modal-overlay" @click.self="confermaEliminazione = false">
       <div class="modal-card">
         <h2 style="margin-top:0">Eliminare questo cliente?</h2>
-        <p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:20px">
+        <p style="font-size:16.5px;color:var(--ink-soft);margin-bottom:20px">
           <strong x-text="clienteSelezionato().nome"></strong> sparisce dalle liste. Puoi chiedere di recuperarlo entro 30 giorni, dopo di che verra' rimosso automaticamente dal database.
         </p>
         <div class="btn-row">
@@ -6217,7 +6217,7 @@
     <!-- POPUP CONFERMA GENERICO: sostituisce window.confirm() nativo (es. uscita da form con modifiche non salvate) -->
     <div x-show="confermaGenerica.aperto" x-cloak class="modal-overlay" @click.self="rispondiConferma(false)">
       <div class="modal-card">
-        <p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:20px" x-text="confermaGenerica.messaggio"></p>
+        <p style="font-size:16.5px;color:var(--ink-soft);margin-bottom:20px" x-text="confermaGenerica.messaggio"></p>
         <div class="btn-row">
           <button type="button" class="btn btn-ghost" @click="rispondiConferma(false)">Annulla</button>
           <button type="button" class="btn btn-primary" @click="rispondiConferma(true)" x-text="confermaGenerica.testoConferma"></button>
