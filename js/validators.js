@@ -37,7 +37,7 @@ function formattaMese(data) {
 }
 
 function formattaEuro(numero) {
-  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 })
     .format(Number(numero) || 0);
 }
 
