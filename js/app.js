@@ -3202,7 +3202,7 @@ costiPerMotoreRataEconomia(
     // se due serie finiscono a meno di 14 unita' viewBox, la piu' in alto
     // viene spinta ancora piu' su.
     trendEtichetteFinali(serie) {
-      const MIN_GAP = 14;
+      const MIN_GAP = 38;
       const etichette = serie
         .map(s => {
           const pts = this.trendPuntiSerie(s.punti);
@@ -3267,8 +3267,8 @@ costiPerMotoreRataEconomia(
         svg += `<line class="metrics-grid-line metrics-grid-line-dark" x1="28" y1="${y}" x2="632" y2="${y}"></line>`;
       });
       this.trendEtichetteAsse(punti).forEach(a => {
-        svg += `<text class="metrics-axis-label metrics-axis-label-dark" x="${a.x}" y="191" text-anchor="middle">${a.text}</text>`;
-        svg += `<text class="metrics-count-label metrics-count-label-dark" x="${a.x}" y="205" text-anchor="middle">${a.numero} sit${a.numero === 1 ? 'o' : 'i'}</text>`;
+        svg += `<text class="metrics-axis-label metrics-axis-label-dark" x="${a.x}" y="196" text-anchor="middle">${a.text}</text>`;
+        svg += `<text class="metrics-count-label metrics-count-label-dark" x="${a.x}" y="234" text-anchor="middle">${a.numero} sit${a.numero === 1 ? 'o' : 'i'}</text>`;
       });
 
       svg += `<path class="metrics-trend-area" d="${this.trendPathArea(punti)}"></path>`;
@@ -3276,7 +3276,7 @@ costiPerMotoreRataEconomia(
 
       pts.forEach(p => {
         if (!p.valore) return;
-        svg += `<text class="metrics-point-label metrics-point-label-dark" x="${p.x}" y="${Math.max(11, p.y - 9)}" text-anchor="middle">${this.formattaEuroCompatto(p.valore)}</text>`;
+        svg += `<text class="metrics-point-label metrics-point-label-dark" x="${p.x}" y="${Math.max(28, p.y - 22)}" text-anchor="middle">${this.formattaEuroCompatto(p.valore)}</text>`;
       });
 
       pts.forEach((p, i) => {
@@ -3289,7 +3289,7 @@ costiPerMotoreRataEconomia(
       if (this.trendHoverVenditore !== null && pts[this.trendHoverVenditore]) {
         const p = pts[this.trendHoverVenditore];
         const x = Math.max(50, Math.min(590, p.x));
-        const y = Math.max(14, p.y - 20);
+        const y = Math.max(28, p.y - 24);
         svg += `<text class="metrics-tooltip metrics-tooltip-dark" x="${x}" y="${y}" text-anchor="middle">${p.label} · ${formattaEuro(p.valore)} · ${p.numero} sit${p.numero === 1 ? 'o' : 'i'}</text>`;
       }
 
@@ -3310,8 +3310,8 @@ costiPerMotoreRataEconomia(
       // qui interessa quante vendite ci sono state in azienda quel mese.
       const serieTotale = serie.find(s => s.id === 'totale') || serie[0];
       this.trendEtichetteAsse(serieTotale ? serieTotale.puntiVisibili : []).forEach(a => {
-        svg += `<text class="metrics-axis-label" x="${a.x}" y="191" text-anchor="middle">${a.text}</text>`;
-        svg += `<text class="metrics-count-label" x="${a.x}" y="205" text-anchor="middle">${a.numero} sit${a.numero === 1 ? 'o' : 'i'}</text>`;
+        svg += `<text class="metrics-axis-label" x="${a.x}" y="196" text-anchor="middle">${a.text}</text>`;
+        svg += `<text class="metrics-count-label" x="${a.x}" y="234" text-anchor="middle">${a.numero} sit${a.numero === 1 ? 'o' : 'i'}</text>`;
       });
 
       serie.forEach(s => {
@@ -3336,7 +3336,7 @@ costiPerMotoreRataEconomia(
         const p = s && this.trendPuntiSerie(s.puntiVisibili)[this.trendHoverAdmin.pi];
         if (p) {
           const x = Math.max(50, Math.min(590, p.x));
-          const y = Math.max(14, p.y - 10);
+          const y = Math.max(28, p.y - 24);
           const nomeSerie = s.id !== 'totale' ? ' · ' + s.nome : '';
           svg += `<text class="metrics-tooltip" x="${x}" y="${y}" text-anchor="middle">${p.label}${nomeSerie} · ${formattaEuro(p.valore)} · ${p.numero} sit${p.numero === 1 ? 'o' : 'i'}</text>`;
         }
