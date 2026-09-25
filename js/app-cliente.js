@@ -1549,16 +1549,29 @@
     },
 
     async apriScheda(clienteId) {
-      if (this.view !== 'scheda') this.viewPrecedenteScheda = this.view;
+      const cambioVista = this.view !== 'scheda';
+      if (cambioVista) this.viewPrecedenteScheda = this.view;
       this.clienteSelezionatoId = clienteId;
       this.view = 'scheda';
 
-      requestAnimationFrame(() => {
+      const resettaScrollScheda = () => {
         document.getElementById('app')?.scrollTo({
           top: 0,
           behavior: 'auto'
         });
-      });
+      };
+
+      if (cambioVista) {
+        /*
+         * La vista precedente resta visibile (in dissolvenza, 160ms)
+         * e condivide lo scroll di #app: se azzeriamo subito, si
+         * vede la vecchia vista saltare in cima prima di sparire.
+         * Aspettiamo che la dissolvenza finisca.
+         */
+        window.setTimeout(resettaScrollScheda, 170);
+      } else {
+        requestAnimationFrame(resettaScrollScheda);
+      }
 
       this.erroreScheda = '';
       this.confermaEliminazione = false;
