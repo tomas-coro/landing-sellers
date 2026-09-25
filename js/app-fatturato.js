@@ -310,10 +310,10 @@
         const s = serie[hover.si];
         const p = s && this.trendPuntiSerie(s.punti)[hover.pi];
         if (p) {
-          const x = Math.max(50, Math.min(590, p.x));
-          const y = Math.max(28, p.y - 24);
-          const nomeSerie = serie.length > 1 ? ' · ' + s.nome : '';
-          svg += `<text class="metrics-tooltip" x="${x}" y="${y}" text-anchor="middle">${p.label}${nomeSerie} · ${formattaEuro(p.valore)}</text>`;
+          const righe = serie.length > 1
+            ? [p.label + ' · ' + s.nome, formattaEuro(p.valore)]
+            : [p.label + ' · ' + formattaEuro(p.valore)];
+          svg += this.markupTooltip(p.x, p.y - 24, righe);
         }
       }
 

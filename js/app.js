@@ -3633,6 +3633,32 @@ costiPerMotoreRataEconomia(
         .map(p => ({ x: p.x, text: p.label, numero: p.numero }));
     },
 
+    // ===== Tooltip dei grafici (barre + linea): condiviso da
+    // disegnaMarkupBarreMensili/trendMarkupAdmin (qui) e da
+    // disegnaMarkupTrendFatturato (app-fatturato.js). Il testo completo
+    // "Mese · Serie · Valore · N siti" su una riga sola usciva dallo
+    // schermo su mobile (viewBox 640 scalato su schermi stretti): qui si
+    // spezza su piu' righe con <tspan> e si clampa la x stimando la
+    // larghezza del testo, non solo il centro della barra/punto.
+    tooltipXSicura(xCentro, righe) {
+      const maxChar = Math.max(0, ...righe.map(r => r.length));
+      const mezzaLarghezza = (maxChar * 13) / 2 + 8;
+      const minX = 20 + mezzaLarghezza;
+      const maxX = 620 - mezzaLarghezza;
+      if (minX > maxX) return 320;
+      return Math.max(minX, Math.min(maxX, xCentro));
+    },
+
+    markupTooltip(xCentro, ySopra, righe, classeExtra = '') {
+      const passo = 24;
+      const x = this.tooltipXSicura(xCentro, righe);
+      const yBase = Math.max(20 + passo * (righe.length - 1), ySopra);
+      const tspans = righe
+        .map((r, i) => `<tspan x="${x.toFixed(1)}" y="${(yBase - passo * (righe.length - 1 - i)).toFixed(1)}">${r}</tspan>`)
+        .join('');
+      return `<text class="metrics-tooltip${classeExtra}" text-anchor="middle">${tspans}</text>`;
+    },
+
     // ===== Grafico a barre mensile: condiviso tra il trend Home venditore
     // e la vista "Il tuo incassato". A differenza di linea+pallini ogni
     // mese occupa uno slot di larghezza fissa, quindi etichette e valori
@@ -3693,10 +3719,10 @@ costiPerMotoreRataEconomia(
 
       if (Number.isInteger(hoverIndex) && barre[hoverIndex]) {
         const b = barre[hoverIndex];
-        const x = Math.max(60, Math.min(580, b.cx));
-        const y = Math.max(20, b.y - 26);
-        const dettaglio = b.numero ? (' · ' + b.numero + ' sit' + (b.numero === 1 ? 'o' : 'i')) : '';
-        svg += `<text class="metrics-tooltip${dark}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle">${b.label} · ${formattaEuro(b.valore)}${dettaglio}</text>`;
+        const dettaglio = b.numero ? (b.numero + ' sit' + (b.numero === 1 ? 'o' : 'i')) : '';
+        const righe = [`${b.label} · ${formattaEuro(b.valore)}`];
+        if (dettaglio) righe.push(dettaglio);
+        svg += this.markupTooltip(b.cx, b.y - 26, righe, dark);
       }
 
       return svg;
@@ -3765,10 +3791,9 @@ costiPerMotoreRataEconomia(
         const s = serie[this.trendHoverAdmin.si];
         const p = s && this.trendPuntiSerie(s.puntiVisibili)[this.trendHoverAdmin.pi];
         if (p) {
-          const x = Math.max(50, Math.min(590, p.x));
-          const y = Math.max(28, p.y - 24);
           const nomeSerie = s.id !== 'totale' ? ' · ' + s.nome : '';
-          svg += `<text class="metrics-tooltip" x="${x}" y="${y}" text-anchor="middle">${p.label}${nomeSerie} · ${formattaEuro(p.valore)} · ${p.numero} sit${p.numero === 1 ? 'o' : 'i'}</text>`;
+          const righe = [`${p.label}${nomeSerie} · ${formattaEuro(p.valore)}`, `${p.numero} sit${p.numero === 1 ? 'o' : 'i'}`];
+          svg += this.markupTooltip(p.x, p.y - 24, righe);
         }
       }
 

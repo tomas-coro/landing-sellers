@@ -15613,7 +15613,7 @@ html[data-theme="dark"]{
 .metrics-trend-dot:hover{r:6}
 .metrics-point-label{font-size:26px;font-weight:800;font-family:var(--sans);fill:var(--ink-soft)}
 .metrics-direct-label{font-size:28px;font-weight:800;font-family:var(--sans);text-anchor:start}
-.metrics-tooltip{font-size:29px;font-weight:800;font-family:var(--sans);fill:var(--ink)}
+.metrics-tooltip{font-size:22px;font-weight:800;font-family:var(--sans);fill:var(--ink)}
 
 .metrics-trend-empty{
   margin-top:12px;padding:10px 12px;background:var(--paper-2);border-radius:10px;
