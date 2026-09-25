@@ -918,13 +918,22 @@
           ),
 
         dominio_it:
-          numeroStorico('dominio_it') > 0 ? 1 : 0,
+          Math.max(
+            0,
+            Math.min(10, numeroStorico('dominio_it'))
+          ),
 
         dominio_com:
-          numeroStorico('dominio_com') > 0 ? 1 : 0,
+          Math.max(
+            0,
+            Math.min(10, numeroStorico('dominio_com'))
+          ),
 
         email_5_caselle:
-          numeroStorico('email_5_caselle') > 0 ? 1 : 0,
+          Math.max(
+            0,
+            Math.min(10, numeroStorico('email_5_caselle'))
+          ),
 
         pacchetto_sicurezza:
           booleanStorico(
