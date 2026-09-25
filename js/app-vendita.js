@@ -301,46 +301,165 @@
       );
     },
 
-    nomePacchettoVendita() {
-      const cfg = this.configurazioneVendita();
-      const catalogo = this.catalogoPrezzi();
+    descrizioneConfigurazioneCommerciale(
+      configurazione,
+      fallback = '',
+      usaDescrizioneSalvata = true
+    ) {
+      const cfg =
+        configurazione &&
+        typeof configurazione === 'object'
+          ? configurazione
+          : null;
+
+      if (!cfg) {
+        return String(fallback || '').trim();
+      }
+
+      /*
+       * Le vendite nuove conservano anche la descrizione leggibile
+       * nello snapshot. In consultazione questa e' prioritaria per
+       * preservare esattamente il significato storico della vendita.
+       */
+      const salvata =
+        String(cfg.descrizione_pacchetto || '').trim();
+
+      if (usaDescrizioneSalvata && salvata) {
+        return salvata;
+      }
+
+      const catalogo = this.catalogoPrezzi?.();
+
+      if (!catalogo) {
+        return String(fallback || '').trim();
+      }
+
+      const formulaId =
+        cfg.formula ||
+        cfg.periodicita_contratto ||
+        null;
 
       const formula =
-        catalogo.formule[cfg.formula] ||
-        catalogo.formule.mensile;
+        catalogo.formule?.[formulaId] ||
+        null;
 
-      const voci = [formula.nome || 'Start mensile'];
+      const voci = [];
+
+      if (formula?.nome) {
+        voci.push(formula.nome);
+      }
+
+      const upgradeSelezionati =
+        Array.isArray(cfg.upgrade)
+          ? cfg.upgrade
+          : [];
 
       (catalogo.upgrade || [])
-        .filter(u => (cfg.upgrade || []).includes(u.id))
-        .forEach(u => voci.push(u.nome));
+        .filter(upgrade =>
+          upgradeSelezionati.includes(upgrade.id)
+        )
+        .forEach(upgrade => {
+          if (upgrade.nome) {
+            voci.push(upgrade.nome);
+          }
+        });
 
-      const pagine = Number(cfg.pagine_extra) || 0;
+      const pagine =
+        Number(cfg.pagine_extra) || 0;
+
       if (pagine > 0) {
-        voci.push(`${pagine} ${pagine === 1 ? 'pagina extra' : 'pagine extra'}`);
+        voci.push(
+          `${pagine} ${
+            pagine === 1
+              ? 'pagina extra'
+              : 'pagine extra'
+          }`
+        );
       }
 
-      const lingue = Number(cfg.lingue_extra) || 0;
+      const lingue =
+        Number(cfg.lingue_extra) || 0;
+
       if (lingue > 0) {
-        voci.push(`${lingue} ${lingue === 1 ? 'lingua extra' : 'lingue extra'}`);
+        voci.push(
+          `${lingue} ${
+            lingue === 1
+              ? 'lingua extra'
+              : 'lingue extra'
+          }`
+        );
       }
 
+      /*
+       * cliente_ha_dominio === false significa che il dominio/
+       * servizio annuale viene acquistato tramite Landing Evolution.
+       * Mostriamo solo le scelte realmente presenti nello snapshot.
+       */
       if (cfg.cliente_ha_dominio === false) {
         const annuali = catalogo.annuali || {};
-        const qtaIt = Number(cfg.dominio_it) || 0;
-        const qtaCom = Number(cfg.dominio_com) || 0;
-        const qtaEmail = Number(cfg.email_5_caselle) || 0;
 
-        if (qtaIt > 0) voci.push(`${annuali.dominioIt.nome}${qtaIt > 1 ? ` x${qtaIt}` : ''}`);
-        if (qtaCom > 0) voci.push(`${annuali.dominioCom.nome}${qtaCom > 1 ? ` x${qtaCom}` : ''}`);
-        if (qtaEmail > 0) voci.push(`${annuali.email5.nome}${qtaEmail > 1 ? ` x${qtaEmail}` : ''}`);
+        const qtaIt =
+          Number(cfg.dominio_it) || 0;
+
+        const qtaCom =
+          Number(cfg.dominio_com) || 0;
+
+        const qtaEmail =
+          Number(cfg.email_5_caselle) || 0;
+
+        if (qtaIt > 0 && annuali.dominioIt?.nome) {
+          voci.push(
+            `${annuali.dominioIt.nome}${
+              qtaIt > 1 ? ` x${qtaIt}` : ''
+            }`
+          );
+        }
+
+        if (qtaCom > 0 && annuali.dominioCom?.nome) {
+          voci.push(
+            `${annuali.dominioCom.nome}${
+              qtaCom > 1 ? ` x${qtaCom}` : ''
+            }`
+          );
+        }
+
+        if (
+          qtaEmail > 0 &&
+          annuali.email5?.nome
+        ) {
+          voci.push(
+            `${annuali.email5.nome}${
+              qtaEmail > 1
+                ? ` x${qtaEmail}`
+                : ''
+            }`
+          );
+        }
       }
 
-      if (formula.id === 'mensile' && cfg.pacchetto_sicurezza) {
+      if (
+        formula?.id === 'mensile' &&
+        cfg.pacchetto_sicurezza &&
+        catalogo.sicurezza?.nome
+      ) {
         voci.push(catalogo.sicurezza.nome);
       }
 
-      return voci.join(' + ');
+      /*
+       * Non inventiamo una descrizione se lo snapshot non contiene
+       * abbastanza informazioni: in quel caso resta il testo storico.
+       */
+      return voci.length
+        ? voci.join(' + ')
+        : String(fallback || '').trim();
+    },
+
+    nomePacchettoVendita() {
+      return this.descrizioneConfigurazioneCommerciale(
+        this.configurazioneVendita(),
+        '',
+        false
+      );
     },
 
     aggiornaConfigurazioneVendita() {
@@ -357,8 +476,19 @@
         cfg.pacchetto_sicurezza = false;
       }
 
-      this.venditaEconomicaForm.servizio =
+      const descrizionePacchetto =
         this.nomePacchettoVendita();
+
+      /*
+       * Congela anche la descrizione leggibile nello snapshot:
+       * in futuro eventuali rinominazioni del catalogo non alterano
+       * la descrizione storica della vendita.
+       */
+      cfg.descrizione_pacchetto =
+        descrizionePacchetto;
+
+      this.venditaEconomicaForm.servizio =
+        descrizionePacchetto;
 
       /*
        * Valore economico complessivo della vendita.

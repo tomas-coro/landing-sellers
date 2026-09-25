@@ -2480,7 +2480,13 @@ costiPerMotoreRataEconomia(
           vendita.cliente_id,
           {
             venditaId: vendita.id,
-            nomePacchetto: (vendita.servizio || '').trim() || null,
+            nomePacchetto:
+              (vendita.servizio || '').trim() || null,
+            configurazioneCommerciale:
+              vendita.configurazione_commerciale &&
+              typeof vendita.configurazione_commerciale === 'object'
+                ? vendita.configurazione_commerciale
+                : null,
             importoVendita: Number(vendita.importo_vendita) || 0,
             periodicitaContratto:
               vendita.configurazione_commerciale?.periodicita_contratto ||
@@ -2750,8 +2756,38 @@ costiPerMotoreRataEconomia(
     // volo" prima di registrare la vendita non ha mai nome_pacchetto
     // valorizzato sulla sua riga, solo sulla vendita collegata.
     etichettaPacchettoCliente(cliente) {
-      const daVendita = this.pacchettoVenditaPerCliente[cliente?.id]?.nomePacchetto;
-      return daVendita || (cliente?.nome_pacchetto || '').trim() || 'Pacchetto non specificato';
+      const vendita =
+        this.pacchettoVenditaPerCliente[
+          cliente?.id
+        ] || null;
+
+      const fallbackVendita =
+        String(vendita?.nomePacchetto || '').trim();
+
+      const fallbackCliente =
+        String(cliente?.nome_pacchetto || '').trim();
+
+      const fallback =
+        fallbackVendita ||
+        fallbackCliente ||
+        'Pacchetto non specificato';
+
+      if (
+        vendita?.configurazioneCommerciale &&
+        typeof this.descrizioneConfigurazioneCommerciale ===
+          'function'
+      ) {
+        return (
+          this.descrizioneConfigurazioneCommerciale(
+            vendita.configurazioneCommerciale,
+            fallback,
+            true
+          ) ||
+          fallback
+        );
+      }
+
+      return fallback;
     },
 
     etichettaProssimaScadenzaCard(cliente) {
