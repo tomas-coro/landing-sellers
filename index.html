@@ -439,12 +439,12 @@
                 <small>Quota maturata</small>
               </div>
 
-              <div class="home-contract-metric">
+              <button type="button" class="home-contract-metric home-contract-metric-clickable" @click="apriIncassato()">
                 <span>Incassato</span>
                 <strong x-show="!caricandoStatistiche" x-text="formattaEuro(statisticheVenditore.incassato)"></strong>
                 <div class="skeleton-block skeleton-metric-value" x-show="caricandoStatistiche" aria-hidden="true"></div>
-                <small>Quota già ricevuta</small>
-              </div>
+                <small>Quota già ricevuta · tocca per il resoconto</small>
+              </button>
 
               <div class="home-contract-metric" x-show="profilo.ruolo !== 'developer'">
                 <span>Media vendita</span>
@@ -474,8 +474,13 @@
                   <div class="metrics-trend-empty" x-show="!trendDatiVenditore.some(p => p.valore > 0)">
                     <span x-text="'Nessuna vendita registrata negli ultimi ' + trendRangeVenditore + ' mesi.'"></span>
                   </div>
-                  <div class="metrics-chart-area" x-show="trendDatiVenditore.some(p => p.valore > 0)">
-                    <svg viewBox="0 0 640 248" preserveAspectRatio="xMidYMid meet" x-html="trendMarkupVenditore()"></svg>
+                  <div class="metrics-trend-table" x-show="trendDatiVenditore.some(p => p.valore > 0)">
+                    <template x-for="p in [...trendVisibile(trendDatiVenditore, trendRangeVenditore)].reverse()" :key="'trend-home-' + p.chiave">
+                      <div class="metrics-trend-table-row">
+                        <span x-text="p.label + ' ' + p.chiave.slice(0, 4)"></span>
+                        <strong x-text="formattaEuro(p.valore)"></strong>
+                      </div>
+                    </template>
                   </div>
                 </div>
               </template>
@@ -1269,14 +1274,6 @@
 
                 <span x-text="etichettaAggiornamento()"></span>
               </strong>
-            </button>
-
-            <button
-              type="button"
-              @click="apriFatturato()">
-
-              <span>Fatturato</span>
-              <strong>Apri</strong>
             </button>
 
             <button
@@ -6192,6 +6189,81 @@
 
         <div x-show="caricandoFatturato" class="empty">
           <p>Caricamento fatturato...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- IL TUO INCASSATO (personale, venditore) -->
+    <div x-show="view === 'incassato'" x-transition.opacity.duration.160ms class="view-fade">
+      <div class="brandbar">
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+      </div>
+      <div class="topbar">
+        <button type="button" class="linkback" @click="vaiHome()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Torna alla home
+        </button>
+        <h1 style="font-size:21px">Il tuo incassato</h1>
+      </div>
+      <div class="content">
+        <p x-show="erroreFatturato" x-text="erroreFatturato" class="err" style="margin-bottom:14px"></p>
+
+        <div class="metrics-trend-chips fatturato-year-chips" role="group" aria-label="Anno">
+          <template x-for="anno in fatturatoAnniDisponibili" :key="'incassato-anno-chip-' + anno">
+            <button type="button" :class="{ active: fatturatoAnno === anno }" @click="fatturatoAnno = anno" x-text="anno"></button>
+          </template>
+        </div>
+
+        <section class="admin-overview-card" style="margin-top:14px">
+          <div class="admin-overview-top">
+            <div>
+              <span x-text="'Incassato · ' + fatturatoAnno"></span>
+              <strong x-text="formattaEuro(fatturatoTotaleAnno(fatturatoGuadagniRighe))"></strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="admin-ranking" style="margin-top:14px">
+          <div class="admin-section-heading">
+            <div>
+              <span x-text="'ANNO ' + fatturatoAnno"></span>
+              <strong>Incassato per mese</strong>
+            </div>
+          </div>
+
+          <div class="metrics-trend-empty" x-show="!fatturatoGuadagniMensile().some(p => p.valore > 0)">
+            <span x-text="'Nessun incasso a tuo nome registrato nel ' + fatturatoAnno + '.'"></span>
+          </div>
+
+          <div class="admin-ranking-list admin-ranking-list-flat" x-show="fatturatoGuadagniMensile().some(p => p.valore > 0)">
+            <template x-for="p in fatturatoGuadagniMensile()" :key="'incassato-mese-' + p.chiave">
+              <div class="admin-ranking-list-row">
+                <span class="admin-ranking-name"><strong x-text="p.label"></strong></span>
+                <strong class="admin-ranking-total" x-text="formattaEuro(p.valore)"></strong>
+              </div>
+            </template>
+          </div>
+        </section>
+
+        <section class="admin-ranking" x-show="fatturatoConfrontoAnni().length > 1" style="margin-top:14px">
+          <div class="admin-section-heading">
+            <div>
+              <span>STORICO</span>
+              <strong>Confronto tra anni</strong>
+            </div>
+          </div>
+
+          <div class="admin-ranking-list admin-ranking-list-flat">
+            <template x-for="riga in fatturatoConfrontoAnni()" :key="'incassato-confronto-' + riga.anno">
+              <button type="button" @click="fatturatoAnno = riga.anno">
+                <span class="admin-ranking-name"><strong x-text="riga.anno"></strong></span>
+                <strong class="admin-ranking-total" x-text="formattaEuro(riga.guadagni)"></strong>
+              </button>
+            </template>
+          </div>
+        </section>
+
+        <div x-show="caricandoFatturato" class="empty">
+          <p>Caricamento incassato...</p>
         </div>
       </div>
     </div>

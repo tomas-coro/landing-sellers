@@ -21,6 +21,15 @@
       await this.caricaFatturato();
     },
 
+    // Vista personale aperta dal tile "Incassato" in Home (IL TUO LAVORO):
+    // stessi dati/loader di apriFatturato, ma un template dedicato con solo
+    // il resoconto mese/anno del venditore - niente sezioni azienda.
+    async apriIncassato() {
+      this.view = 'incassato';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      await this.caricaFatturato();
+    },
+
     // Nessuna cache: la vista Fatturato viene ricaricata da zero ogni volta
     // che si apre, così resta sempre coerente con l'ultimo incasso/vendita/
     // eliminazione registrati altrove nell'app.
