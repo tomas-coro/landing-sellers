@@ -744,6 +744,7 @@ function appState() {
     errorePagamentiCliente: '',
     scadenzePagamentoPerCliente: {},
     riepilogoPagamentiPerCliente: {},
+    pacchettoVenditaPerCliente: {},
 
     // PROBLEMA 3: consultazione read-only della configurazione economica
     // consolidata della vendita, dalla scheda cliente.
@@ -2446,13 +2447,14 @@ costiPerMotoreRataEconomia(
     async caricaScadenzePagamentoClienti() {
       this.scadenzePagamentoPerCliente = {};
       this.riepilogoPagamentiPerCliente = {};
+      this.pacchettoVenditaPerCliente = {};
 
       const clienteIds = this.clienti.map(cliente => cliente.id).filter(Boolean);
       if (!clienteIds.length) return;
 
       const { data: vendite, error: venditeError } = await window.supabaseClient
         .from('vendite')
-        .select('id,cliente_id,importo_vendita')
+        .select('id,cliente_id,importo_vendita,servizio,configurazione_commerciale')
         .in('cliente_id', clienteIds)
         .eq('stato', 'attiva');
 
@@ -2467,6 +2469,22 @@ costiPerMotoreRataEconomia(
 
       const clientiConVenditaAttiva = new Set(
         (vendite || []).map(vendita => vendita.cliente_id)
+      );
+
+      // La vendita attiva e' la fonte di verita' commerciale piu' recente:
+      // un cliente creato "al volo" prima di registrare la vendita non ha
+      // mai nome_pacchetto/periodicita_contratto valorizzati sulla sua riga.
+      this.pacchettoVenditaPerCliente = Object.fromEntries(
+        (vendite || []).map(vendita => [
+          vendita.cliente_id,
+          {
+            nomePacchetto: (vendita.servizio || '').trim() || null,
+            periodicitaContratto:
+              vendita.configurazione_commerciale?.periodicita_contratto ||
+              vendita.configurazione_commerciale?.formula ||
+              null
+          }
+        ])
       );
 
       this.clienti = this.clienti.map(cliente => ({
@@ -2607,15 +2625,26 @@ costiPerMotoreRataEconomia(
     },
 
     etichettaPeriodicitaContrattoCliente(cliente) {
-      if (cliente?.periodicita_contratto === 'mensile') {
+      const periodicita = cliente?.periodicita_contratto ||
+        this.pacchettoVenditaPerCliente[cliente?.id]?.periodicitaContratto;
+
+      if (periodicita === 'mensile') {
         return 'Mensile';
       }
 
-      if (cliente?.periodicita_contratto === 'annuale') {
+      if (periodicita === 'annuale') {
         return 'Annuale';
       }
 
       return 'Non indicata';
+    },
+
+    // La vendita attiva e' la fonte piu' recente: un cliente creato "al
+    // volo" prima di registrare la vendita non ha mai nome_pacchetto
+    // valorizzato sulla sua riga, solo sulla vendita collegata.
+    etichettaPacchettoCliente(cliente) {
+      const daVendita = this.pacchettoVenditaPerCliente[cliente?.id]?.nomePacchetto;
+      return daVendita || (cliente?.nome_pacchetto || '').trim() || 'Pacchetto non specificato';
     },
 
     etichettaProssimaScadenzaCard(cliente) {

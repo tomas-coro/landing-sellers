@@ -266,7 +266,7 @@
 
                   <div class="cmdk-row-body">
                     <strong x-text="c.nome"></strong>
-                    <small x-text="c.nome_pacchetto || 'Senza pacchetto'"></small>
+                    <small x-text="etichettaPacchettoCliente(c)"></small>
                   </div>
 
                   <span class="cmdk-pill" :class="'pill-' + c.stato" x-text="etichettaStatoCmdk(c)"></span>
@@ -669,7 +669,7 @@
             <div class="cc-top">
               <div class="home-client-main">
                 <strong x-text="cliente.nome"></strong>
-                <small x-text="cliente.nome_pacchetto || 'Pacchetto non specificato'"></small>
+                <small x-text="etichettaPacchettoCliente(cliente)"></small>
               </div>
 
               <div class="home-client-card-actions">
@@ -701,6 +701,24 @@
                 </strong>
                 <small
                   x-text="etichettaPeriodicitaContrattoCliente(cliente)">
+                </small>
+              </div>
+
+              <div class="client-status-cell client-status-next">
+                <span>PROSSIMA</span>
+
+                <strong
+                  x-text="etichettaProssimaScadenzaCard(cliente)">
+                </strong>
+
+                <small
+                  x-text="
+                    prossimaScadenzaCliente(cliente)
+                      ? formattaDataCompleta(
+                          prossimaScadenzaCliente(cliente).data
+                        )
+                      : 'Nessuna scadenza'
+                  ">
                 </small>
               </div>
 
@@ -759,24 +777,6 @@
                           ) + '% pagato'
                         )
                       : 'Importo non indicato'
-                  ">
-                </small>
-              </div>
-
-              <div class="client-status-cell client-status-next">
-                <span>PROSSIMA</span>
-
-                <strong
-                  x-text="etichettaProssimaScadenzaCard(cliente)">
-                </strong>
-
-                <small
-                  x-text="
-                    prossimaScadenzaCliente(cliente)
-                      ? formattaDataCompleta(
-                          prossimaScadenzaCliente(cliente).data
-                        )
-                      : 'Nessuna scadenza'
                   ">
                 </small>
               </div>
@@ -4394,10 +4394,7 @@
 
               <div class="client-detail-subtitle">
                 <span
-                  x-text="
-                    clienteSelezionato().nome_pacchetto ||
-                    'Pacchetto non specificato'
-                  ">
+                  x-text="etichettaPacchettoCliente(clienteSelezionato())">
                 </span>
 
                 <strong
@@ -4811,7 +4808,7 @@
 
             <dl class="client-payment-contract-data">
               <dt>Pacchetto</dt>
-              <dd x-text="clienteSelezionato().nome_pacchetto || '-'"></dd>
+              <dd x-text="etichettaPacchettoCliente(clienteSelezionato())"></dd>
 
               <dt>Note prezzo</dt>
               <dd x-text="clienteSelezionato().note_prezzo || '-'"></dd>
