@@ -309,7 +309,38 @@
         catalogo.formule[cfg.formula] ||
         catalogo.formule.mensile;
 
-      return formula.nome || 'Start mensile';
+      const voci = [formula.nome || 'Start mensile'];
+
+      (catalogo.upgrade || [])
+        .filter(u => (cfg.upgrade || []).includes(u.id))
+        .forEach(u => voci.push(u.nome));
+
+      const pagine = Number(cfg.pagine_extra) || 0;
+      if (pagine > 0) {
+        voci.push(`${pagine} ${pagine === 1 ? 'pagina extra' : 'pagine extra'}`);
+      }
+
+      const lingue = Number(cfg.lingue_extra) || 0;
+      if (lingue > 0) {
+        voci.push(`${lingue} ${lingue === 1 ? 'lingua extra' : 'lingue extra'}`);
+      }
+
+      if (cfg.cliente_ha_dominio === false) {
+        const annuali = catalogo.annuali || {};
+        const qtaIt = Number(cfg.dominio_it) || 0;
+        const qtaCom = Number(cfg.dominio_com) || 0;
+        const qtaEmail = Number(cfg.email_5_caselle) || 0;
+
+        if (qtaIt > 0) voci.push(`${annuali.dominioIt.nome}${qtaIt > 1 ? ` x${qtaIt}` : ''}`);
+        if (qtaCom > 0) voci.push(`${annuali.dominioCom.nome}${qtaCom > 1 ? ` x${qtaCom}` : ''}`);
+        if (qtaEmail > 0) voci.push(`${annuali.email5.nome}${qtaEmail > 1 ? ` x${qtaEmail}` : ''}`);
+      }
+
+      if (formula.id === 'mensile' && cfg.pacchetto_sicurezza) {
+        voci.push(catalogo.sicurezza.nome);
+      }
+
+      return voci.join(' + ');
     },
 
     aggiornaConfigurazioneVendita() {
