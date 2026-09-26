@@ -334,17 +334,10 @@ function calcolaStatisticheVenditore(
   pagamenti = [],
   quotePerVendita = {},
   profiloId = '',
-  clientiPerId = {}
+  clientiPerId = {},
+  incassatoPerVendita = {}
 ) {
   const venditeAttive = vendite.filter(v => v.stato === 'attiva');
-
-  const incassatoTotalePerVendita = {};
-  pagamenti
-    .filter(p => p.stato === 'incassato')
-    .forEach(p => {
-      incassatoTotalePerVendita[p.vendita_id] =
-        (incassatoTotalePerVendita[p.vendita_id] || 0) + (Number(p.importo) || 0);
-    });
 
   const clientiVenduti = new Set();
   const totali = venditeAttive.reduce((totali, v) => {
@@ -352,17 +345,13 @@ function calcolaStatisticheVenditore(
     // mai l'importo pieno della vendita degli altri partecipanti.
     const quota = Number(quotePerVendita[v.id]) || 0;
     const importoVendita = valoreContrattoVendita(v, clientiPerId);
-    const importoIncassabile = Number(v.importo_vendita) || 0;
-    const incassatoVendita = incassatoTotalePerVendita[v.id] || 0;
-
-    // L'incasso reale è per l'intera vendita, non per partecipante: la quota
-    // personale scala in proporzione a quanto è stato effettivamente versato.
-    const proporzione = importoIncassabile > 0
-      ? Math.min(1, incassatoVendita / importoIncassabile)
-      : 0;
 
     totali.generato += quota;
-    totali.incassato += quota * proporzione;
+    // Incassato reale: somma di quota_effettiva dal motore economico
+    // (pagamento_partecipanti), non un'approssimazione quota*proporzione -
+    // l'approssimazione ignorava tasse/riduzioni/bonus admin applicati sul
+    // singolo pagamento.
+    totali.incassato += Number(incassatoPerVendita[v.id]) || 0;
 
     // Valore commerciale: conta l'importo pieno solo quando questo profilo
     // risulta essere il venditore effettivo della vendita.
@@ -3223,7 +3212,7 @@ costiPerMotoreRataEconomia(
         const clientiPerId = Object.fromEntries(this.clienti.map(cliente => [cliente.id, cliente]));
 
         if (ids.length) {
-          const [vendite, pagamenti] = await Promise.all([
+          const [vendite, pagamenti, quotePagamenti] = await Promise.all([
             window.supabaseClient
               .from('vendite')
               .select('id,cliente_id,importo_vendita,stato,venditore_id,data_vendita')
@@ -3231,20 +3220,37 @@ costiPerMotoreRataEconomia(
             window.supabaseClient
               .from('pagamenti')
               .select('vendita_id,importo,stato')
-              .in('vendita_id', ids)
+              .in('vendita_id', ids),
+            // Incassato reale per vendita: somma di quota_effettiva (motore
+            // economico con tasse/riduzioni/bonus admin), non un'approssimazione
+            // proporzionale - unica fonte affidabile per "quanto ho gia' ricevuto".
+            window.supabaseClient
+              .from('pagamento_partecipanti')
+              .select('quota_effettiva,pagamenti!inner(vendita_id,stato)')
+              .eq('profilo_id', this.sessione.user.id)
+              .eq('pagamenti.stato', 'incassato')
+              .in('pagamenti.vendita_id', ids)
           ]);
 
-          if (vendite.error || pagamenti.error) {
-            console.warn('Statistiche economiche non disponibili:', (vendite.error || pagamenti.error).message);
+          if (vendite.error || pagamenti.error || quotePagamenti.error) {
+            console.warn('Statistiche economiche non disponibili:', (vendite.error || pagamenti.error || quotePagamenti.error).message);
             return;
           }
+
+          const incassatoPerVendita = {};
+          (quotePagamenti.data || []).forEach(r => {
+            const venditaId = r.pagamenti?.vendita_id;
+            if (!venditaId) return;
+            incassatoPerVendita[venditaId] = (incassatoPerVendita[venditaId] || 0) + (Number(r.quota_effettiva) || 0);
+          });
 
           this.statisticheVenditore = calcolaStatisticheVenditore(
             vendite.data || [],
             pagamenti.data || [],
             quotePerVendita,
             this.sessione.user.id,
-            clientiPerId
+            clientiPerId,
+            incassatoPerVendita
           );
 
           if (!isDeveloper) {

@@ -23,7 +23,8 @@
         clientiResult,
         venditeResult,
         partecipantiResult,
-        pagamentiResult
+        pagamentiResult,
+        quotePagamentiResult
       ] = await Promise.all([
         window.supabaseClient
           .from('profili')
@@ -45,7 +46,15 @@
 
         window.supabaseClient
           .from('pagamenti')
-          .select('id,vendita_id,importo,stato,data_scadenza,data_pagamento')
+          .select('id,vendita_id,importo,stato,data_scadenza,data_pagamento'),
+
+        // Incassato reale per venditore/vendita: somma di quota_effettiva dal
+        // motore economico (pagamento_partecipanti), non un'approssimazione
+        // quota*proporzione - vedi calcolaStatisticheVenditore in js/app.js.
+        window.supabaseClient
+          .from('pagamento_partecipanti')
+          .select('profilo_id,quota_effettiva,pagamenti!inner(vendita_id,stato)')
+          .eq('pagamenti.stato', 'incassato')
       ]);
 
       const errore =
@@ -53,7 +62,8 @@
         clientiResult.error ||
         venditeResult.error ||
         partecipantiResult.error ||
-        pagamentiResult.error;
+        pagamentiResult.error ||
+        quotePagamentiResult.error;
 
       if (errore) {
         this.erroreAdmin =
@@ -68,6 +78,14 @@
       const pagamenti = pagamentiResult.data || [];
       const venditeAttive = vendite.filter(v => v.stato === 'attiva');
       const venditeAttiveIds = new Set(venditeAttive.map(v => v.id));
+
+      const incassatoPerVenditaPerProfilo = {};
+      (quotePagamentiResult.data || []).forEach(riga => {
+        const venditaId = riga.pagamenti?.vendita_id;
+        if (!venditaId) return;
+        const mappa = (incassatoPerVenditaPerProfilo[riga.profilo_id] ||= {});
+        mappa[venditaId] = (mappa[venditaId] || 0) + (Number(riga.quota_effettiva) || 0);
+      });
 
       const venditorePerCliente = Object.fromEntries(
         venditeAttive.map(vendita => [vendita.cliente_id, vendita.venditore_id])
@@ -246,7 +264,8 @@
           pagamenti,
           quotePerVendita,
           profilo.id,
-          clientiPerId
+          clientiPerId,
+          incassatoPerVenditaPerProfilo[profilo.id] || {}
         );
 
         return {

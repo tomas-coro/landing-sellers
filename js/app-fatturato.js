@@ -97,7 +97,7 @@
 
       const { data, error } = await window.supabaseClient
         .from('pagamenti')
-        .select('id,data_pagamento,stato')
+        .select('id,data_pagamento,stato,vendita_id')
         .in('id', idPagamenti);
 
       if (error) {
@@ -105,7 +105,32 @@
         return [];
       }
 
-      const pagamentoPerId = Object.fromEntries((data || []).map(p => [p.id, p]));
+      // Un pagamento incassato su una vendita poi annullata non deve contare
+      // nei guadagni: stessa regola gia' applicata dalla card Home
+      // (calcolaStatisticheVenditore filtra vendite.stato === 'attiva').
+      const idVendite = [...new Set((data || []).map(p => p.vendita_id).filter(Boolean))];
+      const venditeNonAttiveIds = new Set();
+      if (idVendite.length) {
+        const { data: vendite, error: erroreVendite } = await window.supabaseClient
+          .from('vendite')
+          .select('id,stato')
+          .in('id', idVendite);
+
+        if (erroreVendite) {
+          this.erroreFatturato = 'Errore nel caricare le vendite: ' + erroreVendite.message;
+          return [];
+        }
+
+        (vendite || []).forEach(v => {
+          if (v.stato !== 'attiva') venditeNonAttiveIds.add(v.id);
+        });
+      }
+
+      const pagamentoPerId = Object.fromEntries(
+        (data || [])
+          .filter(p => !venditeNonAttiveIds.has(p.vendita_id))
+          .map(p => [p.id, p])
+      );
 
       return partecipanti_a_righe(partecipazioni, pagamentoPerId, mappaExtra);
     },
