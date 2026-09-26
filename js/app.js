@@ -3644,7 +3644,7 @@ costiPerMotoreRataEconomia(
       if (!pts.length) return [];
       const passo = pts.length > 8 ? 2 : 1;
       return pts
-        .filter((_, i) => i % passo === 0 || i === pts.length - 1)
+        .filter((_, i) => (pts.length - 1 - i) % passo === 0)
         .map(p => ({ x: p.x, text: p.label, numero: p.numero }));
     },
 
@@ -3701,7 +3701,7 @@ costiPerMotoreRataEconomia(
     barreEtichetteVisibili(punti) {
       const passo = punti.length > 8 ? 2 : 1;
       return new Set(
-        punti.filter((_, i) => i % passo === 0 || i === punti.length - 1).map(p => p.chiave)
+        punti.filter((_, i) => (punti.length - 1 - i) % passo === 0).map(p => p.chiave)
       );
     },
 

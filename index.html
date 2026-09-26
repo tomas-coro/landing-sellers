@@ -5758,30 +5758,32 @@
 
             <div class="pipeline-cards-v2">
               <template x-if="caricandoClienti && clienti.length === 0">
-                <template x-for="n in 3" :key="'skeleton-pipeline-' + stato.valore + '-' + n">
-                  <div class="skeleton-pipeline-card" aria-hidden="true">
-                    <div class="skeleton-pipeline-head">
-                      <div>
-                        <div class="skeleton-block skeleton-pipeline-title"></div>
-                        <div class="skeleton-block skeleton-pipeline-sub"></div>
+                <div>
+                  <template x-for="n in 3" :key="'skeleton-pipeline-' + stato.valore + '-' + n">
+                    <div class="skeleton-pipeline-card" aria-hidden="true">
+                      <div class="skeleton-pipeline-head">
+                        <div>
+                          <div class="skeleton-block skeleton-pipeline-title"></div>
+                          <div class="skeleton-block skeleton-pipeline-sub"></div>
+                        </div>
+                      </div>
+                      <div class="skeleton-pipeline-info">
+                        <div>
+                          <div class="skeleton-block skeleton-label"></div>
+                          <div class="skeleton-block skeleton-value"></div>
+                        </div>
+                        <div>
+                          <div class="skeleton-block skeleton-label"></div>
+                          <div class="skeleton-block skeleton-value"></div>
+                        </div>
+                      </div>
+                      <div class="skeleton-pipeline-footer">
+                        <div class="skeleton-block skeleton-pipeline-pill"></div>
+                        <div class="skeleton-block skeleton-pipeline-select"></div>
                       </div>
                     </div>
-                    <div class="skeleton-pipeline-info">
-                      <div>
-                        <div class="skeleton-block skeleton-label"></div>
-                        <div class="skeleton-block skeleton-value"></div>
-                      </div>
-                      <div>
-                        <div class="skeleton-block skeleton-label"></div>
-                        <div class="skeleton-block skeleton-value"></div>
-                      </div>
-                    </div>
-                    <div class="skeleton-pipeline-footer">
-                      <div class="skeleton-block skeleton-pipeline-pill"></div>
-                      <div class="skeleton-block skeleton-pipeline-select"></div>
-                    </div>
-                  </div>
-                </template>
+                  </template>
+                </div>
               </template>
 
               <template x-for="cliente in clientiPipeline(stato.valore)" :key="cliente.id">
