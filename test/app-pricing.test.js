@@ -1041,20 +1041,18 @@ test('le statistiche del venditore usano la sua quota, non l’importo pieno del
   assert.deepStrictEqual(calcolaStatisticheVenditore([
     { id: 'a', stato: 'attiva', importo_vendita: '1000' },
     { id: 'b', stato: 'annullata', importo_vendita: '500' }
-  ], [
-    { vendita_id: 'a', stato: 'incassato', importo: '240' },
-    { vendita_id: 'a', stato: 'previsto', importo: '300' },
-    { vendita_id: 'b', stato: 'incassato', importo: '100' }
-  ], {
+  ], [], {
     a: 600, // quota_finale del venditore su una vendita da 1000 condivisa col team
     b: 500
+  }, '', {}, {
+    a: 144 // quota_effettiva reale sommata dal motore economico (pagamento_partecipanti)
   }), {
     generato: 600,
     incassato: 144,
     venduto: 0,
     mediaVendita: 0,
     numeroVendite: 0
-  }); // 600 * (240 / 1000) incassato reale
+  });
 });
 
 test('le gesture tornano correttamente dalle viste admin e secondarie', () => {
