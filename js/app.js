@@ -329,6 +329,22 @@ function serieMensileValore(vendite = [], clientiPerId = {}, filtroVenditoreId =
   return mesi.map(m => ({ ...m, valore: somme[m.chiave], numero: conteggi[m.chiave] }));
 }
 
+// Somma quota_effettiva per vendita, solo per i pagamenti incassati
+// nell'anno indicato: stesso criterio di anno usato dalla vista "Il tuo
+// incassato" (fatturatoAnno), cosi' la card Home mostra lo stesso numero
+// invece di un totale di sempre.
+function incassatoPerVenditaAnnoCorrente(righeQuotePagamenti = [], anno) {
+  const risultato = {};
+  righeQuotePagamenti.forEach(r => {
+    const venditaId = r.pagamenti?.vendita_id;
+    const dataPagamento = r.pagamenti?.data_pagamento;
+    if (!venditaId || !dataPagamento) return;
+    if (Number(String(dataPagamento).slice(0, 4)) !== anno) return;
+    risultato[venditaId] = (risultato[venditaId] || 0) + (Number(r.quota_effettiva) || 0);
+  });
+  return risultato;
+}
+
 function calcolaStatisticheVenditore(
   vendite = [],
   pagamenti = [],
@@ -3226,7 +3242,7 @@ costiPerMotoreRataEconomia(
             // proporzionale - unica fonte affidabile per "quanto ho gia' ricevuto".
             window.supabaseClient
               .from('pagamento_partecipanti')
-              .select('quota_effettiva,pagamenti!inner(vendita_id,stato)')
+              .select('quota_effettiva,pagamenti!inner(vendita_id,stato,data_pagamento)')
               .eq('profilo_id', this.sessione.user.id)
               .eq('pagamenti.stato', 'incassato')
               .in('pagamenti.vendita_id', ids)
@@ -3237,12 +3253,10 @@ costiPerMotoreRataEconomia(
             return;
           }
 
-          const incassatoPerVendita = {};
-          (quotePagamenti.data || []).forEach(r => {
-            const venditaId = r.pagamenti?.vendita_id;
-            if (!venditaId) return;
-            incassatoPerVendita[venditaId] = (incassatoPerVendita[venditaId] || 0) + (Number(r.quota_effettiva) || 0);
-          });
+          const incassatoPerVendita = incassatoPerVenditaAnnoCorrente(
+            quotePagamenti.data || [],
+            new Date().getFullYear()
+          );
 
           this.statisticheVenditore = calcolaStatisticheVenditore(
             vendite.data || [],
@@ -3294,7 +3308,9 @@ costiPerMotoreRataEconomia(
           }
 
           if (evento.tipo === 'rinnovo' || evento.tipo === 'rata') {
-            return evento.data >= oggi && evento.data <= limite;
+            // Scaduto e non ancora gestito: resta visibile come per i
+            // contatti, invece di sparire da solo al passare della data.
+            return evento.data < oggi || (evento.data >= oggi && evento.data <= limite);
           }
 
           return false;
@@ -4509,6 +4525,7 @@ if (typeof module !== 'undefined') {
     percentualeTasseEconomia,
     appState,
     calcolaStatisticheVenditore,
+    incassatoPerVenditaAnnoCorrente,
     valoreContrattoVendita,
     valoreAnnualeCliente,
     clientiAttribuitiAlProfilo,
