@@ -5304,7 +5304,7 @@
                     <button
                       type="button"
                       class="client-payment-icon-btn"
-                      x-show="p.stato !== 'annullato'"
+                      x-show="p.stato === 'previsto' || isAdmin"
                       aria-label="Modifica pagamento"
                       title="Modifica pagamento"
                       @click="modificaPagamentoCliente(clienteSelezionato(), p)">
@@ -5316,6 +5316,7 @@
                     <button
                       type="button"
                       class="client-payment-icon-btn client-payment-icon-danger"
+                      x-show="p.stato === 'previsto' || isAdmin"
                       :disabled="eliminandoPagamentoId === p.id"
                       :aria-label="p.stato === 'incassato' ? 'Annulla incasso' : 'Elimina pagamento'"
                       :title="p.stato === 'incassato' ? 'Annulla incasso' : 'Elimina pagamento'"
@@ -6882,7 +6883,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=133', {
+      navigator.serviceWorker.register('./service-worker.js?v=134', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

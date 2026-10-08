@@ -681,6 +681,7 @@
     // motore economico della registrazione originale.
     async modificaPagamentoCliente(cliente, pagamento) {
       if (!cliente?.id || !pagamento?.id || pagamento.stato === 'annullato') return;
+      if (pagamento.stato === 'incassato' && !this.isAdmin) return;
 
       await this.apriEconomia('incasso');
       this.clienteEconomiaSelezionato = cliente;
@@ -741,6 +742,7 @@
     // resta così visibile in Agenda/Home e può essere registrato di nuovo.
     async eliminaPagamentoCliente(cliente, pagamento) {
       if (!cliente?.id || !pagamento?.id || this.eliminandoPagamentoId) return;
+      if (pagamento.stato === 'incassato' && !this.isAdmin) return;
 
       const annullaIncasso = pagamento.stato === 'incassato';
       const messaggio = annullaIncasso
