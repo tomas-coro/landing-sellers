@@ -645,6 +645,7 @@ html[data-theme="dark"] .client-detail-dashboard{
 :root{--mobile-tabbar-h:68px}
 body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 .app-main-view .content,.profile-view .content{padding-bottom:calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom) + 22px)}
+.client-create-view .content{padding-bottom:calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom) + 64px)}
 .mobile-tabbar{position:fixed;z-index:90;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,720px);min-height:var(--mobile-tabbar-h);padding:8px 14px calc(8px + env(safe-area-inset-bottom));display:flex;align-items:flex-end;justify-content:space-around;gap:8px;background:rgba(255,255,255,.94);border-top:1px solid var(--line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
 .mobile-tabbar>button{min-width:72px;min-height:52px;border:0;background:transparent;color:var(--muted);font:inherit;display:grid;place-items:center;align-content:center;gap:4px;padding:4px 8px;border-radius:14px;touch-action:manipulation}
 .mobile-tabbar>button>svg{width:23px;height:23px}.mobile-tabbar>button>span:last-child{font-size:13.5px;font-weight:700}.mobile-tabbar>button.on{color:#111}
