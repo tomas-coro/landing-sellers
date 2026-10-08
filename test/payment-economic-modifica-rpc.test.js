@@ -124,7 +124,7 @@ test('il frontend instrada la modifica di un pagamento incassato sulla nuova RPC
   );
 });
 
-test('eliminare un pagamento tratta il filtro silenzioso della RLS come errore visibile', () => {
+test('annullare un incasso usa la RPC che lo riporta tra le rate previste', () => {
   assert.match(
     app,
     /eliminaPagamentoCliente\(/
@@ -132,12 +132,12 @@ test('eliminare un pagamento tratta il filtro silenzioso della RLS come errore v
 
   assert.match(
     app,
-    /\.delete\(\)\s*\n\s*\.eq\('id', pagamento\.id\)\s*\n\s*\.select\('id'\)/
+    /rpc\(\s*'annulla_incasso_economico'/
   );
 
   assert.match(
     app,
-    /if \(!data \|\| data\.length === 0\)/
+    /if \(!data \|\| \(!annullaIncasso && data\.length === 0\)\)/
   );
 });
 

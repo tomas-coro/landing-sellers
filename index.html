@@ -547,7 +547,7 @@
                       evento.tipo === 'contatto' && evento.scaduto ? 'type-ritardo' : '',
                       evento.tipo === 'contatto' && !evento.scaduto ? 'type-oggi' : '',
                       evento.tipo === 'rinnovo' ? 'type-rinnovo' : '',
-                      evento.tipo === 'rata' ? 'type-rata' : ''
+                      evento.tipo === 'rata' || evento.tipo === 'mancante' ? 'type-rata' : ''
                     ]">
                   </span>
 
@@ -568,14 +568,14 @@
                   </span>
 
                   <span
-                    x-show="evento.tipo === 'rata'"
+                    x-show="evento.tipo === 'rata' || evento.tipo === 'mancante'"
                     class="event-done-action"
                     role="button"
                     tabindex="0"
                     @click.stop="apriIncassoAgenda(evento)"
                     @keydown.enter.stop="apriIncassoAgenda(evento)"
-                    @keydown.space.prevent.stop="apriIncassoAgenda(evento)">
-                    Incassa
+                    @keydown.space.prevent.stop="apriIncassoAgenda(evento)"
+                    x-text="evento.tipo === 'mancante' ? 'Registra' : 'Incassa'">
                   </span>
 
                   <span
@@ -1685,7 +1685,7 @@
                     evento.tipo === 'contatto' && evento.scaduto ? 'type-ritardo' : '',
                     evento.tipo === 'contatto' && !evento.scaduto ? 'type-oggi' : '',
                     evento.tipo === 'rinnovo' ? 'type-rinnovo' : '',
-                    evento.tipo === 'rata' ? 'type-rata' : ''
+                    evento.tipo === 'rata' || evento.tipo === 'mancante' ? 'type-rata' : ''
                   ]">
                 </span>
 
@@ -1708,14 +1708,14 @@
                 </span>
 
                 <span
-                  x-show="evento.tipo === 'rata'"
+                  x-show="evento.tipo === 'rata' || evento.tipo === 'mancante'"
                   class="event-done-action"
                   role="button"
                   tabindex="0"
                   @click.stop="apriIncassoAgenda(evento)"
                   @keydown.enter.stop="apriIncassoAgenda(evento)"
-                  @keydown.space.prevent.stop="apriIncassoAgenda(evento)">
-                  Incassa
+                  @keydown.space.prevent.stop="apriIncassoAgenda(evento)"
+                  x-text="evento.tipo === 'mancante' ? 'Registra' : 'Incassa'">
                 </span>
 
                 <span
@@ -5317,8 +5317,8 @@
                       type="button"
                       class="client-payment-icon-btn client-payment-icon-danger"
                       :disabled="eliminandoPagamentoId === p.id"
-                      aria-label="Elimina pagamento"
-                      title="Elimina pagamento"
+                      :aria-label="p.stato === 'incassato' ? 'Annulla incasso' : 'Elimina pagamento'"
+                      :title="p.stato === 'incassato' ? 'Annulla incasso' : 'Elimina pagamento'"
                       @click="eliminaPagamentoCliente(clienteSelezionato(), p)">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
                         <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/>
@@ -6882,7 +6882,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=132', {
+      navigator.serviceWorker.register('./service-worker.js?v=133', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

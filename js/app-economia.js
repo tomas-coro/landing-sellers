@@ -737,42 +737,50 @@
       this.cambiaClienteEconomia();
     },
 
-    // Elimina un pagamento: il DB rimuove in cascata lo snapshot economico
-    // collegato (pagamento_calcoli/pagamento_partecipanti). I permessi sono
-    // quelli già impostati dalla RLS di public.pagamenti. Chiamata dalla
-    // scheda cliente, non dalla vista Economia: l'errore va in
-    // errorePagamentiCliente (visibile lì), non in erroreEconomia.
+    // Un incasso torna a essere una rata prevista tramite RPC atomica:
+    // resta così visibile in Agenda/Home e può essere registrato di nuovo.
     async eliminaPagamentoCliente(cliente, pagamento) {
       if (!cliente?.id || !pagamento?.id || this.eliminandoPagamentoId) return;
 
-      const messaggio = pagamento.stato === 'incassato'
-        ? `Stai eliminando un incasso di ${formattaEuro(pagamento.importo)} già conteggiato nelle statistiche. Le quote dei partecipanti collegate verranno rimosse. Confermi?`
+      const annullaIncasso = pagamento.stato === 'incassato';
+      const messaggio = annullaIncasso
+        ? `Annullare l’incasso di ${formattaEuro(pagamento.importo)}? Tornerà tra i pagamenti da registrare.`
         : `Eliminare questa rata prevista da ${formattaEuro(pagamento.importo)}?`;
 
-      const confermato = await this.chiediConferma(messaggio, 'Elimina');
+      const confermato = await this.chiediConferma(
+        messaggio,
+        annullaIncasso ? 'Annulla incasso' : 'Elimina'
+      );
       if (!confermato) return;
 
       this.eliminandoPagamentoId = pagamento.id;
       this.errorePagamentiCliente = '';
 
       try {
-        const { data, error } = await window.supabaseClient
-          .from('pagamenti')
-          .delete()
-          .eq('id', pagamento.id)
-          .select('id');
+        const risultato = annullaIncasso
+          ? await window.supabaseClient.rpc(
+              'annulla_incasso_economico',
+              { p_pagamento_id: pagamento.id }
+            )
+          : await window.supabaseClient
+              .from('pagamenti')
+              .delete()
+              .eq('id', pagamento.id)
+              .select('id');
+        const { data, error } = risultato;
 
         if (error) {
-          this.errorePagamentiCliente = 'Pagamento non eliminato: ' + error.message;
+          this.errorePagamentiCliente =
+            `Pagamento non ${annullaIncasso ? 'annullato' : 'eliminato'}: ${error.message}`;
           return;
         }
 
         // La RLS filtra in silenzio: se non torna alcuna riga il permesso
         // manca, ma error resta null. Senza questo controllo l'utente non
         // saprebbe perché il pagamento è ancora lì dopo aver confermato.
-        if (!data || data.length === 0) {
+        if (!data || (!annullaIncasso && data.length === 0)) {
           this.errorePagamentiCliente =
-            'Pagamento non eliminato: non hai i permessi per eliminare questo pagamento.';
+            `Pagamento non ${annullaIncasso ? 'annullato' : 'eliminato'}: non hai i permessi necessari.`;
           return;
         }
 

@@ -3365,6 +3365,8 @@ costiPerMotoreRataEconomia(
             return evento.data <= oggi;
           }
 
+          if (evento.tipo === 'mancante') return evento.data <= oggi;
+
           if (evento.tipo === 'rinnovo' || evento.tipo === 'rata') {
             // Scaduto e non ancora gestito: resta visibile come per i
             // contatti, invece di sparire da solo al passare della data.
@@ -3379,7 +3381,7 @@ costiPerMotoreRataEconomia(
           if (evento.tipo === 'contatto' && evento.data < oggi) priorita = 1;
           else if (evento.data === oggi) priorita = 2;
           else if (evento.tipo === 'rinnovo') priorita = 3;
-          else if (evento.tipo === 'rata') priorita = 3;
+          else if (evento.tipo === 'rata' || evento.tipo === 'mancante') priorita = 3;
 
           return { ...evento, priorita };
         })
