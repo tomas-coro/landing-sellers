@@ -144,7 +144,8 @@ function validatorsApi() {
   ) {
     return {
       formattaStato: globalThis.formattaStato,
-      classeStato: globalThis.classeStato
+      classeStato: globalThis.classeStato,
+      classeUrgenza: globalThis.classeUrgenza
     };
   }
 
@@ -158,7 +159,8 @@ function validatorsApi() {
 
   return {
     formattaStato: stato => stato,
-    classeStato: () => 'contattato'
+    classeStato: () => 'contattato',
+    classeUrgenza: () => ''
   };
 }
 
@@ -3062,6 +3064,12 @@ costiPerMotoreRataEconomia(
                 prossima.data
               )
             : 'Nessuna scadenza',
+
+        prossimaScadenzaInRitardo:
+          Boolean(
+            prossima?.data &&
+            validators.classeUrgenza(prossima.data) === 'ritardo'
+          ),
 
         incassato,
 

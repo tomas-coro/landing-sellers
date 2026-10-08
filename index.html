@@ -711,7 +711,7 @@
 
             <div class="client-status-strip">
 
-              <div class="client-status-cell">
+              <div class="client-status-cell secondary">
                 <span>CONTRATTO</span>
                 <strong
                   x-text="schedaClienteCompleta(cliente).durataContrattoLabel">
@@ -721,7 +721,9 @@
                 </small>
               </div>
 
-              <div class="client-status-cell client-status-next">
+              <div
+                class="client-status-cell client-status-next"
+                :class="{ overdue: schedaClienteCompleta(cliente).prossimaScadenzaInRitardo }">
                 <span>PROSSIMA</span>
 
                 <strong
@@ -1644,6 +1646,91 @@
               <strong x-text="totalePubblicatiMeseAdmin()"></strong>
               <span>Pubblicati nel mese</span>
             </div>
+          </div>
+        </section>
+
+        <!-- URGENZE SQUADRA -->
+        <section class="home-attention home-today-v3">
+          <div class="home-section-title">
+            <div>
+              <span>SQUADRA</span>
+              <strong
+                x-text="eventiOggiHome().length
+                  ? eventiOggiHome().length + ' attività da gestire'
+                  : 'Tutto sotto controllo'">
+              </strong>
+            </div>
+
+            <button type="button" @click="apriAgenda()">
+              Vedi agenda <span>›</span>
+            </button>
+          </div>
+
+          <div
+            class="home-attention-list"
+            x-show="eventiOggiHome().length > 0">
+
+            <template
+              x-for="evento in eventiOggiHome().slice(0, 20)"
+              :key="'admin-today-' + evento.id">
+
+              <button
+                type="button"
+                class="home-attention-row"
+                @click="apriEventoAdmin(evento)">
+
+                <span
+                  class="home-attention-dot"
+                  :class="[
+                    evento.tipo === 'contatto' && evento.scaduto ? 'type-ritardo' : '',
+                    evento.tipo === 'contatto' && !evento.scaduto ? 'type-oggi' : '',
+                    evento.tipo === 'rinnovo' ? 'type-rinnovo' : '',
+                    evento.tipo === 'rata' ? 'type-rata' : ''
+                  ]">
+                </span>
+
+                <div>
+                  <strong x-text="evento.clienteNome"></strong>
+                  <small
+                    x-text="descrizioneEventoHome(evento) + (evento.venditoreNome ? ' · ' + evento.venditoreNome : '')">
+                  </small>
+                </div>
+
+                <span
+                  x-show="evento.tipo === 'contatto'"
+                  class="event-done-action"
+                  role="button"
+                  tabindex="0"
+                  @click.stop="completaContattoAgenda(evento)"
+                  @keydown.enter.stop="completaContattoAgenda(evento)"
+                  @keydown.space.prevent.stop="completaContattoAgenda(evento)"
+                  x-text="completandoEventoAgendaId === evento.id ? '...' : '✓ Fatto'">
+                </span>
+
+                <span
+                  x-show="evento.tipo === 'rata'"
+                  class="event-done-action"
+                  role="button"
+                  tabindex="0"
+                  @click.stop="apriIncassoAgenda(evento)"
+                  @keydown.enter.stop="apriIncassoAgenda(evento)"
+                  @keydown.space.prevent.stop="apriIncassoAgenda(evento)">
+                  Incassa
+                </span>
+
+                <span
+                  x-show="evento.tipo === 'rinnovo'"
+                  class="home-attention-arrow">›</span>
+              </button>
+            </template>
+          </div>
+
+          <div
+            class="home-today-clear"
+            x-show="eventiOggiHome().length === 0">
+
+            <strong>Niente di urgente</strong>
+            <small>Nessun contatto arretrato, rinnovo o rata nei prossimi 7 giorni, su tutta la squadra.</small>
           </div>
         </section>
 
@@ -6730,7 +6817,7 @@
         </p>
         <div class="btn-row">
           <button type="button" class="btn btn-ghost" :disabled="eliminandoCliente" @click="confermaEliminazione = false">Annulla</button>
-          <button type="button" class="btn btn-primary" :disabled="eliminandoCliente" @click="confermaEliminaCliente()"
+          <button type="button" class="btn btn-danger" :disabled="eliminandoCliente" @click="confermaEliminaCliente()"
             x-text="eliminandoCliente ? 'Eliminazione...' : 'Elimina'"></button>
         </div>
       </div>
@@ -6793,7 +6880,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=131', {
+      navigator.serviceWorker.register('./service-worker.js?v=132', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

@@ -108,6 +108,7 @@ h2{font-size:17px;font-weight:800;letter-spacing:-.005em;margin:22px 0 10px}
 .btn-primary{background:var(--ink);color:var(--paper)}
 .btn-lime{background:var(--lime);color:var(--on-lime)}
 .btn-ghost{border-color:var(--line);color:var(--ink);background:transparent}
+.btn-danger{background:var(--danger);color:#fff}
 .btn-row{display:flex;gap:10px;margin-top:4px}
 .btn-row .btn{width:auto;flex:1}
 .linkback{display:flex;align-items:center;gap:6px;font-size:16px;font-weight:700;color:var(--ink-soft);
@@ -1094,6 +1095,21 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
   line-height:1.2;
   font-weight:650;
   color:var(--muted);
+}
+
+.client-status-next.overdue > strong,
+.client-status-next.overdue > small{
+  color:var(--danger);
+}
+
+.client-status-cell.secondary > strong{
+  font-size:14px;
+  font-weight:700;
+  color:var(--ink-soft);
+}
+
+.client-status-cell.secondary > small{
+  font-size:12px;
 }
 
 .client-payment-progress{
@@ -6088,6 +6104,10 @@ html[data-theme="dark"] .price-choice{
 }
 
 html[data-theme="dark"] .alert-ritardo.on{
+  color:#111;
+}
+
+html[data-theme="dark"] .btn-danger{
   color:#111;
 }
 
