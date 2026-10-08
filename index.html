@@ -1834,6 +1834,36 @@
 
         </section>
 
+        <!-- GESTIONE UTENTI -->
+        <section class="admin-overview-card">
+          <div class="admin-overview-top">
+            <div>
+              <span>GESTIONE UTENTI</span>
+              <strong style="font-size:17px">Profili venditore</strong>
+            </div>
+            <button type="button" class="btn btn-primary" @click="apriNuovoProfiloAdmin()">+ Nuovo profilo</button>
+          </div>
+
+          <div class="admin-seller-list" style="margin-top:16px">
+            <template x-for="p in tuttiProfiliAdmin.filter(p => p.ruolo === 'venditore')" :key="p.id">
+              <div class="admin-seller-card" style="cursor:default">
+                <div class="admin-seller-main">
+                  <span class="admin-seller-avatar" x-text="(p.nome || '?').charAt(0).toUpperCase()"></span>
+                  <div class="admin-seller-identity">
+                    <strong x-text="p.nome"></strong>
+                    <span class="admin-person-role">Venditore</span>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <div x-show="tuttiProfiliAdmin.filter(p => p.ruolo === 'venditore').length === 0" class="admin-empty-state">
+            <strong>Nessun venditore</strong>
+            <span>Crea il primo profilo con il pulsante sopra.</span>
+          </div>
+        </section>
+
       </div>
     </div>
 
@@ -6703,6 +6733,40 @@
           <button type="button" class="btn btn-primary" :disabled="eliminandoCliente" @click="confermaEliminaCliente()"
             x-text="eliminandoCliente ? 'Eliminazione...' : 'Elimina'"></button>
         </div>
+      </div>
+    </div>
+
+    <!-- NUOVO PROFILO VENDITORE (solo admin) -->
+    <div x-show="nuovoProfiloAperto" x-cloak class="modal-overlay" @click.self="chiudiNuovoProfiloAdmin()">
+      <div class="modal-card">
+        <h2 style="margin-top:0">Nuovo profilo venditore</h2>
+        <p style="font-size:14.5px;color:var(--ink-soft);margin-bottom:16px">
+          Il profilo viene creato subito con password temporanea: comunicala tu al venditore.
+        </p>
+
+        <form @submit.prevent="creaProfiloVenditore()">
+          <div class="field">
+            <label>Nome *</label>
+            <input x-model="nuovoProfiloForm.nome" placeholder="Nome e cognome" required>
+          </div>
+          <div class="field" style="margin-top:12px">
+            <label>Email *</label>
+            <input type="email" x-model="nuovoProfiloForm.email" placeholder="email@esempio.it" required>
+          </div>
+          <div class="field" style="margin-top:12px">
+            <label>Password temporanea *</label>
+            <input type="text" x-model="nuovoProfiloForm.password" placeholder="Almeno 8 caratteri" required>
+          </div>
+
+          <p x-show="nuovoProfiloErrore" x-text="nuovoProfiloErrore" class="err" style="margin-top:12px"></p>
+          <p x-show="nuovoProfiloSuccesso" x-text="nuovoProfiloSuccesso" style="margin-top:12px;color:var(--ok, #2f9e44)"></p>
+
+          <div class="btn-row" style="margin-top:20px">
+            <button type="button" class="btn btn-ghost" :disabled="nuovoProfiloCaricando" @click="chiudiNuovoProfiloAdmin()">Annulla</button>
+            <button type="submit" class="btn btn-primary" :disabled="nuovoProfiloCaricando"
+              x-text="nuovoProfiloCaricando ? 'Creazione...' : 'Crea profilo'"></button>
+          </div>
+        </form>
       </div>
     </div>
 

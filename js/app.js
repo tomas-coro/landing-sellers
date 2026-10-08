@@ -821,6 +821,14 @@ function appState() {
     erroreAdmin: '',
     filtroTestoAdmin: '',
 
+    // gestione utenti (creazione nuovo profilo venditore da admin)
+    tuttiProfiliAdmin: [],
+    nuovoProfiloAperto: false,
+    nuovoProfiloForm: { nome: '', email: '', password: '' },
+    nuovoProfiloCaricando: false,
+    nuovoProfiloErrore: '',
+    nuovoProfiloSuccesso: '',
+
     profilo: { nome: '', username: '', avatar_url: '', ruolo: '' },
     profiloPersonale: { nome: '', username: '', avatar_url: '', ruolo: '', email: '' },
     profiloForm: { username: '' },

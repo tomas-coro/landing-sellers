@@ -72,6 +72,7 @@
       }
 
       const profili = profiliResult.data || [];
+      this.tuttiProfiliAdmin = profili;
       const clienti = clientiResult.data || [];
       const vendite = venditeResult.data || [];
       const partecipanti = partecipantiResult.data || [];
@@ -346,6 +347,72 @@
 
     classificaVenditori() {
       return ordinaClassificaVenditori(this.venditori);
+    },
+
+    apriNuovoProfiloAdmin() {
+      this.nuovoProfiloForm = { nome: '', email: '', password: '' };
+      this.nuovoProfiloErrore = '';
+      this.nuovoProfiloSuccesso = '';
+      this.nuovoProfiloAperto = true;
+    },
+
+    chiudiNuovoProfiloAdmin() {
+      this.nuovoProfiloAperto = false;
+    },
+
+    // Crea un nuovo profilo venditore (email + password temporanea) via
+    // Edge Function: il browser non puo' scrivere su auth.users, serve la
+    // service_role key che vive solo lato server (vedi
+    // supabase/functions/admin-crea-profilo). Il ruolo e' sempre
+    // 'venditore', assegnato server-side: non e' un campo del form.
+    async creaProfiloVenditore() {
+      this.nuovoProfiloErrore = '';
+      this.nuovoProfiloSuccesso = '';
+
+      const nome = this.nuovoProfiloForm.nome.trim();
+      const email = this.nuovoProfiloForm.email.trim();
+      const password = this.nuovoProfiloForm.password;
+
+      if (!nome || !email || !password) {
+        this.nuovoProfiloErrore = 'Nome, email e password sono obbligatori.';
+        return;
+      }
+      if (password.length < 8) {
+        this.nuovoProfiloErrore = 'La password deve avere almeno 8 caratteri.';
+        return;
+      }
+
+      this.nuovoProfiloCaricando = true;
+      try {
+        const { data, error } = await window.supabaseClient.functions.invoke(
+          'admin-crea-profilo',
+          { body: { nome, email, password } }
+        );
+
+        if (error) {
+          let messaggio = error.message || 'Creazione profilo fallita.';
+          try {
+            const corpo = await error.context?.json?.();
+            if (corpo?.error) messaggio = corpo.error;
+          } catch {
+            // risposta non-JSON: resta il messaggio generico sopra
+          }
+          this.nuovoProfiloErrore = messaggio;
+          return;
+        }
+        if (data?.error) {
+          this.nuovoProfiloErrore = data.error;
+          return;
+        }
+
+        this.nuovoProfiloSuccesso = `Profilo creato: ${nome} (${email}).`;
+        this.nuovoProfiloForm = { nome: '', email: '', password: '' };
+        await this.caricaDashboardAdmin();
+      } catch (err) {
+        this.nuovoProfiloErrore = 'Creazione profilo fallita: ' + err.message;
+      } finally {
+        this.nuovoProfiloCaricando = false;
+      }
     },
 
     async apriEventoAdmin(evento) {
