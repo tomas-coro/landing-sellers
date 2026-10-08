@@ -63,38 +63,42 @@ test('un incasso senza metodo mostra errore, porta al campo e apre la validazion
   assert.deepEqual(scroll, [['#metodo-incasso', true]]);
 });
 
-test('dopo un incasso riuscito mostra conferma e torna allo storico', async () => {
-  const stato = appState();
-  const toast = [];
-  const scroll = [];
+for (const [ruolo, isAdmin] of [['admin', true], ['venditore', false]]) {
+  test(`dopo un incasso riuscito ${ruolo} mostra conferma e torna allo storico`, async () => {
+    const stato = appState();
+    const toast = [];
+    const scroll = [];
 
-  stato.isAdmin = true;
-  stato.venditaEconomicaAttiva = {
-    id: 'vendita-1',
-    cliente_id: 'cliente-1'
-  };
-  stato.venditaEconomicaForm.importoIncassato = 100;
-  stato.venditaEconomicaForm.statoIncasso = 'incassato';
-  stato.venditaEconomicaForm.metodoPagamento = 'Bonifico';
-  stato.validaIncassoEconomia = () => '';
-  stato.snapshotPagamentoEconomia = () => ({ valido: true });
-  stato.payloadSnapshotPagamentoEconomia = () => ({
-    calcolo: {},
-    partecipanti: []
+    stato.isAdmin = isAdmin;
+    stato.venditaEconomicaAttiva = {
+      id: 'vendita-1',
+      cliente_id: 'cliente-1'
+    };
+    stato.venditaEconomicaForm.importoIncassato = 100;
+    stato.venditaEconomicaForm.statoIncasso = 'incassato';
+    stato.venditaEconomicaForm.metodoPagamento = 'Bonifico';
+    stato.validaIncassoEconomia = () => '';
+    stato.snapshotPagamentoEconomia = () => ({ valido: true });
+    stato.payloadSnapshotPagamentoEconomia = () => ({
+      calcolo: {},
+      partecipanti: []
+    });
+    stato.caricaPagamentiCliente = async () => {};
+    stato.caricaDashboardAdmin = async () => {};
+    stato.caricaClienti = async () => {};
+    stato.caricaStatisticheVenditore = async () => {};
+    stato.aggiornaSnapshotEconomia = () => {};
+    stato.mostraToast = (...args) => toast.push(args);
+    stato.scorriEconomiaA = (...args) => scroll.push(args);
+
+    global.window ||= {};
+    global.window.supabaseClient = {
+      rpc: async () => ({ error: null })
+    };
+
+    await stato.salvaIncassoEconomia();
+
+    assert.deepEqual(toast, [['success', 'Incasso registrato.']]);
+    assert.deepEqual(scroll, [['.payment-history-panel']]);
   });
-  stato.caricaPagamentiCliente = async () => {};
-  stato.caricaDashboardAdmin = async () => {};
-  stato.aggiornaSnapshotEconomia = () => {};
-  stato.mostraToast = (...args) => toast.push(args);
-  stato.scorriEconomiaA = (...args) => scroll.push(args);
-
-  global.window ||= {};
-  global.window.supabaseClient = {
-    rpc: async () => ({ error: null })
-  };
-
-  await stato.salvaIncassoEconomia();
-
-  assert.deepEqual(toast, [['success', 'Incasso registrato.']]);
-  assert.deepEqual(scroll, [['.payment-history-panel']]);
-});
+}
