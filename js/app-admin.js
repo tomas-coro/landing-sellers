@@ -33,7 +33,7 @@
 
         window.supabaseClient
           .from('clienti')
-          .select('id,nome,venditore_id,stato,stato_produzione,pubblicato_il,prossimo_contatto,data_rinnovo,periodicita_contratto,durata_contratto_anni,importo_abbonamento,nome_pacchetto')
+          .select('id,nome,venditore_id,stato,stato_produzione,pubblicato_il,prossimo_contatto,data_rinnovo,data_attivazione,periodicita_contratto,durata_contratto_anni,importo_abbonamento,nome_pacchetto')
           .is('cancellato_il', null),
 
         window.supabaseClient
@@ -91,6 +91,28 @@
       const venditorePerCliente = Object.fromEntries(
         venditeAttive.map(vendita => [vendita.cliente_id, vendita.venditore_id])
       );
+
+      // Serve all'agenda per sapere su quale vendita registrare un incasso
+      // "al volo" quando manca del tutto la rata (vedi mesiNonRegistratiCliente).
+      this.venditaIdPerClienteAdmin = Object.fromEntries(
+        venditeAttive.map(vendita => [vendita.cliente_id, vendita.id])
+      );
+
+      // Un pagamento previsto o incassato "copre" il suo mese: senza questa
+      // mappa l'agenda segnalerebbe come mancante anche un mese che ha già
+      // una rata (che si vede già come rata scaduta, non duplicarla).
+      const mesiCopertiPerVendita = {};
+      pagamenti.forEach(pagamento => {
+        if (pagamento.stato === 'annullato') return;
+        const dataCopertura = pagamento.stato === 'incassato'
+          ? this.normalizzaDataAgenda(pagamento.data_pagamento) ||
+            this.normalizzaDataAgenda(pagamento.data_scadenza)
+          : this.normalizzaDataAgenda(pagamento.data_scadenza);
+        if (!dataCopertura) return;
+        (mesiCopertiPerVendita[pagamento.vendita_id] ||= new Set())
+          .add(dataCopertura.slice(0, 7));
+      });
+      this.mesiCopertiPerVenditaAdmin = mesiCopertiPerVendita;
 
       this.adminClienti = clienti.map(cliente => ({
         ...cliente,
@@ -426,8 +448,9 @@
       if (!cliente) return;
       await this.caricaPagamentiCliente(cliente.id);
       await this.apriPagamentoCliente(cliente, {
-        id: evento.pagamentoId,
-        importo: evento.importo
+        id: evento.pagamentoId || null,
+        importo: evento.importo,
+        vendita_id: evento.venditaId || null
       });
     },
 

@@ -781,6 +781,10 @@ function appState() {
     caricandoPagamentiCliente: false,
     errorePagamentiCliente: '',
     scadenzePagamentoPerCliente: {},
+    mesiCopertiPerVenditaVenditore: {},
+    mesiCopertiPerVenditaAdmin: {},
+    venditaIdPerClienteAdmin: {},
+    coperturaPagamentiAffidabile: false,
     riepilogoPagamentiPerCliente: {},
     pacchettoVenditaPerCliente: {},
 
@@ -954,7 +958,11 @@ function appState() {
             this.view = stato.view || (this.isAdmin ? 'admin' : 'lista');
 
             if (stato.view === 'agenda') {
-              this.agendaVista = stato.agendaVista || 'oggi';
+              // '7giorni' è una vista rimossa: una sessione salvata prima
+              // del cambio non deve restare senza nessun tab selezionato.
+              this.agendaVista = stato.agendaVista === '7giorni'
+                ? 'non_completate'
+                : (stato.agendaVista || 'oggi');
               this.agendaDataSelezionata =
                 stato.agendaData || this.dataISOOggi();
               this.agendaMese =
@@ -2506,8 +2514,22 @@ costiPerMotoreRataEconomia(
 
     async caricaScadenzePagamentoClienti() {
       this.scadenzePagamentoPerCliente = {};
+      // Scope sempre uguale a this.clienti (lista venditore o lista filtrata
+      // dall'admin su UN venditore) - va mantenuta separata dalla mappa
+      // admin-wide costruita in caricaDashboardAdmin, altrimenti aprire
+      // "Registra" su una riga mancante dalla dashboard admin restringe la
+      // copertura a un solo venditore e genera falsi mancanti su tutti gli
+      // altri clienti al ritorno in agenda.
+      this.mesiCopertiPerVenditaVenditore = {};
       this.riepilogoPagamentiPerCliente = {};
       this.pacchettoVenditaPerCliente = {};
+      // pacchettoVenditaPerCliente (quindi il venditaId di un cliente) viene
+      // popolato prima della query su pagamenti: se quella query fallisce o
+      // viene saltata, mesiCopertiPerVenditaVenditore resta vuota ma il
+      // venditaId si risolve comunque - senza questo flag, "non ho potuto
+      // caricare i pagamenti" si leggerebbe come "nessun pagamento mai
+      // fatto", un falso mancante su ogni mese di ogni cliente.
+      this.coperturaPagamentiAffidabile = false;
 
       const clienteIds = this.clienti.map(cliente => cliente.id).filter(Boolean);
       if (!clienteIds.length) return;
@@ -2614,10 +2636,27 @@ costiPerMotoreRataEconomia(
       }
 
       const prossime = {};
+      const mesiCopertiPerVendita = {};
 
       (pagamenti || []).forEach(pagamento => {
         const vendita = venditePerId[pagamento.vendita_id];
         const clienteId = vendita?.cliente_id;
+
+        // Un pagamento previsto o incassato "copre" il suo mese: serve per
+        // non segnalare come mancante un mese che ha già una rata, anche se
+        // non ancora incassata (quella si vede già come rata scaduta).
+        if (pagamento.stato !== 'annullato') {
+          const dataCopertura = pagamento.stato === 'incassato'
+            ? this.normalizzaDataAgenda(pagamento.data_pagamento) ||
+              this.normalizzaDataAgenda(pagamento.data_scadenza)
+            : this.normalizzaDataAgenda(pagamento.data_scadenza);
+
+          if (dataCopertura) {
+            (mesiCopertiPerVendita[pagamento.vendita_id] ||= new Set())
+              .add(dataCopertura.slice(0, 7));
+          }
+        }
+
         if (!clienteId) return;
 
         const riepilogo = riepiloghi[clienteId];
@@ -2667,6 +2706,8 @@ costiPerMotoreRataEconomia(
       });
 
       this.scadenzePagamentoPerCliente = prossime;
+      this.mesiCopertiPerVenditaVenditore = mesiCopertiPerVendita;
+      this.coperturaPagamentiAffidabile = true;
       this.riepilogoPagamentiPerCliente = riepiloghi;
     },
 
@@ -3465,12 +3506,105 @@ costiPerMotoreRataEconomia(
             scaduto: rata.data < oggi
           });
         });
+
+        this.mesiNonRegistratiCliente(cliente).forEach(mese => {
+          eventi.push({
+            id: `mancante-${cliente.id}-${mese.chiaveMese}`,
+            venditaId: mese.venditaId,
+            importo: mese.importo,
+            clienteId: cliente.id,
+            clienteNome: cliente.nome,
+            venditoreId: cliente.venditore_id,
+            venditoreNome: this.adminVenditoriPerId[cliente.venditore_id] || '',
+            data: mese.data,
+            tipo: 'mancante',
+            titolo: mese.importo > 0
+              ? `Pagamento non registrato · ${this.formattaNumeroEuro(mese.importo)}`
+              : 'Pagamento non registrato',
+            scaduto: true
+          });
+        });
       });
 
       return eventi.sort((a, b) =>
         a.data.localeCompare(b.data) ||
         a.clienteNome.localeCompare(b.clienteNome)
       );
+    },
+
+    // Mesi/anni di canone già scaduti per cui non esiste in pagamenti
+    // nessuna riga (previsto o incassata): la rata non è mai stata creata,
+    // quindi senza questo controllo l'importo spariva senza lasciare traccia
+    // in agenda. L'ancora è data_attivazione (o pubblicato_il se manca) e i
+    // candidati seguono lo stesso schema di calcolaProssimoRinnovo/
+    // calcola_prossimo_rinnovo lato DB, partendo da n=1 perché il primo
+    // periodo è quello incassato alla vendita.
+    mesiNonRegistratiCliente(cliente) {
+      const periodicita = cliente.periodicita_contratto;
+      if (!['mensile', 'annuale'].includes(periodicita)) return [];
+
+      const anchor =
+        this.normalizzaDataAgenda(cliente.data_attivazione) ||
+        this.normalizzaDataAgenda(cliente.pubblicato_il);
+      if (!anchor) return [];
+
+      // Due mappe separate (mai condivise) perché hanno scope diversi: quella
+      // admin è costruita una volta sola, su TUTTI i clienti, in
+      // caricaDashboardAdmin; quella venditore viene ricostruita ogni volta
+      // che si apre la lista clienti ed è scoped a this.clienti - mischiarle
+      // vorrebbe dire che aprire "Registra" su una riga admin restringe la
+      // copertura e genera mancanti falsi su tutti gli altri clienti.
+      // Senza admin la copertura arriva da una query a parte (pagamenti) che
+      // può fallire dopo che pacchettoVenditaPerCliente è già popolato: se
+      // non è andata a buon fine, "non lo so" non deve leggersi come
+      // "non pagato mai".
+      if (!this.isAdmin && !this.coperturaPagamentiAffidabile) return [];
+
+      const venditaId = this.isAdmin
+        ? this.venditaIdPerClienteAdmin?.[cliente.id] || null
+        : this.pacchettoVenditaPerCliente?.[cliente.id]?.venditaId || null;
+      if (!venditaId) return [];
+
+      const mesiCoperti = this.isAdmin
+        ? this.mesiCopertiPerVenditaAdmin?.[venditaId] || new Set()
+        : this.mesiCopertiPerVenditaVenditore?.[venditaId] || new Set();
+      const importoAtteso = Number(cliente.importo_abbonamento) || 0;
+      const oggi = this.dataISOOggi();
+
+      const [annoBase, meseBase, giornoBase] = anchor.split('-').map(Number);
+      const risultati = [];
+
+      for (let n = 1; n <= 600; n += 1) {
+        let anno = annoBase;
+        let mese = meseBase;
+
+        if (periodicita === 'mensile') {
+          const indice = (meseBase - 1) + n;
+          anno = annoBase + Math.floor(indice / 12);
+          mese = (indice % 12) + 1;
+        } else {
+          anno = annoBase + n;
+        }
+
+        const ultimoGiorno = new Date(Date.UTC(anno, mese, 0)).getUTCDate();
+        const giorno = Math.min(giornoBase, ultimoGiorno);
+        const candidato =
+          `${anno}-${String(mese).padStart(2, '0')}-${String(giorno).padStart(2, '0')}`;
+
+        if (candidato > oggi) break;
+
+        const chiaveMese = `${anno}-${String(mese).padStart(2, '0')}`;
+        if (!mesiCoperti.has(chiaveMese)) {
+          risultati.push({
+            data: candidato,
+            chiaveMese,
+            venditaId,
+            importo: importoAtteso
+          });
+        }
+      }
+
+      return risultati;
     },
 
     eventiAgendaVisibili() {
@@ -3484,12 +3618,12 @@ costiPerMotoreRataEconomia(
         );
       }
 
-      if (this.agendaVista === '7giorni') {
-        const fine = this.aggiungiGiorniISO(oggi, 7);
-        return eventi.filter(e =>
-          (e.data >= oggi && e.data <= fine) ||
-          ((e.tipo === 'contatto' || e.tipo === 'rata') && e.data < oggi)
-        );
+      // Nessuna finestra temporale: deve restare visibile tutto l'arretrato
+      // non gestito, anche di mesi passati, finché non viene registrato o
+      // evaso - altrimenti un pagamento mai creato sparisce senza lasciare
+      // traccia (il bug che ha fatto perdere di vista Mr Smoky, Giuly Style...).
+      if (this.agendaVista === 'non_completate') {
+        return eventi.filter(e => e.scaduto);
       }
 
       return eventi.filter(e => e.data === this.agendaDataSelezionata);
@@ -3502,6 +3636,14 @@ costiPerMotoreRataEconomia(
       const start = new Date(Date.UTC(anno, mese - 1, 1 - offset));
       const oggi = this.dataISOOggi();
 
+      // eventiAgenda() ricalcola anche i mesi non registrati per ogni
+      // cliente: va chiamata una sola volta, non 42 volte (una per giorno).
+      const eventi = this.eventiAgenda();
+      const conteggioPerGiorno = {};
+      eventi.forEach(evento => {
+        conteggioPerGiorno[evento.data] = (conteggioPerGiorno[evento.data] || 0) + 1;
+      });
+
       return Array.from({ length: 42 }, (_, i) => {
         const d = new Date(start.getTime() + i * 86400000);
         const iso = d.toISOString().slice(0, 10);
@@ -3510,7 +3652,7 @@ costiPerMotoreRataEconomia(
           giorno: d.getUTCDate(),
           nelMese: d.getUTCMonth() === mese - 1,
           oggi: iso === oggi,
-          eventi: this.eventiAgenda().filter(e => e.data === iso).length
+          eventi: conteggioPerGiorno[iso] || 0
         };
       });
     },

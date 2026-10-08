@@ -5734,17 +5734,18 @@
         :class="{ 'agenda-mode-month': agendaVista === 'mese' }">
         <section class="agenda-overview">
           <div>
-            <span x-text="agendaVista === 'oggi' ? 'Da fare oggi' : agendaVista === '7giorni' ? 'Prossimi 7 giorni' : titoloMeseAgenda()"></span>
+            <span x-text="agendaVista === 'oggi' ? 'Da fare oggi' : agendaVista === 'non_completate' ? 'Non completate' : titoloMeseAgenda()"></span>
             <strong x-text="eventiAgendaVisibili().length"></strong>
             <small x-text="eventiAgendaVisibili().length === 1 ? 'attività' : 'attività'"></small>
           </div>
           <p x-show="eventiAgenda().filter(evento => evento.tipo === 'contatto' && evento.scaduto).length > 0"><strong x-text="eventiAgenda().filter(evento => evento.tipo === 'contatto' && evento.scaduto).length"></strong> contatti in ritardo inclusi</p>
           <p x-show="eventiAgenda().filter(evento => evento.tipo === 'contatto' && evento.scaduto).length === 0">Nessun contatto arretrato</p>
+          <p x-show="eventiAgenda().filter(evento => evento.tipo === 'mancante').length > 0"><strong x-text="eventiAgenda().filter(evento => evento.tipo === 'mancante').length"></strong> pagamenti non registrati</p>
         </section>
 
         <div class="agenda-switch" aria-label="Periodo agenda">
           <button type="button" :class="{ on: agendaVista === 'oggi' }" @click="agendaVista = 'oggi'">Oggi</button>
-          <button type="button" :class="{ on: agendaVista === '7giorni' }" @click="agendaVista = '7giorni'">7 giorni</button>
+          <button type="button" :class="{ on: agendaVista === 'non_completate' }" @click="agendaVista = 'non_completate'">Non completate</button>
           <button type="button" :class="{ on: agendaVista === 'mese' }" @click="agendaVista = 'mese'">Mese</button>
         </div>
 
@@ -5786,7 +5787,7 @@
               @click="isAdmin ? apriEventoAdmin(evento) : apriScheda(evento.clienteId)">
               <div class="agenda-event-date">
                 <strong x-text="formattaData(evento.data)"></strong>
-                <span x-text="evento.tipo === 'contatto' ? 'Contatto' : evento.tipo === 'rata' ? 'Rata' : 'Rinnovo'"></span>
+                <span x-text="evento.tipo === 'contatto' ? 'Contatto' : evento.tipo === 'rata' ? 'Rata' : evento.tipo === 'mancante' ? 'Pagamento' : 'Rinnovo'"></span>
               </div>
               <div>
                 <strong x-text="evento.clienteNome"></strong>
@@ -5804,14 +5805,14 @@
               </span>
 
               <span
-                x-show="evento.tipo === 'rata'"
+                x-show="evento.tipo === 'rata' || evento.tipo === 'mancante'"
                 class="event-done-action agenda-event-done"
                 role="button"
                 tabindex="0"
                 @click.stop="apriIncassoAgenda(evento)"
                 @keydown.enter.stop="apriIncassoAgenda(evento)"
-                @keydown.space.prevent.stop="apriIncassoAgenda(evento)">
-                Incassa
+                @keydown.space.prevent.stop="apriIncassoAgenda(evento)"
+                x-text="evento.tipo === 'mancante' ? 'Registra' : 'Incassa'">
               </span>
 
               <span x-show="evento.tipo === 'rinnovo'">›</span>
