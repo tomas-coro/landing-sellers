@@ -6855,7 +6855,7 @@
 
           <div class="metrics-trend-chips" role="group" aria-label="Mese" style="margin:10px 0">
             <template x-for="m in fatturatoGuadagniMensile()" :key="'incassato-mese-chip-' + m.chiave">
-              <button type="button" :class="{ active: fatturatoMeseSelezionato === m.chiave }" @click="fatturatoMeseSelezionato = m.chiave" x-text="m.label"></button>
+              <button type="button" :class="{ active: fatturatoMeseSelezionato === m.chiave }" @click="fatturatoMeseSelezionato = m.chiave" x-text="m.label + ' \'' + String(fatturatoAnno).slice(-2)"></button>
             </template>
           </div>
 
