@@ -123,6 +123,37 @@ test('eventiAgendaVisibili con agendaVista non_completate ignora la finestra tem
   assert.ok(mancanti.length >= 5, 'mesi vecchi di oltre 7 giorni devono restare visibili');
 });
 
+// Regressione: la tab "Oggi" deve mostrare anche l'arretrato di tipo
+// "mancante" (pagamenti non registrati), non solo contatto/rata in ritardo -
+// altrimenti un pagamento mai creato restava visibile solo in "Non completate".
+test('eventiAgendaVisibili con agendaVista oggi include anche i mesi mancanti scaduti', () => {
+  const stato = appState();
+  stato.isAdmin = false;
+  stato.adminVenditoriPerId = {};
+  stato.pacchettoVenditaPerCliente = { c1: { venditaId: 'v1' } };
+  stato.mesiCopertiPerVenditaVenditore = {};
+  stato.coperturaPagamentiAffidabile = true;
+
+  const oggi = stato.dataISOOggi();
+  const seiMesiFa = stato.aggiungiGiorniISO(oggi, -180);
+
+  stato.clienti = [{
+    id: 'c1',
+    nome: 'Mr Smoky',
+    periodicita_contratto: 'mensile',
+    data_attivazione: seiMesiFa,
+    importo_abbonamento: 100,
+    venditore_id: null
+  }];
+  stato.scadenzePagamentoPerCliente = {};
+
+  stato.agendaVista = 'oggi';
+  const visibili = stato.eventiAgendaVisibili();
+
+  const mancanti = visibili.filter(e => e.tipo === 'mancante' && e.clienteId === 'c1');
+  assert.ok(mancanti.length >= 5, 'i pagamenti non registrati vecchi devono comparire anche in "Oggi"');
+});
+
 // Regressione: aprire "Registra" su una riga mancante dalla dashboard admin
 // passa da apriClientiVenditore -> caricaClienti -> caricaScadenzePagamentoClienti,
 // che ricostruisce la copertura SOLO per i clienti di un venditore. Se quella

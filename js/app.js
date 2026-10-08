@@ -3612,10 +3612,7 @@ costiPerMotoreRataEconomia(
       const eventi = this.eventiAgenda();
 
       if (this.agendaVista === 'oggi') {
-        return eventi.filter(e =>
-          e.data === oggi ||
-          ((e.tipo === 'contatto' || e.tipo === 'rata') && e.data < oggi)
-        );
+        return eventi.filter(e => e.data === oggi || e.scaduto);
       }
 
       // Nessuna finestra temporale: deve restare visibile tutto l'arretrato
