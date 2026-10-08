@@ -23,6 +23,30 @@ test('il pagamento salva chi ha incassato tra i partecipanti', () => {
   assert.match(html, />HA INCASSATO</);
 });
 
+test('un venditore include se stesso nella nuova vendita', async () => {
+  const stato = appState();
+  stato.isAdmin = false;
+  stato.sessione = { user: { id: 'venditore' } };
+
+  global.window ||= {};
+  global.window.supabaseClient = {
+    rpc: async () => ({
+      data: [
+        { id: 'alessandro', ruolo_economico: 'referente' },
+        { id: 'tomas', ruolo_economico: 'produzione' },
+        { id: 'venditore', nome: 'Venditore' }
+      ],
+      error: null
+    })
+  };
+
+  await stato.inizializzaPartecipantiEconomia();
+
+  assert.equal(stato.venditaEconomicaForm.partecipanti.length, 3);
+  assert.equal(stato.venditaEconomicaForm.partecipanti[2].haVenduto, true);
+  assert.equal(stato.venditaEconomicaForm.incassatoDa, 'venditore');
+});
+
 test('un trasferimento e completo solo dopo tutte le conferme necessarie', () => {
   const stato = appState();
   const pagamento = {

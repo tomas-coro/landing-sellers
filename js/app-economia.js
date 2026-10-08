@@ -153,7 +153,15 @@
         );
       }
 
+      const utenteCorrente = !this.isAdmin && profili.find(
+        profilo => profilo.id === this.sessione?.user?.id
+      );
+      if (utenteCorrente && !partecipanti.some(p => p.id === utenteCorrente.id)) {
+        partecipanti.push(creaPartecipante(utenteCorrente, 'venditore'));
+      }
+
       const venditoreDefault =
+        partecipanti.find(p => p.id === utenteCorrente?.id) ||
         partecipanti.find(
           partecipante => partecipante.ruolo === 'referente'
         );
