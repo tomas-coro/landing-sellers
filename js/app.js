@@ -694,7 +694,8 @@ function appState() {
     fatturatoVenditeRighe: [],   // admin: [{ data, valore }] - venduto azienda
     fatturatoIncassiRighe: [],   // admin: [{ data, valore }] - incassato azienda
     fatturatoBreakdownRighe: [], // admin: [{ profiloId, nome, data, valore }] - guadagni per persona
-    fatturatoGuadagniRighe: [],  // utente corrente: [{ data, valore }]
+    fatturatoGuadagniRighe: [],  // utente corrente: [{ data, valore, clienteNome, pagamentoId }]
+    fatturatoMeseSelezionato: null, // chiave 'YYYY-MM' per l'elenco dettagliato sotto il grafico
     fatturatoHover: null,
     incassatoHoverMensile: null, // indice barra evidenziata nel grafico "Il tuo incassato"
 
@@ -780,7 +781,11 @@ function appState() {
     venditaClienteAttiva: null,
     pagamentiCliente: [],
     trasferimentiDaConfermare: [],
+    quoteDaTrasferire: [],
+    quoteConfermateRecenti: [],
+    quoteAdmin: [],
     confermandoTrasferimentoId: null,
+    annullandoConfermaQuotaId: null,
     caricandoPagamentiCliente: false,
     errorePagamentiCliente: '',
     scadenzePagamentoPerCliente: {},
@@ -1319,6 +1324,17 @@ function appState() {
       this.agendaDataSelezionata = this.dataISOOggi();
       this.agendaMese = this.dataISOOggi().slice(0, 7);
       this.view = 'agenda';
+      await this.caricaTrasferimentiDaConfermare();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    async apriQuote() {
+      if (!(await this.confermaUscitaFormCliente())) return;
+      this.view = 'quote';
+      await this.caricaTrasferimentiDaConfermare();
+      await this.caricaQuoteDaTrasferire();
+      await this.caricaQuoteConfermateRecenti();
+      if (this.isAdmin) await this.caricaQuoteAdmin();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
@@ -2075,6 +2091,7 @@ costiPerMotoreRataEconomia(
       this.profiloErrore = '';
       this.profiloForm.username = this.profilo.username || '';
       this.view = 'profilo';
+      await this.caricaTrasferimentiDaConfermare();
     },
 
     iniziaPressioneProfilo() {
@@ -3534,6 +3551,26 @@ costiPerMotoreRataEconomia(
               : 'Pagamento non registrato',
             scaduto: true
           });
+        });
+      });
+
+      // Quote ricevute da altri che devi ancora confermare: compaiono in
+      // agenda alla data dell'incasso, finché non confermi o annulli.
+      (this.trasferimentiDaConfermare || []).forEach(quota => {
+        const data = this.normalizzaDataAgenda(quota.pagamenti?.data_pagamento) || oggi;
+        eventi.push({
+          id: `quota-${quota.pagamento_id}`,
+          pagamentoId: quota.pagamento_id,
+          importo: quota.quota_effettiva,
+          clienteId: quota.clienteId,
+          clienteNome: quota.clienteNome || 'Cliente',
+          controparteNome: quota.controparteNome,
+          venditoreId: this.sessione?.user?.id,
+          venditoreNome: '',
+          data,
+          tipo: 'quota',
+          titolo: `Quota da confermare · ${this.formattaNumeroEuro(quota.quota_effettiva)}`,
+          scaduto: false
         });
       });
 

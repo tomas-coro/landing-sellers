@@ -835,20 +835,185 @@
 
       const { data, error } = await window.supabaseClient
         .from('pagamento_partecipanti')
-        .select('pagamento_id,quota_effettiva,ricevuta_il,pagamenti!inner(id,incassato_da,stato,data_pagamento)')
+        .select(`
+          id,
+          pagamento_id,
+          quota_effettiva,
+          ricevuta_il,
+          pagamenti!inner(
+            id,
+            incassato_da,
+            stato,
+            data_pagamento,
+            vendite!inner(cliente_id, clienti(nome)),
+            incassato_da_profilo:profili!pagamenti_incassato_da_fkey(nome)
+          )
+        `)
         .eq('profilo_id', profiloId)
         .is('ricevuta_il', null)
         .gt('quota_effettiva', 0)
         .eq('pagamenti.stato', 'incassato');
 
       if (error) {
-        console.warn('Trasferimenti non disponibili:', error.message);
+        this.mostraToast('error', 'Quote da confermare non caricate', error.message);
         return;
       }
 
-      this.trasferimentiDaConfermare = (data || []).filter(
-        quota => quota.pagamenti?.incassato_da !== profiloId
-      );
+      this.trasferimentiDaConfermare = (data || [])
+        .filter(quota => quota.pagamenti?.incassato_da !== profiloId)
+        .map(quota => ({
+          ...quota,
+          clienteId: quota.pagamenti?.vendite?.cliente_id || null,
+          clienteNome: quota.pagamenti?.vendite?.clienti?.nome || '',
+          controparteNome: quota.pagamenti?.incassato_da_profilo?.nome || ''
+        }));
+    },
+
+    // Quote che altri partecipanti devono ancora ricevere da pagamenti che
+    // HAI incassato tu: risponde a "quanto devo e a chi" lato venditore.
+    async caricaQuoteDaTrasferire() {
+      const profiloId = this.sessione?.user?.id;
+      this.quoteDaTrasferire = [];
+      if (!profiloId) return;
+
+      const { data, error } = await window.supabaseClient
+        .from('pagamento_partecipanti')
+        .select(`
+          id,
+          pagamento_id,
+          profilo_id,
+          quota_effettiva,
+          ricevuta_il,
+          profilo:profili(nome),
+          pagamenti!inner(
+            id,
+            incassato_da,
+            stato,
+            data_pagamento,
+            vendite!inner(cliente_id, clienti(nome))
+          )
+        `)
+        .eq('pagamenti.incassato_da', profiloId)
+        .neq('profilo_id', profiloId)
+        .is('ricevuta_il', null)
+        .gt('quota_effettiva', 0)
+        .eq('pagamenti.stato', 'incassato');
+
+      if (error) {
+        this.mostraToast('error', 'Quote da trasferire non caricate', error.message);
+        return;
+      }
+
+      this.quoteDaTrasferire = (data || []).map(quota => ({
+        ...quota,
+        clienteId: quota.pagamenti?.vendite?.cliente_id || null,
+        clienteNome: quota.pagamenti?.vendite?.clienti?.nome || '',
+        aChiNome: quota.profilo?.nome || ''
+      }));
+    },
+
+    // Ultime quote confermate da te: permette di annullare un tap per
+    // errore senza dover intervenire sul database.
+    async caricaQuoteConfermateRecenti() {
+      const profiloId = this.sessione?.user?.id;
+      this.quoteConfermateRecenti = [];
+      if (!profiloId) return;
+
+      const { data, error } = await window.supabaseClient
+        .from('pagamento_partecipanti')
+        .select(`
+          id,
+          pagamento_id,
+          quota_effettiva,
+          ricevuta_il,
+          pagamenti!inner(
+            id,
+            incassato_da,
+            stato,
+            vendite!inner(cliente_id, clienti(nome)),
+            incassato_da_profilo:profili!pagamenti_incassato_da_fkey(nome)
+          )
+        `)
+        .eq('profilo_id', profiloId)
+        .not('ricevuta_il', 'is', null)
+        .gt('quota_effettiva', 0)
+        .eq('pagamenti.stato', 'incassato')
+        .order('ricevuta_il', { ascending: false })
+        .limit(10);
+
+      if (error) {
+        this.mostraToast('error', 'Quote confermate non caricate', error.message);
+        return;
+      }
+
+      this.quoteConfermateRecenti = (data || [])
+        .filter(quota => quota.pagamenti?.incassato_da !== profiloId)
+        .map(quota => ({
+          ...quota,
+          clienteNome: quota.pagamenti?.vendite?.clienti?.nome || '',
+          controparteNome: quota.pagamenti?.incassato_da_profilo?.nome || ''
+        }));
+    },
+
+    // Vista admin: tutte le quote ancora da trasferire, per capire chi deve
+    // pagare chi su ogni cliente senza dover aprire ogni scheda.
+    async caricaQuoteAdmin() {
+      this.quoteAdmin = [];
+      if (!this.isAdmin) return;
+
+      const { data, error } = await window.supabaseClient
+        .from('pagamento_partecipanti')
+        .select(`
+          id,
+          pagamento_id,
+          profilo_id,
+          quota_effettiva,
+          ricevuta_il,
+          profilo:profili(nome),
+          pagamenti!inner(
+            id,
+            incassato_da,
+            stato,
+            vendite!inner(cliente_id, clienti(nome)),
+            incassato_da_profilo:profili!pagamenti_incassato_da_fkey(nome)
+          )
+        `)
+        .is('ricevuta_il', null)
+        .gt('quota_effettiva', 0)
+        .eq('pagamenti.stato', 'incassato');
+
+      if (error) {
+        this.mostraToast('error', 'Quote non caricate', error.message);
+        return;
+      }
+
+      this.quoteAdmin = (data || [])
+        .filter(quota => quota.pagamenti?.incassato_da !== quota.profilo_id)
+        .map(quota => ({
+          ...quota,
+          clienteId: quota.pagamenti?.vendite?.cliente_id || null,
+          clienteNome: quota.pagamenti?.vendite?.clienti?.nome || '',
+          daChiNome: quota.pagamenti?.incassato_da_profilo?.nome || '',
+          aChiNome: quota.profilo?.nome || ''
+        }));
+    },
+
+    // Mostra sempre il dettaglio (cliente, controparte, importo) prima di
+    // scrivere la conferma: un tap sulla riga non basta più da solo, per
+    // evitare conferme involontarie come quella che ha generato questo bug.
+    async confermaQuotaConDettaglio(quota) {
+      if (!quota?.pagamento_id) return;
+
+      const dettaglio = [
+        `Confermi di aver ricevuto ${this.formattaEuro(quota.quota_effettiva)}`,
+        quota.controparteNome ? `da ${quota.controparteNome}` : '',
+        quota.clienteNome ? `per ${quota.clienteNome}` : ''
+      ].filter(Boolean).join(' ') + '?';
+
+      const confermato = await this.chiediConferma(dettaglio, 'Conferma ricezione');
+      if (!confermato) return;
+
+      await this.confermaRicezioneQuota(quota.pagamento_id);
     },
 
     async confermaRicezioneQuota(pagamentoId) {
@@ -867,12 +1032,46 @@
         }
 
         await this.caricaTrasferimentiDaConfermare();
+        await this.caricaQuoteConfermateRecenti();
         if (this.clienteSelezionatoId) {
           await this.caricaPagamentiCliente(this.clienteSelezionatoId);
         }
         this.mostraToast('success', 'Quota ricevuta confermata.');
       } finally {
         this.confermandoTrasferimentoId = null;
+      }
+    },
+
+    async annullaConfermaQuota(pagamentoId) {
+      if (!pagamentoId || this.annullandoConfermaQuotaId) return;
+
+      const confermato = await this.chiediConferma(
+        'Annulli la conferma di ricezione di questa quota? Tornerà tra quelle da confermare.',
+        'Annulla conferma'
+      );
+      if (!confermato) return;
+
+      this.annullandoConfermaQuotaId = pagamentoId;
+
+      try {
+        const { error } = await window.supabaseClient.rpc(
+          'annulla_conferma_quota_pagamento',
+          { p_pagamento_id: pagamentoId }
+        );
+
+        if (error) {
+          this.mostraToast('error', 'Annullamento non riuscito', error.message);
+          return;
+        }
+
+        await this.caricaTrasferimentiDaConfermare();
+        await this.caricaQuoteConfermateRecenti();
+        if (this.clienteSelezionatoId) {
+          await this.caricaPagamentiCliente(this.clienteSelezionatoId);
+        }
+        this.mostraToast('success', 'Conferma annullata.');
+      } finally {
+        this.annullandoConfermaQuotaId = null;
       }
     },
 

@@ -512,26 +512,6 @@
             </div>
           </section>
 
-          <section class="home-attention home-today-v3 transfer-reminder" x-show="trasferimentiDaConfermare.length > 0">
-            <div class="home-section-title">
-              <div>
-                <span>QUOTE DA CONFERMARE</span>
-                <strong x-text="trasferimentiDaConfermare.length === 1 ? '1 quota ricevuta da confermare' : trasferimentiDaConfermare.length + ' quote ricevute da confermare'"></strong>
-              </div>
-            </div>
-            <div class="home-attention-list">
-              <template x-for="quota in trasferimentiDaConfermare" :key="'transfer-' + quota.pagamento_id">
-                <button type="button" class="home-attention-row" @click="confermaRicezioneQuota(quota.pagamento_id)">
-                  <span class="home-attention-dot type-rata"></span>
-                  <div>
-                    <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
-                    <small>Conferma di aver ricevuto la tua quota</small>
-                  </div>
-                  <span class="event-done-action" x-text="confermandoTrasferimentoId === quota.pagamento_id ? '...' : '✓ Conferma'"></span>
-                </button>
-              </template>
-            </div>
-          </section>
 
           <section class="home-attention home-today-v3">
             <div class="home-section-title">
@@ -1033,6 +1013,26 @@
 
             <button
               type="button"
+              @click="apriQuote()">
+
+              <span class="admin-profile-menu-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="9"/>
+                  <path d="M9 12h6M12 9v6"/>
+                </svg>
+              </span>
+
+              <span class="admin-profile-menu-copy">
+                <strong>Quote</strong>
+                <small x-text="trasferimentiDaConfermare.length > 0 ? trasferimentiDaConfermare.length + ' da confermare' : 'Chi deve a chi'"></small>
+              </span>
+
+              <i>›</i>
+            </button>
+
+            <button
+              type="button"
               @click="apriFatturato()">
 
               <span class="admin-profile-menu-icon">
@@ -1302,6 +1302,14 @@
 
                 <span x-text="etichettaAggiornamento()"></span>
               </strong>
+            </button>
+
+            <button
+              type="button"
+              @click="apriQuote()">
+
+              <span>Quote</span>
+              <strong x-text="trasferimentiDaConfermare.length > 0 ? trasferimentiDaConfermare.length + ' da confermare' : 'Apri'"></strong>
             </button>
 
             <button
@@ -1670,26 +1678,6 @@
           </div>
         </section>
 
-        <section class="home-attention home-today-v3 transfer-reminder" x-show="trasferimentiDaConfermare.length > 0">
-          <div class="home-section-title">
-            <div>
-              <span>QUOTE DA CONFERMARE</span>
-              <strong x-text="trasferimentiDaConfermare.length === 1 ? '1 quota ricevuta da confermare' : trasferimentiDaConfermare.length + ' quote ricevute da confermare'"></strong>
-            </div>
-          </div>
-          <div class="home-attention-list">
-            <template x-for="quota in trasferimentiDaConfermare" :key="'admin-transfer-' + quota.pagamento_id">
-              <button type="button" class="home-attention-row" @click="confermaRicezioneQuota(quota.pagamento_id)">
-                <span class="home-attention-dot type-rata"></span>
-                <div>
-                  <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
-                  <small>Conferma di aver ricevuto la tua quota</small>
-                </div>
-                <span class="event-done-action" x-text="confermandoTrasferimentoId === quota.pagamento_id ? '...' : '✓ Conferma'"></span>
-              </button>
-            </template>
-          </div>
-        </section>
 
         <!-- URGENZE SQUADRA -->
         <section class="home-attention home-today-v3">
@@ -5855,14 +5843,14 @@
               type="button"
               class="agenda-event"
               :class="{ overdue: evento.scaduto }"
-              @click="isAdmin ? apriEventoAdmin(evento) : apriScheda(evento.clienteId)">
+              @click="evento.tipo === 'quota' ? apriQuote() : (isAdmin ? apriEventoAdmin(evento) : apriScheda(evento.clienteId))">
               <div class="agenda-event-date">
                 <strong x-text="formattaData(evento.data)"></strong>
-                <span x-text="evento.tipo === 'contatto' ? 'Contatto' : evento.tipo === 'rata' ? 'Rata' : evento.tipo === 'mancante' ? 'Pagamento' : 'Rinnovo'"></span>
+                <span x-text="evento.tipo === 'contatto' ? 'Contatto' : evento.tipo === 'rata' ? 'Rata' : evento.tipo === 'mancante' ? 'Pagamento' : evento.tipo === 'quota' ? 'Quota' : 'Rinnovo'"></span>
               </div>
               <div>
                 <strong x-text="evento.clienteNome"></strong>
-                <small x-text="isAdmin && evento.venditoreNome ? evento.venditoreNome + ' - ' + evento.titolo : evento.titolo"></small>
+                <small x-text="evento.tipo === 'quota' ? (evento.controparteNome ? 'Da ' + evento.controparteNome : evento.titolo) : (isAdmin && evento.venditoreNome ? evento.venditoreNome + ' - ' + evento.titolo : evento.titolo)"></small>
               </div>
               <span
                 x-show="evento.tipo === 'contatto'"
@@ -5887,6 +5875,7 @@
               </span>
 
               <span x-show="evento.tipo === 'rinnovo'">›</span>
+              <span x-show="evento.tipo === 'quota'">›</span>
             </button>
           </template>
 
@@ -6831,7 +6820,7 @@
 
         <div class="metrics-trend-chips fatturato-year-chips" role="group" aria-label="Anno">
           <template x-for="anno in fatturatoAnniDisponibili" :key="'incassato-anno-chip-' + anno">
-            <button type="button" :class="{ active: fatturatoAnno === anno }" @click="fatturatoAnno = anno" x-text="anno"></button>
+            <button type="button" :class="{ active: fatturatoAnno === anno }" @click="selezionaAnnoIncassato(anno)" x-text="anno"></button>
           </template>
         </div>
 
@@ -6856,6 +6845,37 @@
           </div>
         </section>
 
+        <section class="home-attention home-today-v3" style="margin-top:14px">
+          <div class="home-section-title">
+            <div>
+              <span>DETTAGLIO MESE</span>
+              <strong x-text="fatturatoRigheDelMeseSelezionato().length ? fatturatoRigheDelMeseSelezionato().length + ' incasso/i' : 'Nessun incasso'"></strong>
+            </div>
+          </div>
+
+          <div class="metrics-trend-chips" role="group" aria-label="Mese" style="margin:10px 0">
+            <template x-for="m in fatturatoGuadagniMensile()" :key="'incassato-mese-chip-' + m.chiave">
+              <button type="button" :class="{ active: fatturatoMeseSelezionato === m.chiave }" @click="fatturatoMeseSelezionato = m.chiave" x-text="m.label"></button>
+            </template>
+          </div>
+
+          <div class="home-attention-list" x-show="fatturatoRigheDelMeseSelezionato().length > 0">
+            <template x-for="riga in fatturatoRigheDelMeseSelezionato()" :key="'incassato-riga-' + riga.pagamentoId">
+              <div class="home-attention-row">
+                <span class="home-attention-dot type-oggi"></span>
+                <div>
+                  <strong x-text="formattaEuro(riga.valore)"></strong>
+                  <small x-text="(riga.clienteNome || 'Cliente') + ' · ' + formattaData(riga.data)"></small>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <div class="crm-empty" x-show="fatturatoRigheDelMeseSelezionato().length === 0">
+            Nessun incasso a tuo nome in questo mese.
+          </div>
+        </section>
+
         <section class="admin-ranking" x-show="fatturatoConfrontoAnni().length > 1" style="margin-top:14px">
           <div class="admin-section-heading">
             <div>
@@ -6866,7 +6886,7 @@
 
           <div class="admin-ranking-list admin-ranking-list-flat">
             <template x-for="riga in fatturatoConfrontoAnni()" :key="'incassato-confronto-' + riga.anno">
-              <button type="button" @click="fatturatoAnno = riga.anno">
+              <button type="button" @click="selezionaAnnoIncassato(riga.anno)">
                 <span class="admin-ranking-name"><strong x-text="riga.anno"></strong></span>
                 <strong class="admin-ranking-total" x-text="formattaEuro(riga.guadagni)"></strong>
               </button>
@@ -6877,6 +6897,106 @@
         <div x-show="caricandoFatturato" class="empty">
           <p>Caricamento incassato...</p>
         </div>
+      </div>
+    </div>
+
+    <!-- QUOTE -->
+    <div x-show="view === 'quote'" x-cloak x-transition.opacity.duration.160ms class="view-fade">
+      <div class="brandbar">
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+      </div>
+      <div class="topbar">
+        <button type="button" class="linkback" @click="vaiHome()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Torna alla home
+        </button>
+        <h1 style="font-size:21px">Quote</h1>
+      </div>
+      <div class="content">
+
+        <section class="home-attention home-today-v3">
+          <div class="home-section-title">
+            <div>
+              <span>DA RICEVERE</span>
+              <strong x-text="trasferimentiDaConfermare.length === 0 ? 'Niente da confermare' : (trasferimentiDaConfermare.length === 1 ? '1 quota ricevuta da confermare' : trasferimentiDaConfermare.length + ' quote ricevute da confermare')"></strong>
+            </div>
+          </div>
+          <div class="home-attention-list" x-show="trasferimentiDaConfermare.length > 0">
+            <template x-for="quota in trasferimentiDaConfermare" :key="'da-ricevere-' + quota.pagamento_id">
+              <button type="button" class="home-attention-row" @click="confermaQuotaConDettaglio(quota)">
+                <span class="home-attention-dot type-rata"></span>
+                <div>
+                  <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
+                  <small x-text="(quota.controparteNome ? 'Da ' + quota.controparteNome : 'Da confermare') + (quota.clienteNome ? ' · ' + quota.clienteNome : '')"></small>
+                </div>
+                <span class="event-done-action" x-text="confermandoTrasferimentoId === quota.pagamento_id ? '...' : '✓ Conferma'"></span>
+              </button>
+            </template>
+          </div>
+        </section>
+
+        <section class="home-attention home-today-v3" style="margin-top:14px" x-show="!isAdmin">
+          <div class="home-section-title">
+            <div>
+              <span>DA TRASFERIRE</span>
+              <strong x-text="quoteDaTrasferire.length === 0 ? 'Non devi trasferire nulla' : (quoteDaTrasferire.length === 1 ? '1 quota da pagare ad altri' : quoteDaTrasferire.length + ' quote da pagare ad altri')"></strong>
+            </div>
+          </div>
+          <div class="home-attention-list" x-show="quoteDaTrasferire.length > 0">
+            <template x-for="quota in quoteDaTrasferire" :key="'da-trasferire-' + quota.id">
+              <button type="button" class="home-attention-row" @click="apriScheda(quota.clienteId)">
+                <span class="home-attention-dot type-ritardo"></span>
+                <div>
+                  <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
+                  <small x-text="'A ' + (quota.aChiNome || 'definire') + (quota.clienteNome ? ' · ' + quota.clienteNome : '')"></small>
+                </div>
+                <span class="home-attention-arrow">›</span>
+              </button>
+            </template>
+          </div>
+        </section>
+
+        <section class="home-attention home-today-v3" style="margin-top:14px" x-show="isAdmin">
+          <div class="home-section-title">
+            <div>
+              <span>CHI DEVE A CHI</span>
+              <strong x-text="quoteAdmin.length === 0 ? 'Tutto regolato' : (quoteAdmin.length === 1 ? '1 quota ancora da trasferire' : quoteAdmin.length + ' quote ancora da trasferire')"></strong>
+            </div>
+          </div>
+          <div class="home-attention-list" x-show="quoteAdmin.length > 0">
+            <template x-for="quota in quoteAdmin" :key="'admin-quota-' + quota.id">
+              <button type="button" class="home-attention-row" @click="apriScheda(quota.clienteId)">
+                <span class="home-attention-dot type-ritardo"></span>
+                <div>
+                  <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
+                  <small x-text="(quota.daChiNome || '?') + ' → ' + (quota.aChiNome || '?') + (quota.clienteNome ? ' · ' + quota.clienteNome : '')"></small>
+                </div>
+                <span class="home-attention-arrow">›</span>
+              </button>
+            </template>
+          </div>
+        </section>
+
+        <section class="home-attention home-today-v3" style="margin-top:14px" x-show="quoteConfermateRecenti.length > 0">
+          <div class="home-section-title">
+            <div>
+              <span>CONFERMATE DI RECENTE</span>
+              <strong>Tap per sbaglio? Annulla qui</strong>
+            </div>
+          </div>
+          <div class="home-attention-list">
+            <template x-for="quota in quoteConfermateRecenti" :key="'confermata-' + quota.pagamento_id">
+              <div class="home-attention-row">
+                <span class="home-attention-dot type-oggi"></span>
+                <div>
+                  <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
+                  <small x-text="(quota.controparteNome ? 'Da ' + quota.controparteNome : 'Confermata') + (quota.clienteNome ? ' · ' + quota.clienteNome : '')"></small>
+                </div>
+                <span class="event-done-action" role="button" tabindex="0" @click="annullaConfermaQuota(quota.pagamento_id)" x-text="annullandoConfermaQuotaId === quota.pagamento_id ? '...' : 'Annulla'"></span>
+              </div>
+            </template>
+          </div>
+        </section>
+
       </div>
     </div>
 
@@ -6952,7 +7072,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=136', {
+      navigator.serviceWorker.register('./service-worker.js?v=137', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

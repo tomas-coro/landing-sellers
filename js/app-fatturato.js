@@ -26,8 +26,34 @@
     // il resoconto mese/anno del venditore - niente sezioni azienda.
     async apriIncassato() {
       this.view = 'incassato';
+      this.fatturatoMeseSelezionato = new Date().toISOString().slice(0, 7);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       await this.caricaFatturato();
+    },
+
+    // Elenco dettagliato (cliente, giorno, importo) degli incassi che
+    // compongono il totale del mese selezionato: il grafico mostra solo la
+    // somma, qui si vede cosa c'è dentro, senza dover indovinare perché il
+    // totale è cambiato.
+    // Cambiare anno nella vista "Il tuo incassato" deve aggiornare anche il
+    // mese selezionato, altrimenti il dettaglio resta ancorato a un mese
+    // dell'anno precedente (quasi certamente vuoto) senza spiegazione.
+    selezionaAnnoIncassato(anno) {
+      this.fatturatoAnno = anno;
+      const oggi = new Date();
+      this.fatturatoMeseSelezionato = anno === oggi.getFullYear()
+        ? oggi.toISOString().slice(0, 7)
+        : anno + '-01';
+    },
+
+    fatturatoRigheDelMeseSelezionato() {
+      const chiave = this.fatturatoMeseSelezionato;
+      if (!chiave) return [];
+
+      return this.fatturatoGuadagniRighe
+        .filter(riga => riga.data && String(riga.data).slice(0, 7) === chiave)
+        .slice()
+        .sort((a, b) => b.data.localeCompare(a.data));
     },
 
     // Nessuna cache: la vista Fatturato viene ricaricata da zero ogni volta
@@ -110,10 +136,11 @@
       // (calcolaStatisticheVenditore filtra vendite.stato === 'attiva').
       const idVendite = [...new Set((data || []).map(p => p.vendita_id).filter(Boolean))];
       const venditeNonAttiveIds = new Set();
+      const clienteNomePerVenditaId = {};
       if (idVendite.length) {
         const { data: vendite, error: erroreVendite } = await window.supabaseClient
           .from('vendite')
-          .select('id,stato')
+          .select('id,stato,clienti(nome)')
           .in('id', idVendite);
 
         if (erroreVendite) {
@@ -123,6 +150,7 @@
 
         (vendite || []).forEach(v => {
           if (v.stato !== 'attiva') venditeNonAttiveIds.add(v.id);
+          clienteNomePerVenditaId[v.id] = v.clienti?.nome || '';
         });
       }
 
@@ -132,7 +160,16 @@
           .map(p => [p.id, p])
       );
 
-      return partecipanti_a_righe(partecipazioni, pagamentoPerId, mappaExtra);
+      // Il nome cliente/giorno per riga serve all'elenco dettagliato "Il tuo
+      // incassato" (non solo il totale mensile): sempre applicato, poi si
+      // compone con un eventuale arricchimento extra del chiamante.
+      const arricchisciConCliente = (riga, p) => {
+        riga.pagamentoId = p.pagamento_id;
+        riga.clienteNome = clienteNomePerVenditaId[pagamentoPerId[p.pagamento_id]?.vendita_id] || '';
+        if (mappaExtra) mappaExtra(riga, p);
+      };
+
+      return partecipanti_a_righe(partecipazioni, pagamentoPerId, arricchisciConCliente);
     },
 
     async caricaFatturatoAzienda() {
