@@ -97,7 +97,7 @@ test('solo gli utenti autenticati possono eseguire la RPC economica', () => {
 test('il frontend usa la nuova RPC solo per gli incassi', () => {
   assert.match(
     app,
-    /rpcNome = 'registra_pagamento_economico'/
+    /rpcNome = 'registra_pagamento_con_trasferimenti'/
   );
 
   assert.match(

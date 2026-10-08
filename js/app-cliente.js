@@ -1288,7 +1288,33 @@
           return;
         }
 
-        this.pagamentiCliente = data || [];
+        const pagamenti = data || [];
+        const incassiIds = pagamenti
+          .filter(pagamento => pagamento.stato === 'incassato')
+          .map(pagamento => pagamento.id);
+
+        let quotePerPagamento = {};
+        if (incassiIds.length) {
+          const quoteResult = await window.supabaseClient
+            .from('pagamento_partecipanti')
+            .select('pagamento_id,profilo_id,ruolo,quota_effettiva,ricevuta_il,profilo:profili(nome,username)')
+            .in('pagamento_id', incassiIds);
+
+          if (quoteResult.error) {
+            this.errorePagamentiCliente = quoteResult.error.message;
+            return;
+          }
+
+          quotePerPagamento = (quoteResult.data || []).reduce((mappa, quota) => {
+            (mappa[quota.pagamento_id] ||= []).push(quota);
+            return mappa;
+          }, {});
+        }
+
+        this.pagamentiCliente = pagamenti.map(pagamento => ({
+          ...pagamento,
+          quote_trasferimento: quotePerPagamento[pagamento.id] || []
+        }));
       } finally {
         this.caricandoPagamentiCliente = false;
       }

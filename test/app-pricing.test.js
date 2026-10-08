@@ -68,7 +68,7 @@ test('la vendita salva anche lo snapshot della configurazione commerciale', () =
   const js =
     fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8') +
     fs.readFileSync(path.join(__dirname, '..', 'js', 'app-economia.js'), 'utf8');
-  assert.match(js, /'registra_vendita_completa'/);
+  assert.match(js, /'registra_vendita_con_trasferimenti'/);
   assert.match(js, /p_configurazione:\s*this\.venditaEconomicaForm\.configurazioneCommerciale/);
 });
 

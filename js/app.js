@@ -493,6 +493,7 @@ function formVenditaEconomicaVuoto() {
     dataScadenza: '',
     metodoPagamento: '',
     notePagamento: '',
+    incassatoDa: null,
 
     // Costi propri della singola rata (es. commissioni di incasso):
     // concetto distinto dai costi della vendita, non vengono applicati
@@ -778,6 +779,8 @@ function appState() {
     // pagamenti cliente
     venditaClienteAttiva: null,
     pagamentiCliente: [],
+    trasferimentiDaConfermare: [],
+    confermandoTrasferimentoId: null,
     caricandoPagamentiCliente: false,
     errorePagamentiCliente: '',
     scadenzePagamentoPerCliente: {},
@@ -1225,6 +1228,7 @@ function appState() {
         await this.caricaStatisticheVenditore();
         this.view = 'lista';
       }
+      await this.caricaTrasferimentiDaConfermare();
 
       // se il browser ha gia' una subscription da un login precedente sullo
       // stesso device, aggiornaStatoPush() la ritrova subito (getSubscription)
@@ -1297,6 +1301,7 @@ function appState() {
         await this.caricaClienti();
         await this.caricaStatisticheVenditore();
       }
+      await this.caricaTrasferimentiDaConfermare();
 
       this.view = this.isAdmin ? 'admin' : 'lista';
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1447,7 +1452,7 @@ function appState() {
         const { data, error } = await window.supabaseClient
           .from('vendite')
           .select(
-            'id,cliente_id,servizio,importo_vendita,data_vendita,creato_il,applica_bonus_venditore'
+            'id,cliente_id,venditore_id,servizio,importo_vendita,data_vendita,creato_il,applica_bonus_venditore'
           )
           .eq('cliente_id', cliente.id)
           .eq('stato', 'attiva')
@@ -1557,6 +1562,8 @@ function appState() {
        * non deve mai passare da una vendita all'altra.
        */
       this.venditaEconomicaForm.statoIncasso = 'incassato';
+      this.venditaEconomicaForm.incassatoDa =
+        pagamentoPrevisto?.incassato_da || vendita.venditore_id || null;
       this.venditaEconomicaForm.costiRata = [];
       this.venditaEconomicaForm.costoRataDescrizione = '';
       this.venditaEconomicaForm.costoRataImporto = null;
@@ -1642,7 +1649,8 @@ function appState() {
             partecipante.modalita_fatturazione === 'totale' ||
             !!partecipante.fa_fattura,
 
-          haVenduto: false,
+          haVenduto:
+            partecipante.profilo_id === vendita.venditore_id,
 
           quotaOverride: !!partecipante.quota_override,
 
@@ -4681,6 +4689,7 @@ if (typeof module !== 'undefined') {
     totaleContrattoDaForm,
     costiGestioneCliente,
     percentualeTasseEconomia,
+    formVenditaEconomicaVuoto,
     appState,
     calcolaStatisticheVenditore,
     incassatoPerVenditaAnnoCorrente,

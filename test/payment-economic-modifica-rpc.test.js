@@ -115,7 +115,7 @@ test('solo gli utenti autenticati possono eseguire la RPC di modifica', () => {
 test('il frontend instrada la modifica di un pagamento incassato sulla nuova RPC', () => {
   assert.match(
     app,
-    /rpcNome = 'modifica_pagamento_economico'/
+    /rpcNome = 'modifica_pagamento_con_trasferimenti'/
   );
 
   assert.match(

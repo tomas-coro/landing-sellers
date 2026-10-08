@@ -160,6 +160,7 @@
 
       if (venditoreDefault) {
         venditoreDefault.haVenduto = true;
+        this.venditaEconomicaForm.incassatoDa = venditoreDefault.id;
       }
 
       this.venditaEconomicaForm.partecipanti = partecipanti;
@@ -255,6 +256,9 @@
       this.venditaEconomicaForm.partecipanti.forEach(p => {
         p.haVenduto = p.id === partecipante.id;
       });
+      if (this.modalitaEconomia === 'vendita') {
+        this.venditaEconomicaForm.incassatoDa = partecipante.id;
+      }
     },
 
     modalitaFatturazioneAdminEconomia() {
@@ -692,7 +696,7 @@
       try {
         const { data, error } = await window.supabaseClient
           .from('vendite')
-          .select('id,cliente_id,servizio,importo_vendita,data_vendita,creato_il,applica_bonus_venditore')
+          .select('id,cliente_id,venditore_id,servizio,importo_vendita,data_vendita,creato_il,applica_bonus_venditore')
           .eq('id', pagamento.vendita_id)
           .maybeSingle();
 
@@ -724,6 +728,8 @@
         this.venditaEconomicaForm.notePagamento = pagamento.note || '';
         this.venditaEconomicaForm.dataPagamento = pagamento.data_pagamento || this.dataISOOggi();
         this.venditaEconomicaForm.dataScadenza = pagamento.data_scadenza || '';
+        this.venditaEconomicaForm.incassatoDa =
+          pagamento.incassato_da || data.venditore_id || null;
 
         this.aggiornaSnapshotEconomia();
       } finally {
@@ -796,6 +802,69 @@
         }
       } finally {
         this.eliminandoPagamentoId = null;
+      }
+    },
+
+    nomePartecipanteTrasferimento(quota) {
+      if (quota?.ruolo === 'referente') return 'Alessandro';
+      if (quota?.ruolo === 'produzione') return 'Tomas';
+      return quota?.profilo?.username || quota?.profilo?.nome || 'Venditore';
+    },
+
+    trasferimentoPagamentoCompleto(pagamento) {
+      return (pagamento?.quote_trasferimento || [])
+        .filter(quota =>
+          quota.profilo_id !== pagamento.incassato_da &&
+          Number(quota.quota_effettiva) > 0
+        )
+        .every(quota => !!quota.ricevuta_il);
+    },
+
+    async caricaTrasferimentiDaConfermare() {
+      const profiloId = this.sessione?.user?.id;
+      this.trasferimentiDaConfermare = [];
+      if (!profiloId) return;
+
+      const { data, error } = await window.supabaseClient
+        .from('pagamento_partecipanti')
+        .select('pagamento_id,quota_effettiva,ricevuta_il,pagamenti!inner(id,incassato_da,stato,data_pagamento)')
+        .eq('profilo_id', profiloId)
+        .is('ricevuta_il', null)
+        .gt('quota_effettiva', 0)
+        .eq('pagamenti.stato', 'incassato');
+
+      if (error) {
+        console.warn('Trasferimenti non disponibili:', error.message);
+        return;
+      }
+
+      this.trasferimentiDaConfermare = (data || []).filter(
+        quota => quota.pagamenti?.incassato_da !== profiloId
+      );
+    },
+
+    async confermaRicezioneQuota(pagamentoId) {
+      if (!pagamentoId || this.confermandoTrasferimentoId) return;
+      this.confermandoTrasferimentoId = pagamentoId;
+
+      try {
+        const { error } = await window.supabaseClient.rpc(
+          'conferma_quota_pagamento',
+          { p_pagamento_id: pagamentoId }
+        );
+
+        if (error) {
+          this.mostraToast('error', 'Conferma non salvata', error.message);
+          return;
+        }
+
+        await this.caricaTrasferimentiDaConfermare();
+        if (this.clienteSelezionatoId) {
+          await this.caricaPagamentiCliente(this.clienteSelezionatoId);
+        }
+        this.mostraToast('success', 'Quota ricevuta confermata.');
+      } finally {
+        this.confermandoTrasferimentoId = null;
       }
     },
 
@@ -960,6 +1029,11 @@
         if (!this.venditaEconomicaForm.metodoPagamento) {
           return 'Seleziona il metodo di pagamento.';
         }
+        if (!this.venditaEconomicaForm.partecipanti.some(
+          p => p.id === this.venditaEconomicaForm.incassatoDa
+        )) {
+          return 'Indica chi ha incassato.';
+        }
       }
 
       return '';
@@ -1119,6 +1193,14 @@
       ) {
         return 'Seleziona il metodo di pagamento.';
       }
+      if (
+        this.venditaEconomicaForm.statoIncasso !== 'previsto' &&
+        !this.venditaEconomicaForm.partecipanti.some(
+          p => p.id === this.venditaEconomicaForm.incassatoDa
+        )
+      ) {
+        return 'Indica chi ha incassato.';
+      }
 
     if (this.venditaEconomicaForm.statoIncasso !== 'previsto') {
   const importoRata = importo;
@@ -1240,7 +1322,7 @@
           // per un pagamento ancora 'previsto' salterebbe lo snapshot e
           // lascerebbe lo stato invariato.
           if (modificaId && !this.pagamentoPrevistoId) {
-            rpcNome = 'modifica_pagamento_economico';
+            rpcNome = 'modifica_pagamento_con_trasferimenti';
 
             rpcPayload = {
               p_pagamento_id: modificaId,
@@ -1266,10 +1348,13 @@
                 payloadEconomico.calcolo,
 
               p_partecipanti:
-                payloadEconomico.partecipanti
+                payloadEconomico.partecipanti,
+
+              p_incassato_da:
+                this.venditaEconomicaForm.incassatoDa
             };
           } else {
-            rpcNome = 'registra_pagamento_economico';
+            rpcNome = 'registra_pagamento_con_trasferimenti';
 
             rpcPayload = {
               p_vendita_id:
@@ -1299,7 +1384,10 @@
                 payloadEconomico.calcolo,
 
               p_partecipanti:
-                payloadEconomico.partecipanti
+                payloadEconomico.partecipanti,
+
+              p_incassato_da:
+                this.venditaEconomicaForm.incassatoDa
             };
           }
         }
@@ -1338,6 +1426,7 @@
           await this.caricaStatisticheVenditore();
         }
 
+        await this.caricaTrasferimentiDaConfermare();
         this.mostraToast('success', this.successoEconomia);
         this.scorriEconomiaA('.payment-history-panel');
       } finally {
@@ -1479,6 +1568,7 @@
           note:
             (this.venditaEconomicaForm.notePagamento || '').trim() ||
             null,
+          incassato_da: this.venditaEconomicaForm.incassatoDa,
           calcolo: payloadEconomico.calcolo,
           partecipanti: payloadEconomico.partecipanti
         };
@@ -1513,7 +1603,7 @@
 
       try {
         const { data, error } = await window.supabaseClient.rpc(
-          'registra_vendita_completa',
+          'registra_vendita_con_trasferimenti',
           {
             p_vendita: payloadVendita,
             p_configurazione:

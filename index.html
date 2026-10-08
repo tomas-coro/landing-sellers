@@ -512,6 +512,27 @@
             </div>
           </section>
 
+          <section class="home-attention home-today-v3 transfer-reminder" x-show="trasferimentiDaConfermare.length > 0">
+            <div class="home-section-title">
+              <div>
+                <span>QUOTE DA CONFERMARE</span>
+                <strong x-text="trasferimentiDaConfermare.length === 1 ? '1 quota ricevuta da confermare' : trasferimentiDaConfermare.length + ' quote ricevute da confermare'"></strong>
+              </div>
+            </div>
+            <div class="home-attention-list">
+              <template x-for="quota in trasferimentiDaConfermare" :key="'transfer-' + quota.pagamento_id">
+                <button type="button" class="home-attention-row" @click="confermaRicezioneQuota(quota.pagamento_id)">
+                  <span class="home-attention-dot type-rata"></span>
+                  <div>
+                    <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
+                    <small>Conferma di aver ricevuto la tua quota</small>
+                  </div>
+                  <span class="event-done-action" x-text="confermandoTrasferimentoId === quota.pagamento_id ? '...' : '✓ Conferma'"></span>
+                </button>
+              </template>
+            </div>
+          </section>
+
           <section class="home-attention home-today-v3">
             <div class="home-section-title">
               <div>
@@ -1646,6 +1667,27 @@
               <strong x-text="totalePubblicatiMeseAdmin()"></strong>
               <span>Pubblicati nel mese</span>
             </div>
+          </div>
+        </section>
+
+        <section class="home-attention home-today-v3 transfer-reminder" x-show="trasferimentiDaConfermare.length > 0">
+          <div class="home-section-title">
+            <div>
+              <span>QUOTE DA CONFERMARE</span>
+              <strong x-text="trasferimentiDaConfermare.length === 1 ? '1 quota ricevuta da confermare' : trasferimentiDaConfermare.length + ' quote ricevute da confermare'"></strong>
+            </div>
+          </div>
+          <div class="home-attention-list">
+            <template x-for="quota in trasferimentiDaConfermare" :key="'admin-transfer-' + quota.pagamento_id">
+              <button type="button" class="home-attention-row" @click="confermaRicezioneQuota(quota.pagamento_id)">
+                <span class="home-attention-dot type-rata"></span>
+                <div>
+                  <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
+                  <small>Conferma di aver ricevuto la tua quota</small>
+                </div>
+                <span class="event-done-action" x-text="confermandoTrasferimentoId === quota.pagamento_id ? '...' : '✓ Conferma'"></span>
+              </button>
+            </template>
           </div>
         </section>
 
@@ -3739,6 +3781,16 @@
                 ">
             </label>
 
+            <label class="payment-field">
+              <span>HA INCASSATO</span>
+              <select required x-model="venditaEconomicaForm.incassatoDa">
+                <option value="" disabled>Seleziona persona</option>
+                <template x-for="partecipante in venditaEconomicaForm.partecipanti" :key="'incassa-' + partecipante.id">
+                  <option :value="partecipante.id" x-text="partecipante.nome"></option>
+                </template>
+              </select>
+            </label>
+
           </div>
 
           <details
@@ -5286,6 +5338,23 @@
                             : 'Data non registrata'
                       ">
                     </small>
+
+                    <div class="payment-transfer-list" x-show="p.stato === 'incassato' && p.quote_trasferimento?.length">
+                      <template x-for="quota in p.quote_trasferimento" :key="p.id + '-' + quota.profilo_id">
+                        <div class="payment-transfer-row">
+                          <span x-text="nomePartecipanteTrasferimento(quota) + ' · ' + formattaEuro(quota.quota_effettiva)"></span>
+                          <strong x-text="quota.profilo_id === p.incassato_da ? 'Ha incassato' : (quota.ricevuta_il ? 'Ricevuta' : 'Da trasferire')"></strong>
+                          <button
+                            type="button"
+                            x-show="quota.profilo_id === sessione?.user?.id && quota.profilo_id !== p.incassato_da && !quota.ricevuta_il"
+                            :disabled="confermandoTrasferimentoId === p.id"
+                            @click="confermaRicezioneQuota(p.id)">
+                            Conferma ricevuta
+                          </button>
+                        </div>
+                      </template>
+                      <small x-show="trasferimentoPagamentoCompleto(p)">✓ Quote tutte ricevute</small>
+                    </div>
                   </div>
 
                   <div class="client-payment-actions">
@@ -6883,7 +6952,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=134', {
+      navigator.serviceWorker.register('./service-worker.js?v=135', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
