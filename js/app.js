@@ -1708,6 +1708,7 @@ function appState() {
         pagamentoPrevisto?.note || '';
 
       this.aggiornaSnapshotEconomia();
+      this.scorriEconomiaA('.payment-entry-panel');
     },
 
     apriIncasso() {

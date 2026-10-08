@@ -19,6 +19,22 @@
         (Number(vendita?.importo_vendita) || 0);
     },
 
+    scorriEconomiaA(selettore, mostraValidita = false) {
+      const scorri = () => {
+        const elemento = globalThis.document?.querySelector(selettore);
+        elemento?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        if (mostraValidita) {
+          elemento?.focus({ preventScroll: true });
+          elemento?.reportValidity?.();
+        }
+      };
+
+      return typeof this.$nextTick === 'function'
+        ? this.$nextTick(scorri)
+        : scorri();
+    },
+
     async apriEconomia(modalita = 'vendita') {
       if (!(await this.confermaUscitaFormCliente())) return;
       this.venditaEconomicaForm = formVenditaEconomicaVuoto();
@@ -1142,7 +1158,17 @@
       this.erroreEconomia = this.validaIncassoEconomia();
       this.successoEconomia = '';
 
-      if (this.erroreEconomia) return;
+      if (this.erroreEconomia) {
+        const metodoMancante =
+          this.erroreEconomia === 'Seleziona il metodo di pagamento.';
+
+        this.mostraToast('error', 'Completa i dati', this.erroreEconomia);
+        this.scorriEconomiaA(
+          metodoMancante ? '#metodo-incasso' : '.payment-entry-panel',
+          metodoMancante
+        );
+        return;
+      }
 
       this.salvandoVenditaEconomica = true;
 
@@ -1301,6 +1327,9 @@
           await this.caricaClienti();
           await this.caricaStatisticheVenditore();
         }
+
+        this.mostraToast('success', this.successoEconomia);
+        this.scorriEconomiaA('.payment-history-panel');
       } finally {
         this.salvandoVenditaEconomica = false;
       }
