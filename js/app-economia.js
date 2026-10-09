@@ -1099,7 +1099,7 @@
       if (!pagamentoIds.length) return;
 
       const dettaglio = [
-        `Confermi di aver ricevuto ${this.formattaEuro(quota.quota_effettiva)}`,
+        `Confermi di aver ricevuto ${formattaEuro(quota.quota_effettiva)}`,
         quota.controparteNome ? `da ${quota.controparteNome}` : '',
         quota.clienteNome ? `per ${quota.clienteNome}` : '',
         pagamentoIds.length > 1 ? `(${pagamentoIds.length} incassi)` : ''
@@ -1143,7 +1143,7 @@
       if (!selezionate.length) return;
 
       const confermato = await this.chiediConferma(
-        `Confermi di aver ricevuto ${this.formattaEuro(this.totaleQuoteSelezionate())}` +
+        `Confermi di aver ricevuto ${formattaEuro(this.totaleQuoteSelezionate())}` +
           (selezionate.length > 1 ? ` (${selezionate.length} incassi)` : '') + '?',
         'Conferma ricezione'
       );
