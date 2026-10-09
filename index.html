@@ -594,6 +594,20 @@
               <small>Nessun contatto arretrato, rinnovo o rata nei prossimi 7 giorni.</small>
             </div>
           </section>
+
+          <!-- QUOTE CHE SPETTANO -->
+          <section class="home-attention home-today-v3" style="margin-top:14px" x-show="trasferimentiDaConfermare.length > 0">
+            <div class="home-section-title">
+              <div>
+                <span>QUOTE</span>
+                <strong x-text="trasferimentiDaConfermare.length === 1 ? '1 quota ti spetta' : trasferimentiDaConfermare.length + ' quote ti spettano'"></strong>
+              </div>
+
+              <button type="button" @click="apriQuote()">
+                Vedi quote <span>›</span>
+              </button>
+            </div>
+          </section>
         </div>
 
         <button type="button" class="alert-ritardo" :class="{ on: filtroSoloRitardo }" x-show="(isAdmin || view === 'clienti') && clientiInRitardo().length > 0" @click="toggleFiltroSoloRitardo()">
@@ -1761,6 +1775,20 @@
 
             <strong>Niente di urgente</strong>
             <small>Nessun contatto arretrato, rinnovo o rata nei prossimi 7 giorni, su tutta la squadra.</small>
+          </div>
+        </section>
+
+        <!-- QUOTE CHE SPETTANO -->
+        <section class="home-attention home-today-v3" style="margin-top:14px" x-show="trasferimentiDaConfermare.length > 0">
+          <div class="home-section-title">
+            <div>
+              <span>QUOTE</span>
+              <strong x-text="trasferimentiDaConfermare.length === 1 ? '1 quota ti spetta' : trasferimentiDaConfermare.length + ' quote ti spettano'"></strong>
+            </div>
+
+            <button type="button" @click="apriQuote()">
+              Vedi quote <span>›</span>
+            </button>
           </div>
         </section>
 
@@ -5312,7 +5340,7 @@
               </span>
 
               <template x-for="p in pagamentiCliente" :key="p.id">
-                <div class="client-payment-row">
+                <div class="client-payment-row" :id="'pagamento-' + p.id">
 
                   <div>
                     <strong x-text="formattaEuro(p.importo)"></strong>
@@ -6943,7 +6971,7 @@
           </div>
           <div class="home-attention-list" x-show="quoteDaTrasferire.length > 0">
             <template x-for="quota in quoteDaTrasferire" :key="'da-trasferire-' + quota.id">
-              <button type="button" class="home-attention-row" @click="apriScheda(quota.clienteId)">
+              <button type="button" class="home-attention-row" @click="apriScheda(quota.clienteId, { pagamentoId: quota.pagamento_id })">
                 <span class="home-attention-dot type-ritardo"></span>
                 <div>
                   <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
@@ -6964,7 +6992,7 @@
           </div>
           <div class="home-attention-list" x-show="quoteAdmin.length > 0">
             <template x-for="quota in quoteAdmin" :key="'admin-quota-' + quota.id">
-              <button type="button" class="home-attention-row" @click="apriScheda(quota.clienteId)">
+              <button type="button" class="home-attention-row" @click="apriScheda(quota.clienteId, { pagamentoId: quota.pagamento_id })">
                 <span class="home-attention-dot type-ritardo"></span>
                 <div>
                   <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>

@@ -784,6 +784,7 @@ function appState() {
     quoteDaTrasferire: [],
     quoteConfermateRecenti: [],
     quoteAdmin: [],
+    mappaNomiVenditori: {},
     confermandoTrasferimentoId: null,
     annullandoConfermaQuotaId: null,
     caricandoPagamentiCliente: false,

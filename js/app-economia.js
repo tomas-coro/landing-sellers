@@ -816,7 +816,35 @@
     nomePartecipanteTrasferimento(quota) {
       if (quota?.ruolo === 'referente') return 'Alessandro';
       if (quota?.ruolo === 'produzione') return 'Tomas';
-      return quota?.profilo?.username || quota?.profilo?.nome || 'Venditore';
+      return quota?.profilo?.username || quota?.profilo?.nome ||
+        this.nomeVenditorePerId(quota?.profilo_id) || 'Venditore';
+    },
+
+    // Nomi di tutti i venditori, presi dalla RPC get_partecipanti_economici
+    // (security definer: bypassa la RLS su profili, che altrimenti lascia
+    // leggere solo il proprio profilo). Serve per mostrare "a chi"/"da chi"
+    // nelle quote di un collega, dove il join diretto su profili torna vuoto.
+    async caricaMappaNomiVenditori() {
+      if (Object.keys(this.mappaNomiVenditori).length) return;
+
+      const { data, error } = await window.supabaseClient
+        .rpc('get_partecipanti_economici');
+      if (error || !data) return;
+
+      this.mappaNomiVenditori = data.reduce((mappa, profilo) => {
+        if (!profilo?.id) return mappa;
+        mappa[profilo.id] =
+          profilo.ruolo_economico === 'referente'
+            ? 'Alessandro'
+            : profilo.ruolo_economico === 'produzione'
+              ? 'Tomas'
+              : (profilo.username || profilo.nome || 'Venditore');
+        return mappa;
+      }, {});
+    },
+
+    nomeVenditorePerId(profiloId) {
+      return this.mappaNomiVenditori[profiloId] || '';
     },
 
     trasferimentoPagamentoCompleto(pagamento) {
@@ -845,8 +873,7 @@
             incassato_da,
             stato,
             data_pagamento,
-            vendite!inner(cliente_id, clienti(nome)),
-            incassato_da_profilo:profili!pagamenti_incassato_da_fkey(nome)
+            vendite!inner(cliente_id, clienti(nome))
           )
         `)
         .eq('profilo_id', profiloId)
@@ -859,13 +886,15 @@
         return;
       }
 
+      await this.caricaMappaNomiVenditori();
+
       this.trasferimentiDaConfermare = (data || [])
         .filter(quota => quota.pagamenti?.incassato_da !== profiloId)
         .map(quota => ({
           ...quota,
           clienteId: quota.pagamenti?.vendite?.cliente_id || null,
           clienteNome: quota.pagamenti?.vendite?.clienti?.nome || '',
-          controparteNome: quota.pagamenti?.incassato_da_profilo?.nome || ''
+          controparteNome: this.nomeVenditorePerId(quota.pagamenti?.incassato_da)
         }));
     },
 
@@ -884,7 +913,6 @@
           profilo_id,
           quota_effettiva,
           ricevuta_il,
-          profilo:profili(nome),
           pagamenti!inner(
             id,
             incassato_da,
@@ -904,11 +932,13 @@
         return;
       }
 
+      await this.caricaMappaNomiVenditori();
+
       this.quoteDaTrasferire = (data || []).map(quota => ({
         ...quota,
         clienteId: quota.pagamenti?.vendite?.cliente_id || null,
         clienteNome: quota.pagamenti?.vendite?.clienti?.nome || '',
-        aChiNome: quota.profilo?.nome || ''
+        aChiNome: this.nomeVenditorePerId(quota.profilo_id)
       }));
     },
 
@@ -930,8 +960,7 @@
             id,
             incassato_da,
             stato,
-            vendite!inner(cliente_id, clienti(nome)),
-            incassato_da_profilo:profili!pagamenti_incassato_da_fkey(nome)
+            vendite!inner(cliente_id, clienti(nome))
           )
         `)
         .eq('profilo_id', profiloId)
@@ -946,12 +975,14 @@
         return;
       }
 
+      await this.caricaMappaNomiVenditori();
+
       this.quoteConfermateRecenti = (data || [])
         .filter(quota => quota.pagamenti?.incassato_da !== profiloId)
         .map(quota => ({
           ...quota,
           clienteNome: quota.pagamenti?.vendite?.clienti?.nome || '',
-          controparteNome: quota.pagamenti?.incassato_da_profilo?.nome || ''
+          controparteNome: this.nomeVenditorePerId(quota.pagamenti?.incassato_da)
         }));
     },
 

@@ -1574,7 +1574,12 @@
         );
     },
 
-    async apriScheda(clienteId) {
+    // opzioni.pagamentoId: arrivando da una quota (sezione Quote) apre
+    // direttamente "Dettagli economici" e scrolla al pagamento cliccato,
+    // invece di lasciare l'utente in cima alla scheda senza capire perché
+    // ci si trova lì - vedi index.html righe della vista 'quote'.
+    async apriScheda(clienteId, opzioni = {}) {
+      const { pagamentoId = null } = opzioni;
       const cambioVista = this.view !== 'scheda';
       if (cambioVista) this.viewPrecedenteScheda = this.view;
       this.clienteSelezionatoId = clienteId;
@@ -1612,7 +1617,7 @@
         contatti: false,
         attivita: false,
         note: false,
-        economia: false
+        economia: !!pagamentoId
       };
       const { data, error } = await window.supabaseClient
         .from('note').select('*').eq('cliente_id', clienteId)
@@ -1623,6 +1628,13 @@
         this.caricaPagamentiCliente(clienteId),
         this.caricaAttivitaCliente(clienteId)
       ]);
+
+      if (pagamentoId) {
+        this.$nextTick(() => {
+          document.getElementById('pagamento-' + pagamentoId)
+            ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+      }
     },
 
     async tornaDaScheda() {
