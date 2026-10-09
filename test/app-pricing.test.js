@@ -95,10 +95,10 @@ test('la durata nulla indica un prezzo o sconto permanente', () => {
   assert.strictEqual(etichettaDurataScontoForm({ sconto_durata_anni: 2 }), 'Per i primi 2 anni');
 });
 
-test('il prezzo finale concordato include setup, dominio e altri extra', () => {
+test('setup, dominio e altri extra si aggiungono sempre al canone, anche a prezzo fisso', () => {
   assert.strictEqual(totaleContrattoDaForm(300, 180, {
     sconto_tipo: 'prezzo_fisso'
-  }), 300);
+  }), 480);
   assert.strictEqual(totaleContrattoDaForm(300, 180, {
     sconto_tipo: 'percentuale'
   }), 480);

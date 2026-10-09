@@ -7,7 +7,9 @@ window.CATALOGO_PREZZI_LE={
   upgrade:[
     {id:'modulo_dinamico',nome:'Modulo di contatto dinamico',prezzoMensile:3},
     {id:'gallery_dinamica',nome:'Gallery dinamica',prezzoMensile:3},
-    {id:'chatbot_ai',nome:'Chatbot AI personalizzato',prezzoMensile:18}
+    {id:'chatbot_ai',nome:'Chatbot AI personalizzato',prezzoMensile:18},
+    {id:'menu_digitale',nome:'Menù digitale',prezzoMensile:5},
+    {id:'assistenza_extra',nome:'Assistenza extra (modifiche settimanali)',prezzoMensile:10}
   ],
   paginaExtra:{id:'pagina_extra',nome:'Pagina extra',prezzoMensile:6,max:15},
   multilingua:{id:'multilingua',nome:'Multilingua',prezzoMensilePerLingua:2,max:5},

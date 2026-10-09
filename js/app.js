@@ -78,9 +78,12 @@ function prezzoRicorrenteDaForm(prezzoCatalogo, form) {
 }
 
 function totaleContrattoDaForm(canone, extra, form) {
-  return Number(canone) + (
-    form.sconto_tipo === 'prezzo_fisso' ? 0 : Number(extra)
-  );
+  /*
+   * Setup, dominio ed email sono costi reali distinti dal canone:
+   * si aggiungono sempre, anche quando il canone e' a prezzo fisso
+   * (il prezzo fisso riguarda solo il canone concordato, non questi extra).
+   */
+  return Number(canone) + Number(extra);
 }
 
 function costiGestioneCliente(cliente, rinnovo = false) {
