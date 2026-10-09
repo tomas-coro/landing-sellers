@@ -1,3 +1,0 @@
-- [Stato progetto landing-sellers](project_landing_sellers.md) - repo reale, stack, feature consegnate oltre l'MVP originale
-- [Gotcha worktree + service worker](gotcha_worktree_service_worker.md) - worktree parte da origin non da main locale; SW cache-first serve asset vecchi in QA
-- [Ruoli economici Alessandro/Tomas](ruoli_economici_alessandro_tomas.md) - Alessandro (referente) deve vedere guadagni su TUTTI i clienti, non solo i suoi venduti
