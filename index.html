@@ -6951,13 +6951,14 @@
           </div>
           <div class="home-attention-list" x-show="trasferimentiDaConfermare.length > 0">
             <template x-for="quota in trasferimentiDaConfermareRaggruppati()" :key="'da-ricevere-' + quota.pagamentoIds.join('-')">
-              <button type="button" class="home-attention-row" @click="confermaQuotaConDettaglio(quota)">
+              <button type="button" class="home-attention-row" @click="quota.pagamentoIds.length > 1 ? apriDettaglioQuoteGruppo(quota) : confermaQuotaConDettaglio(quota)">
                 <span class="home-attention-dot type-rata"></span>
                 <div>
                   <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
-                  <small x-text="(quota.controparteNome ? 'Da ' + quota.controparteNome : 'Da confermare') + (quota.clienteNome ? ' · ' + quota.clienteNome : '')"></small>
+                  <small x-text="(quota.controparteNome ? 'Da ' + quota.controparteNome : 'Da confermare') + (quota.clienteNome ? ' · ' + quota.clienteNome : '') + (quota.pagamentoIds.length > 1 ? ' · ' + quota.pagamentoIds.length + ' incassi' : '')"></small>
                 </div>
-                <span class="event-done-action" x-text="quota.pagamentoIds.includes(confermandoTrasferimentoId) ? '...' : '✓ Conferma'"></span>
+                <span class="event-done-action" x-show="quota.pagamentoIds.length === 1" x-text="quota.pagamentoIds.includes(confermandoTrasferimentoId) ? '...' : '✓ Conferma'"></span>
+                <span class="home-attention-arrow" x-show="quota.pagamentoIds.length > 1">›</span>
               </button>
             </template>
           </div>
@@ -7037,6 +7038,36 @@
       </div>
     </div>
 
+    <!-- POPUP DETTAGLIO QUOTE RAGGRUPPATE: le quote dello stesso cliente/controparte
+         sono mostrate insieme in home ma qui si confermano una per una, o più insieme
+         selezionandole, invece che tutte in blocco con un solo click -->
+    <div x-show="dettaglioQuoteGruppo.aperto" x-cloak class="modal-overlay" @click.self="chiudiDettaglioQuoteGruppo()">
+      <div class="modal-card">
+        <h2 style="margin-top:0" x-text="'Da ' + (dettaglioQuoteGruppo.controparteNome || 'confermare')"></h2>
+        <div class="home-attention-list">
+          <template x-for="riga in dettaglioQuoteGruppo.righe" :key="'dettaglio-' + riga.pagamento_id">
+            <label class="home-attention-row" style="cursor:pointer;display:flex;align-items:center;gap:12px">
+              <input type="checkbox" x-model="riga.selezionata" style="width:20px;height:20px;flex:none">
+              <div>
+                <strong x-text="formattaEuro(riga.quota_effettiva)"></strong>
+                <small x-text="riga.clienteNome || ''"></small>
+                <small
+                  x-show="riga.importoIncasso || riga.dataPagamento"
+                  x-text="'Incasso' + (riga.importoIncasso ? ' ' + formattaEuro(riga.importoIncasso) : '') + (riga.dataPagamento ? ' · ' + formattaData(riga.dataPagamento) : '') + (riga.noteIncasso ? ' · ' + riga.noteIncasso : '')"></small>
+              </div>
+            </label>
+          </template>
+        </div>
+        <div class="btn-row" style="margin-top:20px">
+          <button type="button" class="btn btn-ghost" @click="chiudiDettaglioQuoteGruppo()">Chiudi</button>
+          <button type="button" class="btn btn-primary"
+            :disabled="!dettaglioQuoteGruppo.righe.some(r => r.selezionata)"
+            @click="confermaQuoteSelezionate()"
+            x-text="dettaglioQuoteGruppo.righe.some(r => r.selezionata) ? 'Conferma ' + formattaEuro(totaleQuoteSelezionate()) : 'Conferma selezionate'"></button>
+        </div>
+      </div>
+    </div>
+
     <!-- POPUP CONFERMA ELIMINAZIONE -->
     <div x-show="confermaEliminazione" x-cloak class="modal-overlay" @click.self="confermaEliminazione = false">
       <div class="modal-card">
@@ -7109,7 +7140,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=138', {
+      navigator.serviceWorker.register('./service-worker.js?v=139', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

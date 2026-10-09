@@ -909,7 +909,9 @@
             id,
             incassato_da,
             stato,
+            importo,
             data_pagamento,
+            note,
             vendite!inner(cliente_id, clienti(nome))
           )
         `)
@@ -931,7 +933,10 @@
           ...quota,
           clienteId: quota.pagamenti?.vendite?.cliente_id || null,
           clienteNome: quota.pagamenti?.vendite?.clienti?.nome || '',
-          controparteNome: this.nomeVenditorePerId(quota.pagamenti?.incassato_da)
+          controparteNome: this.nomeVenditorePerId(quota.pagamenti?.incassato_da),
+          dataPagamento: quota.pagamenti?.data_pagamento || null,
+          importoIncasso: quota.pagamenti?.importo ?? null,
+          noteIncasso: quota.pagamenti?.note || ''
         }));
     },
 
@@ -1100,6 +1105,55 @@
 
       for (const pagamentoId of pagamentoIds) {
         await this.confermaRicezioneQuota(pagamentoId);
+      }
+    },
+
+    // Apre il dettaglio di un gruppo "Paoloni 2 in 1, €60": mostra ogni
+    // incasso singolo con la sua checkbox, così si può confermarne uno solo
+    // o più insieme invece di confermarli tutti in blocco con un click.
+    apriDettaglioQuoteGruppo(quotaGruppo) {
+      const righe = this.trasferimentiDaConfermare
+        .filter(quota => quotaGruppo.pagamentoIds.includes(quota.pagamento_id))
+        .map(quota => ({ ...quota, selezionata: false }));
+
+      this.dettaglioQuoteGruppo = {
+        aperto: true,
+        controparteNome: quotaGruppo.controparteNome || '',
+        righe
+      };
+    },
+
+    chiudiDettaglioQuoteGruppo() {
+      this.dettaglioQuoteGruppo = { aperto: false, controparteNome: '', righe: [] };
+    },
+
+    totaleQuoteSelezionate() {
+      return this.dettaglioQuoteGruppo.righe
+        .filter(riga => riga.selezionata)
+        .reduce((somma, riga) => somma + Number(riga.quota_effettiva || 0), 0);
+    },
+
+    async confermaQuoteSelezionate() {
+      const selezionate = this.dettaglioQuoteGruppo.righe.filter(riga => riga.selezionata);
+      if (!selezionate.length) return;
+
+      const confermato = await this.chiediConferma(
+        `Confermi di aver ricevuto ${this.formattaEuro(this.totaleQuoteSelezionate())}` +
+          (selezionate.length > 1 ? ` (${selezionate.length} incassi)` : '') + '?',
+        'Conferma ricezione'
+      );
+      if (!confermato) return;
+
+      for (const riga of selezionate) {
+        await this.confermaRicezioneQuota(riga.pagamento_id);
+      }
+
+      const idConfermati = selezionate.map(riga => riga.pagamento_id);
+      this.dettaglioQuoteGruppo.righe = this.dettaglioQuoteGruppo.righe
+        .filter(riga => !idConfermati.includes(riga.pagamento_id));
+
+      if (!this.dettaglioQuoteGruppo.righe.length) {
+        this.chiudiDettaglioQuoteGruppo();
       }
     },
 
