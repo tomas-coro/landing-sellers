@@ -847,6 +847,43 @@
       return this.mappaNomiVenditori[profiloId] || '';
     },
 
+    // Raggruppa più pagamenti reali dello stesso cliente/controparte in
+    // un'unica riga (es. Tarantella incassata 2 volte = 1 riga da 60€, non
+    // 2 righe da 30€): la causa non era un duplicato, erano 2 incassi veri.
+    _raggruppaQuote(lista, chiaveFn) {
+      const gruppi = lista.reduce((mappa, quota) => {
+        const chiave = chiaveFn(quota);
+        if (!mappa[chiave]) {
+          mappa[chiave] = { ...quota, quota_effettiva: 0, pagamentoIds: [] };
+        }
+        mappa[chiave].quota_effettiva += Number(quota.quota_effettiva || 0);
+        mappa[chiave].pagamentoIds.push(quota.pagamento_id);
+        return mappa;
+      }, {});
+      return Object.values(gruppi);
+    },
+
+    trasferimentiDaConfermareRaggruppati() {
+      return this._raggruppaQuote(
+        this.trasferimentiDaConfermare,
+        quota => (quota.clienteId || '') + '|' + (quota.controparteNome || '')
+      );
+    },
+
+    quoteDaTrasferireRaggruppate() {
+      return this._raggruppaQuote(
+        this.quoteDaTrasferire,
+        quota => (quota.clienteId || '') + '|' + (quota.aChiNome || '')
+      );
+    },
+
+    quoteAdminRaggruppate() {
+      return this._raggruppaQuote(
+        this.quoteAdmin,
+        quota => (quota.clienteId || '') + '|' + (quota.daChiNome || '') + '|' + (quota.aChiNome || '')
+      );
+    },
+
     trasferimentoPagamentoCompleto(pagamento) {
       return (pagamento?.quote_trasferimento || [])
         .filter(quota =>
@@ -942,6 +979,19 @@
       }));
     },
 
+    // Totale da trasferire per destinatario (es. "Quanto devo a Tomas",
+    // "Quanto devo ad Alessandro"): riepilogo sopra l'elenco riga per riga.
+    quoteDaTrasferirePerDestinatario() {
+      const totali = this.quoteDaTrasferire.reduce((mappa, quota) => {
+        const nome = quota.aChiNome || 'Da definire';
+        mappa[nome] = (mappa[nome] || 0) + Number(quota.quota_effettiva || 0);
+        return mappa;
+      }, {});
+      return Object.entries(totali)
+        .map(([nome, totale]) => ({ nome, totale }))
+        .sort((a, b) => b.totale - a.totale);
+    },
+
     // Ultime quote confermate da te: permette di annullare un tap per
     // errore senza dover intervenire sul database.
     async caricaQuoteConfermateRecenti() {
@@ -1033,18 +1083,24 @@
     // scrivere la conferma: un tap sulla riga non basta più da solo, per
     // evitare conferme involontarie come quella che ha generato questo bug.
     async confermaQuotaConDettaglio(quota) {
-      if (!quota?.pagamento_id) return;
+      const pagamentoIds = quota?.pagamentoIds?.length
+        ? quota.pagamentoIds
+        : (quota?.pagamento_id ? [quota.pagamento_id] : []);
+      if (!pagamentoIds.length) return;
 
       const dettaglio = [
         `Confermi di aver ricevuto ${this.formattaEuro(quota.quota_effettiva)}`,
         quota.controparteNome ? `da ${quota.controparteNome}` : '',
-        quota.clienteNome ? `per ${quota.clienteNome}` : ''
+        quota.clienteNome ? `per ${quota.clienteNome}` : '',
+        pagamentoIds.length > 1 ? `(${pagamentoIds.length} incassi)` : ''
       ].filter(Boolean).join(' ') + '?';
 
       const confermato = await this.chiediConferma(dettaglio, 'Conferma ricezione');
       if (!confermato) return;
 
-      await this.confermaRicezioneQuota(quota.pagamento_id);
+      for (const pagamentoId of pagamentoIds) {
+        await this.confermaRicezioneQuota(pagamentoId);
+      }
     },
 
     async confermaRicezioneQuota(pagamentoId) {

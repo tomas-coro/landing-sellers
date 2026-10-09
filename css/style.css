@@ -640,6 +640,19 @@ html[data-theme="dark"] .client-detail-dashboard{
 .profile-menu{padding:0;overflow:hidden}.profile-menu button{width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;padding:15px 16px;display:flex;align-items:center;justify-content:space-between;gap:14px;font:inherit;color:inherit}
 .profile-menu button:last-child{border-bottom:0}.profile-menu button span{font-weight:700}.profile-menu button strong{font-size:15.5px;color:var(--muted)}.profile-menu .danger-row strong{color:#c53434}
 
+.profile-menu .profile-quote-row{
+  background:rgba(200,255,61,.14);
+  border-bottom:1px solid var(--line);
+  box-shadow:inset 3px 0 0 var(--lime-deep);
+}
+.profile-menu .profile-quote-row span{
+  font-size:16.5px;
+}
+.profile-menu .profile-quote-row strong{
+  color:var(--ink);
+  font-weight:800;
+}
+
 
 /* --- Navigazione mobile app --- */
 :root{--mobile-tabbar-h:68px}
@@ -1838,6 +1851,27 @@ html[data-theme="dark"] .client-status-strip{
 .crm-tabbar svg{
   width:20px;
   height:20px;
+}
+
+.quote-riepilogo-destinatari{
+  margin-top:8px;
+  padding:10px 12px;
+  border-radius:13px;
+  background:var(--surface);
+}
+
+.quote-riepilogo-riga{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:4px 0;
+  font-size:14px;
+  color:var(--ink);
+}
+
+.quote-riepilogo-riga strong{
+  font-size:14.5px;
 }
 
 @media(max-width:520px){

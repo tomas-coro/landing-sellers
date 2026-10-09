@@ -1320,6 +1320,7 @@
 
             <button
               type="button"
+              class="profile-quote-row"
               @click="apriQuote()">
 
               <span>Quote</span>
@@ -6949,14 +6950,14 @@
             </div>
           </div>
           <div class="home-attention-list" x-show="trasferimentiDaConfermare.length > 0">
-            <template x-for="quota in trasferimentiDaConfermare" :key="'da-ricevere-' + quota.pagamento_id">
+            <template x-for="quota in trasferimentiDaConfermareRaggruppati()" :key="'da-ricevere-' + quota.pagamentoIds.join('-')">
               <button type="button" class="home-attention-row" @click="confermaQuotaConDettaglio(quota)">
                 <span class="home-attention-dot type-rata"></span>
                 <div>
                   <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
                   <small x-text="(quota.controparteNome ? 'Da ' + quota.controparteNome : 'Da confermare') + (quota.clienteNome ? ' · ' + quota.clienteNome : '')"></small>
                 </div>
-                <span class="event-done-action" x-text="confermandoTrasferimentoId === quota.pagamento_id ? '...' : '✓ Conferma'"></span>
+                <span class="event-done-action" x-text="quota.pagamentoIds.includes(confermandoTrasferimentoId) ? '...' : '✓ Conferma'"></span>
               </button>
             </template>
           </div>
@@ -6969,9 +6970,17 @@
               <strong x-text="quoteDaTrasferire.length === 0 ? 'Non devi trasferire nulla' : (quoteDaTrasferire.length === 1 ? '1 quota da pagare ad altri' : quoteDaTrasferire.length + ' quote da pagare ad altri')"></strong>
             </div>
           </div>
+          <div class="quote-riepilogo-destinatari" x-show="quoteDaTrasferire.length > 0">
+            <template x-for="riga in quoteDaTrasferirePerDestinatario()" :key="'riepilogo-' + riga.nome">
+              <div class="quote-riepilogo-riga">
+                <span x-text="riga.nome"></span>
+                <strong x-text="formattaEuro(riga.totale)"></strong>
+              </div>
+            </template>
+          </div>
           <div class="home-attention-list" x-show="quoteDaTrasferire.length > 0">
-            <template x-for="quota in quoteDaTrasferire" :key="'da-trasferire-' + quota.id">
-              <button type="button" class="home-attention-row" @click="apriScheda(quota.clienteId, { pagamentoId: quota.pagamento_id })">
+            <template x-for="quota in quoteDaTrasferireRaggruppate()" :key="'da-trasferire-' + quota.pagamentoIds.join('-')">
+              <button type="button" class="home-attention-row" @click="apriScheda(quota.clienteId, { pagamentoId: quota.pagamentoIds[0] })">
                 <span class="home-attention-dot type-ritardo"></span>
                 <div>
                   <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
@@ -6991,8 +7000,8 @@
             </div>
           </div>
           <div class="home-attention-list" x-show="quoteAdmin.length > 0">
-            <template x-for="quota in quoteAdmin" :key="'admin-quota-' + quota.id">
-              <button type="button" class="home-attention-row" @click="apriScheda(quota.clienteId, { pagamentoId: quota.pagamento_id })">
+            <template x-for="quota in quoteAdminRaggruppate()" :key="'admin-quota-' + quota.pagamentoIds.join('-')">
+              <button type="button" class="home-attention-row" @click="apriScheda(quota.clienteId, { pagamentoId: quota.pagamentoIds[0] })">
                 <span class="home-attention-dot type-ritardo"></span>
                 <div>
                   <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
@@ -7100,7 +7109,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=137', {
+      navigator.serviceWorker.register('./service-worker.js?v=138', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
