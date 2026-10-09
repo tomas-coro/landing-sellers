@@ -786,6 +786,7 @@ function appState() {
     quoteAdmin: [],
     mappaNomiVenditori: {},
     dettaglioQuoteGruppo: { aperto: false, controparteNome: '', righe: [] },
+    dettaglioTrasferimentoGruppo: { aperto: false, aChiNome: '', righe: [] },
     confermandoTrasferimentoId: null,
     annullandoConfermaQuotaId: null,
     caricandoPagamentiCliente: false,

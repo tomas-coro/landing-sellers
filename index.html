@@ -6981,11 +6981,12 @@
           </div>
           <div class="home-attention-list" x-show="quoteDaTrasferire.length > 0">
             <template x-for="quota in quoteDaTrasferireRaggruppate()" :key="'da-trasferire-' + quota.pagamentoIds.join('-')">
-              <button type="button" class="home-attention-row" @click="apriScheda(quota.clienteId, { pagamentoId: quota.pagamentoIds[0] })">
+              <button type="button" class="home-attention-row"
+                @click="quota.pagamentoIds.length > 1 ? apriDettaglioTrasferimentoGruppo(quota) : apriScheda(quota.clienteId, { pagamentoId: quota.pagamentoIds[0] })">
                 <span class="home-attention-dot type-ritardo"></span>
                 <div>
                   <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
-                  <small x-text="'A ' + (quota.aChiNome || 'definire') + (quota.clienteNome ? ' · ' + quota.clienteNome : '')"></small>
+                  <small x-text="'A ' + (quota.aChiNome || 'definire') + (quota.clienteNome ? ' · ' + quota.clienteNome : '') + (quota.pagamentoIds.length > 1 ? ' · ' + quota.pagamentoIds.length + ' incassi' : '')"></small>
                 </div>
                 <span class="home-attention-arrow">›</span>
               </button>
@@ -7068,6 +7069,33 @@
       </div>
     </div>
 
+    <!-- POPUP DETTAGLIO TRASFERIMENTI RAGGRUPPATI: lato venditore, stesso problema
+         di "quote da confermare" ma senza azione di conferma - qui si sceglie solo
+         su quale incasso aprire la scheda cliente -->
+    <div x-show="dettaglioTrasferimentoGruppo.aperto" x-cloak class="modal-overlay" @click.self="chiudiDettaglioTrasferimentoGruppo()">
+      <div class="modal-card">
+        <h2 style="margin-top:0" x-text="'A ' + (dettaglioTrasferimentoGruppo.aChiNome || 'definire')"></h2>
+        <div class="home-attention-list">
+          <template x-for="riga in dettaglioTrasferimentoGruppo.righe" :key="'dettaglio-trasf-' + riga.pagamento_id">
+            <button type="button" class="home-attention-row" @click="vaiASchedaDaDettaglio(riga)">
+              <span class="home-attention-dot type-ritardo"></span>
+              <div>
+                <strong x-text="formattaEuro(riga.quota_effettiva)"></strong>
+                <small x-text="riga.clienteNome || ''"></small>
+                <small
+                  x-show="riga.importoIncasso || riga.dataPagamento"
+                  x-text="'Incasso' + (riga.importoIncasso ? ' ' + formattaEuro(riga.importoIncasso) : '') + (riga.dataPagamento ? ' · ' + formattaData(riga.dataPagamento) : '') + (riga.noteIncasso ? ' · ' + riga.noteIncasso : '')"></small>
+              </div>
+              <span class="home-attention-arrow">›</span>
+            </button>
+          </template>
+        </div>
+        <div class="btn-row" style="margin-top:20px">
+          <button type="button" class="btn btn-ghost" @click="chiudiDettaglioTrasferimentoGruppo()">Chiudi</button>
+        </div>
+      </div>
+    </div>
+
     <!-- POPUP CONFERMA ELIMINAZIONE -->
     <div x-show="confermaEliminazione" x-cloak class="modal-overlay" @click.self="confermaEliminazione = false">
       <div class="modal-card">
@@ -7140,7 +7168,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=139', {
+      navigator.serviceWorker.register('./service-worker.js?v=140', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

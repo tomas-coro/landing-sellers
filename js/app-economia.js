@@ -959,7 +959,9 @@
             id,
             incassato_da,
             stato,
+            importo,
             data_pagamento,
+            note,
             vendite!inner(cliente_id, clienti(nome))
           )
         `)
@@ -980,7 +982,10 @@
         ...quota,
         clienteId: quota.pagamenti?.vendite?.cliente_id || null,
         clienteNome: quota.pagamenti?.vendite?.clienti?.nome || '',
-        aChiNome: this.nomeVenditorePerId(quota.profilo_id)
+        aChiNome: this.nomeVenditorePerId(quota.profilo_id),
+        dataPagamento: quota.pagamenti?.data_pagamento || null,
+        importoIncasso: quota.pagamenti?.importo ?? null,
+        noteIncasso: quota.pagamenti?.note || ''
       }));
     },
 
@@ -1155,6 +1160,30 @@
       if (!this.dettaglioQuoteGruppo.righe.length) {
         this.chiudiDettaglioQuoteGruppo();
       }
+    },
+
+    // Stesso problema lato venditore: "A Tomas · Paoloni, 60€" raggruppa due
+    // incassi diversi. Qui non si conferma nulla (è solo lo storico di chi
+    // ha incassato), quindi il dettaglio apre direttamente la scheda cliente
+    // sull'incasso scelto, non una checkbox.
+    apriDettaglioTrasferimentoGruppo(quotaGruppo) {
+      const righe = this.quoteDaTrasferire
+        .filter(quota => quotaGruppo.pagamentoIds.includes(quota.pagamento_id));
+
+      this.dettaglioTrasferimentoGruppo = {
+        aperto: true,
+        aChiNome: quotaGruppo.aChiNome || '',
+        righe
+      };
+    },
+
+    chiudiDettaglioTrasferimentoGruppo() {
+      this.dettaglioTrasferimentoGruppo = { aperto: false, aChiNome: '', righe: [] };
+    },
+
+    vaiASchedaDaDettaglio(riga) {
+      this.chiudiDettaglioTrasferimentoGruppo();
+      this.apriScheda(riga.clienteId, { pagamentoId: riga.pagamento_id });
     },
 
     async confermaRicezioneQuota(pagamentoId) {
