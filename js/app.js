@@ -36,6 +36,10 @@ function filtraClientiVenditore(clienti = [], venditoreId = '', venditoriTeamIds
   return clienti;
 }
 
+function filtroVenditoreTeamIniziale(venditoriTeam = [], utenteId = '') {
+  return venditoriTeam.length > 1 ? '' : utenteId;
+}
+
 function normalizzaClientePerSalvataggio(form) {
   return {
     ...form,
@@ -1367,7 +1371,10 @@ function appState() {
     },
 
     apriClienti() {
-      this.filtroVenditoreTeamId = this.sessione?.user?.id || '';
+      this.filtroVenditoreTeamId = filtroVenditoreTeamIniziale(
+        this.venditoriTeam,
+        this.sessione?.user?.id || ''
+      );
       this.filtroTesto = '';
       this.filtroStato = '';
       this.filtroSoloRitardo = false;
@@ -2517,7 +2524,10 @@ costiPerMotoreRataEconomia(
       this.venditoriTeam = error || !data?.length
         ? [{ id: this.sessione.user.id, nome: this.profilo.nome, livello: 0 }]
         : data;
-      this.filtroVenditoreTeamId = this.sessione.user.id;
+      this.filtroVenditoreTeamId = filtroVenditoreTeamIniziale(
+        this.venditoriTeam,
+        this.sessione.user.id
+      );
     },
 
     async caricaClienti() {
@@ -4781,6 +4791,7 @@ if (typeof module !== 'undefined') {
     filtroVenditoreClienti,
     ultimiClienti,
     filtraClientiVenditore,
+    filtroVenditoreTeamIniziale,
     normalizzaClientePerSalvataggio,
     prezzoRicorrenteDaForm,
     etichettaDurataScontoForm,

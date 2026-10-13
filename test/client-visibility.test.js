@@ -3,7 +3,8 @@ const assert = require('node:assert');
 const {
   filtroVenditoreClienti,
   ultimiClienti,
-  filtraClientiVenditore
+  filtraClientiVenditore,
+  filtroVenditoreTeamIniziale
 } = require('../js/app.js');
 
 test('un venditore non filtra i clienti prima delle regole RLS', () => {
@@ -18,6 +19,17 @@ test('la home mostra solo gli ultimi cinque clienti senza mutare la lista', () =
   const clienti = Array.from({ length: 7 }, (_, i) => ({ id: i, creato_il: `2026-09-0${i + 1}` }));
   assert.deepStrictEqual(ultimiClienti(clienti).map(c => c.id), [6, 5, 4, 3, 2]);
   assert.deepStrictEqual(clienti.map(c => c.id), [0, 1, 2, 3, 4, 5, 6]);
+});
+
+test('un responsabile apre tutti i clienti visibili, un venditore solo i propri', () => {
+  assert.strictEqual(
+    filtroVenditoreTeamIniziale([{ id: 'nicholas' }, { id: 'selim' }], 'nicholas'),
+    ''
+  );
+  assert.strictEqual(
+    filtroVenditoreTeamIniziale([{ id: 'nicola' }], 'nicola'),
+    'nicola'
+  );
 });
 
 test('il filtro separa i clienti diretti da quelli del team', () => {
