@@ -81,6 +81,16 @@ test('il filtro Tutti non nasconde clienti a chi ha accesso globale', () => {
   assert.deepStrictEqual(stato.clientiFiltroVenditore(), stato.clienti);
 });
 
+test('Tomas non compare tra i filtri venditore dei clienti', () => {
+  const stato = appState();
+  stato.venditoriTeam = [
+    { id: 't', nome: 'Tomas' },
+    { id: 'a', nome: 'Alessandro' }
+  ];
+
+  assert.deepStrictEqual(stato.venditoriFiltroClienti(), [stato.venditoriTeam[1]]);
+});
+
 test('ogni cliente mostra il proprio venditore', () => {
   const venditori = [
     { id: 'tomas', nome: 'Tomas' },

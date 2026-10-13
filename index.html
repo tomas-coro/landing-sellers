@@ -633,7 +633,7 @@
               <button type="button" :class="{ on: filtroVenditoreTeamId === '' }" @click="filtroVenditoreTeamId = ''; paginaClienti = 1">
                 Tutti <b x-text="clienti.length"></b>
               </button>
-              <template x-for="venditore in venditoriTeam" :key="'team-filter-' + venditore.id">
+              <template x-for="venditore in venditoriFiltroClienti()" :key="'team-filter-' + venditore.id">
                 <button type="button" :class="{ on: filtroVenditoreTeamId === venditore.id }" @click="filtroVenditoreTeamId = venditore.id; paginaClienti = 1">
                   <span x-text="venditore.nome"></span>
                   <b x-text="filtraClientiVenditore(clienti, venditore.id).length"></b>
@@ -7144,7 +7144,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=147', {
+      navigator.serviceWorker.register('./service-worker.js?v=148', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

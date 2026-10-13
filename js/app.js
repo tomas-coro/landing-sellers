@@ -3251,6 +3251,10 @@ costiPerMotoreRataEconomia(
       );
     },
 
+    venditoriFiltroClienti() {
+      return this.venditoriTeam.filter(venditore => !this.profiloEconomicoETomas(venditore));
+    },
+
     clientiFiltroVenditore() {
       return filtraClientiVenditore(
         this.clienti,
