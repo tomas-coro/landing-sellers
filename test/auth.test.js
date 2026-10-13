@@ -1,7 +1,11 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
 const fs = require('node:fs');
-const { mappaErroreLogin, urlRecuperoPassword } = require('../js/auth-logic.js');
+const {
+  mappaErroreLogin,
+  urlRecuperoPassword,
+  sessioneRecuperoPassword
+} = require('../js/auth-logic.js');
 
 test('credenziali errate produce messaggio in italiano', () => {
   const msg = mappaErroreLogin({ message: 'Invalid login credentials' });
@@ -22,6 +26,14 @@ test('riconosce soltanto i link Supabase di recupero password', () => {
   assert.strictEqual(urlRecuperoPassword({ hash: '#access_token=x&type=recovery' }), true);
   assert.strictEqual(urlRecuperoPassword({ hash: '#access_token=x&type=signup' }), false);
   assert.strictEqual(urlRecuperoPassword({ hash: '' }), false);
+});
+
+test('riconosce una sessione creata dal link di recupero anche dopo il redirect', () => {
+  const token = payload => `header.${Buffer.from(JSON.stringify(payload)).toString('base64url')}.firma`;
+
+  assert.strictEqual(sessioneRecuperoPassword({ access_token: token({ amr: [{ method: 'otp' }] }) }), true);
+  assert.strictEqual(sessioneRecuperoPassword({ access_token: token({ amr: [{ method: 'password' }] }) }), false);
+  assert.strictEqual(sessioneRecuperoPassword(null), false);
 });
 
 test('logout e cambio password chiudono solo la sessione locale', () => {

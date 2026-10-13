@@ -1164,6 +1164,14 @@ function appState() {
       }
 
       this.sessione = await getSessioneCorrente();
+
+      if (sessioneRecuperoPassword(this.sessione)) {
+        this.modalitaAccesso = 'nuova-password';
+        this.view = 'login';
+        this.sessione = null;
+        return;
+      }
+
       this.accountSlot = window.AccountSessions.getActiveSlot();
       await this.aggiornaStatoAccountSwitcher();
 
