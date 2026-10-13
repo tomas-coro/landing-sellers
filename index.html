@@ -626,105 +626,52 @@
           <small x-text="isAdmin ? clienti.length : clientiFiltroVenditore().length"></small>
         </div>
 
-        <div class="client-toolbar" x-show="(isAdmin || view === 'clienti') && clienti.length > 0">
-          <label class="client-toolbar-search">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
-            <span class="sr-only">Cerca clienti per nome o referente</span>
-            <input type="search" placeholder="Cerca..." x-model="filtroTesto" @input="paginaClienti = 1">
-          </label>
-          <button
-            type="button"
-            class="client-tool-button"
-            :class="{ active: numeroFiltriClientiAttivi() > 0 }"
-            @click="pannelloClienti = 'filtri'"
-            aria-label="Apri filtri clienti">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M7 12h10M10 17h4"></path></svg>
-            <span>Filtri</span>
-            <sup x-show="numeroFiltriClientiAttivi()" x-text="numeroFiltriClientiAttivi()"></sup>
-          </button>
-          <button
-            type="button"
-            class="client-tool-button client-sort-button"
-            @click="pannelloClienti = 'ordine'"
-            :aria-label="'Ordina clienti: ' + etichettaOrdinamentoClienti()">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h8M8 18h4M4 5v14"></path></svg>
-          </button>
-        </div>
-
-        <div class="client-active-filters" x-show="numeroFiltriClientiAttivi() > 0" x-cloak>
-          <span x-show="filtroStato">
-            <span x-text="formattaStato(filtroStato)"></span>
-            <button type="button" @click="filtroStato = ''; paginaClienti = 1" aria-label="Rimuovi filtro stato">×</button>
-          </span>
-          <span x-show="filtroVenditoreTeamId && venditoriTeam.length > 1">
-            <span x-text="nomeVenditoreCliente({ venditore_id: filtroVenditoreTeamId })"></span>
-            <button type="button" @click="filtroVenditoreTeamId = ''; paginaClienti = 1" aria-label="Rimuovi filtro venditore">×</button>
-          </span>
-          <span x-show="filtroSoloRitardo">
-            In ritardo
-            <button type="button" @click="toggleFiltroSoloRitardo()" aria-label="Rimuovi filtro ritardi">×</button>
-          </span>
-        </div>
-
-        <div
-          class="client-filter-overlay"
-          x-show="pannelloClienti"
-          x-cloak
-          @click.self="pannelloClienti = ''"
-          @keydown.escape.window="pannelloClienti = ''">
-          <section class="client-filter-sheet" role="dialog" aria-modal="true" :aria-label="pannelloClienti === 'filtri' ? 'Filtra clienti' : 'Ordina clienti'">
-            <template x-if="pannelloClienti === 'filtri'">
-              <div>
-                <div class="client-sheet-head">
-                  <h2>Filtra clienti</h2>
-                  <button type="button" @click="azzeraFiltriClienti()" x-show="numeroFiltriClientiAttivi()">Azzera</button>
-                </div>
-                <fieldset class="client-sheet-group">
-                  <legend>Stato</legend>
-                  <div class="client-sheet-options">
-                    <button type="button" :class="{ on: filtroStato === '' }" @click="filtroStato = ''; paginaClienti = 1">Tutti</button>
-                    <template x-for="s in ['contattato','brief_mandato','vinto','perso']" :key="'filter-' + s">
-                      <button type="button" :class="{ on: filtroStato === s }" @click="filtroStato = s; paginaClienti = 1" x-text="formattaStato(s)"></button>
-                    </template>
-                  </div>
-                </fieldset>
-                <label class="client-sheet-select" x-show="!isAdmin && venditoriTeam.length > 1">
-                  <span>Venditore</span>
-                  <select x-model="filtroVenditoreTeamId" @change="paginaClienti = 1">
-                    <option value="">Tutti i venditori</option>
-                    <template x-for="venditore in venditoriTeam" :key="'sheet-team-' + venditore.id">
-                      <option :value="venditore.id" x-text="venditore.nome + ' · ' + filtraClientiVenditore(clienti, venditore.id).length"></option>
-                    </template>
-                  </select>
-                </label>
-                <button type="button" class="client-sheet-toggle" :class="{ on: filtroSoloRitardo }" @click="toggleFiltroSoloRitardo()">
-                  <span>Contatti in ritardo</span>
-                  <strong x-text="clientiInRitardo().length"></strong>
+        <div class="client-filter-dock" x-show="(isAdmin || view === 'clienti') && clienti.length > 0">
+          <div class="client-seller-switcher" x-show="!isAdmin && venditoriTeam.length > 1">
+            <span>Venditore</span>
+            <div class="client-filter-scroll">
+              <button type="button" :class="{ on: filtroVenditoreTeamId === '' }" @click="filtroVenditoreTeamId = ''; paginaClienti = 1">
+                Tutti <b x-text="clienti.length"></b>
+              </button>
+              <template x-for="venditore in venditoriTeam" :key="'team-filter-' + venditore.id">
+                <button type="button" :class="{ on: filtroVenditoreTeamId === venditore.id }" @click="filtroVenditoreTeamId = venditore.id; paginaClienti = 1">
+                  <span x-text="venditore.nome"></span>
+                  <b x-text="filtraClientiVenditore(clienti, venditore.id).length"></b>
                 </button>
-                <button type="button" class="client-sheet-apply" @click="pannelloClienti = ''" x-text="'Mostra ' + clientiFiltrati().length + ' clienti'"></button>
-              </div>
-            </template>
+              </template>
+            </div>
+          </div>
 
-            <template x-if="pannelloClienti === 'ordine'">
-              <div>
-                <div class="client-sheet-head"><h2>Ordina clienti</h2></div>
-                <div class="client-sort-options">
-                  <template x-for="opz in [
-                    { campo: 'creato_il', etichetta: 'Più recenti' },
-                    { campo: 'nome', etichetta: 'Nome' },
-                    { campo: 'importo', etichetta: 'Importo' },
-                    { campo: 'prossimo_contatto', etichetta: 'Prossimo contatto' }
-                  ]" :key="'sort-' + opz.campo">
-                    <button type="button" :class="{ on: ordinamento === opz.campo }" @click="impostaOrdinamento(opz.campo)">
-                      <span x-text="opz.etichetta"></span>
-                      <strong x-show="ordinamento === opz.campo" x-text="ordinamentoDesc ? '↓' : '↑'"></strong>
-                    </button>
-                  </template>
-                </div>
-                <button type="button" class="client-sheet-apply" @click="pannelloClienti = ''">Applica ordine</button>
-              </div>
+          <div class="client-toolbar">
+            <label class="client-toolbar-search">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
+              <span class="sr-only">Cerca clienti per nome o referente</span>
+              <input type="search" placeholder="Cerca cliente..." x-model="filtroTesto" @input="paginaClienti = 1">
+            </label>
+            <button type="button" class="client-delay-filter" :class="{ on: filtroSoloRitardo }" @click="toggleFiltroSoloRitardo()">
+              In ritardo <b x-text="clientiInRitardo().length"></b>
+            </button>
+          </div>
+
+          <div class="client-filter-scroll client-filter-options">
+            <span class="client-filter-label">Stato</span>
+            <button type="button" :class="{ on: filtroStato === '' }" @click="filtroStato = ''; paginaClienti = 1">Tutti</button>
+            <template x-for="s in ['contattato','brief_mandato','vinto','perso']" :key="'filter-' + s">
+              <button type="button" :class="{ on: filtroStato === s }" @click="filtroStato = s; paginaClienti = 1" x-text="formattaStato(s)"></button>
             </template>
-          </section>
+            <span class="client-filter-divider" aria-hidden="true"></span>
+            <span class="client-filter-label">Ordina</span>
+            <template x-for="opz in [
+              { campo: 'creato_il', etichetta: 'Recenti' },
+              { campo: 'nome', etichetta: 'Nome' },
+              { campo: 'importo', etichetta: 'Importo' },
+              { campo: 'prossimo_contatto', etichetta: 'Contatto' }
+            ]" :key="'sort-' + opz.campo">
+              <button type="button" class="client-sort-option" :class="{ on: ordinamento === opz.campo }" @click="impostaOrdinamento(opz.campo)">
+                <span x-text="opz.etichetta"></span><span x-show="ordinamento === opz.campo" x-text="ordinamentoDesc ? '↓' : '↑'"></span>
+              </button>
+            </template>
+          </div>
         </div>
 
         <div class="skeleton-clienti" x-show="caricandoClienti && clienti.length === 0" aria-hidden="true">
@@ -7197,7 +7144,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=145', {
+      navigator.serviceWorker.register('./service-worker.js?v=147', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
