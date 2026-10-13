@@ -3257,7 +3257,9 @@ costiPerMotoreRataEconomia(
       return filtraClientiVenditore(
         this.clienti,
         this.filtroVenditoreTeamId,
-        this.venditoriTeam.map(venditore => venditore.id)
+        profiloHaAccessoGlobaleClienti(this.profilo)
+          ? []
+          : this.venditoriTeam.map(venditore => venditore.id)
       );
     },
 

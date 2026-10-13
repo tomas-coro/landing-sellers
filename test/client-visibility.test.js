@@ -68,6 +68,19 @@ test('solo Tomas e Alessandro hanno accesso globale ai clienti', () => {
   assert.deepStrictEqual(clientiHomeProfilo(clienti, 'nicola', false), [clienti[1]]);
 });
 
+test('il filtro Tutti non nasconde clienti a chi ha accesso globale', () => {
+  const stato = appState();
+  stato.profilo = { ruolo: 'developer' };
+  stato.venditoriTeam = [{ id: 'tomas' }, { id: 'alessandro' }];
+  stato.clienti = [
+    { id: 'a', venditore_id: 'alessandro' },
+    { id: 'n', venditore_id: 'nicola' }
+  ];
+  stato.filtroVenditoreTeamId = '';
+
+  assert.deepStrictEqual(stato.clientiFiltroVenditore(), stato.clienti);
+});
+
 test('ogni cliente mostra il proprio venditore', () => {
   const venditori = [
     { id: 'tomas', nome: 'Tomas' },
