@@ -42,6 +42,23 @@ async function logout() {
   await logoutAccount(window.AccountSessions.getActiveSlot());
 }
 
+async function inviaRecuperoPassword(email) {
+  const redirectTo = `${window.location.origin}${window.location.pathname}`;
+  const { error } = await window.AccountSessions
+    .getClient('personale')
+    .auth.resetPasswordForEmail(email, { redirectTo });
+
+  if (error) throw error;
+}
+
+async function aggiornaPassword(password) {
+  const client = window.AccountSessions.getClient('personale');
+  const { error } = await client.auth.updateUser({ password });
+
+  if (error) throw error;
+  await client.auth.signOut({ scope: 'local' });
+}
+
 async function getSessioneCorrente() {
   const slotAttivo = window.AccountSessions.getActiveSlot();
   const sessioneAttiva = await sessioneAccount(slotAttivo);

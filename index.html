@@ -318,10 +318,15 @@
         <span class="wordmark">Landing Evolution</span>
       </div>
       <div class="login-hero">
-        <h1>Area <span class="hl">venditori</span></h1>
-        <p class="sub">Accedi per gestire i tuoi clienti e la pipeline.</p>
+        <h1 x-show="modalitaAccesso === 'login'">Area <span class="hl">venditori</span></h1>
+        <h1 x-show="modalitaAccesso === 'recupero'">Recupera <span class="hl">password</span></h1>
+        <h1 x-show="modalitaAccesso === 'nuova-password'">Nuova <span class="hl">password</span></h1>
+        <p class="sub" x-show="modalitaAccesso === 'login'">Accedi per gestire i tuoi clienti e la pipeline.</p>
+        <p class="sub" x-show="modalitaAccesso === 'recupero'">Riceverai via email il link per scegliere una nuova password.</p>
+        <p class="sub" x-show="modalitaAccesso === 'nuova-password'">Scegli una password di almeno 8 caratteri.</p>
       </div>
-      <form @submit.prevent="fareLogin()" class="login-card" aria-label="Accesso venditori">
+
+      <form x-show="modalitaAccesso === 'login'" @submit.prevent="fareLogin()" class="login-card" aria-label="Accesso venditori">
         <div class="field field-icon">
           <label for="login-email">Email</label>
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M4 7l8 6 8-6"/></svg>
@@ -335,11 +340,38 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
         </div>
+        <button type="button" class="login-help" @click="mostraRecuperoPassword()">Password dimenticata?</button>
+        <p x-show="messaggioAccesso" x-text="messaggioAccesso" class="login-success" role="status"></p>
         <p x-show="erroreLogin" x-text="erroreLogin" class="err" role="alert" aria-live="assertive"></p>
         <button type="submit" class="btn btn-primary" :disabled="accedendo">
           <span x-text="accedendo ? 'Accesso...' : 'Entra'"></span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
+      </form>
+
+      <form x-show="modalitaAccesso === 'recupero'" @submit.prevent="richiediRecuperoPassword()" class="login-card" aria-label="Recupera password">
+        <div class="field field-icon">
+          <label for="recovery-email">Email</label>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M4 7l8 6 8-6"/></svg>
+          <input id="recovery-email" name="email" type="email" x-model="emailInput" autocomplete="email" required>
+        </div>
+        <p x-show="messaggioAccesso" x-text="messaggioAccesso" class="login-success" role="status"></p>
+        <p x-show="erroreLogin" x-text="erroreLogin" class="err" role="alert" aria-live="assertive"></p>
+        <button type="submit" class="btn btn-primary" :disabled="recuperoInCorso" x-text="recuperoInCorso ? 'Invio...' : 'Invia link'"></button>
+        <button type="button" class="login-help login-help-back" @click="tornaAlLogin()">Torna all’accesso</button>
+      </form>
+
+      <form x-show="modalitaAccesso === 'nuova-password'" @submit.prevent="salvaNuovaPassword()" class="login-card" aria-label="Scegli nuova password">
+        <div class="field">
+          <label for="new-password">Nuova password</label>
+          <input id="new-password" type="password" x-model="nuovaPasswordInput" autocomplete="new-password" minlength="8" required>
+        </div>
+        <div class="field">
+          <label for="confirm-password">Conferma password</label>
+          <input id="confirm-password" type="password" x-model="confermaPasswordInput" autocomplete="new-password" minlength="8" required>
+        </div>
+        <p x-show="erroreLogin" x-text="erroreLogin" class="err" role="alert" aria-live="assertive"></p>
+        <button type="submit" class="btn btn-primary" :disabled="recuperoInCorso" x-text="recuperoInCorso ? 'Salvataggio...' : 'Salva password'"></button>
       </form>
     </div>
 

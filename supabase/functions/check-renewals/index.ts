@@ -31,22 +31,8 @@ function json(data: unknown, status = 200): Response {
 
 function autorizzato(req: Request): boolean {
   const auth = req.headers.get("authorization");
-  if (!auth?.startsWith("Bearer ")) return false;
-
-  const token = auth.slice("Bearer ".length).trim();
-  const parts = token.split(".");
-  if (parts.length !== 3) return false;
-
-  try {
-    const payloadJson = atob(
-      parts[1].replace(/-/g, "+").replace(/_/g, "/") +
-      "=".repeat((4 - (parts[1].length % 4)) % 4)
-    );
-    const payload = JSON.parse(payloadJson);
-    return payload?.role === "service_role";
-  } catch {
-    return false;
-  }
+  if (!SERVICE_ROLE_KEY || !auth?.startsWith("Bearer ")) return false;
+  return auth.slice("Bearer ".length).trim() === SERVICE_ROLE_KEY;
 }
 
 function giorniTra(oggi: string, data: string): number {

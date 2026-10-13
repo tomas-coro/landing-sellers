@@ -3,6 +3,9 @@
 (function () {
   const ACTIVE_SLOT_KEY = 'le-active-account-slot';
   const ADMIN_STORAGE_KEY = 'le-admin-auth-session';
+  const passwordRecoveryInUrl = new URLSearchParams(
+    window.location.hash.replace(/^#/, '')
+  ).get('type') === 'recovery';
 
   function creaClientPersonale() {
     return window.supabase.createClient(
@@ -66,7 +69,7 @@
   }
 
   async function signOut(slot) {
-    const { error } = await getClient(slot).auth.signOut();
+    const { error } = await getClient(slot).auth.signOut({ scope: 'local' });
     if (error) throw error;
   }
 
@@ -76,7 +79,8 @@
     getClient,
     getSession,
     signIn,
-    signOut
+    signOut,
+    isPasswordRecovery: () => passwordRecoveryInUrl
   };
 
   window.supabaseClient = clients[getActiveSlot()];

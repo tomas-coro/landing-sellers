@@ -158,6 +158,9 @@ h2{font-size:17px;font-weight:800;letter-spacing:-.005em;margin:22px 0 10px}
 
 .login-card .field{margin-bottom:16px}
 .login-card .field:last-of-type{margin-bottom:20px}
+.login-help{display:block;margin:-8px 0 16px auto;padding:4px 0;border:0;background:none;color:var(--ink-soft);font:700 13px var(--sans);cursor:pointer;text-decoration:underline;text-decoration-color:var(--lime);text-decoration-thickness:2px;text-underline-offset:3px}
+.login-help-back{margin:14px auto 0}
+.login-success{margin:0 0 14px;color:var(--success);font-size:13px;font-weight:700;line-height:1.45}
 
 .login-foot{position:relative;z-index:1;text-align:center;margin-top:30px}
 .login-foot span{font-size:14.5px;font-weight:600;color:var(--muted)}

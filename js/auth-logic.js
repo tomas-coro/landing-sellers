@@ -5,4 +5,10 @@ function mappaErroreLogin(err) {
   return `Errore: ${err.message}`;
 }
 
-if (typeof module !== 'undefined') module.exports = { mappaErroreLogin };
+function urlRecuperoPassword(location) {
+  return new URLSearchParams(location.hash.replace(/^#/, '')).get('type') === 'recovery';
+}
+
+if (typeof module !== 'undefined') {
+  module.exports = { mappaErroreLogin, urlRecuperoPassword };
+}

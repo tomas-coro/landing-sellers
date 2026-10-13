@@ -638,8 +638,13 @@ function appState() {
     sessione: null,
     clienteSelezionatoId: null,
     erroreLogin: '',
+    messaggioAccesso: '',
     emailInput: '',
     passwordInput: '',
+    modalitaAccesso: 'login',
+    nuovaPasswordInput: '',
+    confermaPasswordInput: '',
+    recuperoInCorso: false,
 
     // toast: feedback non bloccante per azioni che oggi salvano senza alcun riscontro visivo
     toasts: [],
@@ -1140,6 +1145,24 @@ function appState() {
         }
       });
 
+      window.AccountSessions.getClient('personale').auth.onAuthStateChange(event => {
+        if (event !== 'PASSWORD_RECOVERY') return;
+        this.modalitaAccesso = 'nuova-password';
+        this.view = 'login';
+        this.sessione = null;
+        this.erroreLogin = '';
+        this.messaggioAccesso = '';
+      });
+
+      if (
+        window.AccountSessions.isPasswordRecovery?.() ||
+        urlRecuperoPassword(window.location)
+      ) {
+        this.modalitaAccesso = 'nuova-password';
+        this.view = 'login';
+        return;
+      }
+
       this.sessione = await getSessioneCorrente();
       this.accountSlot = window.AccountSessions.getActiveSlot();
       await this.aggiornaStatoAccountSwitcher();
@@ -1226,10 +1249,69 @@ function appState() {
       return 'App aggiornata';
     },
 
+    mostraRecuperoPassword() {
+      this.modalitaAccesso = 'recupero';
+      this.erroreLogin = '';
+      this.messaggioAccesso = '';
+    },
+
+    tornaAlLogin() {
+      this.modalitaAccesso = 'login';
+      this.erroreLogin = '';
+    },
+
+    async richiediRecuperoPassword() {
+      if (this.recuperoInCorso) return;
+      this.recuperoInCorso = true;
+      this.erroreLogin = '';
+      this.messaggioAccesso = '';
+
+      try {
+        await inviaRecuperoPassword(this.emailInput);
+        this.messaggioAccesso = 'Se l’indirizzo è registrato, riceverai un link per scegliere una nuova password.';
+      } catch (err) {
+        this.erroreLogin = err.message === 'Failed to fetch'
+          ? 'Connessione assente, riprova'
+          : 'Invio non riuscito. Riprova tra poco.';
+      } finally {
+        this.recuperoInCorso = false;
+      }
+    },
+
+    async salvaNuovaPassword() {
+      this.erroreLogin = '';
+
+      if (this.nuovaPasswordInput.length < 8) {
+        this.erroreLogin = 'La password deve avere almeno 8 caratteri.';
+        return;
+      }
+      if (this.nuovaPasswordInput !== this.confermaPasswordInput) {
+        this.erroreLogin = 'Le password non coincidono.';
+        return;
+      }
+
+      this.recuperoInCorso = true;
+      try {
+        await aggiornaPassword(this.nuovaPasswordInput);
+        history.replaceState(null, '', window.location.pathname);
+        this.nuovaPasswordInput = '';
+        this.confermaPasswordInput = '';
+        this.modalitaAccesso = 'login';
+        this.messaggioAccesso = 'Password aggiornata. Ora puoi accedere.';
+      } catch (err) {
+        this.erroreLogin = err.message === 'Failed to fetch'
+          ? 'Connessione assente, riprova'
+          : 'Il link non è valido o è scaduto. Richiedine uno nuovo.';
+      } finally {
+        this.recuperoInCorso = false;
+      }
+    },
+
     async fareLogin() {
       if (this.accedendo) return;
       this.accedendo = true;
       this.erroreLogin = '';
+      this.messaggioAccesso = '';
       try {
         this.sessione = await login(this.emailInput, this.passwordInput);
         await this.dopoLogin();
