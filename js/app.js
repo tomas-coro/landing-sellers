@@ -25,6 +25,17 @@ function ultimiClienti(clienti = [], limite = 5) {
     .slice(0, limite);
 }
 
+function filtraClientiVenditore(clienti = [], venditoreId = '', venditoriTeamIds = []) {
+  if (venditoreId) {
+    return clienti.filter(cliente => cliente.venditore_id === venditoreId);
+  }
+  if (venditoriTeamIds.length) {
+    const ids = new Set(venditoriTeamIds);
+    return clienti.filter(cliente => ids.has(cliente.venditore_id));
+  }
+  return clienti;
+}
+
 function normalizzaClientePerSalvataggio(form) {
   return {
     ...form,
@@ -650,6 +661,8 @@ function appState() {
     isAdmin: false,
     filtroVenditoreId: '',
     filtroVenditoreNome: '',
+    venditoriTeam: [],
+    filtroVenditoreTeamId: '',
     filtroTesto: '',
     filtroStato: '',
     cmdkAperta: false,
@@ -1235,6 +1248,7 @@ function appState() {
 
       if (this.isAdmin) { await this.caricaDashboardAdmin(); this.view = 'admin'; }
       else {
+        await this.caricaVenditoriTeam();
         await this.caricaClienti();
         await this.caricaStatisticheVenditore();
         this.view = 'lista';
@@ -1353,6 +1367,7 @@ function appState() {
     },
 
     apriClienti() {
+      this.filtroVenditoreTeamId = this.sessione?.user?.id || '';
       this.filtroTesto = '';
       this.filtroStato = '';
       this.filtroSoloRitardo = false;
@@ -2340,6 +2355,8 @@ costiPerMotoreRataEconomia(
       this.clienteSelezionatoId = null;
       this.filtroVenditoreId = '';
       this.filtroVenditoreNome = '';
+      this.venditoriTeam = [];
+      this.filtroVenditoreTeamId = '';
       this.filtroTesto = '';
       this.filtroStato = '';
       this.filtroSoloRitardo = false;
@@ -2491,6 +2508,16 @@ costiPerMotoreRataEconomia(
       this.accountSlot = 'personale';
       window.AccountSessions.setActiveSlot('personale');
       this.view = 'login';
+    },
+
+    async caricaVenditoriTeam() {
+      const { data, error } = await window.supabaseClient
+        .rpc('venditori_team_corrente');
+
+      this.venditoriTeam = error || !data?.length
+        ? [{ id: this.sessione.user.id, nome: this.profilo.nome, livello: 0 }]
+        : data;
+      this.filtroVenditoreTeamId = this.sessione.user.id;
     },
 
     async caricaClienti() {
@@ -3189,13 +3216,34 @@ costiPerMotoreRataEconomia(
       };
     },
 
+    clientiDiretti() {
+      return filtraClientiVenditore(
+        this.clienti,
+        this.sessione?.user?.id || ''
+      );
+    },
+
+    clientiFiltroVenditore() {
+      return filtraClientiVenditore(
+        this.clienti,
+        this.filtroVenditoreTeamId,
+        this.venditoriTeam.map(venditore => venditore.id)
+      );
+    },
+
+    nomeVenditoreTeam(venditore) {
+      return venditore.id === this.sessione?.user?.id
+        ? 'I miei'
+        : venditore.nome;
+    },
+
     clientiRecenti() {
-      return ultimiClienti(this.clienti);
+      return ultimiClienti(this.clientiDiretti());
     },
 
     clientiFiltrati() {
       const testo = this.filtroTesto.trim().toLowerCase();
-      const risultato = this.clienti.filter(c => {
+      const risultato = this.clientiFiltroVenditore().filter(c => {
         if (this.filtroStato && c.stato !== this.filtroStato) return false;
         if (this.filtroSoloRitardo && classeUrgenza(c.prossimo_contatto) !== 'ritardo') return false;
         if (!testo) return true;
@@ -3225,7 +3273,10 @@ costiPerMotoreRataEconomia(
 
     risultatiCmdk() {
       const testo = this.cmdkTesto.trim().toLowerCase();
-      const lista = this.clienti.filter(c => {
+      const clientiDisponibili = this.view === 'clienti'
+        ? this.clientiFiltroVenditore()
+        : this.clientiDiretti();
+      const lista = clientiDisponibili.filter(c => {
         if (!testo) return true;
         return (c.nome || '').toLowerCase().includes(testo)
           || (c.referente || '').toLowerCase().includes(testo);
@@ -3277,7 +3328,10 @@ costiPerMotoreRataEconomia(
     },
 
     clientiInRitardo() {
-      return this.clienti.filter(c => classeUrgenza(c.prossimo_contatto) === 'ritardo');
+      const clienti = this.view === 'clienti'
+        ? this.clientiFiltroVenditore()
+        : this.clientiDiretti();
+      return clienti.filter(c => classeUrgenza(c.prossimo_contatto) === 'ritardo');
     },
 
     async caricaStatisticheVenditore() {
@@ -3487,7 +3541,7 @@ costiPerMotoreRataEconomia(
     eventiAgenda() {
       const oggi = this.dataISOOggi();
       const eventi = [];
-      const clientiAgenda = this.isAdmin ? this.adminClienti : this.clienti;
+      const clientiAgenda = this.isAdmin ? this.adminClienti : this.clientiDiretti();
 
       clientiAgenda.forEach(cliente => {
         const contatto = this.normalizzaDataAgenda(cliente.prossimo_contatto);
@@ -3743,13 +3797,13 @@ costiPerMotoreRataEconomia(
     },
 
     clientiPipeline(stato) {
-      return this.clienti
+      return this.clientiDiretti()
         .filter(c => c.stato === stato)
         .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
     },
 
     clientiProduzione(stato) {
-      return this.clienti.filter(c => c.stato_produzione === stato);
+      return this.clientiDiretti().filter(c => c.stato_produzione === stato);
     },
 
     statiPipeline() {
@@ -4306,12 +4360,12 @@ costiPerMotoreRataEconomia(
 
     // --- statistiche venditore (home) ---
     clientiPubblicati() {
-      return this.clienti.filter(c => c.stato_produzione === 'pubblicato');
+      return this.clientiDiretti().filter(c => c.stato_produzione === 'pubblicato');
     },
 
     conteggiPerStato() {
       const conteggi = { contattato: 0, brief_mandato: 0, vinto: 0, perso: 0 };
-      for (const c of this.clienti) {
+      for (const c of this.clientiFiltroVenditore()) {
         if (conteggi[c.stato] !== undefined) conteggi[c.stato] += 1;
       }
       return conteggi;
@@ -4726,6 +4780,7 @@ if (typeof module !== 'undefined') {
   module.exports = {
     filtroVenditoreClienti,
     ultimiClienti,
+    filtraClientiVenditore,
     normalizzaClientePerSalvataggio,
     prezzoRicorrenteDaForm,
     etichettaDurataScontoForm,

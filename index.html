@@ -285,7 +285,7 @@
             <span><kbd>↑</kbd><kbd>↓</kbd> naviga</span>
             <span><kbd>↵</kbd> apri scheda</span>
           </div>
-          <span x-text="cmdkTesto ? risultatiCmdk().length + ' risultati' : clienti.length + ' clienti'"></span>
+          <span x-text="cmdkTesto ? risultatiCmdk().length + ' risultati' : (view === 'clienti' ? clientiFiltroVenditore().length : clientiDiretti().length) + ' clienti'"></span>
         </div>
       </div>
     </div>
@@ -394,7 +394,7 @@
           <button type="button" class="retry-btn" x-show="retryClienti" @click="retryClienti && retryClienti.fn()">Riprova</button>
         </p>
 
-        <div class="home-dashboard home-dashboard-v3" x-show="!isAdmin && view === 'lista' && clienti.length > 0">
+        <div class="home-dashboard home-dashboard-v3" x-show="!isAdmin && view === 'lista' && clientiDiretti().length > 0">
           <section class="home-performance home-performance-v4">
             <div class="home-performance-head">
               <div>
@@ -409,9 +409,9 @@
 
             <div class="home-work-summary">
               <div class="home-work-count">
-                <strong x-text="clienti.length"></strong>
+                <strong x-text="clientiDiretti().length"></strong>
                 <div>
-                  <b x-text="clienti.length === 1 ? 'cliente gestito' : 'clienti gestiti'"></b>
+                  <b x-text="clientiDiretti().length === 1 ? 'cliente gestito' : 'clienti gestiti'"></b>
                   <small>
                     <span x-text="clientiPubblicati().length"></span>
                     pubblicati ·
@@ -423,7 +423,7 @@
 
               <div class="home-work-progress">
                 <span
-                  :style="{ width: (clienti.length ? clientiPubblicati().length / clienti.length * 100 : 0) + '%' }">
+                  :style="{ width: (clientiDiretti().length ? clientiPubblicati().length / clientiDiretti().length * 100 : 0) + '%' }">
                 </span>
               </div>
             </div>
@@ -615,7 +615,7 @@
           <span x-text="filtroSoloRitardo ? 'mostra tutti' : 'mostra solo questi'"></span>
         </button>
 
-        <div class="home-all-clients-head home-recent-head" x-show="!isAdmin && view === 'lista' && clienti.length > 0">
+        <div class="home-all-clients-head home-recent-head" x-show="!isAdmin && view === 'lista' && clientiDiretti().length > 0">
           <div>
             <span>CLIENTI</span>
             <strong>Ultimi clienti</strong>
@@ -628,7 +628,7 @@
             <span x-text="clientiFiltrati().length + ' risultati'"></span>
             <strong x-text="isAdmin ? 'Tutti i clienti' : 'Archivio clienti'"></strong>
           </div>
-          <small x-text="clienti.length"></small>
+          <small x-text="isAdmin ? clienti.length : clientiFiltroVenditore().length"></small>
         </div>
 
         <div class="client-search-tools" x-show="(isAdmin || view === 'clienti') && clienti.length > 0">
@@ -636,8 +636,16 @@
             <input type="search" placeholder="Cerca per nome o referente..." aria-label="Cerca clienti per nome o referente" x-model="filtroTesto" @input="paginaClienti = 1">
           </div>
         </div>
+        <div class="filtro-stati home-filter-scroll" x-show="!isAdmin && view === 'clienti' && venditoriTeam.length > 1">
+          <button type="button" class="chip-stato" :class="{ on: filtroVenditoreTeamId === '' }" @click="filtroVenditoreTeamId = ''; paginaClienti = 1">Tutto il team</button>
+          <template x-for="venditore in venditoriTeam" :key="'team-' + venditore.id">
+            <button type="button" class="chip-stato" :class="{ on: filtroVenditoreTeamId === venditore.id }" @click="filtroVenditoreTeamId = venditore.id; paginaClienti = 1">
+              <span x-text="nomeVenditoreTeam(venditore)"></span> · <span x-text="filtraClientiVenditore(clienti, venditore.id).length"></span>
+            </button>
+          </template>
+        </div>
         <div class="filtro-stati home-filter-scroll" x-show="(isAdmin || view === 'clienti') && clienti.length > 0">
-          <button type="button" class="chip-stato" :class="{ on: filtroStato === '' }" @click="filtroStato = ''; paginaClienti = 1">Tutti · <span x-text="clienti.length"></span></button>
+          <button type="button" class="chip-stato" :class="{ on: filtroStato === '' }" @click="filtroStato = ''; paginaClienti = 1">Tutti · <span x-text="isAdmin ? clienti.length : clientiFiltroVenditore().length"></span></button>
           <template x-for="s in ['contattato','brief_mandato','vinto','perso']" :key="s">
             <button type="button" class="chip-stato" :class="{ on: filtroStato === s }" @click="filtroStato = filtroStato === s ? '' : s; paginaClienti = 1">
               <span x-text="formattaStato(s)"></span> · <span x-text="conteggiPerStato()[s]"></span>
@@ -830,7 +838,7 @@
           <button type="button" @click="cambiaPaginaClienti(1)" :disabled="paginaClienti === totalePagineClienti()">›</button>
         </div>
 
-        <div x-show="clienti.length === 0 && !erroreClienti && !caricandoClienti" class="home-empty">
+        <div x-show="!isAdmin && view === 'lista' && clientiDiretti().length === 0 && !erroreClienti && !caricandoClienti" class="home-empty">
           <div class="home-empty-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="9" cy="8" r="3.2"/>
@@ -5936,7 +5944,7 @@
 
         <div class="pipeline-client-count">
           <span>CLIENTI</span>
-          <h1 x-text="clienti.length"></h1>
+          <h1 x-text="clientiDiretti().length"></h1>
         </div>
       </div>
 
@@ -5964,7 +5972,7 @@
             </div>
 
             <div class="pipeline-cards-v2">
-              <template x-if="caricandoClienti && clienti.length === 0">
+              <template x-if="caricandoClienti && clientiDiretti().length === 0">
                 <div>
                   <template x-for="n in 3" :key="'skeleton-pipeline-' + stato.valore + '-' + n">
                     <div class="skeleton-pipeline-card" aria-hidden="true">
@@ -6017,7 +6025,7 @@
                 </article>
               </template>
 
-              <div x-show="clientiPipeline(stato.valore).length === 0 && !(caricandoClienti && clienti.length === 0)" class="pipeline-empty-v2">
+              <div x-show="clientiPipeline(stato.valore).length === 0 && !(caricandoClienti && clientiDiretti().length === 0)" class="pipeline-empty-v2">
                 <div class="pipeline-empty-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h10M4 17h7"/></svg>
                 </div>
@@ -7168,7 +7176,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=141', {
+      navigator.serviceWorker.register('./service-worker.js?v=142', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
