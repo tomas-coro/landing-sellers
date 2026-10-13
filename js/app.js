@@ -36,8 +36,20 @@ function filtraClientiVenditore(clienti = [], venditoreId = '', venditoriTeamIds
   return clienti;
 }
 
-function filtroVenditoreTeamIniziale(venditoriTeam = [], utenteId = '') {
-  return venditoriTeam.length > 1 ? '' : utenteId;
+function profiloHaAccessoGlobaleClienti(profilo = {}) {
+  return profilo.ruolo === 'developer' || profilo.ruolo_economico === 'referente';
+}
+
+function filtroVenditoreTeamIniziale(venditoriTeam = [], utenteId = '', accessoGlobale = false) {
+  return accessoGlobale || venditoriTeam.length > 1 ? '' : utenteId;
+}
+
+function clientiHomeProfilo(clienti = [], utenteId = '', accessoGlobale = false) {
+  return accessoGlobale ? clienti : filtraClientiVenditore(clienti, utenteId);
+}
+
+function nomeVenditoreCliente(cliente = {}, venditori = []) {
+  return venditori.find(venditore => venditore.id === cliente.venditore_id)?.nome || 'Non assegnato';
 }
 
 function normalizzaClientePerSalvataggio(form) {
@@ -264,7 +276,7 @@ function clientiAttribuitiAlProfilo(profiloId, clienti = [], vendite = [], parte
 }
 
 function ordinaTeamEconomico(venditori = []) {
-  const ordine = ['alessandro', 'tomas', 'nicola'];
+  const ordine = ['tomas', 'alessandro', 'nicola', 'nicholas cerma', 'selim'];
   return [...venditori].sort((a, b) => {
     const nomeA = String(a.nome || '').trim().toLowerCase();
     const nomeB = String(b.nome || '').trim().toLowerCase();
@@ -866,7 +878,7 @@ function appState() {
     nuovoProfiloErrore: '',
     nuovoProfiloSuccesso: '',
 
-    profilo: { nome: '', username: '', avatar_url: '', ruolo: '' },
+    profilo: { nome: '', username: '', avatar_url: '', ruolo: '', ruolo_economico: null },
     profiloPersonale: { nome: '', username: '', avatar_url: '', ruolo: '', email: '' },
     profiloForm: { username: '' },
     avatarPosizione: { x: 50, y: 50, zoom: 1 },
@@ -1232,10 +1244,11 @@ function appState() {
       this.accountSlot = window.AccountSessions.getActiveSlot();
 
       const { data: profilo } = await window.supabaseClient
-        .from('profili').select('nome,ruolo,username,avatar_url').eq('id', this.sessione.user.id).single();
+        .from('profili').select('nome,ruolo,ruolo_economico,username,avatar_url').eq('id', this.sessione.user.id).single();
       this.profilo = {
         nome: profilo?.nome || '',
         ruolo: profilo?.ruolo || 'venditore',
+        ruolo_economico: profilo?.ruolo_economico || null,
         username: profilo?.username || '',
         avatar_url: profilo?.avatar_url || ''
       };
@@ -1373,7 +1386,8 @@ function appState() {
     apriClienti() {
       this.filtroVenditoreTeamId = filtroVenditoreTeamIniziale(
         this.venditoriTeam,
-        this.sessione?.user?.id || ''
+        this.sessione?.user?.id || '',
+        profiloHaAccessoGlobaleClienti(this.profilo)
       );
       this.filtroTesto = '';
       this.filtroStato = '';
@@ -2521,12 +2535,15 @@ costiPerMotoreRataEconomia(
       const { data, error } = await window.supabaseClient
         .rpc('venditori_team_corrente');
 
-      this.venditoriTeam = error || !data?.length
-        ? [{ id: this.sessione.user.id, nome: this.profilo.nome, livello: 0 }]
-        : data;
+      this.venditoriTeam = ordinaTeamEconomico(
+        error || !data?.length
+          ? [{ id: this.sessione.user.id, nome: this.profilo.nome, livello: 0 }]
+          : data
+      );
       this.filtroVenditoreTeamId = filtroVenditoreTeamIniziale(
         this.venditoriTeam,
-        this.sessione.user.id
+        this.sessione.user.id,
+        profiloHaAccessoGlobaleClienti(this.profilo)
       );
     },
 
@@ -3227,9 +3244,10 @@ costiPerMotoreRataEconomia(
     },
 
     clientiDiretti() {
-      return filtraClientiVenditore(
+      return clientiHomeProfilo(
         this.clienti,
-        this.sessione?.user?.id || ''
+        this.sessione?.user?.id || '',
+        profiloHaAccessoGlobaleClienti(this.profilo)
       );
     },
 
@@ -3241,10 +3259,8 @@ costiPerMotoreRataEconomia(
       );
     },
 
-    nomeVenditoreTeam(venditore) {
-      return venditore.id === this.sessione?.user?.id
-        ? 'I miei'
-        : venditore.nome;
+    nomeVenditoreCliente(cliente) {
+      return nomeVenditoreCliente(cliente, this.venditoriTeam);
     },
 
     clientiRecenti() {
@@ -3355,9 +3371,8 @@ costiPerMotoreRataEconomia(
       };
       this.trendDatiVenditore = [];
 
-      // Il developer non ha una quota su ogni vendita: il grafico gli serve
-      // per vedere il totale venduto dall'azienda, non la propria parte.
-      const isDeveloper = this.profilo.ruolo === 'developer';
+      // Tomas e Alessandro hanno visibilità globale anche nel trend aziendale.
+      const accessoGlobale = profiloHaAccessoGlobaleClienti(this.profilo);
 
       try {
         const partecipazioni = await window.supabaseClient
@@ -3376,7 +3391,7 @@ costiPerMotoreRataEconomia(
         });
 
         const ids = Object.keys(quotePerVendita);
-        if (!ids.length && !isDeveloper) return;
+        if (!ids.length && !accessoGlobale) return;
 
         const clientiPerId = Object.fromEntries(this.clienti.map(cliente => [cliente.id, cliente]));
 
@@ -3420,7 +3435,7 @@ costiPerMotoreRataEconomia(
             incassatoPerVendita
           );
 
-          if (!isDeveloper) {
+          if (!accessoGlobale) {
             this.trendDatiVenditore = serieMensileValore(
               vendite.data || [],
               clientiPerId,
@@ -3429,7 +3444,7 @@ costiPerMotoreRataEconomia(
           }
         }
 
-        if (isDeveloper) {
+        if (accessoGlobale) {
           const venditeGenerali = await window.supabaseClient
             .from('vendite')
             .select('id,cliente_id,importo_vendita,stato,venditore_id,data_vendita');
@@ -4792,6 +4807,9 @@ if (typeof module !== 'undefined') {
     ultimiClienti,
     filtraClientiVenditore,
     filtroVenditoreTeamIniziale,
+    profiloHaAccessoGlobaleClienti,
+    clientiHomeProfilo,
+    nomeVenditoreCliente,
     normalizzaClientePerSalvataggio,
     prezzoRicorrenteDaForm,
     etichettaDurataScontoForm,

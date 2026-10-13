@@ -1007,20 +1007,20 @@ test('il venduto conta ogni cliente una volta e include quelli non pubblicati', 
   assert.strictEqual(statistiche.mediaVendita, 312);
 });
 
-test('il team mostra Alessandro, Tomas, Nicola e poi i futuri venditori', () => {
+test('il team segue l’ordine operativo concordato', () => {
   const team = [
-    { nome: 'Zeno' },
+    { nome: 'Selim' },
+    { nome: 'Nicholas Cerma' },
     { nome: 'Nicola' },
     { nome: 'Tomas' },
-    { nome: 'Alessandro' },
-    { nome: 'Bruno' }
+    { nome: 'Alessandro' }
   ];
 
   assert.deepStrictEqual(
     ordinaTeamEconomico(team).map(persona => persona.nome),
-    ['Alessandro', 'Tomas', 'Nicola', 'Bruno', 'Zeno']
+    ['Tomas', 'Alessandro', 'Nicola', 'Nicholas Cerma', 'Selim']
   );
-  assert.strictEqual(team[0].nome, 'Zeno');
+  assert.strictEqual(team[0].nome, 'Selim');
 });
 
 test('la classifica ordina i venditori per venduto ed esclude il developer', () => {

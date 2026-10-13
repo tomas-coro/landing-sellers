@@ -636,14 +636,15 @@
             <input type="search" placeholder="Cerca per nome o referente..." aria-label="Cerca clienti per nome o referente" x-model="filtroTesto" @input="paginaClienti = 1">
           </div>
         </div>
-        <div class="filtro-stati home-filter-scroll" x-show="!isAdmin && view === 'clienti' && venditoriTeam.length > 1">
-          <button type="button" class="chip-stato" :class="{ on: filtroVenditoreTeamId === '' }" @click="filtroVenditoreTeamId = ''; paginaClienti = 1">Tutto il team</button>
-          <template x-for="venditore in venditoriTeam" :key="'team-' + venditore.id">
-            <button type="button" class="chip-stato" :class="{ on: filtroVenditoreTeamId === venditore.id }" @click="filtroVenditoreTeamId = venditore.id; paginaClienti = 1">
-              <span x-text="nomeVenditoreTeam(venditore)"></span> · <span x-text="filtraClientiVenditore(clienti, venditore.id).length"></span>
-            </button>
-          </template>
-        </div>
+        <label class="seller-filter" x-show="!isAdmin && view === 'clienti' && venditoriTeam.length > 1">
+          <span>Venditore</span>
+          <select x-model="filtroVenditoreTeamId" @change="paginaClienti = 1">
+            <option value="">Tutti i venditori</option>
+            <template x-for="venditore in venditoriTeam" :key="'team-' + venditore.id">
+              <option :value="venditore.id" x-text="venditore.nome + ' · ' + filtraClientiVenditore(clienti, venditore.id).length"></option>
+            </template>
+          </select>
+        </label>
         <div class="filtro-stati home-filter-scroll" x-show="(isAdmin || view === 'clienti') && clienti.length > 0">
           <button type="button" class="chip-stato" :class="{ on: filtroStato === '' }" @click="filtroStato = ''; paginaClienti = 1">Tutti · <span x-text="isAdmin ? clienti.length : clientiFiltroVenditore().length"></span></button>
           <template x-for="s in ['contattato','brief_mandato','vinto','perso']" :key="s">
@@ -651,9 +652,7 @@
               <span x-text="formattaStato(s)"></span> · <span x-text="conteggiPerStato()[s]"></span>
             </button>
           </template>
-        </div>
-
-        <div class="filtro-stati home-filter-scroll" x-show="(isAdmin || view === 'clienti') && clienti.length > 0">
+          <span class="filter-divider" aria-hidden="true"></span>
           <template x-for="opz in [
             { campo: 'nome', etichetta: 'Nome' },
             { campo: 'importo', etichetta: 'Importo' },
@@ -700,6 +699,9 @@
                 </strong>
                 <small
                   x-text="schedaClienteCompleta(cliente).pacchetto">
+                </small>
+                <small class="home-client-seller">
+                  Venditore · <span x-text="nomeVenditoreCliente(cliente)"></span>
                 </small>
               </div>
 
@@ -7176,7 +7178,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=143', {
+      navigator.serviceWorker.register('./service-worker.js?v=145', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

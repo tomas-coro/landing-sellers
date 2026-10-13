@@ -4,7 +4,10 @@ const {
   filtroVenditoreClienti,
   ultimiClienti,
   filtraClientiVenditore,
-  filtroVenditoreTeamIniziale
+  filtroVenditoreTeamIniziale,
+  profiloHaAccessoGlobaleClienti,
+  nomeVenditoreCliente,
+  clientiHomeProfilo
 } = require('../js/app.js');
 
 test('un venditore non filtra i clienti prima delle regole RLS', () => {
@@ -30,6 +33,35 @@ test('un responsabile apre tutti i clienti visibili, un venditore solo i propri'
     filtroVenditoreTeamIniziale([{ id: 'nicola' }], 'nicola'),
     'nicola'
   );
+  assert.strictEqual(
+    filtroVenditoreTeamIniziale([{ id: 'tomas' }], 'tomas', true),
+    ''
+  );
+});
+
+test('solo Tomas e Alessandro hanno accesso globale ai clienti', () => {
+  assert.strictEqual(profiloHaAccessoGlobaleClienti({ ruolo: 'developer' }), true);
+  assert.strictEqual(profiloHaAccessoGlobaleClienti({ ruolo: 'venditore', ruolo_economico: 'referente' }), true);
+  assert.strictEqual(profiloHaAccessoGlobaleClienti({ ruolo: 'venditore' }), false);
+
+  const clienti = [
+    { id: 'a', venditore_id: 'alessandro' },
+    { id: 'n', venditore_id: 'nicola' }
+  ];
+
+  assert.deepStrictEqual(clientiHomeProfilo(clienti, 'tomas', true), clienti);
+  assert.deepStrictEqual(clientiHomeProfilo(clienti, 'alessandro', true), clienti);
+  assert.deepStrictEqual(clientiHomeProfilo(clienti, 'nicola', false), [clienti[1]]);
+});
+
+test('ogni cliente mostra il proprio venditore', () => {
+  const venditori = [
+    { id: 'tomas', nome: 'Tomas' },
+    { id: 'alessandro', nome: 'Alessandro' }
+  ];
+
+  assert.strictEqual(nomeVenditoreCliente({ venditore_id: 'alessandro' }, venditori), 'Alessandro');
+  assert.strictEqual(nomeVenditoreCliente({ venditore_id: 'sconosciuto' }, venditori), 'Non assegnato');
 });
 
 test('il filtro separa i clienti diretti da quelli del team', () => {

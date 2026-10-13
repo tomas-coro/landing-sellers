@@ -370,6 +370,11 @@ html[data-theme="dark"] .skeleton-payment-row{border-bottom-color:var(--line)}
   background:var(--card);border:1.5px solid var(--line);border-radius:11px;padding:10px 13px}
 .search-row input:focus{outline:none;border-color:var(--ink)}
 .search-row input::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none}
+.seller-filter{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:12px;
+  margin-bottom:12px;padding:8px 10px 8px 13px;border:1.5px solid var(--line);border-radius:11px;background:var(--card)}
+.seller-filter>span{font-size:14px;font-weight:800;color:var(--muted)}
+.seller-filter select{min-width:0;width:100%;border:0;background:transparent;color:var(--ink);font:inherit;
+  font-size:15px;font-weight:750;text-align:right;outline:none;cursor:pointer}
 .filtro-stati{display:flex;gap:7px;overflow-x:auto;margin-bottom:16px;padding-bottom:2px;
   -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 24px),transparent 100%);
   mask-image:linear-gradient(to right,#000 calc(100% - 24px),transparent 100%)}
@@ -377,6 +382,7 @@ html[data-theme="dark"] .skeleton-payment-row{border-bottom-color:var(--line)}
 .chip-stato{flex:none;font-family:var(--sans);font-size:15px;font-weight:700;white-space:nowrap;
   padding:7px 12px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer}
 .chip-stato.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.filter-divider{width:1px;align-self:stretch;flex:none;background:var(--line);margin:2px 2px}
 
 .pill{font-size:14px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;
   padding:5px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex:none}
@@ -1029,6 +1035,7 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 .home-client-main{display:grid;gap:1px;min-width:0}
 .home-client-main>strong{font-size:19px;font-weight:850;letter-spacing:-.01em}
 .home-client-main>small{font-size:12px;color:var(--muted);font-weight:650}
+.home-client-main>.home-client-seller{color:var(--ink);font-weight:750}
 .home-client-meta{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:9px}
 .home-client-value-label{font-size:11px;line-height:1.2;color:var(--muted);font-weight:800;letter-spacing:.055em}
 .home-client-meta strong{color:var(--ink);font-size:16px;line-height:1.15;font-weight:850;text-align:right}
