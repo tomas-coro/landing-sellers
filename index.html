@@ -610,11 +610,6 @@
           </section>
         </div>
 
-        <button type="button" class="alert-ritardo" :class="{ on: filtroSoloRitardo }" x-show="(isAdmin || view === 'clienti') && clientiInRitardo().length > 0" @click="toggleFiltroSoloRitardo()">
-          <span x-text="clientiInRitardo().length === 1 ? '1 cliente con contatto in ritardo' : clientiInRitardo().length + ' clienti con contatto in ritardo'"></span>
-          <span x-text="filtroSoloRitardo ? 'mostra tutti' : 'mostra solo questi'"></span>
-        </button>
-
         <div class="home-all-clients-head home-recent-head" x-show="!isAdmin && view === 'lista' && clientiDiretti().length > 0">
           <div>
             <span>CLIENTI</span>
@@ -631,38 +626,105 @@
           <small x-text="isAdmin ? clienti.length : clientiFiltroVenditore().length"></small>
         </div>
 
-        <div class="client-search-tools" x-show="(isAdmin || view === 'clienti') && clienti.length > 0">
-          <div class="search-row">
-            <input type="search" placeholder="Cerca per nome o referente..." aria-label="Cerca clienti per nome o referente" x-model="filtroTesto" @input="paginaClienti = 1">
-          </div>
+        <div class="client-toolbar" x-show="(isAdmin || view === 'clienti') && clienti.length > 0">
+          <label class="client-toolbar-search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
+            <span class="sr-only">Cerca clienti per nome o referente</span>
+            <input type="search" placeholder="Cerca..." x-model="filtroTesto" @input="paginaClienti = 1">
+          </label>
+          <button
+            type="button"
+            class="client-tool-button"
+            :class="{ active: numeroFiltriClientiAttivi() > 0 }"
+            @click="pannelloClienti = 'filtri'"
+            aria-label="Apri filtri clienti">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M7 12h10M10 17h4"></path></svg>
+            <span>Filtri</span>
+            <sup x-show="numeroFiltriClientiAttivi()" x-text="numeroFiltriClientiAttivi()"></sup>
+          </button>
+          <button
+            type="button"
+            class="client-tool-button client-sort-button"
+            @click="pannelloClienti = 'ordine'"
+            :aria-label="'Ordina clienti: ' + etichettaOrdinamentoClienti()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h8M8 18h4M4 5v14"></path></svg>
+          </button>
         </div>
-        <label class="seller-filter" x-show="!isAdmin && view === 'clienti' && venditoriTeam.length > 1">
-          <span>Venditore</span>
-          <select x-model="filtroVenditoreTeamId" @change="paginaClienti = 1">
-            <option value="">Tutti i venditori</option>
-            <template x-for="venditore in venditoriTeam" :key="'team-' + venditore.id">
-              <option :value="venditore.id" x-text="venditore.nome + ' · ' + filtraClientiVenditore(clienti, venditore.id).length"></option>
+
+        <div class="client-active-filters" x-show="numeroFiltriClientiAttivi() > 0" x-cloak>
+          <span x-show="filtroStato">
+            <span x-text="formattaStato(filtroStato)"></span>
+            <button type="button" @click="filtroStato = ''; paginaClienti = 1" aria-label="Rimuovi filtro stato">×</button>
+          </span>
+          <span x-show="filtroVenditoreTeamId && venditoriTeam.length > 1">
+            <span x-text="nomeVenditoreCliente({ venditore_id: filtroVenditoreTeamId })"></span>
+            <button type="button" @click="filtroVenditoreTeamId = ''; paginaClienti = 1" aria-label="Rimuovi filtro venditore">×</button>
+          </span>
+          <span x-show="filtroSoloRitardo">
+            In ritardo
+            <button type="button" @click="toggleFiltroSoloRitardo()" aria-label="Rimuovi filtro ritardi">×</button>
+          </span>
+        </div>
+
+        <div
+          class="client-filter-overlay"
+          x-show="pannelloClienti"
+          x-cloak
+          @click.self="pannelloClienti = ''"
+          @keydown.escape.window="pannelloClienti = ''">
+          <section class="client-filter-sheet" role="dialog" aria-modal="true" :aria-label="pannelloClienti === 'filtri' ? 'Filtra clienti' : 'Ordina clienti'">
+            <template x-if="pannelloClienti === 'filtri'">
+              <div>
+                <div class="client-sheet-head">
+                  <h2>Filtra clienti</h2>
+                  <button type="button" @click="azzeraFiltriClienti()" x-show="numeroFiltriClientiAttivi()">Azzera</button>
+                </div>
+                <fieldset class="client-sheet-group">
+                  <legend>Stato</legend>
+                  <div class="client-sheet-options">
+                    <button type="button" :class="{ on: filtroStato === '' }" @click="filtroStato = ''; paginaClienti = 1">Tutti</button>
+                    <template x-for="s in ['contattato','brief_mandato','vinto','perso']" :key="'filter-' + s">
+                      <button type="button" :class="{ on: filtroStato === s }" @click="filtroStato = s; paginaClienti = 1" x-text="formattaStato(s)"></button>
+                    </template>
+                  </div>
+                </fieldset>
+                <label class="client-sheet-select" x-show="!isAdmin && venditoriTeam.length > 1">
+                  <span>Venditore</span>
+                  <select x-model="filtroVenditoreTeamId" @change="paginaClienti = 1">
+                    <option value="">Tutti i venditori</option>
+                    <template x-for="venditore in venditoriTeam" :key="'sheet-team-' + venditore.id">
+                      <option :value="venditore.id" x-text="venditore.nome + ' · ' + filtraClientiVenditore(clienti, venditore.id).length"></option>
+                    </template>
+                  </select>
+                </label>
+                <button type="button" class="client-sheet-toggle" :class="{ on: filtroSoloRitardo }" @click="toggleFiltroSoloRitardo()">
+                  <span>Contatti in ritardo</span>
+                  <strong x-text="clientiInRitardo().length"></strong>
+                </button>
+                <button type="button" class="client-sheet-apply" @click="pannelloClienti = ''" x-text="'Mostra ' + clientiFiltrati().length + ' clienti'"></button>
+              </div>
             </template>
-          </select>
-        </label>
-        <div class="filtro-stati home-filter-scroll" x-show="(isAdmin || view === 'clienti') && clienti.length > 0">
-          <button type="button" class="chip-stato" :class="{ on: filtroStato === '' }" @click="filtroStato = ''; paginaClienti = 1">Tutti · <span x-text="isAdmin ? clienti.length : clientiFiltroVenditore().length"></span></button>
-          <template x-for="s in ['contattato','brief_mandato','vinto','perso']" :key="s">
-            <button type="button" class="chip-stato" :class="{ on: filtroStato === s }" @click="filtroStato = filtroStato === s ? '' : s; paginaClienti = 1">
-              <span x-text="formattaStato(s)"></span> · <span x-text="conteggiPerStato()[s]"></span>
-            </button>
-          </template>
-          <span class="filter-divider" aria-hidden="true"></span>
-          <template x-for="opz in [
-            { campo: 'nome', etichetta: 'Nome' },
-            { campo: 'importo', etichetta: 'Importo' },
-            { campo: 'prossimo_contatto', etichetta: 'Prossimo contatto' },
-            { campo: 'creato_il', etichetta: 'Più recenti' }
-          ]" :key="opz.campo">
-            <button type="button" class="chip-stato" :class="{ on: ordinamento === opz.campo }" @click="impostaOrdinamento(opz.campo)">
-              <span x-text="opz.etichetta"></span><span x-show="ordinamento === opz.campo" x-text="ordinamentoDesc ? ' ↓' : ' ↑'"></span>
-            </button>
-          </template>
+
+            <template x-if="pannelloClienti === 'ordine'">
+              <div>
+                <div class="client-sheet-head"><h2>Ordina clienti</h2></div>
+                <div class="client-sort-options">
+                  <template x-for="opz in [
+                    { campo: 'creato_il', etichetta: 'Più recenti' },
+                    { campo: 'nome', etichetta: 'Nome' },
+                    { campo: 'importo', etichetta: 'Importo' },
+                    { campo: 'prossimo_contatto', etichetta: 'Prossimo contatto' }
+                  ]" :key="'sort-' + opz.campo">
+                    <button type="button" :class="{ on: ordinamento === opz.campo }" @click="impostaOrdinamento(opz.campo)">
+                      <span x-text="opz.etichetta"></span>
+                      <strong x-show="ordinamento === opz.campo" x-text="ordinamentoDesc ? '↓' : '↑'"></strong>
+                    </button>
+                  </template>
+                </div>
+                <button type="button" class="client-sheet-apply" @click="pannelloClienti = ''">Applica ordine</button>
+              </div>
+            </template>
+          </section>
         </div>
 
         <div class="skeleton-clienti" x-show="caricandoClienti && clienti.length === 0" aria-hidden="true">
@@ -725,100 +787,57 @@
               </div>
             </div>
 
-            <div class="home-client-meta">
-              <span class="home-client-value-label">
-                VALORE ANNUALE
-              </span>
-              <strong
-                x-text="schedaClienteCompleta(cliente).valoreAnnualeLabel">
-              </strong>
-            </div>
+            <div class="client-card-data">
+              <div>
+                <span>VALORE</span>
+                <strong
+                  x-text="schedaClienteCompleta(cliente).valoreAnnualeLabel">
+                </strong>
+              </div>
 
-            <div class="client-status-strip">
-
-              <div class="client-status-cell secondary">
+              <div>
                 <span>CONTRATTO</span>
                 <strong
-                  x-text="schedaClienteCompleta(cliente).durataContrattoLabel">
-                </strong>
-                <small
                   x-text="schedaClienteCompleta(cliente).periodicitaContrattoLabel">
-                </small>
-              </div>
-
-              <div
-                class="client-status-cell client-status-next"
-                :class="{ overdue: schedaClienteCompleta(cliente).prossimaScadenzaInRitardo }">
-                <span>PROSSIMA</span>
-
-                <strong
-                  x-text="schedaClienteCompleta(cliente).prossimaScadenzaLabel">
                 </strong>
-
                 <small
-                  x-text="schedaClienteCompleta(cliente).prossimaScadenzaDataLabel">
+                  x-text="schedaClienteCompleta(cliente).durataContrattoLabel">
                 </small>
               </div>
 
-              <div class="client-status-cell client-status-payment">
-                <span>INCASSATO</span>
-
+              <div>
+                <span>PAGATO</span>
                 <strong
-                  x-show="
-                    schedaClienteCompleta(cliente).totalePagamento > 0
-                  ">
-                  <span
-                    x-text="
-                      formattaNumeroEuro(
-                        schedaClienteCompleta(cliente).incassato
-                      )
-                    ">
-                  </span>
-                  <em
-                    x-text="
-                      '/ ' +
-                      formattaNumeroEuro(
-                        schedaClienteCompleta(cliente).totalePagamento
-                      )
-                    ">
-                  </em>
+                  x-text="schedaClienteCompleta(cliente).totalePagamento > 0
+                    ? Math.round(schedaClienteCompleta(cliente).percentualeIncassata) + '%'
+                    : '-'">
                 </strong>
-
-                <strong
-                  x-show="
-                    schedaClienteCompleta(cliente).totalePagamento === 0
-                  ">
-                  -
-                </strong>
-
-                <div
-                  class="client-payment-progress"
-                  x-show="
-                    schedaClienteCompleta(cliente).totalePagamento > 0
-                  ">
-                  <i
-                    :style="{
-                      width:
-                        riepilogoPagamentoListaCliente(cliente)
-                          .percentualeIncassata + '%'
-                    }">
-                  </i>
-                </div>
-
                 <small
-                  x-text="
-                    schedaClienteCompleta(cliente).totalePagamento > 0
-                      ? (
-                          Math.round(
-                            riepilogoPagamentoListaCliente(cliente)
-                              .percentualeIncassata
-                          ) + '% pagato'
-                        )
-                      : 'Importo non indicato'
-                  ">
+                  x-text="schedaClienteCompleta(cliente).totalePagamento > 0
+                    ? formattaNumeroEuro(schedaClienteCompleta(cliente).incassato)
+                    : 'Non indicato'">
                 </small>
               </div>
+            </div>
 
+            <div
+              class="client-card-next"
+              :class="{ overdue: schedaClienteCompleta(cliente).prossimaScadenzaInRitardo }">
+              <span>PROSSIMA</span>
+              <strong
+                x-text="schedaClienteCompleta(cliente).prossimaScadenzaLabel">
+              </strong>
+              <small
+                x-text="schedaClienteCompleta(cliente).prossimaScadenzaDataLabel">
+              </small>
+            </div>
+
+            <div
+              class="client-payment-progress"
+              x-show="schedaClienteCompleta(cliente).totalePagamento > 0">
+              <i
+                :style="{ width: schedaClienteCompleta(cliente).percentualeIncassata + '%' }">
+              </i>
             </div>
 
             <span

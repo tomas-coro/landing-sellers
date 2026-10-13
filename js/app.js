@@ -685,6 +685,7 @@ function appState() {
     cmdkTesto: '',
     cmdkIndiceAttivo: 0,
     filtroSoloRitardo: false,
+    pannelloClienti: '',
     ordinamento: 'prossimo_contatto',
     ordinamentoDesc: false,
     paginaClienti: 1,
@@ -1392,6 +1393,7 @@ function appState() {
       this.filtroTesto = '';
       this.filtroStato = '';
       this.filtroSoloRitardo = false;
+      this.pannelloClienti = '';
       this.ordinamento = 'creato_il';
       this.ordinamentoDesc = true;
       this.paginaClienti = 1;
@@ -4351,6 +4353,28 @@ costiPerMotoreRataEconomia(
     toggleFiltroSoloRitardo() {
       this.filtroSoloRitardo = !this.filtroSoloRitardo;
       this.paginaClienti = 1;
+    },
+
+    numeroFiltriClientiAttivi() {
+      return Number(Boolean(this.filtroStato)) +
+        Number(Boolean(this.filtroSoloRitardo)) +
+        Number(this.venditoriTeam.length > 1 && Boolean(this.filtroVenditoreTeamId));
+    },
+
+    azzeraFiltriClienti() {
+      this.filtroStato = '';
+      this.filtroVenditoreTeamId = '';
+      this.filtroSoloRitardo = false;
+      this.paginaClienti = 1;
+    },
+
+    etichettaOrdinamentoClienti() {
+      return ({
+        nome: 'Nome',
+        importo: 'Importo',
+        prossimo_contatto: 'Prossimo contatto',
+        creato_il: 'Più recenti'
+      })[this.ordinamento] || 'Più recenti';
     },
 
     ordinaClienti(elenco) {

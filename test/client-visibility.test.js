@@ -7,11 +7,25 @@ const {
   filtroVenditoreTeamIniziale,
   profiloHaAccessoGlobaleClienti,
   nomeVenditoreCliente,
-  clientiHomeProfilo
+  clientiHomeProfilo,
+  appState
 } = require('../js/app.js');
 
 test('un venditore non filtra i clienti prima delle regole RLS', () => {
   assert.strictEqual(filtroVenditoreClienti(false, ''), '');
+});
+
+test('la barra clienti conta e azzera solo i filtri modificabili', () => {
+  const stato = appState();
+  stato.venditoriTeam = [{ id: 'a' }, { id: 'b' }];
+  stato.filtroStato = 'brief_mandato';
+  stato.filtroVenditoreTeamId = 'a';
+  stato.filtroSoloRitardo = true;
+
+  assert.strictEqual(stato.numeroFiltriClientiAttivi(), 3);
+  stato.azzeraFiltriClienti();
+  assert.strictEqual(stato.numeroFiltriClientiAttivi(), 0);
+  assert.strictEqual(stato.paginaClienti, 1);
 });
 
 test('un admin può filtrare la dashboard per venditore', () => {
