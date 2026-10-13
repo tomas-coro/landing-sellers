@@ -643,6 +643,7 @@ function appState() {
     passwordInput: '',
     modalitaAccesso: 'login',
     nuovaPasswordInput: '',
+    emailRecupero: '',
     confermaPasswordInput: '',
     recuperoInCorso: false,
 
@@ -1145,8 +1146,9 @@ function appState() {
         }
       });
 
-      window.AccountSessions.getClient('personale').auth.onAuthStateChange(event => {
+      window.AccountSessions.getClient('personale').auth.onAuthStateChange((event, session) => {
         if (event !== 'PASSWORD_RECOVERY') return;
+        this.emailRecupero = emailDaSessione(session);
         this.modalitaAccesso = 'nuova-password';
         this.view = 'login';
         this.sessione = null;
@@ -1160,12 +1162,20 @@ function appState() {
       ) {
         this.modalitaAccesso = 'nuova-password';
         this.view = 'login';
+        // L'evento PASSWORD_RECOVERY può partire prima che l'app lo ascolti:
+        // leggo l'email direttamente dalla sessione creata dal link.
+        window.AccountSessions.getClient('personale').auth.getSession()
+          .then(({ data }) => {
+            if (!this.emailRecupero) this.emailRecupero = emailDaSessione(data.session);
+          })
+          .catch(err => console.error('Lettura sessione di recupero non riuscita:', err));
         return;
       }
 
       this.sessione = await getSessioneCorrente();
 
       if (sessioneRecuperoPassword(this.sessione)) {
+        this.emailRecupero = emailDaSessione(this.sessione);
         this.modalitaAccesso = 'nuova-password';
         this.view = 'login';
         this.sessione = null;
@@ -1304,6 +1314,8 @@ function appState() {
         history.replaceState(null, '', window.location.pathname);
         this.nuovaPasswordInput = '';
         this.confermaPasswordInput = '';
+        // Precompila l'email nel login, così si entra subito con la nuova password
+        if (this.emailRecupero) this.emailInput = this.emailRecupero;
         this.modalitaAccesso = 'login';
         this.messaggioAccesso = 'Password aggiornata. Ora puoi accedere.';
       } catch (err) {

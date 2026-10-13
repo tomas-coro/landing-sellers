@@ -19,6 +19,12 @@ function sessioneRecuperoPassword(sessione) {
   }
 }
 
+// Email dell'account a cui appartiene la sessione di recupero: serve al
+// portachiavi del telefono per capire quale password salvata aggiornare.
+function emailDaSessione(sessione) {
+  return sessione?.user?.email || '';
+}
+
 if (typeof module !== 'undefined') {
-  module.exports = { mappaErroreLogin, urlRecuperoPassword, sessioneRecuperoPassword };
+  module.exports = { mappaErroreLogin, urlRecuperoPassword, sessioneRecuperoPassword, emailDaSessione };
 }

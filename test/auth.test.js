@@ -4,7 +4,8 @@ const fs = require('node:fs');
 const {
   mappaErroreLogin,
   urlRecuperoPassword,
-  sessioneRecuperoPassword
+  sessioneRecuperoPassword,
+  emailDaSessione
 } = require('../js/auth-logic.js');
 
 test('credenziali errate produce messaggio in italiano', () => {
@@ -42,4 +43,19 @@ test('logout e cambio password chiudono solo la sessione locale', () => {
 
   assert.match(auth, /client\.auth\.signOut\(\{ scope: 'local' \}\)/);
   assert.match(client, /getClient\(slot\)\.auth\.signOut\(\{ scope: 'local' \}\)/);
+});
+
+test('emailDaSessione legge l\'email dell\'account dalla sessione di recupero', () => {
+  assert.strictEqual(emailDaSessione({ user: { email: 'venditore@esempio.it' } }), 'venditore@esempio.it');
+  assert.strictEqual(emailDaSessione(null), '');
+  assert.strictEqual(emailDaSessione({ user: {} }), '');
+});
+
+test('il form nuova password dice al portachiavi a quale account appartiene', () => {
+  const html = fs.readFileSync(require('node:path').join(__dirname, '..', 'index.html'), 'utf8');
+  const inizio = html.indexOf("<form x-show=\"modalitaAccesso === 'nuova-password'\"");
+  const form = html.slice(inizio, html.indexOf('</form>', inizio));
+  assert.match(form, /autocomplete="username"[^>]*x-model="emailRecupero"|x-model="emailRecupero"[^>]*autocomplete="username"/);
+  assert.match(form, /id="new-password"[^>]*name="new-password"/);
+  assert.match(form, /id="confirm-password"[^>]*name="confirm-password"/);
 });

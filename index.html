@@ -362,13 +362,18 @@
       </form>
 
       <form x-show="modalitaAccesso === 'nuova-password'" @submit.prevent="salvaNuovaPassword()" class="login-card" aria-label="Scegli nuova password">
+        <!-- Campo account: senza, il portachiavi di iPhone/Chrome non sa a quale account appartiene la nuova password e non propone di aggiornarla -->
+        <div class="field" x-show="emailRecupero">
+          <label for="recovery-account">Account</label>
+          <input id="recovery-account" name="username" type="email" x-model="emailRecupero" autocomplete="username" readonly>
+        </div>
         <div class="field">
           <label for="new-password">Nuova password</label>
-          <input id="new-password" type="password" x-model="nuovaPasswordInput" autocomplete="new-password" minlength="8" required>
+          <input id="new-password" name="new-password" type="password" x-model="nuovaPasswordInput" autocomplete="new-password" minlength="8" required>
         </div>
         <div class="field">
           <label for="confirm-password">Conferma password</label>
-          <input id="confirm-password" type="password" x-model="confermaPasswordInput" autocomplete="new-password" minlength="8" required>
+          <input id="confirm-password" name="confirm-password" type="password" x-model="confermaPasswordInput" autocomplete="new-password" minlength="8" required>
         </div>
         <p x-show="erroreLogin" x-text="erroreLogin" class="err" role="alert" aria-live="assertive"></p>
         <button type="submit" class="btn btn-primary" :disabled="recuperoInCorso" x-text="recuperoInCorso ? 'Salvataggio...' : 'Salva password'"></button>
@@ -7176,7 +7181,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=148', {
+      navigator.serviceWorker.register('./service-worker.js?v=149', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
