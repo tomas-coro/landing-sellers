@@ -6,6 +6,9 @@
   const passwordRecoveryInUrl = new URLSearchParams(
     window.location.hash.replace(/^#/, '')
   ).get('type') === 'recovery';
+  // Errore di un link email già usato o scaduto: lo leggo adesso, prima che
+  // Supabase ripulisca l'indirizzo (stesso motivo della riga sopra).
+  const erroreLinkInUrl = erroreDaUrl(window.location);
 
   function creaClientPersonale() {
     return window.supabase.createClient(
@@ -80,7 +83,8 @@
     getSession,
     signIn,
     signOut,
-    isPasswordRecovery: () => passwordRecoveryInUrl
+    isPasswordRecovery: () => passwordRecoveryInUrl,
+    erroreLink: () => erroreLinkInUrl
   };
 
   window.supabaseClient = clients[getActiveSlot()];

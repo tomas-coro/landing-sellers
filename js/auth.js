@@ -10,7 +10,9 @@ async function login(email, password) {
     window.AccountSessions.setActiveSlot('personale');
     return sessione;
   } catch (error) {
-    throw new Error(mappaErroreLogin(error));
+    // Dettaglio completo solo in console: all'utente va la frase tradotta
+    console.error('[auth] login non riuscito', error);
+    throw new Error(messaggioErroreAuth(error));
   }
 }
 
@@ -18,7 +20,8 @@ async function loginAccount(slot, email, password) {
   try {
     return await window.AccountSessions.signIn(slot, email, password);
   } catch (error) {
-    throw new Error(mappaErroreLogin(error));
+    console.error(`[auth] login account ${slot} non riuscito`, error);
+    throw new Error(messaggioErroreAuth(error));
   }
 }
 

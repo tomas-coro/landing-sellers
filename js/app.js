@@ -1156,6 +1156,15 @@ function appState() {
         this.messaggioAccesso = '';
       });
 
+      // Link email già usato o scaduto (es. aperto dall'anteprima di WhatsApp):
+      // lo dico sul login invece di mostrarlo vuoto, e ripulisco l'indirizzo.
+      const erroreLink = window.AccountSessions.erroreLink?.() || erroreDaUrl(window.location);
+      if (erroreLink) {
+        console.error('[auth] link email non valido:', erroreLink);
+        this.erroreLogin = erroreLink;
+        history.replaceState(null, '', window.location.pathname);
+      }
+
       if (
         window.AccountSessions.isPasswordRecovery?.() ||
         urlRecuperoPassword(window.location)
@@ -1288,9 +1297,8 @@ function appState() {
         await inviaRecuperoPassword(this.emailInput);
         this.messaggioAccesso = 'Se l’indirizzo è registrato, riceverai un link per scegliere una nuova password.';
       } catch (err) {
-        this.erroreLogin = err.message === 'Failed to fetch'
-          ? 'Connessione assente, riprova'
-          : 'Invio non riuscito. Riprova tra poco.';
+        console.error('[auth] invio recupero password non riuscito', err);
+        this.erroreLogin = messaggioErroreAuth(err);
       } finally {
         this.recuperoInCorso = false;
       }
@@ -1319,9 +1327,8 @@ function appState() {
         this.modalitaAccesso = 'login';
         this.messaggioAccesso = 'Password aggiornata. Ora puoi accedere.';
       } catch (err) {
-        this.erroreLogin = err.message === 'Failed to fetch'
-          ? 'Connessione assente, riprova'
-          : 'Il link non è valido o è scaduto. Richiedine uno nuovo.';
+        console.error('[auth] salvataggio nuova password non riuscito', err);
+        this.erroreLogin = messaggioErroreAuth(err);
       } finally {
         this.recuperoInCorso = false;
       }
