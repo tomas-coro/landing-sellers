@@ -16175,27 +16175,23 @@ html[data-theme="dark"] .pill.s-perso{background:#3a1d19;color:#ff9b91}
   font-size:14px !important;
   font-weight:700;
 }
-.economy-sale-final-summary>.economy-sale-summary-annual{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  margin-top:14px;
-  padding:12px 14px;
-  border:1px dashed var(--line);
-  border-radius:12px;
+.economy-sale-final-summary>.economy-sale-summary-client-total{
+  border-top:2px solid var(--ink);
+  margin-top:6px;
+  font-weight:800;
 }
-.economy-sale-summary-annual>span{
+.economy-sale-final-summary>.economy-sale-summary-section{
+  display:block;
+  margin-top:18px;
+  padding-top:12px;
+  border-top:1px dashed var(--line);
+}
+.economy-sale-summary-section>span{
   font-size:12.5px;
   font-weight:800;
-  letter-spacing:.04em;
+  letter-spacing:.06em;
   text-transform:uppercase;
   color:var(--muted);
-}
-.economy-sale-summary-annual>div{
-  display:flex;
-  justify-content:space-between;
-  gap:16px;
-  font-size:14.5px;
 }
 
 /* ==========================================================
@@ -16346,3 +16342,19 @@ html[data-theme="dark"] .cli-view{--cli-lc:#5a5e52}
 .metrics-readout.metrics-bar-dark{fill:#fff}
 .metrics-bar-label-on{font-weight:900;fill:var(--ink)}
 .metrics-bar-label-on.metrics-bar-dark{fill:#fff}
+
+/* Agenda e home: brief in azzurro, pagamento non registrato in rosso */
+.home-attention-dot.type-brief{background:#4aa3e8}
+.home-attention-dot.type-mancante{background:#d85f5f}
+.agenda-content .agenda-event.ev-brief{border-color:#4aa3e8;background:#eef6fd}
+.agenda-content .agenda-event.ev-brief .agenda-event-date strong,
+.agenda-content .agenda-event.ev-brief .agenda-event-date span{color:#1f6fb2}
+.agenda-content .agenda-event.ev-mancante{border-color:#cf5a51;background:#fff1ee}
+.agenda-content .agenda-event.ev-mancante .agenda-event-date strong,
+.agenda-content .agenda-event.ev-mancante .agenda-event-date span{color:#b3261e}
+html[data-theme="dark"] .agenda-content .agenda-event.ev-brief{background:#14283a;border-color:#5aaff0}
+html[data-theme="dark"] .agenda-content .agenda-event.ev-brief .agenda-event-date strong,
+html[data-theme="dark"] .agenda-content .agenda-event.ev-brief .agenda-event-date span{color:#8cc8f5}
+html[data-theme="dark"] .agenda-content .agenda-event.ev-mancante{background:#3a1d19;border-color:#e0786c}
+html[data-theme="dark"] .agenda-content .agenda-event.ev-mancante .agenda-event-date strong,
+html[data-theme="dark"] .agenda-content .agenda-event.ev-mancante .agenda-event-date span{color:#ff8a7a}

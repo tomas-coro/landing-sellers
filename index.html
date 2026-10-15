@@ -585,10 +585,12 @@
                   <span
                     class="home-attention-dot"
                     :class="[
-                      evento.tipo === 'contatto' && evento.scaduto ? 'type-ritardo' : '',
-                      evento.tipo === 'contatto' && !evento.scaduto ? 'type-oggi' : '',
+                      evento.brief ? 'type-brief' : '',
+                      evento.tipo === 'contatto' && !evento.brief && evento.scaduto ? 'type-ritardo' : '',
+                      evento.tipo === 'contatto' && !evento.brief && !evento.scaduto ? 'type-oggi' : '',
                       evento.tipo === 'rinnovo' ? 'type-rinnovo' : '',
-                      evento.tipo === 'rata' || evento.tipo === 'mancante' ? 'type-rata' : ''
+                      evento.tipo === 'mancante' ? 'type-mancante' : '',
+                      evento.tipo === 'rata' ? 'type-rata' : ''
                     ]">
                   </span>
 
@@ -1834,10 +1836,12 @@
                 <span
                   class="home-attention-dot"
                   :class="[
-                    evento.tipo === 'contatto' && evento.scaduto ? 'type-ritardo' : '',
-                    evento.tipo === 'contatto' && !evento.scaduto ? 'type-oggi' : '',
+                    evento.brief ? 'type-brief' : '',
+                    evento.tipo === 'contatto' && !evento.brief && evento.scaduto ? 'type-ritardo' : '',
+                    evento.tipo === 'contatto' && !evento.brief && !evento.scaduto ? 'type-oggi' : '',
                     evento.tipo === 'rinnovo' ? 'type-rinnovo' : '',
-                    evento.tipo === 'rata' || evento.tipo === 'mancante' ? 'type-rata' : ''
+                    evento.tipo === 'mancante' ? 'type-mancante' : '',
+                    evento.tipo === 'rata' ? 'type-rata' : ''
                   ]">
                 </span>
 
@@ -4108,6 +4112,27 @@
             </div>
           </template>
 
+          <template x-for="riga in righeAnnualiClienteVendita()" :key="riga.descrizione">
+            <div class="economy-sale-summary-sub">
+              <span x-text="'+ ' + riga.descrizione + ' (annuale)'"></span>
+              <strong x-text="formattaEuroEconomia(riga.importo)"></strong>
+            </div>
+          </template>
+
+          <div class="economy-sale-summary-client-total">
+            <span>Totale per il cliente</span>
+            <strong
+              x-text="formattaEuroEconomia(
+                (Number(venditaEconomicaForm.importoVendita) || 0) +
+                totaleAnnualiSeparatiVendita()
+              )">
+            </strong>
+          </div>
+
+          <div class="economy-sale-summary-section">
+            <span>Parte venditori</span>
+          </div>
+
           <div>
             <span>Costi interni</span>
             <strong
@@ -4141,18 +4166,6 @@
               )">
             </strong>
           </div>
-
-          <template x-if="righeAnnualiClienteVendita().length">
-            <div class="economy-sale-summary-annual">
-              <span>A carico del cliente ogni anno (fuori da totale e quote)</span>
-              <template x-for="riga in righeAnnualiClienteVendita()" :key="riga.descrizione">
-                <div>
-                  <span x-text="riga.descrizione"></span>
-                  <strong x-text="formattaEuroEconomia(riga.importo)"></strong>
-                </div>
-              </template>
-            </div>
-          </template>
 
         </section>
 
@@ -5997,7 +6010,11 @@
             <button
               type="button"
               class="agenda-event"
-              :class="{ overdue: evento.scaduto }"
+              :class="{
+                overdue: evento.scaduto && !evento.brief,
+                'ev-brief': evento.brief,
+                'ev-mancante': evento.tipo === 'mancante'
+              }"
               @click="evento.tipo === 'quota' ? apriQuote() : (isAdmin ? apriEventoAdmin(evento) : apriScheda(evento.clienteId))">
               <div class="agenda-event-date">
                 <strong x-text="formattaData(evento.data)"></strong>
@@ -7390,7 +7407,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=159', {
+      navigator.serviceWorker.register('./service-worker.js?v=160', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
