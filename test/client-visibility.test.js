@@ -49,6 +49,14 @@ test('la home mostra gli ultimi cinque clienti e può caricarli tutti senza muta
   assert.deepStrictEqual(clienti.map(c => c.id), [0, 1, 2, 3, 4, 5, 6]);
 });
 
+test('la scheda cliente mostra il collegamento al brief finché è da compilare', () => {
+  const html = require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
+  assert.match(
+    html,
+    /x-show="clienteSelezionato\(\)\.stato === 'contattato'"[\s\S]{0,180}href="https:\/\/landingevolution\.it\/brief\.html"/
+  );
+});
+
 test('di default ognuno parte dai propri clienti, solo Tomas parte da tutti', () => {
   assert.strictEqual(
     filtroVenditoreTeamIniziale([{ id: 'nicholas' }, { id: 'selim' }], 'nicholas'),

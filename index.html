@@ -5033,6 +5033,16 @@
 
         <div class="client-quick-actions">
           <a
+            x-show="clienteSelezionato().stato === 'contattato'"
+            href="https://landingevolution.it/brief.html"
+            target="_blank"
+            rel="noopener"
+            class="client-quick-action">
+            <span>▤</span>
+            <strong>Brief</strong>
+          </a>
+
+          <a
             x-show="clienteSelezionato().telefono"
             :href="'tel:' + telefonoPulito(clienteSelezionato())"
             class="client-quick-action">
@@ -7476,7 +7486,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=169', {
+      navigator.serviceWorker.register('./service-worker.js?v=170', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
