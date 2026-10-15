@@ -643,6 +643,25 @@ function appReteMixinApi() {
   return null;
 }
 
+function appClientiMixinApi() {
+  if (
+    typeof globalThis !== 'undefined' &&
+    globalThis.appClientiMixin
+  ) {
+    return globalThis.appClientiMixin;
+  }
+
+  if (
+    typeof module === 'object' &&
+    module.exports &&
+    typeof require === 'function'
+  ) {
+    return require('./app-clienti.js');
+  }
+
+  return null;
+}
+
 function appFatturatoMixinApi() {
   if (
     typeof globalThis !== 'undefined' &&
@@ -766,6 +785,17 @@ function appState() {
     reteFoglioAperto: false,
     reteFoglioTmp: [],
     reteRicerca: '',
+
+    // Pagina Clienti del venditore (js/app-clienti.js).
+    clientiNodi: null,       // righe di rete_vendita_albero(); null = non ancora caricate
+    erroreAlberoClienti: '',
+    clientiModo: 'own',      // 'own' = I miei diretti, 'rete' = Tutta la rete
+    clientiScelti: [],       // venditori spuntati nel foglio (vuoto = tutti)
+    clientiTesto: '',
+    clientiAperti: { 1: true, 2: true, 3: true, 4: true, 5: false },
+    clientiAltri: {},        // gruppi in cui e stato premuto "Mostra altri"
+    clientiFoglio: '',       // '' | 'venditori' | 'dafare'
+    clientiFoglioTmp: [],
 
     // Vista Fatturato: caricata a richiesta (apriFatturato), mai in cache -
     // così resta sempre coerente con l'ultimo incasso/vendita registrati.
@@ -1537,19 +1567,11 @@ function appState() {
     },
 
     apriClienti() {
-      this.filtroVenditoreTeamId = filtroVenditoreTeamIniziale(
-        this.venditoriTeam,
-        this.sessione?.user?.id || '',
-        profiloVedeTuttiPerDefault(this.profilo)
-      );
-      this.filtroTesto = '';
-      this.filtroStato = '';
-      this.filtroSoloRitardo = false;
-      this.ordinamento = 'creato_il';
-      this.ordinamentoDesc = true;
+      this.clientiReset();
       this.paginaClienti = 1;
       this.view = 'clienti';
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (!this.isAdmin) this.caricaAlberoClienti();
     },
 
     apriRicerca() {
@@ -3461,7 +3483,7 @@ costiPerMotoreRataEconomia(
     risultatiCmdk() {
       const testo = this.cmdkTesto.trim().toLowerCase();
       const clientiDisponibili = this.view === 'clienti'
-        ? this.clientiFiltroVenditore()
+        ? this.clientiNelPerimetro()
         : this.clientiDiretti();
       const lista = clientiDisponibili.filter(c => {
         if (!testo) return true;
@@ -4982,7 +5004,7 @@ costiPerMotoreRataEconomia(
       this.filtroTestoAdmin = '';
       this.view = 'admin';
     }
-  }, appEconomiaMixinApi(), appVenditaMixinApi(), appClienteMixinApi(), appAdminMixinApi(), appFatturatoMixinApi(), appReteMixinApi());
+  }, appEconomiaMixinApi(), appVenditaMixinApi(), appClienteMixinApi(), appAdminMixinApi(), appFatturatoMixinApi(), appReteMixinApi(), appClientiMixinApi());
 }
 
 if (typeof module !== 'undefined') {

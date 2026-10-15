@@ -263,7 +263,7 @@
 
     reteAnni() {
       const anno = new Date().getFullYear();
-      return [anno, anno - 1, anno - 2];
+      return [anno]; // solo l'anno in corso: niente storico per ora
     },
 
     async reteSelezionaAnno(anno) {

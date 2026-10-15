@@ -49,6 +49,7 @@
 <script src="js/app-admin.js" defer></script>
 <script src="js/app-fatturato.js" defer></script>
 <script src="js/app-rete.js" defer></script>
+<script src="js/app-clienti.js" defer></script>
 <script src="js/app.js" defer></script>
 <script defer src="js/vendor/alpine-3.17.4.min.js"></script>
 
@@ -286,7 +287,7 @@
             <span><kbd>↑</kbd><kbd>↓</kbd> naviga</span>
             <span><kbd>↵</kbd> apri scheda</span>
           </div>
-          <span x-text="cmdkTesto ? risultatiCmdk().length + ' risultati' : (view === 'clienti' ? clientiFiltroVenditore().length : clientiDiretti().length) + ' clienti'"></span>
+          <span x-text="cmdkTesto ? risultatiCmdk().length + ' risultati' : (view === 'clienti' ? clientiNelPerimetro().length : clientiDiretti().length) + ' clienti'"></span>
         </div>
       </div>
     </div>
@@ -382,7 +383,7 @@
     </div>
 
     <!-- LISTA CLIENTI -->
-    <div x-show="view === 'lista' || view === 'clienti'" x-transition.opacity.duration.160ms class="app-main-view">
+    <div x-show="view === 'lista' || (isAdmin && view === 'clienti')" x-transition.opacity.duration.160ms class="app-main-view">
       <div class="brandbar">
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
 
@@ -440,8 +441,8 @@
                 <strong x-text="profilo.username || profilo.nome || 'Venditore'"></strong>
               </div>
 
-              <button type="button" @click="apriClienti()">
-                Clienti <span aria-hidden="true">›</span>
+              <button type="button" @click="apriRete()">
+                Rete vendita <span aria-hidden="true">›</span>
               </button>
             </div>
 
@@ -481,12 +482,12 @@
                 <small>Quota maturata</small>
               </div>
 
-              <button type="button" class="home-contract-metric home-contract-metric-clickable" @click="apriRete()">
+              <div class="home-contract-metric">
                 <span>Incassato</span>
                 <strong x-show="!caricandoStatistiche" x-text="formattaEuro(statisticheVenditore.incassato)"></strong>
                 <div class="skeleton-block skeleton-metric-value" x-show="caricandoStatistiche" aria-hidden="true"></div>
-                <small>Quota ricevuta quest'anno · tocca per la Rete vendita</small>
-              </button>
+                <small>Quota ricevuta quest'anno</small>
+              </div>
 
               <div class="home-contract-metric" x-show="profilo.ruolo !== 'developer'">
                 <span>Media vendita</span>
@@ -866,6 +867,95 @@
       </div>
     </div>
 
+
+    <!-- CLIENTI (venditore): barra azioni scadute + gruppi per tappa (js/app-clienti.js, mockup 12) -->
+    <div x-show="!isAdmin && view === 'clienti'" x-cloak x-transition.opacity.duration.160ms class="app-main-view cli-view"
+         x-effect="view !== 'clienti' && clientiFoglio !== '' && clientiChiudiFogli()">
+      <div class="brandbar">
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+        <div class="home-header-actions">
+          <button type="button" class="home-search-trigger" @click="apriRicerca()" aria-label="Ricerca globale">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="topbar">
+        <button type="button" class="linkback" @click="vaiHome()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Home
+        </button>
+        <h1 style="font-size:21px">Clienti</h1>
+      </div>
+      <div class="content">
+        <p x-show="erroreClienti" style="margin-bottom:14px">
+          <span x-text="erroreClienti" class="err"></span>
+          <button type="button" class="retry-btn" x-show="retryClienti" @click="retryClienti && retryClienti.fn()">Riprova</button>
+        </p>
+        <p x-show="erroreAlberoClienti" style="margin-bottom:14px">
+          <span x-text="erroreAlberoClienti" class="err"></span>
+          <button type="button" class="retry-btn" @click="caricaAlberoClienti()">Riprova</button>
+        </p>
+
+        <div x-show="clientiNodi === null && !erroreAlberoClienti" aria-hidden="true">
+          <div class="skeleton-block skeleton-trend"></div>
+        </div>
+
+        <div x-show="clientiNodi !== null">
+          <p class="cli-sub" x-text="clientiEtichettaSottotitolo()"></p>
+
+          <div class="cli-seg" x-show="clientiPerimetro().haSegmento" role="group" aria-label="Quali clienti vedere">
+            <button type="button" :aria-pressed="clientiModo === 'own'" @click="clientiImpostaModo('own')">I miei diretti</button>
+            <button type="button" :aria-pressed="clientiModo === 'rete'" @click="clientiImpostaModo('rete')">Tutta la rete</button>
+          </div>
+
+          <button type="button" class="cli-field" x-show="clientiPerimetro().haCampo" @click="clientiApriFoglioVenditori()">
+            <span>Venditori</span><em x-text="clientiCapFiltro() + ' ▾'"></em>
+          </button>
+
+          <label class="cli-srch">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
+            <input type="search" x-model="clientiTesto" placeholder="Cerca cliente" aria-label="Cerca cliente">
+          </label>
+
+          <button type="button" class="cli-ban" x-show="clientiScadute().length > 0" @click="clientiApriFoglioDaFare()">
+            <span class="cli-dot"></span>
+            <b x-text="clientiScadute().length"></b>
+            <span x-text="clientiScadute().length === 1 ? 'azione scaduta' : 'azioni scadute'"></span>
+            <span class="cli-go">Vedi <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2l4 4-4 4"/></svg></span>
+          </button>
+
+          <div class="skeleton-clienti" x-show="caricandoClienti && clienti.length === 0" aria-hidden="true">
+            <div class="skeleton-block skeleton-trend"></div>
+          </div>
+
+          <div x-show="!(caricandoClienti && clienti.length === 0)" x-html="clientiMarkup()" @click="clientiGestisciClick($event)"></div>
+        </div>
+      </div>
+
+      <div class="cli-sheetbg" x-show="clientiFoglio !== ''" x-cloak @click="clientiChiudiFogli()"></div>
+
+      <div class="cli-sheet" x-show="clientiFoglio === 'dafare'" x-cloak role="dialog" aria-modal="true" aria-label="Azioni scadute"
+           @keydown.escape.window="clientiFoglio !== '' && clientiChiudiFogli()">
+        <div class="cli-shh">
+          <h3 x-text="clientiScadute().length + (clientiScadute().length === 1 ? ' azione scaduta' : ' azioni scadute')"></h3>
+          <button type="button" class="cli-x" @click="clientiChiudiFogli()" aria-label="Chiudi">×</button>
+        </div>
+        <div x-html="clientiMarkupDaFare()" @click="clientiGestisciClick($event)"></div>
+      </div>
+
+      <div class="cli-sheet" x-show="clientiFoglio === 'venditori'" x-cloak role="dialog" aria-modal="true" aria-label="Scegli i venditori">
+        <div class="cli-shh">
+          <h3>Venditori</h3>
+          <button type="button" class="cli-x" @click="clientiChiudiFogli()" aria-label="Chiudi">×</button>
+        </div>
+        <template x-for="n in clientiElencoFoglio()" :key="'cli-opt-' + n.id">
+          <button type="button" class="cli-opt" :class="{ on: clientiFoglioTmp.includes(n.id) }" :data-lv="n.livello"
+                  :aria-pressed="clientiFoglioTmp.includes(n.id)" @click="clientiToggleFoglio(n.id)">
+            <span class="cli-bx">✓</span><span x-text="n.nome"></span><span class="cli-l" x-text="'Lv ' + n.livello"></span>
+          </button>
+        </template>
+        <button type="button" class="cli-apply" @click="clientiApplicaFoglio()">Applica</button>
+      </div>
+    </div>
 
     <!-- PROFILO -->
     <div x-show="view === 'profilo'" x-transition.opacity.duration.160ms class="profile-view app-main-view" :class="{ 'is-personal-profile': !isAdmin }">
@@ -6886,7 +6976,7 @@
           <button type="button" class="retry-btn" @click="caricaRete()">Riprova</button>
         </p>
 
-        <div class="metrics-trend-chips fatturato-year-chips" role="group" aria-label="Anno degli incassi">
+        <div class="metrics-trend-chips fatturato-year-chips" role="group" aria-label="Anno degli incassi" x-show="reteAnni().length > 1">
           <template x-for="anno in reteAnni()" :key="'rete-anno-' + anno">
             <button type="button" :class="{ active: reteAnno === anno }" @click="reteSelezionaAnno(anno)" x-text="anno"></button>
           </template>
@@ -7300,7 +7390,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=155', {
+      navigator.serviceWorker.register('./service-worker.js?v=157', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
