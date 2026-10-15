@@ -4166,6 +4166,24 @@
             </strong>
           </div>
 
+          <div
+            class="economy-sale-summary-reduction"
+            x-show="partecipanteUtenteCorrenteEconomia() &&
+              riduzioneNoFatturaPartecipanteEconomia(partecipanteUtenteCorrenteEconomia()) > 0">
+            <span>
+              Riduzione per mancata fattura
+              <small
+                x-show="partecipanteUtenteCorrenteEconomia()?.modalitaFatturazione === 'nessuna'"
+                x-text="'(-' + Number(venditaEconomicaForm.percentualeRiduzioneNoFattura) + '%)'">
+              </small>
+            </span>
+            <strong
+              x-text="'-' + formattaEuroEconomia(
+                riduzioneNoFatturaPartecipanteEconomia(partecipanteUtenteCorrenteEconomia())
+              )">
+            </strong>
+          </div>
+
           <div class="economy-summary-profit economy-my-share">
             <span
               x-text="
@@ -4583,15 +4601,20 @@
               </div>
 
               <div class="contract-summary-total">
-                <span>Valore canone contratto</span>
+                <span>Valore contratto</span>
                 <strong x-text="formattaEuro(valoreCanoneContratto())"></strong>
               </div>
 
+              <div class="contract-summary-total" x-show="totaleExtra() > 0">
+                <span>Extra (setup, sicurezza, dominio e posta)</span>
+                <strong x-text="formattaEuro(totaleExtra())"></strong>
+              </div>
+
               <div class="contract-summary-grand-total">
-                <span>Valore complessivo stimato</span>
+                <span>Totale vendita</span>
                 <strong x-text="formattaEuro(valoreTotaleContrattoStimato())"></strong>
                 <small x-show="nuovoClienteForm.sconto_tipo === 'prezzo_fisso'">Include tutti i servizi selezionati.</small>
-                <small x-show="nuovoClienteForm.sconto_tipo !== 'prezzo_fisso'">Include canone, setup, sicurezza e costi annuali selezionati per la durata prevista.</small>
+                <small x-show="nuovoClienteForm.sconto_tipo !== 'prezzo_fisso'">Include canone, setup, sicurezza e dominio/posta del primo anno.</small>
               </div>
             </div>
             <p x-show="erroriNuovoCliente.importo_abbonamento" x-text="erroriNuovoCliente.importo_abbonamento" class="err"></p>
@@ -7422,7 +7445,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=162', {
+      navigator.serviceWorker.register('./service-worker.js?v=163', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

@@ -16365,3 +16365,15 @@ html[data-theme="dark"] .agenda-content .agenda-event.ev-mancante .agenda-event-
 
 /* Menu "+": icone SVG */
 .quick-action-icon svg{width:22px;height:22px;display:block}
+
+/* Riepilogo vendita: riduzione per mancata fattura, evidenziata */
+.economy-sale-final-summary>.economy-sale-summary-reduction{
+  margin:6px 0;
+  padding:10px 12px;
+  border-radius:10px;
+  border-left:3px solid #ffb347;
+  background:rgba(255,179,71,.14);
+  color:#ffb347;
+  font-weight:800;
+}
+.economy-sale-summary-reduction small{font-weight:700;opacity:.85}

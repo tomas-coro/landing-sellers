@@ -4616,15 +4616,15 @@ costiPerMotoreRataEconomia(
       );
     },
 
-    valoreTotaleContrattoStimato() {
-      const durata = Math.max(
-        1,
-        Math.min(4, Number(this.nuovoClienteForm.durata_contratto_anni) || 1)
-      );
+    /* Extra = una tantum + dominio ed email del primo anno (come nella vendita). */
+    totaleExtra() {
+      return this.totaleUnaTantum() + this.totaleAnnualiSeparati();
+    },
 
+    valoreTotaleContrattoStimato() {
       return totaleContrattoDaForm(
         this.valoreCanoneContratto(),
-        this.totaleUnaTantum() + (this.totaleAnnualiSeparati() * durata),
+        this.totaleExtra(),
         this.nuovoClienteForm
       );
     },
