@@ -1773,6 +1773,15 @@ test('v129 Home admin ricarica dashboard e clienti prima di mostrare le card', (
   );
 });
 
+test('il login admin carica anche la lista completa dei clienti', () => {
+  const app = fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8');
+
+  assert.match(
+    app,
+    /async dopoLogin\(\)[\s\S]*if \(this\.isAdmin\) \{[\s\S]*await this\.caricaDashboardAdmin\(\);[\s\S]*await this\.caricaClienti\(\);[\s\S]*this\.view = 'admin'/
+  );
+});
+
 test('v129 ritorno dalla scheda rilegge i clienti prima della navigazione', () => {
   const cliente = fs.readFileSync(
     path.join(__dirname, '..', 'js', 'app-cliente.js'),

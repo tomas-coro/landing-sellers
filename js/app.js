@@ -1576,8 +1576,11 @@ function appState() {
       this.filtroStato = '';
       this.filtroSoloRitardo = false;
 
-      if (this.isAdmin) { await this.caricaDashboardAdmin(); this.view = 'admin'; }
-      else {
+      if (this.isAdmin) {
+        await this.caricaDashboardAdmin();
+        await this.caricaClienti();
+        this.view = 'admin';
+      } else {
         await this.caricaVenditoriTeam();
         await this.caricaClienti();
         await this.caricaStatisticheVenditore();
