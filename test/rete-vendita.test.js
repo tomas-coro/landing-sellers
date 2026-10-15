@@ -47,10 +47,10 @@ function statistiche() {
   });
 }
 
-test('indicizzaAlbero trova la radice e mette il padre prima dei figli in ordine alfabetico', () => {
+test('indicizzaAlbero mette il padre prima dei figli e Nicola prima di Nicholas', () => {
   const albero = indicizzaAlbero(NODI);
   assert.deepStrictEqual(albero.radici, ['ale']);
-  assert.deepStrictEqual(albero.ordine, ['ale', 'nho', 'sel', 'nic']);
+  assert.deepStrictEqual(albero.ordine, ['ale', 'nic', 'nho', 'sel']);
 });
 
 test('un nodo il cui padre non e visibile diventa radice (vista di Nicholas)', () => {
@@ -65,7 +65,7 @@ test('un nodo il cui padre non e visibile diventa radice (vista di Nicholas)', (
 test('sottoalbero e percorso', () => {
   const albero = indicizzaAlbero(NODI);
   assert.deepStrictEqual(sottoalbero(albero, 'nho'), ['nho', 'sel']);
-  assert.deepStrictEqual(sottoalbero(albero, 'ale'), ['ale', 'nho', 'sel', 'nic']);
+  assert.deepStrictEqual(sottoalbero(albero, 'ale'), ['ale', 'nic', 'nho', 'sel']);
   assert.deepStrictEqual(percorsoNodo(albero, 'sel'), ['ale', 'nho', 'sel']);
 });
 

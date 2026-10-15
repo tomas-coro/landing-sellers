@@ -44,7 +44,13 @@
       else radici.push(n.id);
     });
 
-    const perNome = (a, b) => perId[a].nome.localeCompare(perId[b].nome, 'it');
+    const perNome = (a, b) => {
+      const nomeA = perId[a].nome.toLocaleLowerCase('it');
+      const nomeB = perId[b].nome.toLocaleLowerCase('it');
+      if (nomeA === 'nicola' && nomeB.startsWith('nicholas')) return -1;
+      if (nomeB === 'nicola' && nomeA.startsWith('nicholas')) return 1;
+      return perId[a].nome.localeCompare(perId[b].nome, 'it');
+    };
     const ordine = [];
     const visita = id => {
       ordine.push(id);

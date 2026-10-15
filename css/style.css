@@ -16291,6 +16291,8 @@ html[data-theme="dark"] .rete-view{--rete-lc:#5a5e52}
    Mockup approvato: mockups/12-clienti-barra-da-fare.html
    Token dell'app; --cli-lc = colore della linea che lega i clienti alla tappa. */
 .cli-view{--cli-lc:#b9b4a8}
+/* Transform e will-change dello swipe renderebbero i dialog fixed relativi alla vista. */
+.cli-view.cli-foglio-aperto{transform:none;will-change:auto}
 html[data-theme="dark"] .cli-view{--cli-lc:#5a5e52}
 .cli-view .cli-sub{font-size:.72rem;color:var(--muted);font-weight:600;margin:0 2px 10px}
 .cli-view .cli-seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:4px;margin-bottom:8px}
