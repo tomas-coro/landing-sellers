@@ -469,9 +469,9 @@
             <div class="home-contract-metrics" :class="{ 'is-developer': profilo.ruolo === 'developer' }">
               <div class="home-contract-metric" x-show="profilo.ruolo !== 'developer'">
                 <span>Venduto</span>
-                <strong x-show="!caricandoStatistiche" x-text="formattaEuro(statisticheVenditore.venduto)"></strong>
+                <strong x-show="!caricandoStatistiche" x-text="formattaEuro(vendutoReteHome?.haTeam ? vendutoReteHome.rete : statisticheVenditore.venduto)"></strong>
                 <div class="skeleton-block skeleton-metric-value" x-show="caricandoStatistiche" aria-hidden="true"></div>
-                <small>Valore contratti</small>
+                <small x-text="vendutoReteHome?.haTeam ? 'Di rete · di cui tuo diretto ' + formattaEuro(statisticheVenditore.venduto) : 'Valore contratti'"></small>
               </div>
 
               <div class="home-contract-metric">
@@ -490,9 +490,9 @@
 
               <div class="home-contract-metric" x-show="profilo.ruolo !== 'developer'">
                 <span>Media vendita</span>
-                <strong x-show="!caricandoStatistiche" x-text="formattaEuro(statisticheVenditore.mediaVendita)"></strong>
+                <strong x-show="!caricandoStatistiche" x-text="formattaEuro(vendutoReteHome?.haTeam ? vendutoReteHome.mediaVendita : statisticheVenditore.mediaVendita)"></strong>
                 <div class="skeleton-block skeleton-metric-value" x-show="caricandoStatistiche" aria-hidden="true"></div>
-                <small>Per contratto</small>
+                <small x-text="vendutoReteHome?.haTeam ? 'Per contratto, di rete' : 'Per contratto'"></small>
               </div>
             </div>
 
@@ -7300,7 +7300,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=154', {
+      navigator.serviceWorker.register('./service-worker.js?v=155', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

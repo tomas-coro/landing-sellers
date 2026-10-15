@@ -758,6 +758,7 @@ function appState() {
     caricandoRete: false,
     erroreRete: '',
     reteAnno: new Date().getFullYear(),
+    vendutoReteHome: null,   // {rete, diretto, mediaVendita, haTeam} o null (nessun team)
     reteNodi: [],            // righe di rete_vendita_albero()
     reteStatistiche: {},     // id venditore -> { venduto, generato, incassato, ... }
     reteSelezionati: [],     // venditori spuntati nel foglio
@@ -3530,6 +3531,8 @@ costiPerMotoreRataEconomia(
         numeroVendite: 0
       };
       this.trendDatiVenditore = [];
+      // In parallelo: non allunga il caricamento dei numeri personali.
+      this.caricaVendutoReteHome();
 
       // Tomas e Alessandro hanno visibilità globale anche nel trend aziendale.
       const accessoGlobale = profiloHaAccessoGlobaleClienti(this.profilo);

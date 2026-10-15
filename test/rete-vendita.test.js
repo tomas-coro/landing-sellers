@@ -4,7 +4,7 @@ const { calcolaStatisticheVenditore } = require('../js/app.js');
 const mixin = require('../js/app-rete.js');
 const {
   escapaHtml, indicizzaAlbero, sottoalbero, percorsoNodo,
-  calcolaStatisticheRete, riepilogoRete, markupAlberoRete
+  calcolaStatisticheRete, riepilogoRete, markupAlberoRete, vendutoReteVenditore
 } = mixin.__puri;
 
 // Albero come nel database: Alessandro > Nicola, Nicholas > Selim.
@@ -145,4 +145,23 @@ test('solo i nodi con un team sotto e diversi dal centro sono cliccabili', () =>
 test('le funzioni pure non finiscono nello stato Alpine', () => {
   assert.ok(!Object.keys(mixin).includes('__puri'));
   assert.ok(typeof mixin.apriRete === 'function');
+});
+
+test('home: il venduto di rete somma se stesso e chi sta sotto, con il diretto a parte', () => {
+  const albero = indicizzaAlbero(NODI);
+  const nho = vendutoReteVenditore({ albero, viewerId: 'nho', vendite: VENDITE, clientiPerId: {}, calcola: calcolaStatisticheVenditore });
+  // Nicholas (1000) + Selim (1000); Nicola e Alessandro restano fuori.
+  assert.deepStrictEqual(nho, { rete: 2000, diretto: 1000, numeroVendite: 2, mediaVendita: 1000, haTeam: true });
+  const ale = vendutoReteVenditore({ albero, viewerId: 'ale', vendite: VENDITE, clientiPerId: {}, calcola: calcolaStatisticheVenditore });
+  assert.strictEqual(ale.rete, 4000);
+  assert.strictEqual(ale.diretto, 1000);
+});
+
+test('home: senza team o fuori dall\'albero non c\'e venduto di rete', () => {
+  const albero = indicizzaAlbero(NODI);
+  const sel = vendutoReteVenditore({ albero, viewerId: 'sel', vendite: VENDITE, clientiPerId: {}, calcola: calcolaStatisticheVenditore });
+  assert.strictEqual(sel.haTeam, false);
+  assert.strictEqual(sel.rete, 1000);
+  const tomas = vendutoReteVenditore({ albero, viewerId: 'tom', vendite: VENDITE, clientiPerId: {}, calcola: calcolaStatisticheVenditore });
+  assert.strictEqual(tomas, null);
 });

@@ -133,6 +133,34 @@
     };
   }
 
+  // Home: venduto di rete del solo spettatore = i suoi contratti diretti piu
+  // quelli di chi sta sotto di lui. Stessa regola della sezione Rete vendita
+  // (venduto di ogni nodo = contratti di cui e venditore diretto). null se lo
+  // spettatore non e un nodo dell'albero (es. developer): la Home resta com'e.
+  function vendutoReteVenditore({ albero, viewerId, vendite = [], clientiPerId = {}, calcola }) {
+    if (!viewerId || !albero.perId[viewerId]) return null;
+
+    const nodi = sottoalbero(albero, viewerId);
+    let rete = 0;
+    let numeroVendite = 0;
+    let diretto = 0;
+
+    nodi.forEach(id => {
+      const s = calcola(vendite.filter(v => v.venditore_id === id), [], {}, id, clientiPerId, {});
+      rete += s.venduto;
+      numeroVendite += s.numeroVendite;
+      if (id === viewerId) diretto = s.venduto;
+    });
+
+    return {
+      rete,
+      diretto,
+      numeroVendite,
+      mediaVendita: numeroVendite > 0 ? rete / numeroVendite : 0,
+      haTeam: nodi.length > 1
+    };
+  }
+
   // Markup dell'albero: riga con gomiti di collegamento, come nel mockup.
   // Il nome e l'unico testo libero e viene sempre escapato.
   function markupAlberoRete({ albero, statistiche, visibili, centro, viewerId }) {
@@ -187,6 +215,46 @@
       this.reteSelezionati = []; // ogni apertura riparte da "tutti"
       window.scrollTo({ top: 0, behavior: 'smooth' });
       await this.caricaRete();
+    },
+
+    // Venduto di rete per la tile della Home. Se non ha nessuno sotto (o la
+    // rete non si carica) la Home resta sul venduto diretto di sempre: un errore
+    // qui non deve rompere i numeri personali.
+    async caricaVendutoReteHome() {
+      this.vendutoReteHome = null;
+      try {
+        const db = window.supabaseClient;
+        const { data: nodi, error } = await db.rpc('rete_vendita_albero');
+        if (error) throw error;
+
+        const albero = indicizzaAlbero(nodi || []);
+        const viewerId = this.sessione?.user?.id;
+        const ids = sottoalbero(albero, viewerId);
+        if (ids.length < 2) return;
+
+        let vendite = [];
+        for (const blocco of dividiInBlocchi(ids, 100)) {
+          const res = await db.from('vendite')
+            .select('id,cliente_id,importo_vendita,stato,venditore_id,data_vendita')
+            .in('venditore_id', blocco);
+          if (res.error) throw res.error;
+          vendite = vendite.concat(res.data || []);
+        }
+
+        const idsClienti = [...new Set(vendite.map(v => v.cliente_id).filter(Boolean))];
+        const clientiPerId = {};
+        for (const blocco of dividiInBlocchi(idsClienti, 100)) {
+          const res = await db.from('clienti').select('*').in('id', blocco);
+          if (res.error) throw res.error;
+          (res.data || []).forEach(c => { clientiPerId[c.id] = c; });
+        }
+
+        this.vendutoReteHome = vendutoReteVenditore({
+          albero, viewerId, vendite, clientiPerId, calcola: calcolaStatisticheVenditore
+        });
+      } catch (errore) {
+        console.warn('Venduto di rete non disponibile:', errore?.message || errore);
+      }
     },
 
     tornaDaRete() {
@@ -399,7 +467,7 @@
   Object.defineProperty(mixin, '__puri', {
     value: {
       escapaHtml, indicizzaAlbero, sottoalbero, percorsoNodo,
-      calcolaStatisticheRete, riepilogoRete, markupAlberoRete
+      calcolaStatisticheRete, riepilogoRete, markupAlberoRete, vendutoReteVenditore
     }
   });
 
