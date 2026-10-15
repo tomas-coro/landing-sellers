@@ -985,7 +985,13 @@ function appState() {
     historyPronta: false,
     historyRipristino: false,
     historyUltimaChiave: '',
+    historyUltimaVista: '',
     posizioniScroll: {},
+    // Chiavi delle schermate attraversate: servono a capire se si sta tornando
+    // indietro (si riprende la posizione di scorrimento) o aprendo qualcosa di
+    // nuovo (si parte dall'alto). navTabScadenza: tocco sulla barra in basso.
+    pilaNavigazione: [],
+    navTabScadenza: 0,
 
     statoHistoryCorrente() {
       return {
@@ -1016,13 +1022,62 @@ function appState() {
 
       if (chiave === this.historyUltimaChiave) return;
 
+      // La posizione la tiene aggiornata l'ascoltatore di scroll: a questo punto
+      // il contenitore potrebbe essere gia stato accorciato dalla nuova vista.
       const appEl = document.getElementById('app');
-      if (appEl) {
+      if (appEl && this.posizioniScroll[this.historyUltimaChiave] === undefined) {
         this.posizioniScroll[this.historyUltimaChiave] = appEl.scrollTop;
       }
 
       history.pushState(stato, '', location.href);
       this.historyUltimaChiave = chiave;
+
+      const vistaCambiata = stato.view !== this.historyUltimaVista;
+      this.historyUltimaVista = stato.view;
+      if (vistaCambiata) this.gestisciScrollCambioVista(chiave);
+    },
+
+    // Torno indietro (la schermata e gia nella pila) = riprendo dove ero.
+    // Apro una schermata nuova o tocco la barra in basso = parto dall'alto.
+    // Vale per ogni vista dell'app, non solo per il gesto indietro del browser.
+    gestisciScrollCambioVista(chiave) {
+      const daBarra = Date.now() < this.navTabScadenza;
+      this.navTabScadenza = 0;
+      const indice = this.pilaNavigazione.lastIndexOf(chiave);
+
+      if (daBarra || indice === -1) {
+        this.pilaNavigazione = (daBarra ? [chiave] : this.pilaNavigazione.concat(chiave)).slice(-50);
+        this.posizioniScroll[chiave] = 0;
+        this.scrollApp(0);
+        return;
+      }
+
+      this.pilaNavigazione = this.pilaNavigazione.slice(0, indice + 1);
+      this.scrollApp(this.posizioniScroll[chiave] || 0);
+    },
+
+    // Scorre #app alla posizione data. Se la pagina non e ancora alta abbastanza
+    // (dati in caricamento) riprova per qualche frame invece di fermarsi a meta.
+    scrollApp(top) {
+      const appEl = document.getElementById('app');
+      if (!appEl) return;
+
+      if (!top) {
+        appEl.scrollTop = 0;
+        requestAnimationFrame(() => { appEl.scrollTop = 0; });
+        return;
+      }
+
+      let tentativi = 0;
+      const prova = () => {
+        const massimo = appEl.scrollHeight - appEl.clientHeight;
+        if (massimo >= top || tentativi++ >= 40) {
+          appEl.scrollTo({ top, behavior: 'auto' });
+          return;
+        }
+        requestAnimationFrame(prova);
+      };
+      requestAnimationFrame(prova);
     },
 
     inizializzaHistoryNavigazione() {
@@ -1032,6 +1087,8 @@ function appState() {
 
       history.replaceState(iniziale, '', location.href);
       this.historyUltimaChiave = this.chiaveHistory(iniziale);
+      this.historyUltimaVista = iniziale.view;
+      this.pilaNavigazione = [this.historyUltimaChiave];
       this.historyPronta = true;
 
       const appEl = document.getElementById('app');
@@ -1099,14 +1156,14 @@ function appState() {
           }
 
           this.historyUltimaChiave = this.chiaveHistory(stato);
+          this.historyUltimaVista = stato.view;
 
-          requestAnimationFrame(() => {
-            const scrollSalvato = this.posizioniScroll[this.historyUltimaChiave] || 0;
-            document.getElementById('app')?.scrollTo({
-              top: scrollSalvato,
-              behavior: 'auto'
-            });
-          });
+          const posizioneNellaPila = this.pilaNavigazione.lastIndexOf(this.historyUltimaChiave);
+          this.pilaNavigazione = posizioneNellaPila === -1
+            ? [this.historyUltimaChiave]
+            : this.pilaNavigazione.slice(0, posizioneNellaPila + 1);
+
+          this.scrollApp(this.posizioniScroll[this.historyUltimaChiave] || 0);
 
         } finally {
           requestAnimationFrame(() => {
@@ -3691,6 +3748,7 @@ costiPerMotoreRataEconomia(
       const oggi = this.dataISOOggi();
 
       if (evento.tipo === 'contatto') {
+        if (evento.brief) return evento.data < oggi ? 'Brief da inviare · in ritardo' : 'Brief da inviare oggi';
         if (evento.data < oggi) return 'Contatto in ritardo';
         return 'Da contattare oggi';
       }
@@ -3754,17 +3812,32 @@ costiPerMotoreRataEconomia(
       const clientiAgenda = this.isAdmin ? this.adminClienti : this.clientiDiretti();
 
       clientiAgenda.forEach(cliente => {
-        const contatto = this.normalizzaDataAgenda(cliente.prossimo_contatto);
+        const contattoImpostato = this.normalizzaDataAgenda(cliente.prossimo_contatto);
+
+        // Cliente "contattato" senza una data di contatto scelta: il brief e la
+        // prima cosa da fare, quindi compare in agenda con il flag "Brief".
+        // Vale il giorno di creazione: se passa senza brief diventa in ritardo.
+        // Con una data di contatto gia impostata resta il normale contatto.
+        // Gli admin non hanno creato_il nel loro elenco e non mandano brief.
+        const briefDaInviare = !this.isAdmin && cliente.stato === 'contattato' && !contattoImpostato;
+        const contatto = contattoImpostato ||
+          (briefDaInviare ? (this.normalizzaDataAgenda(cliente.creato_il) || oggi) : null);
+
         if (contatto) {
           eventi.push({
-            id: `contatto-${cliente.id}-${contatto}`,
+            id: briefDaInviare
+              ? `brief-${cliente.id}`
+              : `contatto-${cliente.id}-${contatto}`,
             clienteId: cliente.id,
             clienteNome: cliente.nome,
             venditoreId: cliente.venditore_id,
             venditoreNome: this.adminVenditoriPerId[cliente.venditore_id] || '',
             data: contatto,
             tipo: 'contatto',
-            titolo: contatto < oggi ? 'Contatto in ritardo' : 'Contatto cliente',
+            brief: briefDaInviare,
+            titolo: briefDaInviare
+              ? 'Brief da inviare'
+              : (contatto < oggi ? 'Contatto in ritardo' : 'Contatto cliente'),
             scaduto: contatto < oggi
           });
         }
@@ -4209,30 +4282,41 @@ costiPerMotoreRataEconomia(
       const gridClass = opzioni.dark ? ' metrics-grid-line-dark' : '';
       const colore = opzioni.colore || 'var(--lime-deep)';
       const hoverIndex = this[statoHoverProp];
-      let svg = `<line class="metrics-grid-line${gridClass}" x1="16" y1="${barre[0].baseline}" x2="624" y2="${barre[0].baseline}"></line>`;
+      const selezione = Number.isInteger(hoverIndex) && barre[hoverIndex] ? hoverIndex : null;
+      // Un valore compatto ("5.6k€") e largo circa 64 unita: con piu di 9 mesi
+      // gli slot sono piu stretti e i valori di barre vicine si toccherebbero.
+      // In quel caso il valore si legge toccando la barra (riga fissa in alto).
+      const valoriInChiaro = selezione === null && (640 - 32) / Math.max(1, punti.length) >= 64;
+      const stato = `Alpine.$data(document.getElementById('app')).${statoHoverProp}`;
 
+      // Sfondo trasparente: toccare fuori dalle barre toglie la selezione.
+      let svg = `<rect x="0" y="0" width="640" height="248" fill="transparent" onclick="${stato}=null"></rect>`;
+      svg += `<line class="metrics-grid-line${gridClass}" x1="16" y1="${barre[0].baseline}" x2="624" y2="${barre[0].baseline}"></line>`;
+
+      // Il mouse seleziona al passaggio; il tocco seleziona solo con il click
+      // (con mouseenter + toggle il tocco selezionava e deselezionava subito).
       barre.forEach((b, i) => {
-        svg += `<rect class="metrics-bar${dark}" x="${b.x.toFixed(1)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(1)}" height="${Math.max(b.h, 1).toFixed(1)}" rx="5" style="fill:${colore}"
-          onmouseenter="Alpine.$data(document.getElementById('app')).${statoHoverProp}=${i}"
-          onmouseleave="Alpine.$data(document.getElementById('app')).${statoHoverProp}=null"
-          onclick="const __d=Alpine.$data(document.getElementById('app'));__d.${statoHoverProp}=(__d.${statoHoverProp}===${i}?null:${i})"></rect>`;
+        const attenuata = selezione !== null && selezione !== i ? ' metrics-bar-dim' : '';
+        svg += `<rect class="metrics-bar${dark}${attenuata}" x="${b.x.toFixed(1)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(1)}" height="${Math.max(b.h, 1).toFixed(1)}" rx="5" style="fill:${colore}"
+          onpointerenter="if(event.pointerType==='mouse')${stato}=${i}"
+          onpointerleave="if(event.pointerType==='mouse')${stato}=null"
+          onclick="event.stopPropagation();${stato}=${i}"></rect>`;
 
-        // Etichetta valore di default: nascosta sulla barra col tooltip attivo
-        // (i===hoverIndex), altrimenti si sovrappone al testo del tooltip.
-        if (b.valore > 0 && i !== hoverIndex) {
+        // Con una barra selezionata i valori sulle altre spariscono: il valore
+        // della selezionata sta nella riga fissa in alto, quindi niente testo
+        // sopra le colonne che si possa fondere con le barre vicine.
+        if (b.valore > 0 && valoriInChiaro) {
           svg += `<text class="metrics-bar-value${dark}" x="${b.cx.toFixed(1)}" y="${Math.max(20, b.y - 10).toFixed(1)}" text-anchor="middle">${this.formattaEuroCompatto(b.valore)}</text>`;
         }
         if (etichetteVisibili.has(b.chiave)) {
-          svg += `<text class="metrics-bar-label${dark}" x="${b.cx.toFixed(1)}" y="${(b.baseline + 26).toFixed(1)}" text-anchor="middle">${b.label}</text>`;
+          svg += `<text class="metrics-bar-label${dark}${selezione === i ? ' metrics-bar-label-on' : ''}" x="${b.cx.toFixed(1)}" y="${(b.baseline + 26).toFixed(1)}" text-anchor="middle">${b.label}</text>`;
         }
       });
 
-      if (Number.isInteger(hoverIndex) && barre[hoverIndex]) {
-        const b = barre[hoverIndex];
-        const dettaglio = b.numero ? (b.numero + ' sit' + (b.numero === 1 ? 'o' : 'i')) : '';
-        const righe = [`${b.label} · ${formattaEuro(b.valore)}`];
-        if (dettaglio) righe.push(dettaglio);
-        svg += this.markupTooltip(b.cx, b.y - 26, righe, dark);
+      if (selezione !== null) {
+        const b = barre[selezione];
+        const dettaglio = b.numero ? ' · ' + b.numero + ' sit' + (b.numero === 1 ? 'o' : 'i') : '';
+        svg += `<text class="metrics-readout${dark}" x="320" y="26" text-anchor="middle">${b.label} · ${formattaEuro(b.valore)}${dettaglio}</text>`;
       }
 
       return svg;
@@ -4430,17 +4514,29 @@ costiPerMotoreRataEconomia(
       this.erroreClienti = '';
 
       try {
-        const { error } = await window.supabaseClient
-          .rpc('completa_contatto_cliente', {
-            p_cliente_id: evento.clienteId,
-            p_data: evento.data || null
-          });
+        // Un contatto con data si chiude con la funzione dedicata; "Brief da
+        // inviare" fatto significa che il cliente passa a "Brief mandato".
+        if (!evento.brief) {
+          const { error } = await window.supabaseClient
+            .rpc('completa_contatto_cliente', {
+              p_cliente_id: evento.clienteId,
+              p_data: evento.data || null
+            });
 
-        if (error) {
-          console.error('Errore completamento contatto:', error);
-          this.erroreClienti =
-            'Contatto non completato: ' + error.message;
-          return;
+          if (error) {
+            console.error('Errore completamento contatto:', error);
+            this.erroreClienti =
+              'Contatto non completato: ' + error.message;
+            return;
+          }
+        }
+
+        if (evento.brief) {
+          const erroreStato = await this.impostaStatoCliente(evento.clienteId, 'brief_mandato');
+          if (erroreStato) {
+            this.erroreClienti = 'Brief non segnato come mandato: ' + erroreStato;
+            return;
+          }
         }
 
         if (this.isAdmin) {

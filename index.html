@@ -6001,7 +6001,7 @@
               @click="evento.tipo === 'quota' ? apriQuote() : (isAdmin ? apriEventoAdmin(evento) : apriScheda(evento.clienteId))">
               <div class="agenda-event-date">
                 <strong x-text="formattaData(evento.data)"></strong>
-                <span x-text="evento.tipo === 'contatto' ? 'Contatto' : evento.tipo === 'rata' ? 'Rata' : evento.tipo === 'mancante' ? 'Pagamento' : evento.tipo === 'quota' ? 'Quota' : 'Rinnovo'"></span>
+                <span x-text="evento.tipo === 'contatto' ? (evento.brief ? 'Brief' : 'Contatto') : evento.tipo === 'rata' ? 'Rata' : evento.tipo === 'mancante' ? 'Pagamento' : evento.tipo === 'quota' ? 'Quota' : 'Rinnovo'"></span>
               </div>
               <div>
                 <strong x-text="evento.clienteNome"></strong>
@@ -6726,7 +6726,7 @@
 
 
     <!-- NAVIGAZIONE MOBILE -->
-    <nav x-show="navVisibile()" x-cloak class="mobile-tabbar crm-tabbar" aria-label="Navigazione principale">
+    <nav x-show="navVisibile()" x-cloak class="mobile-tabbar crm-tabbar" aria-label="Navigazione principale" @click.capture="navTabScadenza = Date.now() + 2000">
 
       <button type="button" :class="{ on: view === 'lista' || view === 'admin' }" @click="vaiHome()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
@@ -7390,7 +7390,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=157', {
+      navigator.serviceWorker.register('./service-worker.js?v=159', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
