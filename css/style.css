@@ -12628,7 +12628,7 @@ html[data-theme="dark"] .flow-choice-card{
     color-mix(in srgb,var(--lime) 5%,var(--card));
 }
 
-.sale-domain-services input{
+.sale-domain-services input[type="checkbox"]{
   width:19px;
   height:19px;
   flex:none;
