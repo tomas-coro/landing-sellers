@@ -745,6 +745,7 @@ function appState() {
     ordinamentoDesc: false,
     paginaClienti: 1,
     clientiPerPagina: 20,
+    mostraTuttiClientiHome: false,
     viewPrecedenteScheda: 'lista',
     viewPrecedenteRicerca: 'lista',
 
@@ -3570,7 +3571,8 @@ costiPerMotoreRataEconomia(
     },
 
     clientiRecenti() {
-      return ultimiClienti(this.clientiDiretti());
+      const clienti = this.clientiDiretti();
+      return ultimiClienti(clienti, this.mostraTuttiClientiHome ? clienti.length : 5);
     },
 
     clientiFiltrati() {

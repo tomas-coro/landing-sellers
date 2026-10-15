@@ -845,6 +845,14 @@
           </div>
         </template>
 
+        <button
+          type="button"
+          class="btn btn-ghost home-clients-load-more"
+          x-show="!isAdmin && view === 'lista' && !mostraTuttiClientiHome && clientiDiretti().length > 5"
+          @click="mostraTuttiClientiHome = true">
+          Carica altri
+        </button>
+
         <div class="client-pagination" x-show="!isAdmin && view === 'clienti' && totalePagineClienti() > 1">
           <button type="button" @click="cambiaPaginaClienti(-1)" :disabled="paginaClienti === 1">‹</button>
           <span>Pagina <strong x-text="paginaClienti"></strong> di <strong x-text="totalePagineClienti()"></strong></span>
@@ -7479,7 +7487,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=167', {
+      navigator.serviceWorker.register('./service-worker.js?v=168', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
