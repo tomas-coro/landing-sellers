@@ -884,6 +884,55 @@
       );
     },
 
+    totaleQuote(lista) {
+      return (lista || []).reduce(
+        (totale, quota) => totale + Number(quota.quota_effettiva || 0),
+        0
+      );
+    },
+
+    totaleQuoteDaConfermare() {
+      return this.totaleQuote(this.trasferimentiDaConfermare);
+    },
+
+    totaleQuoteDaTrasferire() {
+      return this.totaleQuote(this.isAdmin ? this.quoteAdmin : this.quoteDaTrasferire);
+    },
+
+    numeroAzioniQuote() {
+      return this.isAdmin
+        ? this.quoteAdminRaggruppate().length
+        : this.trasferimentiDaConfermareRaggruppati().length +
+            this.quoteDaTrasferireRaggruppate().length;
+    },
+
+    totaleQuoteAperte() {
+      return this.isAdmin
+        ? this.totaleQuoteDaTrasferire()
+        : this.totaleQuoteDaConfermare() + this.totaleQuoteDaTrasferire();
+    },
+
+    descrizioneAzioniQuote() {
+      if (this.isAdmin) {
+        return this.numeroAzioniQuote() === 1
+          ? '1 trasferimento da verificare'
+          : this.numeroAzioniQuote() + ' trasferimenti da verificare';
+      }
+
+      const daConfermare = this.trasferimentiDaConfermareRaggruppati().length;
+      const daTrasferire = this.quoteDaTrasferireRaggruppate().length;
+      return [
+        daConfermare ? daConfermare + ' da confermare' : '',
+        daTrasferire ? daTrasferire + ' da trasferire' : ''
+      ].filter(Boolean).join(' · ');
+    },
+
+    async caricaQuoteAperte() {
+      await this.caricaTrasferimentiDaConfermare();
+      if (this.isAdmin) await this.caricaQuoteAdmin();
+      else await this.caricaQuoteDaTrasferire();
+    },
+
     trasferimentoPagamentoCompleto(pagamento) {
       return (pagamento?.quote_trasferimento || [])
         .filter(quota =>

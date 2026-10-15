@@ -47,6 +47,26 @@ test('un venditore include se stesso nella nuova vendita', async () => {
   assert.equal(stato.venditaEconomicaForm.incassatoDa, 'venditore');
 });
 
+test('il riepilogo quote somma importi e azioni aperte per ruolo', () => {
+  const stato = appState();
+  stato.trasferimentiDaConfermare = [
+    { pagamento_id: 'p1', clienteId: 'c1', controparteNome: 'Tomas', quota_effettiva: 180 }
+  ];
+  stato.quoteDaTrasferire = [
+    { pagamento_id: 'p2', clienteId: 'c2', aChiNome: 'Nicola', quota_effettiva: 132 }
+  ];
+  stato.quoteAdmin = [
+    { pagamento_id: 'p3', clienteId: 'c3', daChiNome: 'A', aChiNome: 'B', quota_effettiva: 50 }
+  ];
+
+  assert.equal(stato.numeroAzioniQuote(), 2);
+  assert.equal(stato.totaleQuoteAperte(), 312);
+
+  stato.isAdmin = true;
+  assert.equal(stato.numeroAzioniQuote(), 1);
+  assert.equal(stato.totaleQuoteAperte(), 50);
+});
+
 test('un trasferimento e completo solo dopo tutte le conferme necessarie', () => {
   const stato = appState();
   const pagamento = {

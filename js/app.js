@@ -1580,7 +1580,7 @@ function appState() {
         await this.caricaStatisticheVenditore();
         this.view = 'lista';
       }
-      await this.caricaTrasferimentiDaConfermare();
+      await this.caricaQuoteAperte();
 
       // se il browser ha gia' una subscription da un login precedente sullo
       // stesso device, aggiornaStatoPush() la ritrova subito (getSubscription)
@@ -1653,7 +1653,7 @@ function appState() {
         await this.caricaClienti();
         await this.caricaStatisticheVenditore();
       }
-      await this.caricaTrasferimentiDaConfermare();
+      await this.caricaQuoteAperte();
 
       this.view = this.isAdmin ? 'admin' : 'lista';
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1678,10 +1678,8 @@ function appState() {
     async apriQuote() {
       if (!(await this.confermaUscitaFormCliente())) return;
       this.view = 'quote';
-      await this.caricaTrasferimentiDaConfermare();
-      await this.caricaQuoteDaTrasferire();
+      await this.caricaQuoteAperte();
       await this.caricaQuoteConfermateRecenti();
-      if (this.isAdmin) await this.caricaQuoteAdmin();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
