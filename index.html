@@ -48,6 +48,7 @@
 <script src="js/app-cliente.js" defer></script>
 <script src="js/app-admin.js" defer></script>
 <script src="js/app-fatturato.js" defer></script>
+<script src="js/app-rete.js" defer></script>
 <script src="js/app.js" defer></script>
 <script defer src="js/vendor/alpine-3.17.4.min.js"></script>
 
@@ -480,11 +481,11 @@
                 <small>Quota maturata</small>
               </div>
 
-              <button type="button" class="home-contract-metric home-contract-metric-clickable" @click="apriIncassato()">
+              <button type="button" class="home-contract-metric home-contract-metric-clickable" @click="apriRete()">
                 <span>Incassato</span>
                 <strong x-show="!caricandoStatistiche" x-text="formattaEuro(statisticheVenditore.incassato)"></strong>
                 <div class="skeleton-block skeleton-metric-value" x-show="caricandoStatistiche" aria-hidden="true"></div>
-                <small>Quota ricevuta quest'anno · tocca per il resoconto</small>
+                <small>Quota ricevuta quest'anno · tocca per la Rete vendita</small>
               </button>
 
               <div class="home-contract-metric" x-show="profilo.ruolo !== 'developer'">
@@ -1686,6 +1687,8 @@
               <strong x-text="formattaEuro(residuoIncassoAdmin())"></strong>
             </div>
           </div>
+
+          <button type="button" class="retry-btn" style="margin-top:12px;width:100%" @click="apriRete()">Rete vendita ›</button>
 
           <div class="admin-overview-grid">
             <div>
@@ -6866,6 +6869,102 @@
       </div>
     </div>
 
+    <!-- RETE VENDITA: albero dei venditori, venduto di rete, generato e incassato (js/app-rete.js) -->
+    <div x-show="view === 'rete'" x-cloak x-transition.opacity.duration.160ms class="view-fade rete-view">
+      <div class="brandbar">
+        <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
+      </div>
+      <div class="topbar">
+        <button type="button" class="linkback" @click="tornaDaRete()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Torna alla home
+        </button>
+        <h1 style="font-size:21px">Rete vendita</h1>
+      </div>
+      <div class="content">
+        <p x-show="erroreRete">
+          <span x-text="erroreRete" class="err"></span>
+          <button type="button" class="retry-btn" @click="caricaRete()">Riprova</button>
+        </p>
+
+        <div class="metrics-trend-chips fatturato-year-chips" role="group" aria-label="Anno degli incassi">
+          <template x-for="anno in reteAnni()" :key="'rete-anno-' + anno">
+            <button type="button" :class="{ active: reteAnno === anno }" @click="reteSelezionaAnno(anno)" x-text="anno"></button>
+          </template>
+        </div>
+
+        <div x-show="caricandoRete" aria-hidden="true">
+          <div class="skeleton-block skeleton-trend" style="margin-top:14px"></div>
+        </div>
+
+        <div x-show="!caricandoRete && reteNodi.length > 0">
+          <button type="button" class="rete-field" x-show="reteHaSottoposti()" @click="reteApriFoglio()">
+            <span>Venditori</span><em x-text="reteCapFiltro() + ' ▾'"></em>
+          </button>
+
+          <div class="rete-crumb" x-show="retePercorso().length > 1">
+            <template x-for="(passo, i) in retePercorso()" :key="'rete-crumb-' + passo.id">
+              <span class="rete-crumb-step">
+                <span x-show="i > 0" aria-hidden="true">›</span>
+                <button type="button" @click="reteVaiA(passo.id)" x-text="passo.etichetta"></button>
+              </span>
+            </template>
+          </div>
+
+          <div class="rete-big">
+            <span class="rete-lab" x-text="reteEtichettaTotale()"></span>
+            <strong class="rete-num" x-text="formattaEuro(reteVista().venduto)"></strong>
+            <div class="rete-split"><i :style="{ width: retePercentualeDiretto() + '%' }"></i></div>
+            <div class="rete-splitcap">
+              <span><span x-text="reteEtichettaDiretto()"></span> <span x-text="formattaEuro(reteVista().diretto)"></span></span>
+              <span x-show="reteHaSottoposti()">Team <span x-text="formattaEuro(reteVista().team)"></span></span>
+            </div>
+          </div>
+
+          <div class="rete-mini">
+            <div><span class="rete-lab">Generato</span><strong class="rete-num" x-text="formattaEuro(reteVista().generato)"></strong></div>
+            <div><span class="rete-lab" x-text="'Incassato ' + reteAnno"></span><strong class="rete-num" x-text="formattaEuro(reteVista().incassato)"></strong></div>
+            <div><span class="rete-lab">Media vendita</span><strong class="rete-num" x-text="formattaEuro(reteVista().mediaVendita)"></strong></div>
+            <div><span class="rete-lab">Venditori</span><strong class="rete-num" x-text="reteVista().visibili.length"></strong></div>
+          </div>
+
+          <p class="rete-hint" x-show="reteHaSottoposti()">Tocca un nome con il team per entrarci.</p>
+          <div class="rete-empty" x-show="reteVista().visibili.length === 0">Nessun venditore con questo filtro.</div>
+          <div class="rete-tree" x-html="reteMarkup()" @click="reteEntra($event)"></div>
+
+          <button type="button" class="rete-link" @click="apriIncassato()">Resoconto mensile dei tuoi incassi ›</button>
+        </div>
+
+        <div class="rete-empty" x-show="!caricandoRete && !erroreRete && reteNodi.length === 0">
+          Nessun venditore da mostrare.
+        </div>
+      </div>
+
+      <div class="rete-sheetbg" x-show="reteFoglioAperto" x-cloak @click="reteChiudiFoglio()"></div>
+      <div class="rete-sheet" x-show="reteFoglioAperto" x-cloak role="dialog" aria-modal="true" aria-label="Scegli i venditori"
+           @keydown.escape.window="reteFoglioAperto && reteChiudiFoglio()">
+        <div class="rete-shh">
+          <h3>Venditori</h3>
+          <button type="button" class="rete-x" @click="reteChiudiFoglio()" aria-label="Chiudi">×</button>
+        </div>
+        <input type="search" class="rete-search" x-model="reteRicerca" placeholder="Cerca un venditore" aria-label="Cerca un venditore">
+        <div class="rete-quick">
+          <button type="button" @click="reteScorciatoia('tutti')">Tutti</button>
+          <button type="button" @click="reteScorciatoia('io')">Solo io</button>
+          <button type="button" @click="reteScorciatoia('team')">Il mio team</button>
+        </div>
+        <div>
+          <template x-for="n in reteElencoFoglio()" :key="'rete-opt-' + n.id">
+            <button type="button" class="rete-opt" :class="{ on: reteFoglioTmp.includes(n.id) }" :data-lv="n.livello"
+                    :aria-pressed="reteFoglioTmp.includes(n.id)" @click="reteToggleFoglio(n.id)">
+              <span class="rete-bx">✓</span><span x-text="n.nome"></span><span class="rete-l" x-text="'Lv ' + n.livello"></span>
+            </button>
+          </template>
+          <div class="rete-empty" x-show="reteElencoFoglio().length === 0">Nessun risultato</div>
+        </div>
+        <button type="button" class="rete-apply" @click="reteApplicaFoglio()">Applica</button>
+      </div>
+    </div>
+
     <!-- IL TUO INCASSATO (personale, venditore) -->
     <div x-show="view === 'incassato'" x-transition.opacity.duration.160ms class="view-fade">
       <div class="brandbar">
@@ -7201,7 +7300,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=153', {
+      navigator.serviceWorker.register('./service-worker.js?v=154', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

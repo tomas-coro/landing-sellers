@@ -16197,3 +16197,82 @@ html[data-theme="dark"] .pill.s-perso{background:#3a1d19;color:#ff9b91}
   gap:16px;
   font-size:14.5px;
 }
+
+/* ==========================================================
+   RETE VENDITA - albero venditori, foglio filtro (js/app-rete.js)
+   Mockup approvato: mockups/08-rete-vendita-finale.html
+   Token dell'app; --rete-lc = colore dei gomiti di collegamento.
+   ========================================================== */
+.rete-view{--rete-lc:#b9b4a8}
+html[data-theme="dark"] .rete-view{--rete-lc:#5a5e52}
+.rete-view .rete-lab{display:block;font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.rete-view .rete-num{font-variant-numeric:tabular-nums}
+.rete-view .rete-field{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:48px;margin-top:14px;padding:0 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit;font-weight:700;font-size:.88rem;text-align:left;cursor:pointer}
+.rete-view .rete-field em{font-style:normal;color:var(--muted);font-weight:600;font-size:.8rem}
+.rete-view .rete-crumb{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;margin-top:8px;font-size:.8rem;font-weight:700}
+.rete-view .rete-crumb-step{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
+.rete-view .rete-crumb button{min-height:44px;padding:0 12px;border:1.5px solid var(--line);background:var(--card);border-radius:11px;font:inherit;font-weight:800;font-size:.8rem;color:var(--ink);cursor:pointer}
+.rete-view .rete-crumb-step:last-child button{background:var(--lime);border-color:var(--lime);color:var(--on-lime)}
+.rete-view .rete-big{background:var(--ink);color:var(--paper);border-radius:16px;padding:14px;margin:12px 0 8px}
+.rete-view .rete-big .rete-lab{color:inherit;opacity:.65}
+.rete-view .rete-big strong{display:block;font-size:1.9rem;font-weight:900;letter-spacing:-.01em}
+.rete-view .rete-split{height:8px;border-radius:99px;background:rgba(128,128,120,.4);overflow:hidden;margin:8px 0 5px}
+.rete-view .rete-split i{display:block;height:100%;background:var(--lime)}
+.rete-view .rete-splitcap{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.7rem;font-weight:700;opacity:.85}
+.rete-view .rete-mini{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:12px}
+.rete-view .rete-mini div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 10px}
+.rete-view .rete-mini strong{display:block;font-size:.98rem;font-weight:800}
+.rete-view .rete-mini .rete-lab{font-size:.56rem}
+.rete-view .rete-hint{font-size:.72rem;color:var(--muted);font-weight:600;margin:0 2px 8px}
+.rete-view .rete-empty{padding:24px 10px;text-align:center;color:var(--muted);font-size:.85rem;font-weight:600}
+.rete-view .rete-link{display:block;width:100%;min-height:48px;margin-top:18px;border:1.5px solid var(--line);border-radius:12px;background:transparent;color:var(--ink-soft);font:inherit;font-weight:700;font-size:.84rem;cursor:pointer}
+
+/* albero: righe alte 58px, il gomito arriva al centro (29px) */
+.rete-view .rete-item{position:relative;padding-bottom:6px}
+.rete-view .rete-item>.rete-kids{margin:0 0 0 10px;padding-top:6px}
+.rete-view .rete-kids>.rete-item{padding-left:14px}
+.rete-view .rete-kids>.rete-item::before{content:"";position:absolute;left:0;top:-6px;width:14px;height:35px;border-left:1.5px solid var(--rete-lc);border-bottom:1.5px solid var(--rete-lc);border-bottom-left-radius:8px}
+.rete-view .rete-kids>.rete-item:not(:last-child)::after{content:"";position:absolute;left:0;top:29px;bottom:0;border-left:1.5px solid var(--rete-lc)}
+.rete-view .rete-node{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 6px;align-items:center;align-content:center;width:100%;height:58px;padding:10px 10px;background:var(--card);border:1px solid var(--line);border-radius:12px;color:var(--ink);font:inherit;text-align:left}
+.rete-view button.rete-node{cursor:pointer}
+.rete-view .rete-node>span:first-child{display:flex;align-items:center;min-width:0}
+.rete-view .rete-node b{font-size:.9rem;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rete-view .rete-lv{font-size:.58rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:1px 6px;margin-right:6px;white-space:nowrap;flex:none}
+.rete-view .rete-v{font-size:.9rem;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.rete-view .rete-node small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.7rem;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
+.rete-view .rete-node small.r{text-align:right}
+.rete-view .rete-node.me{background:var(--lime);border-color:var(--lime);color:var(--on-lime)}
+.rete-view .rete-node.me small{color:rgba(17,17,17,.65)}
+.rete-view .rete-node.me .rete-lv{border-color:rgba(17,17,17,.3);color:rgba(17,17,17,.65)}
+.rete-view .rete-go{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:99px;background:var(--paper);border:1px solid var(--line);margin-left:5px;flex:none;color:var(--ink)}
+.rete-view .rete-go svg{width:8px;height:8px;display:block}
+
+/* foglio a spunte dal basso (sopra la tab bar, che sta a z-index 90) */
+.rete-view .rete-sheetbg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1500;touch-action:none}
+.rete-view .rete-sheet{position:fixed;left:0;right:0;bottom:0;max-width:440px;margin:0 auto;max-height:82vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));z-index:1501;color:var(--ink);overscroll-behavior:contain}
+.rete-view .rete-shh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.rete-view .rete-sheet h3{margin:0;font-size:1.2rem;font-weight:800}
+.rete-view .rete-x{min-height:44px;min-width:44px;border:0;background:var(--paper);color:var(--ink);border-radius:12px;font-size:1.1rem;cursor:pointer}
+.rete-view .rete-search{display:block;width:100%;min-height:48px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);padding:0 14px;font:inherit;font-weight:500;font-size:.9rem;outline:none}
+.rete-view .rete-search:focus{border-color:var(--ink)}
+.rete-view .rete-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
+.rete-view .rete-quick button{min-height:44px;border:1.5px solid var(--line);background:var(--paper);border-radius:11px;font:inherit;font-weight:700;font-size:.72rem;color:var(--ink-soft);cursor:pointer}
+.rete-view .rete-opt{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:700;font-size:.9rem;text-align:left;cursor:pointer}
+.rete-view .rete-bx{width:24px;height:24px;border-radius:8px;border:2px solid var(--ink);display:grid;place-items:center;font-size:.8rem;font-weight:900;color:transparent;flex:none}
+.rete-view .rete-opt.on .rete-bx{background:var(--lime);border-color:var(--lime);color:var(--on-lime)}
+.rete-view .rete-l{font-size:.58rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-left:auto}
+.rete-view .rete-opt[data-lv="2"]{padding-left:18px}
+.rete-view .rete-opt[data-lv="3"]{padding-left:36px}
+.rete-view .rete-opt[data-lv="4"]{padding-left:54px}
+.rete-view .rete-apply{width:100%;min-height:48px;border:0;border-radius:12px;background:var(--lime);color:var(--on-lime);font:inherit;font-weight:800;font-size:.9rem;margin-top:12px;cursor:pointer}
+/* Container query sul solo albero: container-type sull'intera vista romperebbe il foglio position:fixed */
+.rete-view .rete-tree{container-type:inline-size}
+@container (max-width:340px){
+  .rete-view .rete-node{padding:8px 8px;gap:2px 4px}
+  .rete-view .rete-node b{font-size:.84rem}
+  .rete-view .rete-v{font-size:.84rem}
+  .rete-view .rete-node small{font-size:.64rem}
+  .rete-view .rete-lv{font-size:.52rem;padding:1px 5px;margin-right:4px}
+  .rete-view .rete-go{width:16px;height:16px;margin-left:4px}
+}
+@media (prefers-reduced-motion:reduce){.rete-view *{transition:none!important;animation:none!important}}

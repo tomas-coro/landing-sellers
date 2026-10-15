@@ -624,6 +624,25 @@ function appAdminMixinApi() {
   return null;
 }
 
+function appReteMixinApi() {
+  if (
+    typeof globalThis !== 'undefined' &&
+    globalThis.appReteMixin
+  ) {
+    return globalThis.appReteMixin;
+  }
+
+  if (
+    typeof module === 'object' &&
+    module.exports &&
+    typeof require === 'function'
+  ) {
+    return require('./app-rete.js');
+  }
+
+  return null;
+}
+
 function appFatturatoMixinApi() {
   if (
     typeof globalThis !== 'undefined' &&
@@ -734,6 +753,18 @@ function appState() {
     trendDatiAdmin: [], // [{ id, nome, color, punti: [{chiave,label,valore}] }]
     trendRangeAdmin: 12,
     trendHoverAdmin: null,
+
+    // Vista Rete vendita (js/app-rete.js): caricata a richiesta da apriRete.
+    caricandoRete: false,
+    erroreRete: '',
+    reteAnno: new Date().getFullYear(),
+    reteNodi: [],            // righe di rete_vendita_albero()
+    reteStatistiche: {},     // id venditore -> { venduto, generato, incassato, ... }
+    reteSelezionati: [],     // venditori spuntati nel foglio
+    reteFocusId: null,       // venditore in cui si e entrati (null = tutta la rete)
+    reteFoglioAperto: false,
+    reteFoglioTmp: [],
+    reteRicerca: '',
 
     // Vista Fatturato: caricata a richiesta (apriFatturato), mai in cache -
     // così resta sempre coerente con l'ultimo incasso/vendita registrati.
@@ -4948,7 +4979,7 @@ costiPerMotoreRataEconomia(
       this.filtroTestoAdmin = '';
       this.view = 'admin';
     }
-  }, appEconomiaMixinApi(), appVenditaMixinApi(), appClienteMixinApi(), appAdminMixinApi(), appFatturatoMixinApi());
+  }, appEconomiaMixinApi(), appVenditaMixinApi(), appClienteMixinApi(), appAdminMixinApi(), appFatturatoMixinApi(), appReteMixinApi());
 }
 
 if (typeof module !== 'undefined') {
