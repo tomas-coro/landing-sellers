@@ -16450,7 +16450,7 @@ html[data-theme="dark"] .agenda-content .agenda-event.ev-mancante .agenda-event-
   border:0;
   border-radius:9px;
   background:var(--lime);
-  color:var(--on-lime);
+  color:#111 !important;
   font:inherit;
   font-size:13.5px;
   font-weight:850;
