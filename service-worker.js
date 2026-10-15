@@ -1,5 +1,5 @@
 // service-worker.js
-const CACHE_NAME = 'venditori-le-shell-v168';
+const CACHE_NAME = 'venditori-le-shell-v169';
 
 const APP_SHELL = [
   './',

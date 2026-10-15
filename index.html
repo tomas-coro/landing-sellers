@@ -390,17 +390,6 @@
 
         <div class="home-header-actions">
           <button
-            type="button"
-            class="home-search-trigger"
-            @click="apriAssistente()"
-            aria-label="Assistente AI">
-            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-              <path d="m11 2 1.55 4.2a4 4 0 0 0 2.25 2.25L19 10l-4.2 1.55a4 4 0 0 0-2.25 2.25L11 18l-1.55-4.2a4 4 0 0 0-2.25-2.25L3 10l4.2-1.55a4 4 0 0 0 2.25-2.25L11 2Z"/>
-              <path d="m18.5 13 .75 1.75L21 15.5l-1.75.75-.75 1.75-.75-1.75L16 15.5l1.75-.75.75-1.75Z"/>
-            </svg>
-          </button>
-
-          <button
             x-show="!isAdmin"
             type="button"
             class="home-search-trigger"
@@ -7487,7 +7476,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=168', {
+      navigator.serviceWorker.register('./service-worker.js?v=169', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
