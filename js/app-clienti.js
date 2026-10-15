@@ -292,7 +292,10 @@
 
     clientiElencoFoglio() {
       const albero = indicizzaAlbero(this.clientiNodi || []);
-      return this.clientiPerimetro().scope.map(id => albero.perId[id]).filter(Boolean);
+      const testo = this.clientiRicerca.trim().toLowerCase();
+      return this.clientiPerimetro().scope
+        .map(id => albero.perId[id])
+        .filter(n => n && n.nome.toLowerCase().includes(testo));
     },
 
     clientiImpostaModo(modo) {
@@ -325,24 +328,36 @@
     // Fogli: un solo flag per foglio; chiuderli ripristina lo scroll della pagina.
     clientiApriFoglioVenditori() {
       this.clientiFoglioTmp = (this.clientiScelti.length ? this.clientiScelti : this.clientiPerimetro().scope).slice();
+      this.clientiRicerca = '';
       this.clientiFoglio = 'venditori';
-      document.body.style.overflow = 'hidden';
+      this.bloccaScrollApp(true);
     },
 
     clientiApriFoglioDaFare() {
       this.clientiFoglio = 'dafare';
-      document.body.style.overflow = 'hidden';
+      this.bloccaScrollApp(true);
     },
 
     clientiChiudiFogli() {
       this.clientiFoglio = '';
-      document.body.style.overflow = '';
+      this.bloccaScrollApp(false);
     },
 
     clientiToggleFoglio(id) {
       this.clientiFoglioTmp = this.clientiFoglioTmp.includes(id)
         ? this.clientiFoglioTmp.filter(x => x !== id)
         : this.clientiFoglioTmp.concat(id);
+    },
+
+    clientiScorciatoia(tipo) {
+      const scope = this.clientiPerimetro().scope;
+      const io = this.sessione?.user?.id;
+      if (tipo === 'tutti') this.clientiFoglioTmp = scope.slice();
+      else if (tipo === 'io') this.clientiFoglioTmp = scope.includes(io) ? [io] : [];
+      else {
+        const team = sottoalbero(indicizzaAlbero(this.clientiNodi || []), io);
+        this.clientiFoglioTmp = team.length ? team.filter(id => scope.includes(id)) : scope.slice();
+      }
     },
 
     clientiApplicaFoglio() {

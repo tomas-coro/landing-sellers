@@ -16331,9 +16331,17 @@ html[data-theme="dark"] .cli-view{--cli-lc:#5a5e52}
 /* fogli dal basso (stessa forma di Rete vendita) */
 .cli-view .cli-sheetbg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1500;touch-action:none}
 .cli-view .cli-sheet{position:fixed;left:0;right:0;bottom:0;max-width:440px;margin:0 auto;max-height:82vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));z-index:1501;color:var(--ink);overscroll-behavior:contain}
+.cli-view .cli-sheet-venditori{left:16px;right:16px;top:50%;bottom:auto;transform:translateY(-50%);max-height:min(78vh,640px);display:flex;flex-direction:column;overflow:hidden;border-radius:20px;padding:16px}
+.cli-view .cli-list{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.cli-view .cli-foot{display:flex;gap:8px;flex:0 0 auto;margin-top:12px}
+.cli-view .cli-cancel{flex:0 0 auto;min-height:48px;padding:0 18px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);font:inherit;font-weight:700;font-size:.9rem;cursor:pointer}
 .cli-view .cli-shh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .cli-view .cli-sheet h3{margin:0;font-size:1.2rem;font-weight:800}
 .cli-view .cli-x{min-height:44px;min-width:44px;border:0;background:var(--paper);color:var(--ink);border-radius:12px;font-size:1.1rem;cursor:pointer}
+.cli-view .cli-search{display:block;width:100%;min-height:48px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);padding:0 14px;font:inherit;font-weight:500;font-size:.9rem;outline:none}
+.cli-view .cli-search:focus{border-color:var(--ink)}
+.cli-view .cli-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
+.cli-view .cli-quick button{min-height:44px;border:1.5px solid var(--line);background:var(--paper);border-radius:11px;font:inherit;font-weight:700;font-size:.72rem;color:var(--ink-soft);cursor:pointer}
 .cli-view .cli-td{display:flex;align-items:center;gap:12px;margin-bottom:10px;padding:10px 10px 10px 14px;background:var(--paper);border:1px solid var(--line);border-radius:13px;border-left:3px solid var(--danger)}
 .cli-view .cli-tdi{flex:1;min-width:0}
 .cli-view .cli-tdi b{display:block;font-size:.9rem;font-weight:800}
@@ -16346,7 +16354,7 @@ html[data-theme="dark"] .cli-view{--cli-lc:#5a5e52}
 .cli-view .cli-opt[data-lv="2"]{padding-left:18px}
 .cli-view .cli-opt[data-lv="3"]{padding-left:36px}
 .cli-view .cli-opt[data-lv="4"]{padding-left:54px}
-.cli-view .cli-apply{width:100%;min-height:48px;border:0;border-radius:12px;background:var(--lime);color:var(--on-lime);font:inherit;font-weight:800;font-size:.9rem;cursor:pointer}
+.cli-view .cli-apply{flex:1;min-height:48px;border:0;border-radius:12px;background:var(--lime);color:var(--on-lime);font:inherit;font-weight:800;font-size:.9rem;cursor:pointer}
 @media (prefers-reduced-motion:reduce){.cli-view *{transition:none!important}}
 
 /* Trend a barre: riga fissa con il valore della barra scelta (niente testo sopra le colonne) */

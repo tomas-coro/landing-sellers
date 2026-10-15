@@ -797,6 +797,7 @@ function appState() {
     clientiAltri: {},        // gruppi in cui e stato premuto "Mostra altri"
     clientiFoglio: '',       // '' | 'venditori' | 'dafare'
     clientiFoglioTmp: [],
+    clientiRicerca: '',
 
     // Vista Fatturato: caricata a richiesta (apriFatturato), mai in cache -
     // così resta sempre coerente con l'ultimo incasso/vendita registrati.
@@ -1084,6 +1085,12 @@ function appState() {
         requestAnimationFrame(prova);
       };
       requestAnimationFrame(prova);
+    },
+
+    bloccaScrollApp(bloccato) {
+      const appEl = document.getElementById('app');
+      if (appEl) appEl.style.overflowY = bloccato ? 'hidden' : '';
+      document.body.style.overflow = bloccato ? 'hidden' : '';
     },
 
     inizializzaHistoryNavigazione() {

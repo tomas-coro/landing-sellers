@@ -934,9 +934,11 @@
         </div>
       </div>
 
-      <div class="cli-sheetbg" x-show="clientiFoglio !== ''" x-cloak @click="clientiChiudiFogli()"></div>
+      <div class="cli-sheetbg" x-show="clientiFoglio !== ''" x-cloak @click="clientiChiudiFogli()"
+           @touchstart.stop @touchmove.stop @touchend.stop></div>
 
       <div class="cli-sheet" x-show="clientiFoglio === 'dafare'" x-cloak role="dialog" aria-modal="true" aria-label="Azioni scadute"
+           @touchstart.stop @touchmove.stop @touchend.stop
            @keydown.escape.window="clientiFoglio !== '' && clientiChiudiFogli()">
         <div class="cli-shh">
           <h3 x-text="clientiScadute().length + (clientiScadute().length === 1 ? ' azione scaduta' : ' azioni scadute')"></h3>
@@ -945,18 +947,31 @@
         <div x-html="clientiMarkupDaFare()" @click="clientiGestisciClick($event)"></div>
       </div>
 
-      <div class="cli-sheet" x-show="clientiFoglio === 'venditori'" x-cloak role="dialog" aria-modal="true" aria-label="Scegli i venditori">
+      <div class="cli-sheet cli-sheet-venditori" x-show="clientiFoglio === 'venditori'" x-cloak role="dialog" aria-modal="true" aria-label="Scegli i venditori"
+           @touchstart.stop @touchmove.stop @touchend.stop>
         <div class="cli-shh">
           <h3>Venditori</h3>
           <button type="button" class="cli-x" @click="clientiChiudiFogli()" aria-label="Chiudi">×</button>
         </div>
-        <template x-for="n in clientiElencoFoglio()" :key="'cli-opt-' + n.id">
-          <button type="button" class="cli-opt" :class="{ on: clientiFoglioTmp.includes(n.id) }" :data-lv="n.livello"
-                  :aria-pressed="clientiFoglioTmp.includes(n.id)" @click="clientiToggleFoglio(n.id)">
-            <span class="cli-bx">✓</span><span x-text="n.nome"></span><span class="cli-l" x-text="'Lv ' + n.livello"></span>
-          </button>
-        </template>
-        <button type="button" class="cli-apply" @click="clientiApplicaFoglio()">Applica</button>
+        <input type="search" class="cli-search" x-model="clientiRicerca" placeholder="Cerca un venditore" aria-label="Cerca un venditore">
+        <div class="cli-quick">
+          <button type="button" @click="clientiScorciatoia('tutti')">Tutti</button>
+          <button type="button" @click="clientiScorciatoia('io')">Solo io</button>
+          <button type="button" @click="clientiScorciatoia('team')">Il mio team</button>
+        </div>
+        <div class="cli-list">
+          <template x-for="n in clientiElencoFoglio()" :key="'cli-opt-' + n.id">
+            <button type="button" class="cli-opt" :class="{ on: clientiFoglioTmp.includes(n.id) }" :data-lv="n.livello"
+                    :aria-pressed="clientiFoglioTmp.includes(n.id)" @click="clientiToggleFoglio(n.id)">
+              <span class="cli-bx">✓</span><span x-text="n.nome"></span><span class="cli-l" x-text="'Lv ' + n.livello"></span>
+            </button>
+          </template>
+          <div class="cli-empty" x-show="clientiElencoFoglio().length === 0">Nessun risultato</div>
+        </div>
+        <div class="cli-foot">
+          <button type="button" class="cli-cancel" @click="clientiChiudiFogli()">Annulla</button>
+          <button type="button" class="cli-apply" @click="clientiApplicaFoglio()">Conferma</button>
+        </div>
       </div>
     </div>
 
@@ -6990,7 +7005,8 @@
     </div>
 
     <!-- RETE VENDITA: albero dei venditori, venduto di rete, generato e incassato (js/app-rete.js) -->
-    <div x-show="view === 'rete'" x-cloak x-transition.opacity.duration.160ms class="view-fade rete-view">
+    <div x-show="view === 'rete'" x-cloak x-transition.opacity.duration.160ms class="view-fade rete-view"
+         x-effect="view !== 'rete' && reteFoglioAperto && reteChiudiFoglio()">
       <div class="brandbar">
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
@@ -7060,8 +7076,10 @@
         </div>
       </div>
 
-      <div class="rete-sheetbg" x-show="reteFoglioAperto" x-cloak @click="reteChiudiFoglio()"></div>
+      <div class="rete-sheetbg" x-show="reteFoglioAperto" x-cloak @click="reteChiudiFoglio()"
+           @touchstart.stop @touchmove.stop @touchend.stop></div>
       <div class="rete-sheet" x-show="reteFoglioAperto" x-cloak role="dialog" aria-modal="true" aria-label="Scegli i venditori"
+           @touchstart.stop @touchmove.stop @touchend.stop
            @keydown.escape.window="reteFoglioAperto && reteChiudiFoglio()">
         <div class="rete-shh">
           <h3>Venditori</h3>
@@ -7439,7 +7457,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=172', {
+      navigator.serviceWorker.register('./service-worker.js?v=173', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

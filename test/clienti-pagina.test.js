@@ -133,3 +133,20 @@ test('il markup limita a 3 clienti, offre "Mostra altri" e protegge l html', () 
 
   assert.match(markupGruppi({ ...base, mostraVenditore: true }), /cli-sel">Nicola/);
 });
+
+test('il popup venditori filtra per nome e applica le stesse scorciatoie della rete', () => {
+  const stato = Object.assign({}, clienti, {
+    clientiNodi: Object.values(albero.perId).map(n => ({ ...n, responsabile_id: n.padre })),
+    clientiModo: 'rete',
+    clientiScelti: [],
+    clientiRicerca: 'sel',
+    clientiFoglioTmp: [],
+    sessione: { user: { id: 'ale' } }
+  });
+
+  assert.deepStrictEqual(stato.clientiElencoFoglio().map(n => n.id), ['sel']);
+  stato.clientiScorciatoia('io');
+  assert.deepStrictEqual(stato.clientiFoglioTmp, ['ale']);
+  stato.clientiScorciatoia('team');
+  assert.deepStrictEqual([...stato.clientiFoglioTmp].sort(), ['ale', 'nho', 'nic', 'sel']);
+});

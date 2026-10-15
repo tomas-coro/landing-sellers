@@ -428,12 +428,12 @@
       this.reteFoglioTmp = this.reteSelezionati.slice();
       this.reteRicerca = '';
       this.reteFoglioAperto = true;
-      document.body.style.overflow = 'hidden';
+      this.bloccaScrollApp(true);
     },
 
     reteChiudiFoglio() {
       this.reteFoglioAperto = false;
-      document.body.style.overflow = '';
+      this.bloccaScrollApp(false);
     },
 
     reteElencoFoglio() {
