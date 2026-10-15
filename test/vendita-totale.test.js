@@ -21,13 +21,14 @@ function contesto(cfg) {
   };
 }
 
-test('il totale vendita non include dominio ed email annuali', () => {
+test('il totale vendita include una tantum, dominio ed email annuali', () => {
   const c = contesto({
     formula: 'mensile', pacchetto_sicurezza: true, cliente_ha_dominio: false,
     dominio_it: 1, dominio_com: 0, email_5_caselle: 1, durata_contratto_anni: 2
   });
-  // canone 750 + realizzazione 200 + sicurezza 60, senza 30 + 25 annuali
-  assert.strictEqual(c.valoreTotaleContrattoStimatoVendita(), 1010);
+  // canone 750 + realizzazione 200 + sicurezza 60 + dominio 30 + email 25
+  assert.strictEqual(c.totaleExtraVendita(), 315);
+  assert.strictEqual(c.valoreTotaleContrattoStimatoVendita(), 1065);
 });
 
 test('il riepilogo separa una tantum e costi annuali a carico del cliente', () => {

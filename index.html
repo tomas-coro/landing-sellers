@@ -2391,13 +2391,20 @@
               </div>
 
               <div>
-                <span>Extra ricorrenti</span>
+                <span>Upgrade</span>
                 <strong
                   x-text="formattaEuroEconomia(
                     venditaEconomicaForm.configurazioneCommerciale.formula === 'annuale'
                       ? prezzoUpgradeMensileVendita() * 12
                       : prezzoUpgradeMensileVendita()
                   )">
+                </strong>
+              </div>
+
+              <div>
+                <span>Extra</span>
+                <strong
+                  x-text="formattaEuroEconomia(totaleExtraVendita())">
                 </strong>
               </div>
 
@@ -2414,8 +2421,7 @@
                 <span>Totale vendita</span>
                 <strong
                   x-text="formattaEuroEconomia(
-                    valoreTotaleContrattoStimatoVendita() +
-                    totaleAnnualiSeparatiVendita()
+                    valoreTotaleContrattoStimatoVendita()
                   )">
                 </strong>
               </div>
@@ -4101,7 +4107,7 @@
             <span>Valore contratto</span>
             <strong
               x-text="formattaEuroEconomia(
-                venditaEconomicaForm.importoVendita
+                valoreCanoneContrattoVendita()
               )">
             </strong>
           </div>
@@ -4124,8 +4130,7 @@
             <span>Totale per il cliente</span>
             <strong
               x-text="formattaEuroEconomia(
-                (Number(venditaEconomicaForm.importoVendita) || 0) +
-                totaleAnnualiSeparatiVendita()
+                venditaEconomicaForm.importoVendita
               )">
             </strong>
           </div>
@@ -4134,17 +4139,26 @@
             <span>Parte venditori</span>
           </div>
 
-          <div>
-            <span>Costi interni</span>
+          <template x-for="costo in venditaEconomicaForm.costi" :key="costo.id">
+            <div class="economy-sale-summary-sub">
+              <span x-text="'- ' + costo.descrizione"></span>
+              <strong x-text="formattaEuroEconomia(costo.importo)"></strong>
+            </div>
+          </template>
+
+          <div
+            class="economy-sale-summary-sub"
+            x-show="risultatoMotoreEconomia().importoTasse > 0">
+            <span>- Tasse</span>
             <strong
               x-text="formattaEuroEconomia(
-                totaleCostiEconomia()
+                risultatoMotoreEconomia().importoTasse
               )">
             </strong>
           </div>
 
           <div>
-            <span>Disponibile da dividere</span>
+            <span>Netto da dividere</span>
             <strong
               x-text="formattaEuroEconomia(
                 nettoDistribuibileEconomia()
@@ -6398,7 +6412,7 @@
             menuAzioneAperto = false;
             vaiNuovoCliente();
           ">
-          <span class="quick-action-icon">+</span>
+          <span class="quick-action-icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>
 
           <div>
             <strong>Nuovo cliente</strong>
@@ -6412,7 +6426,7 @@
             menuAzioneAperto = false;
             apriEconomia();
           ">
-          <span class="quick-action-icon">€</span>
+          <span class="quick-action-icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg></span>
 
           <div>
             <strong>Registra vendita</strong>
@@ -6426,7 +6440,7 @@
             menuAzioneAperto = false;
             apriIncasso();
           ">
-          <span class="quick-action-icon">＋</span>
+          <span class="quick-action-icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9.5a3.5 3.5 0 1 0 0 5M8.5 11h5M8.5 13h5"/></svg></span>
 
           <div>
             <strong>Incassa</strong>
@@ -7408,7 +7422,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=161', {
+      navigator.serviceWorker.register('./service-worker.js?v=162', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

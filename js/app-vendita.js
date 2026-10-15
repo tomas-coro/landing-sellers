@@ -281,16 +281,18 @@
       );
     },
 
+    /* Extra = tutto cio' che esce dal canone: una tantum, dominio ed email. */
+    totaleExtraVendita() {
+      return this.totaleUnaTantumVendita() + this.totaleAnnualiSeparatiVendita();
+    },
+
+    /* Totale vendita: canone + extra. E' il valore su cui si calcolano le quote. */
     valoreTotaleContrattoStimatoVendita() {
       const cfg = this.configurazioneVendita();
 
-      /*
-       * Dominio ed email annuali sono a carico del cliente ogni anno:
-       * non entrano nel totale vendita (vedi righeAnnualiClienteVendita).
-       */
       return totaleContrattoDaForm(
         this.valoreCanoneContrattoVendita(),
-        this.totaleUnaTantumVendita(),
+        this.totaleExtraVendita(),
         cfg
       );
     },
@@ -312,7 +314,7 @@
       return righe;
     },
 
-    /* Dominio ed email: a carico del cliente ogni anno, fuori dai totali. */
+    /* Dominio ed email: pagati dal cliente ogni anno, parte degli extra. */
     righeAnnualiClienteVendita() {
       const cfg = this.configurazioneVendita();
       if (cfg.cliente_ha_dominio !== false) return [];

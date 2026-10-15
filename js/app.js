@@ -123,11 +123,11 @@ function totaleContrattoDaForm(canone, extra, form) {
 function costiGestioneCliente(cliente, rinnovo = false) {
   const costi = [{ descrizione: 'Gestione sito', importo: 30 }];
   /*
-   * Dominio ed email del primo anno sono a carico del cliente ogni anno:
-   * restano fuori dai costi della vendita (e quindi dal disponibile da
-   * dividere e dalle quote). Qui rientrano solo nei costi di rinnovo.
+   * Dominio ed email acquistati tramite noi sono un costo reale: nel primo
+   * anno costano meno che nei rinnovi (il prezzo al cliente e' un'altra cosa,
+   * vedi catalogo-prezzi.js).
    */
-  if (rinnovo && cliente.cliente_ha_dominio === false) {
+  if (cliente.cliente_ha_dominio === false) {
     const qtaIt = Number(cliente.dominio_it) || 0;
     if (qtaIt > 0) {
       costi.push({
