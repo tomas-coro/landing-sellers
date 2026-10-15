@@ -439,8 +439,8 @@
                 <strong x-text="profilo.username || profilo.nome || 'Venditore'"></strong>
               </div>
 
-              <button type="button" @click="apriPipeline()">
-                Pipeline <span aria-hidden="true">›</span>
+              <button type="button" @click="apriClienti()">
+                Clienti <span aria-hidden="true">›</span>
               </button>
             </div>
 
@@ -523,7 +523,8 @@
             </div>
           </section>
 
-          <section class="home-flow">
+          <!-- Pipeline nascosta (non cancellata): per riattivarla togli x-show="false" -->
+          <section class="home-flow" x-show="false" x-cloak>
             <div class="home-section-title">
               <div>
                 <span>PIPELINE</span>
@@ -2313,7 +2314,7 @@
               </div>
 
               <div>
-                <span>Totale stimato</span>
+                <span>Totale vendita</span>
                 <strong
                   x-text="formattaEuroEconomia(
                     valoreTotaleContrattoStimatoVendita()
@@ -4007,6 +4008,13 @@
             </strong>
           </div>
 
+          <template x-for="riga in righeUnaTantumVendita()" :key="riga.descrizione">
+            <div class="economy-sale-summary-sub">
+              <span x-text="'+ ' + riga.descrizione + ' (una tantum)'"></span>
+              <strong x-text="formattaEuroEconomia(riga.importo)"></strong>
+            </div>
+          </template>
+
           <div>
             <span>Costi interni</span>
             <strong
@@ -4040,6 +4048,18 @@
               )">
             </strong>
           </div>
+
+          <template x-if="righeAnnualiClienteVendita().length">
+            <div class="economy-sale-summary-annual">
+              <span>A carico del cliente ogni anno (fuori da totale e quote)</span>
+              <template x-for="riga in righeAnnualiClienteVendita()" :key="riga.descrizione">
+                <div>
+                  <span x-text="riga.descrizione"></span>
+                  <strong x-text="formattaEuroEconomia(riga.importo)"></strong>
+                </div>
+              </template>
+            </div>
+          </template>
 
         </section>
 
@@ -5611,7 +5631,7 @@
               <span class="client-payment-history-title">Partecipanti e quote</span>
               <template x-for="partecipante in dettagliEconomiciPartecipanti" :key="'dettaglio-partecipante-' + partecipante.nome + partecipante.ruolo">
                 <div class="economy-payment-person">
-                  <strong x-text="partecipante.nome + ' (' + partecipante.ruolo + ')'"></strong>
+                  <strong x-text="partecipante.nome + ' (' + etichettaRuoloEconomia(partecipante.ruolo) + ')'"></strong>
                   <div class="economy-invoice-choice economy-invoice-choice-readonly">
                     <span>Modalità fatturazione</span>
                     <strong x-text="partecipante.modalitaFatturazione"></strong>
@@ -6645,13 +6665,13 @@
         <span>Nuovo</span>
       </button>
 
-      <button x-show="!isAdmin" type="button" :class="{ on: view === 'pipeline' }" @click="apriPipeline()">
+      <button x-show="!isAdmin" type="button" :class="{ on: view === 'clienti' }" @click="apriClienti()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-          <rect x="3" y="4" width="5" height="16" rx="1.5"/>
-          <rect x="10" y="7" width="5" height="13" rx="1.5"/>
-          <rect x="17" y="10" width="4" height="10" rx="1.5"/>
+          <circle cx="9" cy="8" r="3.2"/>
+          <path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/>
+          <path d="M16 5.2a3 3 0 0 1 0 5.6M18 14.8c1.8.6 3 2.4 3 5.2"/>
         </svg>
-        <span>Pipeline</span>
+        <span>Clienti</span>
       </button>
 
       <button
@@ -7181,7 +7201,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=150', {
+      navigator.serviceWorker.register('./service-worker.js?v=153', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

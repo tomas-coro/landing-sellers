@@ -20,6 +20,7 @@ test('la scelta della vendita porta al modulo incasso', async () => {
   global.requestAnimationFrame = () => {};
   global.window ||= {};
   global.window.supabaseClient = {
+    rpc: async () => ({ data: [], error: null }),
     from(tabella) {
       return {
         select() { return this; },

@@ -1359,6 +1359,7 @@
           return;
         }
 
+        await this.caricaMappaNomiVenditori();
         this.dettagliEconomiciPartecipanti =
           (partecipantiResult.data || []).map(partecipante => ({
             nome:
@@ -1366,7 +1367,7 @@
                 ? 'Alessandro'
                 : partecipante.ruolo === 'produzione'
                   ? 'Tomas'
-                  : 'Venditore',
+                  : (this.nomeVenditorePerId(partecipante.profilo_id) || 'Venditore'),
             ruolo: partecipante.ruolo,
             modalitaFatturazione:
               partecipante.modalita_fatturazione ||

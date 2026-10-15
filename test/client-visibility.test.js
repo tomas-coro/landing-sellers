@@ -5,6 +5,7 @@ const {
   ultimiClienti,
   filtraClientiVenditore,
   filtroVenditoreTeamIniziale,
+  profiloVedeTuttiPerDefault,
   profiloHaAccessoGlobaleClienti,
   nomeVenditoreCliente,
   clientiHomeProfilo,
@@ -38,10 +39,15 @@ test('la home mostra solo gli ultimi cinque clienti senza mutare la lista', () =
   assert.deepStrictEqual(clienti.map(c => c.id), [0, 1, 2, 3, 4, 5, 6]);
 });
 
-test('un responsabile apre tutti i clienti visibili, un venditore solo i propri', () => {
+test('di default ognuno parte dai propri clienti, solo Tomas parte da tutti', () => {
   assert.strictEqual(
     filtroVenditoreTeamIniziale([{ id: 'nicholas' }, { id: 'selim' }], 'nicholas'),
-    ''
+    'nicholas'
+  );
+  assert.strictEqual(profiloVedeTuttiPerDefault({ ruolo: 'developer' }), true);
+  assert.strictEqual(
+    profiloVedeTuttiPerDefault({ ruolo: 'venditore', ruolo_economico: 'referente' }),
+    false
   );
   assert.strictEqual(
     filtroVenditoreTeamIniziale([{ id: 'nicola' }], 'nicola'),
@@ -64,7 +70,7 @@ test('solo Tomas e Alessandro hanno accesso globale ai clienti', () => {
   ];
 
   assert.deepStrictEqual(clientiHomeProfilo(clienti, 'tomas', true), clienti);
-  assert.deepStrictEqual(clientiHomeProfilo(clienti, 'alessandro', true), clienti);
+  assert.deepStrictEqual(clientiHomeProfilo(clienti, 'alessandro', false), [clienti[0]]);
   assert.deepStrictEqual(clientiHomeProfilo(clienti, 'nicola', false), [clienti[1]]);
 });
 

@@ -284,21 +284,49 @@
     valoreTotaleContrattoStimatoVendita() {
       const cfg = this.configurazioneVendita();
 
-      const durata = Math.max(
-        1,
-        Math.min(
-          4,
-          Number(cfg.durata_contratto_anni) || 1
-        )
-      );
-
+      /*
+       * Dominio ed email annuali sono a carico del cliente ogni anno:
+       * non entrano nel totale vendita (vedi righeAnnualiClienteVendita).
+       */
       return totaleContrattoDaForm(
         this.valoreCanoneContrattoVendita(),
-        this.totaleUnaTantumVendita() +
-          this.totaleAnnualiSeparatiVendita() *
-            durata,
+        this.totaleUnaTantumVendita(),
         cfg
       );
+    },
+
+    /* Costi aggiuntivi una tantum, con le sottovoci per il riepilogo. */
+    righeUnaTantumVendita() {
+      const cfg = this.configurazioneVendita();
+      const catalogo = this.catalogoPrezzi();
+      const formula = catalogo.formule[cfg.formula] || catalogo.formule.mensile;
+      const righe = [];
+      const setup = Number(formula.setup) || 0;
+      if (setup > 0) righe.push({ descrizione: 'Realizzazione', importo: setup });
+      if (formula.id === 'mensile' && cfg.pacchetto_sicurezza) {
+        righe.push({
+          descrizione: 'Sicurezza',
+          importo: Number(catalogo.sicurezza.prezzo) || 0
+        });
+      }
+      return righe;
+    },
+
+    /* Dominio ed email: a carico del cliente ogni anno, fuori dai totali. */
+    righeAnnualiClienteVendita() {
+      const cfg = this.configurazioneVendita();
+      if (cfg.cliente_ha_dominio !== false) return [];
+      const a = this.catalogoPrezzi().annuali;
+      return [
+        ['Dominio .it', cfg.dominio_it, a.dominioIt],
+        ['Dominio .com', cfg.dominio_com, a.dominioCom],
+        ['Email 5 caselle', cfg.email_5_caselle, a.email5]
+      ]
+        .map(([descrizione, qta, voce]) => ({
+          descrizione: Number(qta) > 1 ? `${descrizione} x${Number(qta)}` : descrizione,
+          importo: (Number(qta) || 0) * (Number(voce.prezzo) || 0)
+        }))
+        .filter(riga => riga.importo > 0);
     },
 
     descrizioneConfigurazioneCommerciale(

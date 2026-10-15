@@ -104,15 +104,14 @@ test('setup, dominio e altri extra si aggiungono sempre al canone, anche a prezz
   }), 480);
 });
 
-test('i costi del primo anno sono 30 euro più 10 per il dominio .it acquistato', () => {
+test('i costi del primo anno sono solo i 30 euro di gestione: dominio ed email sono a carico del cliente', () => {
   assert.strictEqual(typeof costiGestioneCliente, 'function');
   assert.deepStrictEqual(costiGestioneCliente({
     cliente_ha_dominio: false,
     dominio_it: true,
     dominio_com: false
   }), [
-    { descrizione: 'Gestione sito', importo: 30 },
-    { descrizione: 'Dominio .it - primo anno', importo: 10 }
+    { descrizione: 'Gestione sito', importo: 30 }
   ]);
   assert.deepStrictEqual(costiGestioneCliente({ cliente_ha_dominio: true }), [
     { descrizione: 'Gestione sito', importo: 30 }
@@ -129,15 +128,13 @@ test('il dominio .it costa 15 euro dai rinnovi successivi', () => {
   ]);
 });
 
-test('il dominio .com costa 15 euro il primo anno e 20 dai rinnovi, l’email 5 il primo anno e 10 dai rinnovi', () => {
+test('il dominio .com costa 20 euro e l’email 5 costa 10 euro nei rinnovi; il primo anno non entrano nei costi', () => {
   assert.deepStrictEqual(costiGestioneCliente({
     cliente_ha_dominio: false,
     dominio_com: true,
     email_5_caselle: true
   }), [
-    { descrizione: 'Gestione sito', importo: 30 },
-    { descrizione: 'Dominio .com - primo anno', importo: 15 },
-    { descrizione: 'Email 5 caselle - primo anno', importo: 5 }
+    { descrizione: 'Gestione sito', importo: 30 }
   ]);
   assert.deepStrictEqual(costiGestioneCliente({
     cliente_ha_dominio: false,

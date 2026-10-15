@@ -40,8 +40,15 @@ function profiloHaAccessoGlobaleClienti(profilo = {}) {
   return profilo.ruolo === 'developer' || profilo.ruolo_economico === 'referente';
 }
 
-function filtroVenditoreTeamIniziale(venditoriTeam = [], utenteId = '', accessoGlobale = false) {
-  return accessoGlobale || venditoriTeam.length > 1 ? '' : utenteId;
+// Di default vede tutti i clienti solo chi non ha clienti diretti (Tomas,
+// developer). Alessandro e i capi-rete partono dai propri e allargano
+// la vista con il filtro "Venditore".
+function profiloVedeTuttiPerDefault(profilo = {}) {
+  return profilo.ruolo === 'developer';
+}
+
+function filtroVenditoreTeamIniziale(venditoriTeam = [], utenteId = '', vedeTutti = false) {
+  return vedeTutti ? '' : utenteId;
 }
 
 function clientiHomeProfilo(clienti = [], utenteId = '', accessoGlobale = false) {
@@ -115,7 +122,12 @@ function totaleContrattoDaForm(canone, extra, form) {
 
 function costiGestioneCliente(cliente, rinnovo = false) {
   const costi = [{ descrizione: 'Gestione sito', importo: 30 }];
-  if (cliente.cliente_ha_dominio === false) {
+  /*
+   * Dominio ed email del primo anno sono a carico del cliente ogni anno:
+   * restano fuori dai costi della vendita (e quindi dal disponibile da
+   * dividere e dalle quote). Qui rientrano solo nei costi di rinnovo.
+   */
+  if (rinnovo && cliente.cliente_ha_dominio === false) {
     const qtaIt = Number(cliente.dominio_it) || 0;
     if (qtaIt > 0) {
       costi.push({
@@ -1496,7 +1508,7 @@ function appState() {
       this.filtroVenditoreTeamId = filtroVenditoreTeamIniziale(
         this.venditoriTeam,
         this.sessione?.user?.id || '',
-        profiloHaAccessoGlobaleClienti(this.profilo)
+        profiloVedeTuttiPerDefault(this.profilo)
       );
       this.filtroTesto = '';
       this.filtroStato = '';
@@ -1780,6 +1792,8 @@ function appState() {
         return;
       }
 
+      await this.caricaMappaNomiVenditori();
+
       const snapshotPartecipanti =
         partecipantiResult.data || [];
 
@@ -1801,7 +1815,7 @@ function appState() {
               ? 'Alessandro'
               : partecipante.ruolo === 'produzione'
                 ? 'Tomas'
-                : 'Venditore',
+                : (this.nomeVenditorePerId(partecipante.profilo_id) || 'Venditore'),
 
           ruolo: partecipante.ruolo,
 
@@ -2652,7 +2666,7 @@ costiPerMotoreRataEconomia(
       this.filtroVenditoreTeamId = filtroVenditoreTeamIniziale(
         this.venditoriTeam,
         this.sessione.user.id,
-        profiloHaAccessoGlobaleClienti(this.profilo)
+        profiloVedeTuttiPerDefault(this.profilo)
       );
     },
 
@@ -3356,7 +3370,7 @@ costiPerMotoreRataEconomia(
       return clientiHomeProfilo(
         this.clienti,
         this.sessione?.user?.id || '',
-        profiloHaAccessoGlobaleClienti(this.profilo)
+        profiloVedeTuttiPerDefault(this.profilo)
       );
     },
 
@@ -4471,12 +4485,20 @@ costiPerMotoreRataEconomia(
     numeroFiltriClientiAttivi() {
       return Number(Boolean(this.filtroStato)) +
         Number(Boolean(this.filtroSoloRitardo)) +
-        Number(this.venditoriTeam.length > 1 && Boolean(this.filtroVenditoreTeamId));
+        Number(this.venditoriTeam.length > 1 && this.filtroVenditoreTeamId !== this.filtroVenditoreTeamDefault());
+    },
+
+    filtroVenditoreTeamDefault() {
+      return filtroVenditoreTeamIniziale(
+        this.venditoriTeam,
+        this.sessione?.user?.id || '',
+        profiloVedeTuttiPerDefault(this.profilo)
+      );
     },
 
     azzeraFiltriClienti() {
       this.filtroStato = '';
-      this.filtroVenditoreTeamId = '';
+      this.filtroVenditoreTeamId = this.filtroVenditoreTeamDefault();
       this.filtroSoloRitardo = false;
       this.paginaClienti = 1;
     },
@@ -4935,6 +4957,7 @@ if (typeof module !== 'undefined') {
     ultimiClienti,
     filtraClientiVenditore,
     filtroVenditoreTeamIniziale,
+    profiloVedeTuttiPerDefault,
     profiloHaAccessoGlobaleClienti,
     clientiHomeProfilo,
     nomeVenditoreCliente,
