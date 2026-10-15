@@ -2385,7 +2385,7 @@
             </div>
 
             <div class="sale-live-price-meta">
-              <div>
+              <div class="sale-live-price-pack">
                 <span>Pacchetto</span>
                 <strong x-text="nomePacchettoVendita()"></strong>
               </div>
@@ -2414,7 +2414,8 @@
                 <span>Totale vendita</span>
                 <strong
                   x-text="formattaEuroEconomia(
-                    valoreTotaleContrattoStimatoVendita()
+                    valoreTotaleContrattoStimatoVendita() +
+                    totaleAnnualiSeparatiVendita()
                   )">
                 </strong>
               </div>
@@ -7407,7 +7408,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=160', {
+      navigator.serviceWorker.register('./service-worker.js?v=161', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

@@ -16358,3 +16358,7 @@ html[data-theme="dark"] .agenda-content .agenda-event.ev-brief .agenda-event-dat
 html[data-theme="dark"] .agenda-content .agenda-event.ev-mancante{background:#3a1d19;border-color:#e0786c}
 html[data-theme="dark"] .agenda-content .agenda-event.ev-mancante .agenda-event-date strong,
 html[data-theme="dark"] .agenda-content .agenda-event.ev-mancante .agenda-event-date span{color:#ff8a7a}
+
+/* Prezzo configurato: il nome del pacchetto occupa tutta la riga e va a capo */
+.sale-live-price-meta>.sale-live-price-pack{grid-column:1/-1;border-left:0;min-height:0}
+.sale-live-price-meta>.sale-live-price-pack strong{overflow:visible;white-space:normal;text-overflow:clip;line-height:1.35}
