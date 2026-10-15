@@ -130,16 +130,16 @@ test('il markup annida i figli e il nome e escapato', () => {
   assert.strictEqual(escapaHtml('a&b"'), 'a&amp;b&quot;');
 });
 
-test('solo i nodi con un team sotto e diversi dal centro sono cliccabili', () => {
+test('ogni venditore diverso dal centro e cliccabile, anche senza team', () => {
   const albero = indicizzaAlbero(NODI);
   const html = markupAlberoRete({
     albero, statistiche: statistiche(), visibili: albero.ordine, centro: 'ale', viewerId: 'ale'
   });
-  // Nicholas ha Selim sotto: bottone. Alessandro e il centro, Nicola e Selim non hanno team: div.
+  // Alessandro e il centro: div. Nicholas (con team), Nicola e Selim (senza team): bottoni.
   assert.ok(/<button type="button" class="rete-node" data-id="nho">/.test(html));
+  assert.ok(/<button[^>]*data-id="nic"/.test(html));
+  assert.ok(/<button[^>]*data-id="sel"/.test(html));
   assert.ok(!/<button[^>]*data-id="ale"/.test(html));
-  assert.ok(!/<button[^>]*data-id="nic"/.test(html));
-  assert.ok(!/<button[^>]*data-id="sel"/.test(html));
 });
 
 test('le funzioni pure non finiscono nello stato Alpine', () => {

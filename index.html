@@ -211,6 +211,7 @@
       agendaVista;
       agendaDataSelezionata;
       pipelineIndice;
+      reteFocusId;
       sincronizzaHistoryNavigazione();
     ">
 
@@ -422,8 +423,9 @@
         <button x-show="isAdmin" type="button" class="linkback" @click="tornaAllaDashboard()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Dashboard
         </button>
-        <button x-show="!isAdmin && view === 'clienti'" type="button" class="linkback" @click="vaiHome()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Home
+        <button x-show="!isAdmin && view === 'clienti'" type="button" class="linkback" @click="tornaIndietro()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+          <span x-text="etichettaIndietro()"></span>
         </button>
         <h1 style="font-size:21px" x-text="isAdmin ? filtroVenditoreNome : (view === 'clienti' ? 'Clienti' : 'Home')"></h1>
       </div>
@@ -882,8 +884,9 @@
         </div>
       </div>
       <div class="topbar">
-        <button type="button" class="linkback" @click="vaiHome()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Home
+        <button type="button" class="linkback" @click="tornaIndietro()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+          <span x-text="etichettaIndietro()"></span>
         </button>
         <h1 style="font-size:21px">Clienti</h1>
       </div>
@@ -969,12 +972,12 @@
       </div>
 
       <div class="topbar profile-topbar">
-        <button type="button" class="linkback" @click="tornaDaProfilo()">
+        <button type="button" class="linkback" @click="tornaIndietro()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M19 12H5M11 18l-6-6 6-6"/>
           </svg>
-          Indietro
+          <span x-text="etichettaIndietro()"></span>
         </button>
 
         <h1 x-text="isAdmin ? 'Area admin' : 'Profilo'"></h1>
@@ -2133,12 +2136,12 @@
       class="app-main-view">
 
       <div class="topbar">
-        <button type="button" class="linkback" @click="vaiHome()">
+        <button type="button" class="linkback" @click="tornaIndietro()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M19 12H5M11 18l-6-6 6-6"/>
           </svg>
-          Home
+          <span x-text="etichettaIndietro()"></span>
         </button>
 
         <div>
@@ -5985,11 +5988,11 @@
       </div>
 
       <div class="topbar">
-        <button type="button" class="linkback" @click="vaiHome()">
+        <button type="button" class="linkback" @click="tornaIndietro()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M19 12H5M11 18l-6-6 6-6"/>
           </svg>
-          Home
+          <span x-text="etichettaIndietro()"></span>
         </button>
         <h1 style="font-size:21px" x-text="isAdmin ? 'Agenda rete' : 'Agenda'"></h1>
       </div>
@@ -6103,11 +6106,11 @@
       </div>
 
       <div class="pipeline-topbar">
-        <button type="button" class="linkback" @click="vaiHome()">
+        <button type="button" class="linkback" @click="tornaIndietro()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M19 12H5M11 18l-6-6 6-6"/>
           </svg>
-          Home
+          <span x-text="etichettaIndietro()"></span>
         </button>
 
         <div class="pipeline-desktop-heading">
@@ -6729,9 +6732,9 @@
       </div>
 
       <div class="topbar assistant-topbar">
-        <button type="button" class="linkback" @click="vaiHome()">
+        <button type="button" class="linkback" @click="tornaIndietro()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
-          Home
+          <span x-text="etichettaIndietro()"></span>
         </button>
         <h1>Assistente</h1>
       </div>
@@ -6847,8 +6850,9 @@
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
       <div class="topbar">
-        <button type="button" class="linkback" @click="view = 'lista'">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Torna alla lista
+        <button type="button" class="linkback" @click="tornaIndietro()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+          <span x-text="etichettaIndietro()"></span>
         </button>
         <h1 style="font-size:21px">Cestino</h1>
       </div>
@@ -6887,8 +6891,9 @@
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
       <div class="topbar">
-        <button type="button" class="linkback" @click="view = 'profilo'">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Torna al profilo
+        <button type="button" class="linkback" @click="tornaIndietro()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+          <span x-text="etichettaIndietro()"></span>
         </button>
         <h1 style="font-size:21px">Fatturato</h1>
       </div>
@@ -7020,8 +7025,9 @@
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
       <div class="topbar">
-        <button type="button" class="linkback" @click="tornaDaRete()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Torna alla home
+        <button type="button" class="linkback" @click="tornaIndietro()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+          <span x-text="etichettaIndietro()"></span>
         </button>
         <h1 style="font-size:21px">Rete vendita</h1>
       </div>
@@ -7061,7 +7067,7 @@
             <div class="rete-split"><i :style="{ width: retePercentualeDiretto() + '%' }"></i></div>
             <div class="rete-splitcap">
               <span><span x-text="reteEtichettaDiretto()"></span> <span x-text="formattaEuro(reteVista().diretto)"></span></span>
-              <span x-show="reteHaSottoposti()">Team <span x-text="formattaEuro(reteVista().team)"></span></span>
+              <span x-show="reteVista().visibili.length > 1">Team <span x-text="formattaEuro(reteVista().team)"></span></span>
             </div>
           </div>
 
@@ -7072,7 +7078,7 @@
             <div><span class="rete-lab">Venditori</span><strong class="rete-num" x-text="reteVista().visibili.length"></strong></div>
           </div>
 
-          <p class="rete-hint" x-show="reteHaSottoposti()">Tocca un nome con il team per entrarci.</p>
+          <p class="rete-hint" x-show="reteHaSottoposti()">Tocca un nome per vedere i suoi numeri.</p>
           <div class="rete-empty" x-show="reteVista().visibili.length === 0">Nessun venditore con questo filtro.</div>
           <div class="rete-tree" x-html="reteMarkup()" @click="reteEntra($event)"></div>
 
@@ -7116,8 +7122,9 @@
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
       <div class="topbar">
-        <button type="button" class="linkback" @click="vaiHome()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Torna alla home
+        <button type="button" class="linkback" @click="tornaIndietro()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+          <span x-text="etichettaIndietro()"></span>
         </button>
         <h1 style="font-size:21px">Il tuo incassato</h1>
       </div>
@@ -7212,8 +7219,9 @@
         <div class="brand"><span class="bdot"></span><span>LANDING EVOLUTION</span></div>
       </div>
       <div class="topbar">
-        <button type="button" class="linkback" @click="vaiHome()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Torna alla home
+        <button type="button" class="linkback" @click="tornaIndietro()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+          <span x-text="etichettaIndietro()"></span>
         </button>
         <h1 style="font-size:21px">Quote</h1>
       </div>
@@ -7445,7 +7453,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=163', {
+      navigator.serviceWorker.register('./service-worker.js?v=164', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

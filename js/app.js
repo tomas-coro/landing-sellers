@@ -1002,7 +1002,8 @@ function appState() {
         agendaVista: this.agendaVista || null,
         agendaData: this.agendaDataSelezionata || null,
         agendaMese: this.agendaMese || null,
-        pipelineIndice: Number(this.pipelineIndice) || 0
+        pipelineIndice: Number(this.pipelineIndice) || 0,
+        reteFocusId: this.view === 'rete' ? (this.reteFocusId || null) : null
       };
     },
 
@@ -1034,7 +1035,9 @@ function appState() {
 
       const vistaCambiata = stato.view !== this.historyUltimaVista;
       this.historyUltimaVista = stato.view;
-      if (vistaCambiata) this.gestisciScrollCambioVista(chiave);
+      // In Rete vendita ogni ingresso in un venditore e un passo a se: indietro
+      // torna al livello prima, non alla Home.
+      if (vistaCambiata || stato.view === 'rete') this.gestisciScrollCambioVista(chiave);
     },
 
     // Torno indietro (la schermata e gia nella pila) = riprendo dove ero.
@@ -1126,34 +1129,7 @@ function appState() {
         this.historyRipristino = true;
 
         try {
-          if (stato.view === 'scheda' && stato.clienteId) {
-            await this.apriScheda(stato.clienteId);
-
-          } else if (stato.view === 'economia') {
-            await this.apriEconomia(
-              stato.modalitaEconomia || 'vendita'
-            );
-
-          } else {
-            this.view = stato.view || (this.isAdmin ? 'admin' : 'lista');
-
-            if (stato.view === 'agenda') {
-              // '7giorni' è una vista rimossa: una sessione salvata prima
-              // del cambio non deve restare senza nessun tab selezionato.
-              this.agendaVista = stato.agendaVista === '7giorni'
-                ? 'non_completate'
-                : (stato.agendaVista || 'oggi');
-              this.agendaDataSelezionata =
-                stato.agendaData || this.dataISOOggi();
-              this.agendaMese =
-                stato.agendaMese || this.dataISOOggi().slice(0, 7);
-            }
-
-            if (stato.view === 'pipeline') {
-              this.pipelineIndice =
-                Number(stato.pipelineIndice) || 0;
-            }
-          }
+          await this.applicaStatoNavigazione(stato);
 
           this.historyUltimaChiave = this.chiaveHistory(stato);
           this.historyUltimaVista = stato.view;
@@ -1171,6 +1147,100 @@ function appState() {
           });
         }
       });
+    },
+
+    // Porta l'app alla schermata descritta da uno stato di navigazione: usato
+    // dal gesto/tasto indietro del browser e dal "Torna a..." dentro l'app.
+    async applicaStatoNavigazione(stato) {
+      if (stato.view === 'scheda' && stato.clienteId) {
+        await this.apriScheda(stato.clienteId);
+        return;
+      }
+
+      if (stato.view === 'economia') {
+        await this.apriEconomia(stato.modalitaEconomia || 'vendita');
+        return;
+      }
+
+      this.view = stato.view || (this.isAdmin ? 'admin' : 'lista');
+
+      if (stato.view === 'agenda') {
+        // '7giorni' è una vista rimossa: una sessione salvata prima
+        // del cambio non deve restare senza nessun tab selezionato.
+        this.agendaVista = stato.agendaVista === '7giorni'
+          ? 'non_completate'
+          : (stato.agendaVista || 'oggi');
+        this.agendaDataSelezionata =
+          stato.agendaData || this.dataISOOggi();
+        this.agendaMese =
+          stato.agendaMese || this.dataISOOggi().slice(0, 7);
+      }
+
+      if (stato.view === 'pipeline') {
+        this.pipelineIndice =
+          Number(stato.pipelineIndice) || 0;
+      }
+
+      if (stato.view === 'rete') {
+        this.reteFocusId = stato.reteFocusId || null;
+        if (!this.reteNodi.length) await this.caricaRete();
+      }
+    },
+
+    // La schermata da cui si e arrivati: la penultima della pila. Dopo un tocco
+    // sulla barra in basso la pila riparte da una sola voce, quindi non c'e e
+    // "indietro" porta alla Home.
+    statoPrecedenteNavigazione() {
+      const pila = this.pilaNavigazione || [];
+      if (pila.length < 2) return null;
+
+      try {
+        const stato = JSON.parse(pila[pila.length - 2]);
+        return stato?.le && !['nuovo', 'login'].includes(stato.view) ? stato : null;
+      } catch (errore) {
+        return null;
+      }
+    },
+
+    etichettaIndietro() {
+      const prec = this.statoPrecedenteNavigazione();
+      if (!prec) return this.isAdmin ? 'Torna alla dashboard' : 'Torna alla home';
+
+      if (prec.view === 'rete') {
+        const nodo = prec.reteFocusId && this.reteAlbero().perId[prec.reteFocusId];
+        return nodo ? `Torna a ${nodo.nome}` : 'Torna a Rete vendita';
+      }
+
+      return {
+        lista: 'Torna alla home',
+        admin: 'Torna alla dashboard',
+        clienti: 'Torna ai clienti',
+        scheda: 'Torna al cliente',
+        agenda: 'Torna all’agenda',
+        pipeline: 'Torna alla pipeline',
+        ricerca: 'Torna alla ricerca',
+        assistente: 'Torna all’assistente',
+        profilo: 'Torna al profilo',
+        cestino: 'Torna al cestino',
+        fatturato: 'Torna al fatturato',
+        incassato: 'Torna all’incassato',
+        quote: 'Torna alle quote',
+        economia: prec.modalitaEconomia === 'incasso' ? 'Torna all’incasso' : 'Torna alla vendita'
+      }[prec.view] || (this.isAdmin ? 'Torna alla dashboard' : 'Torna alla home');
+    },
+
+    async tornaIndietro() {
+      const prec = this.statoPrecedenteNavigazione();
+
+      if (!prec) {
+        return this.isAdmin ? this.tornaAllaDashboard() : this.vaiHome();
+      }
+
+      // La Home si ricarica sempre (vedi vaiHome), le altre schermate no.
+      if (['lista', 'admin'].includes(prec.view)) return this.vaiHome();
+
+      if (!(await this.confermaUscitaFormCliente())) return;
+      await this.applicaStatoNavigazione(prec);
     },
 
     mostraToast(tipo, titolo, testo = '') {
@@ -2308,7 +2378,8 @@ costiPerMotoreRataEconomia(
     vistaSupportaSwipeIndietro() {
       return [
         'profilo', 'cestino', 'scheda', 'nuovo', 'agenda',
-        'pipeline', 'ricerca', 'assistente', 'clienti', 'economia'
+        'pipeline', 'ricerca', 'assistente', 'clienti', 'economia',
+        'rete', 'incassato', 'quote', 'fatturato'
       ].includes(this.view) || (
         this.view === 'lista' && this.isAdmin && this.filtroVenditoreId
       );
@@ -2328,16 +2399,13 @@ costiPerMotoreRataEconomia(
 
       if (this.view === 'lista' && this.isAdmin && this.filtroVenditoreId) {
         this.tornaAllaDashboard();
-      } else if (this.view === 'profilo' || this.view === 'economia') {
-        this.vaiHome();
-      } else if (this.view === 'cestino') {
-        this.apriProfilo();
-      } else if (['agenda', 'pipeline', 'clienti'].includes(this.view)) {
-        this.vaiHome();
+      } else if ([
+        'profilo', 'economia', 'cestino', 'agenda', 'pipeline', 'clienti',
+        'assistente', 'rete', 'incassato', 'quote', 'fatturato'
+      ].includes(this.view)) {
+        this.tornaIndietro();
       } else if (this.view === 'ricerca') {
         this.tornaDaRicerca();
-      } else if (this.view === 'assistente') {
-        this.vaiHome();
       } else if (this.view === 'scheda') {
         this.tornaDaScheda();
       } else if (this.view === 'nuovo') {
@@ -2393,7 +2461,7 @@ costiPerMotoreRataEconomia(
     },
 
     tornaDaProfilo() {
-      this.view = this.isAdmin ? 'admin' : 'lista';
+      return this.tornaIndietro();
     },
 
     inizialeProfilo() {

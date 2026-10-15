@@ -179,7 +179,7 @@
       const s = statistiche[id] || {};
       const sotto = sottoalbero(albero, id).filter(x => nelloInsieme.has(x));
       const conTeam = sotto.length > 1;
-      const puoEntrare = conTeam && id !== centro;
+      const puoEntrare = id !== centro;
       const teamVenduto = sotto.reduce((tot, x) => tot + (Number(statistiche[x]?.venduto) || 0), 0);
       const tag = puoEntrare ? 'button' : 'div';
       const figli = figliVisibili(id);
@@ -258,7 +258,7 @@
     },
 
     tornaDaRete() {
-      return this.isAdmin ? this.tornaAllaDashboard() : this.vaiHome();
+      return this.tornaIndietro();
     },
 
     reteAnni() {
@@ -377,7 +377,10 @@
       const vista = this.reteVista();
       const albero = this.reteAlbero();
       const filtrato = this.reteSelezionati.length < albero.ordine.length;
-      if (this.reteFocusId) return 'Venduto di ' + albero.perId[this.reteFocusId].nome + ' e team';
+      if (this.reteFocusId) {
+        const nome = albero.perId[this.reteFocusId].nome;
+        return vista.visibili.length > 1 ? 'Venduto di ' + nome + ' e team' : 'Venduto di ' + nome;
+      }
       return filtrato ? 'Venduto dei venditori scelti' : 'Venduto di rete';
     },
 
