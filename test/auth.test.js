@@ -137,3 +137,11 @@ test('all\'avvio l\'app mostra l\'errore del link e ripulisce l\'indirizzo', () 
   assert.match(app, /const erroreLink = window\.AccountSessions\.erroreLink\?\.\(\) \|\| erroreDaUrl\(window\.location\)/);
   assert.match(app, /if \(erroreLink\)[\s\S]{0,300}?history\.replaceState/);
 });
+
+test('la pulizia degli account tecnici non può cancellare un admin', () => {
+  const migration = fs.readFileSync(
+    require('node:path').join(__dirname, '..', 'supabase', 'migrations', '20261013150000_pulisci_e_ordina_profili.sql'),
+    'utf8'
+  );
+  assert.match(migration, /delete from auth\.users u[\s\S]*and not exists \([\s\S]*p\.ruolo = 'admin'/);
+});

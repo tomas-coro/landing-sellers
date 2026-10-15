@@ -37,11 +37,17 @@ where id in (
 
 -- Account tecnici creati durante i test.
 -- L'account admin info@landingevolution.it resta attivo ma non compare tra i venditori.
-delete from auth.users
-where id in (
+delete from auth.users u
+where u.id in (
   'a1eab3a9-8811-4e65-91e0-29b007a3ae40'::uuid,
   'd997d748-1cd2-4b4b-ab8e-fb70fa79e0cd'::uuid,
   '13609504-65ce-4948-aded-e06497f4bb3f'::uuid
+)
+and not exists (
+  select 1
+  from public.profili p
+  where p.id = u.id
+    and p.ruolo = 'admin'
 );
 
 create or replace function public.venditori_team_corrente()
