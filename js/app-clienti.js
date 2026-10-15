@@ -195,6 +195,42 @@
       return this.clienti.filter(c => !ids || ids.has(c.venditore_id));
     },
 
+    // --- Scheda cliente: percorso a 4 tappe (mockup 09) ---
+    tappaSchedaCliente() {
+      return tappaCliente(this.clienteSelezionato());
+    },
+
+    tappeScheda() {
+      const corrente = this.tappaSchedaCliente();
+      const scelta = this.schedaTappa || (corrente === 5 ? 0 : corrente);
+      return TAPPE.filter(t => t.n <= 4).map(t => ({
+        ...t,
+        stato: corrente === 5 ? 'next' : (t.n < corrente ? 'ok' : (t.n === corrente ? 'cur' : 'next')),
+        selezionata: t.n === scelta
+      }));
+    },
+
+    selezionaTappaScheda(n) {
+      this.schedaTappa = n === this.tappaSchedaCliente() ? 0 : n;
+    },
+
+    tappaSelezionataSchedaCorrente() {
+      return !this.schedaTappa || this.schedaTappa === this.tappaSchedaCliente();
+    },
+
+    descrizioneTappaScheda() {
+      const sel = this.schedaTappa || this.tappaSchedaCliente();
+      const corrente = this.tappaSchedaCliente();
+      if (sel < corrente) return 'Tappa completata';
+      if (sel > corrente) return 'Non ancora raggiunta';
+      return {
+        1: 'Raccogli il brief dal cliente',
+        2: 'Contratto da chiudere',
+        3: 'Il sito è in lavorazione',
+        4: 'Il sito è online'
+      }[sel] || '';
+    },
+
     clientiRighe() {
       return this.clientiNelPerimetro().map(c => rigaCliente(c, this.schedaClienteCompleta(c)));
     },

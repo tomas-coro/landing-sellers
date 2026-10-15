@@ -920,6 +920,8 @@ function appState() {
     erroreDettagliEconomici: '',
 
     schedaAperture: { stato: true, crm: true, pacchetto: false, contatti: false, attivita: true, note: false, economia: false },
+    schedaFoglio: '',        // dettaglio aperto dalla card della scheda: soldi | contratto | persone | storia
+    schedaTappa: 0,          // tappa del percorso scelta con il tocco (0 = quella corrente)
 
     aggiornamentoDisponibile: false,
     aggiornamentoStato: 'controllo', // controllo | aggiornato | disponibile | errore

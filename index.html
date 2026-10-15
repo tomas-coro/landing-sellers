@@ -204,7 +204,7 @@
     @touchend.passive="swipeEnd($event)"
     @touchcancel.passive="swipeCancel()"
     x-effect="
-      document.body.style.overflow = confermaEliminazione ? 'hidden' : '';
+      document.body.style.overflow = (confermaEliminazione || schedaFoglio) ? 'hidden' : '';
       view;
       modalitaEconomia;
       clienteSelezionatoId;
@@ -4906,130 +4906,93 @@
             </div>
           </div>
 
-          <div class="client-detail-dashboard">
-
-            <div>
-              <span>CONTRATTO</span>
-
-              <strong
-                x-text="
-                  etichettaDurataContrattoCliente(
-                    clienteSelezionato()
-                  )
-                ">
-              </strong>
-
-              <small
-                x-text="
-                  etichettaPeriodicitaContrattoCliente(
-                    clienteSelezionato()
-                  )
-                ">
-              </small>
-            </div>
-
-            <div class="client-detail-payment">
-              <span>INCASSATO</span>
-
-              <strong
-                x-show="
-                  riepilogoPagamentoListaCliente(
-                    clienteSelezionato()
-                  ).numeroVendite > 0
-                ">
-                <span
-                  x-text="
-                    formattaNumeroEuro(
-                      riepilogoPagamentoListaCliente(
-                        clienteSelezionato()
-                      ).incassato
-                    )
-                  ">
-                </span>
-
-                <em
-                  x-text="
-                    '/ ' +
-                    formattaNumeroEuro(
-                      riepilogoPagamentoListaCliente(
-                        clienteSelezionato()
-                      ).totaleVendite
-                    )
-                  ">
-                </em>
-              </strong>
-
-              <strong
-                x-show="
-                  riepilogoPagamentoListaCliente(
-                    clienteSelezionato()
-                  ).numeroVendite === 0
-                ">
-                -
-              </strong>
-
-              <div
-                class="client-payment-progress"
-                x-show="
-                  riepilogoPagamentoListaCliente(
-                    clienteSelezionato()
-                  ).numeroVendite > 0
-                ">
-                <i
-                  :style="{
-                    width:
-                      riepilogoPagamentoListaCliente(
-                        clienteSelezionato()
-                      ).percentualeIncassata + '%'
-                  }">
-                </i>
-              </div>
-
-              <small
-                x-text="
-                  riepilogoPagamentoListaCliente(
-                    clienteSelezionato()
-                  ).numeroVendite > 0
-                    ? (
-                        Math.round(
-                          riepilogoPagamentoListaCliente(
-                            clienteSelezionato()
-                          ).percentualeIncassata
-                        ) + '% pagato'
-                      )
-                    : 'Nessuna vendita'
-                ">
-              </small>
-            </div>
-
-            <div>
-              <span>PROSSIMA</span>
-
-              <strong
-                x-text="
-                  etichettaProssimaScadenzaCard(
-                    clienteSelezionato()
-                  )
-                ">
-              </strong>
-
-              <small
-                x-text="
-                  prossimaScadenzaCliente(clienteSelezionato())
-                    ? formattaDataCompleta(
-                        prossimaScadenzaCliente(
-                          clienteSelezionato()
-                        ).data
-                      )
-                    : 'Nessuna scadenza'
-                ">
-              </small>
-            </div>
-
-          </div>
-
         </section>
         <p x-show="erroreScheda" x-text="erroreScheda" class="err" style="margin-bottom:14px"></p>
+
+        <div class="scheda-stepper" role="tablist" aria-label="Percorso del cliente" x-show="tappaSchedaCliente() !== 5">
+          <template x-for="t in tappeScheda()" :key="'tappa-' + t.n">
+            <button type="button" role="tab" class="scheda-stp" :class="[t.stato, { sel: t.selezionata }]"
+                    :aria-selected="t.selezionata" @click="selezionaTappaScheda(t.n)">
+              <span class="scheda-bl" x-text="t.stato === 'ok' ? '✓' : t.n"></span>
+              <span x-text="t.nome"></span>
+            </button>
+          </template>
+        </div>
+
+        <div class="scheda-stage">
+          <div x-show="tappaSchedaCliente() !== 5">
+            <h2 class="scheda-stage-t" x-text="tappeScheda().find(t => t.selezionata)?.nome"></h2>
+            <p class="scheda-stage-p" x-text="descrizioneTappaScheda()"></p>
+          </div>
+          <div class="scheda-stage-ctrl" x-show="tappaSchedaCliente() === 5 || tappaSelezionataSchedaCorrente()">
+        <div class="accordion-section">
+          <button type="button" class="accordion-header" :class="{ open: schedaAperture.stato }" @click="toggleAccordion('stato')">
+            <span>Commerciale e produzione</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="accordion-body" x-show="schedaAperture.stato">
+            <div class="stato-current">
+              <span class="lbl">Pipeline commerciale</span>
+              <span class="pill" :class="'s-' + classeStato(clienteSelezionato().stato)"><i></i><span x-text="formattaStato(clienteSelezionato().stato)"></span></span>
+            </div>
+            <div class="stato-grid">
+              <template x-for="stato in statiPipeline()" :key="'detail-' + stato.valore">
+                <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === stato.valore }" :disabled="cambiandoStato" @click="cambiaStato(stato.valore)" x-text="stato.label"></button>
+              </template>
+            </div>
+
+            <div class="crm-outcome-note" x-show="clienteSelezionato().esito_motivazione">
+              <span>Motivazione</span>
+              <p x-text="clienteSelezionato().esito_motivazione"></p>
+            </div>
+            <button
+              type="button"
+              class="btn btn-ghost crm-outcome-action"
+              x-show="clienteSelezionato().stato === 'perso' && !clienteSelezionato().esito_motivazione"
+              @click="apriModificaCliente(clienteSelezionatoId)">
+              Aggiungi motivazione
+            </button>
+
+            <div class="production-status" x-show="clienteSelezionato().stato === 'vinto'">
+              <div class="stato-current">
+                <span class="lbl">Produzione</span>
+                <strong x-text="formattaStatoProduzione(clienteSelezionato().stato_produzione)"></strong>
+              </div>
+              <div class="stato-grid production-grid">
+                <template x-for="stato in statiProduzione()" :key="'production-' + stato.valore">
+                  <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato_produzione === stato.valore }" :disabled="cambiandoStatoProduzione" @click="cambiaStatoProduzione(stato.valore)" x-text="stato.label"></button>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+
+          </div>
+        </div>
+
+        <div class="scheda-cards" x-data="{ get s() { return schedaClienteCompleta(clienteSelezionato()); } }">
+          <button type="button" @click="apriFoglioScheda('soldi')">
+            <span class="scheda-lab">Soldi</span>
+            <strong class="num" x-text="s.totalePagamento > 0 ? formattaNumeroEuro(s.incassato) + ' / ' + formattaNumeroEuro(s.totalePagamento) : s.valoreAnnualeLabel"></strong>
+            <div class="scheda-meter" x-show="s.totalePagamento > 0"><i :style="{ width: s.percentualeIncassata + '%' }"></i></div>
+            <em x-text="s.totalePagamento > 0 ? Math.round(s.percentualeIncassata) + '% pagato' : 'Nessuna vendita'"></em>
+          </button>
+          <button type="button" @click="apriFoglioScheda('contratto')">
+            <span class="scheda-lab">Contratto</span>
+            <strong x-text="s.durataContrattoLabel"></strong>
+            <em x-text="s.periodicitaContrattoLabel + ' · ' + s.pacchetto"></em>
+          </button>
+          <button type="button" @click="apriFoglioScheda('persone')">
+            <span class="scheda-lab">Persone</span>
+            <strong><span class="scheda-av" x-text="inizialiScheda()"></span> <span x-text="clienteSelezionato().referente || 'Da indicare'"></span></strong>
+            <em x-text="clienteSelezionato().prossimo_contatto ? 'prossimo contatto ' + formattaDataCompleta(clienteSelezionato().prossimo_contatto) : 'nessun contatto fissato'"></em>
+          </button>
+          <button type="button" @click="apriFoglioScheda('storia')">
+            <span class="scheda-lab">Storia e note</span>
+            <strong x-text="note.length === 1 ? '1 nota' : note.length + ' note'"></strong>
+            <em>timeline e annotazioni</em>
+          </button>
+        </div>
 
         <div class="client-quick-actions">
           <a
@@ -5097,6 +5060,25 @@
           </button>
         </div>
 
+
+        <div class="scheda-bar" x-data="{ get s() { return schedaClienteCompleta(clienteSelezionato()); } }">
+          <div>
+            <small>Prossima scadenza</small>
+            <b class="num" x-text="s.prossimaScadenza ? s.prossimaScadenzaLabel + ' · ' + s.prossimaScadenzaDataLabel : 'Nessuna scadenza'"></b>
+          </div>
+          <a class="scheda-bar-btn" x-show="clienteSelezionato().telefono" :href="'tel:' + telefonoPulito(clienteSelezionato())">Chiama</a>
+        </div>
+
+
+        <div class="scheda-sheetbg" x-show="schedaFoglio" x-cloak @click="chiudiFoglioScheda()"></div>
+        <div class="scheda-sheet" x-show="schedaFoglio" x-cloak role="dialog" aria-modal="true" :aria-label="titoloFoglioScheda()"
+             @keydown.escape.window="schedaFoglio && chiudiFoglioScheda()">
+          <div class="scheda-shh">
+            <h3 x-text="titoloFoglioScheda()"></h3>
+            <button type="button" class="scheda-x" @click="chiudiFoglioScheda()" aria-label="Chiudi">×</button>
+          </div>
+          <div class="scheda-shbody">
+            <div x-show="schedaFoglio === 'soldi'">
         <div class="accordion-section">
           <button
             type="button"
@@ -5661,48 +5643,12 @@
           </div>
         </div>
 
-        <div class="accordion-section">
-          <button type="button" class="accordion-header" :class="{ open: schedaAperture.stato }" @click="toggleAccordion('stato')">
-            <span>Commerciale e produzione</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div class="accordion-body" x-show="schedaAperture.stato">
-            <div class="stato-current">
-              <span class="lbl">Pipeline commerciale</span>
-              <span class="pill" :class="'s-' + classeStato(clienteSelezionato().stato)"><i></i><span x-text="formattaStato(clienteSelezionato().stato)"></span></span>
             </div>
-            <div class="stato-grid">
-              <template x-for="stato in statiPipeline()" :key="'detail-' + stato.valore">
-                <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato === stato.valore }" :disabled="cambiandoStato" @click="cambiaStato(stato.valore)" x-text="stato.label"></button>
-              </template>
-            </div>
-
-            <div class="crm-outcome-note" x-show="clienteSelezionato().esito_motivazione">
-              <span>Motivazione</span>
-              <p x-text="clienteSelezionato().esito_motivazione"></p>
-            </div>
-            <button
-              type="button"
-              class="btn btn-ghost crm-outcome-action"
-              x-show="clienteSelezionato().stato === 'perso' && !clienteSelezionato().esito_motivazione"
-              @click="apriModificaCliente(clienteSelezionatoId)">
-              Aggiungi motivazione
-            </button>
-
-            <div class="production-status" x-show="clienteSelezionato().stato === 'vinto'">
-              <div class="stato-current">
-                <span class="lbl">Produzione</span>
-                <strong x-text="formattaStatoProduzione(clienteSelezionato().stato_produzione)"></strong>
-              </div>
-              <div class="stato-grid production-grid">
-                <template x-for="stato in statiProduzione()" :key="'production-' + stato.valore">
-                  <button type="button" class="stato-chip" :class="{ on: clienteSelezionato().stato_produzione === stato.valore }" :disabled="cambiandoStatoProduzione" @click="cambiaStatoProduzione(stato.valore)" x-text="stato.label"></button>
-                </template>
-              </div>
-            </div>
-          </div>
-        </div>
-
+            <div x-show="schedaFoglio === 'contratto'" x-data="{ get s() { return schedaClienteCompleta(clienteSelezionato()); } }">
+              <div class="scheda-kv"><span>Pacchetto</span><b x-text="s.pacchetto"></b></div>
+              <div class="scheda-kv"><span>Durata</span><b x-text="s.durataContrattoLabel"></b></div>
+              <div class="scheda-kv"><span>Periodicità</span><b x-text="s.periodicitaContrattoLabel"></b></div>
+              <div class="scheda-kv"><span>Valore annuale</span><b class="num" x-text="s.valoreAnnualeLabel"></b></div>
         <div class="accordion-section" x-show="venditaClienteAttiva">
           <button type="button" class="accordion-header" :class="{ open: schedaAperture.economia }" @click="toggleAccordion('economia')">
             <span>Dettagli economici</span>
@@ -5819,6 +5765,8 @@
           </div>
         </div>
 
+            </div>
+            <div x-show="schedaFoglio === 'persone'">
         <div class="accordion-section">
           <button type="button" class="accordion-header" :class="{ open: schedaAperture.crm }" @click="toggleAccordion('crm')">
             <span>Brief e prossima azione</span>
@@ -5858,6 +5806,8 @@
           </div>
         </div>
 
+            </div>
+            <div x-show="schedaFoglio === 'storia'">
         <div class="accordion-section client-timeline-section">
 
           <button
@@ -5976,6 +5926,9 @@
               </div>
             </template>
             <p x-show="note.length === 0" style="color:var(--muted);font-size:16.5px">Nessuna nota ancora.</p>
+          </div>
+        </div>
+            </div>
           </div>
         </div>
         <div class="client-detail-footer-action">

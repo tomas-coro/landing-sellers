@@ -16505,3 +16505,50 @@ html[data-theme="dark"] .agenda-content .agenda-event.ev-mancante .agenda-event-
   .quote-summary-card{padding:13px}
   .quote-summary-card strong{font-size:22px}
 }
+
+/* ===== Scheda cliente: percorso, cruscotto e fogli (mockup 09) ===== */
+.scheda-stepper{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:12px 0 8px}
+.scheda-stp{display:flex;flex-direction:column;align-items:center;gap:4px;min-height:60px;background:none;border:0;padding:4px 0;position:relative;font:inherit;cursor:pointer;color:var(--muted)}
+.scheda-stp:not(:last-child)::after{content:"";position:absolute;top:21px;left:calc(50% + 18px);right:calc(-50% + 18px);height:2px;background:var(--line)}
+.scheda-stp.ok:not(:last-child)::after{background:var(--ink)}
+.scheda-bl{width:34px;height:34px;border-radius:99px;border:2px solid var(--line);background:var(--paper);display:grid;place-items:center;font-size:.76rem;font-weight:900;color:var(--muted);z-index:1}
+.scheda-stp.ok .scheda-bl{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.scheda-stp.cur .scheda-bl{background:var(--lime);border-color:var(--lime);color:var(--on-lime)}
+.scheda-stp>span:last-child{font-size:.64rem;font-weight:700}
+.scheda-stp.sel>span:last-child{color:var(--ink);font-weight:900}
+.scheda-stp.sel .scheda-bl{box-shadow:0 0 0 3px var(--paper),0 0 0 5px var(--ink)}
+.scheda-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 13px}
+.scheda-stage-t{margin:0;font-size:.98rem;font-weight:800}
+.scheda-stage-p{margin:2px 0 6px;font-size:.76rem;color:var(--muted);font-weight:600}
+.scheda-stage .accordion-section{border:0;background:none;margin:0;border-radius:0;overflow:visible}
+.scheda-stage .accordion-header{display:none}
+.scheda-stage .accordion-body{padding:0}
+.scheda-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 12px}
+.scheda-cards button{text-align:left;min-height:96px;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:3px;font:inherit;color:var(--ink);cursor:pointer}
+.scheda-cards strong{font-size:.98rem;font-weight:800;line-height:1.25}
+.scheda-cards em{font-style:normal;font-size:.68rem;color:var(--muted);font-weight:600}
+.scheda-lab{font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.scheda-meter{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:3px 0 1px}
+.scheda-meter i{display:block;height:100%;background:var(--lime)}
+.scheda-av{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:99px;background:var(--lime);color:var(--on-lime);font-size:.62rem;font-weight:900;vertical-align:middle}
+.scheda-bar{position:sticky;bottom:8px;margin:12px 0;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--ink);color:var(--paper);border-radius:16px;padding:8px 8px 8px 14px;z-index:5}
+.scheda-bar small{display:block;font-size:.6rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:.65}
+.scheda-bar b{font-size:.86rem}
+.scheda-bar-btn{display:grid;place-items:center;min-height:44px;padding:0 16px;border-radius:11px;background:var(--lime);color:var(--on-lime);font-weight:800;font-size:.8rem;text-decoration:none}
+.scheda-sheetbg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1500;touch-action:none}
+.scheda-sheet{position:fixed;left:0;right:0;bottom:0;max-width:440px;margin:0 auto;max-height:82vh;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));z-index:1501;color:var(--ink)}
+.scheda-shh{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.scheda-sheet h3{margin:0;font-size:1.2rem;font-weight:800}
+.scheda-x{min-height:44px;min-width:44px;border:0;background:var(--paper);color:var(--ink);border-radius:12px;font-size:1.1rem;cursor:pointer}
+.scheda-shbody{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.scheda-shbody .accordion-header{display:none}
+.scheda-shbody .accordion-section{margin-bottom:12px}
+.scheda-kv{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.84rem}
+.scheda-kv span{color:var(--muted);font-weight:600}
+.scheda-kv b{text-align:right;font-weight:700}
+.scheda-stage .stato-current{padding:0;border:0;background:none;min-height:0;margin:0 0 6px}
+.scheda-stage .stato-current .lbl{font-size:.62rem}
+.scheda-stage .stato-current .pill,.scheda-stage .stato-current strong{font-size:.74rem}
+.scheda-stage .stato-grid{gap:6px;margin-bottom:10px}
+.scheda-stage .stato-chip{font-size:.74rem;min-height:44px;padding:6px 8px}
+.scheda-stage .production-status{margin-top:10px;padding-top:10px}

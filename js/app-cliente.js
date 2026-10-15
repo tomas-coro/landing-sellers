@@ -175,6 +175,12 @@
         this.schedaAperture[sezione] = true;
       }
 
+      const foglio = {
+        pacchetto: 'soldi', economia: 'contratto', crm: 'persone',
+        contatti: 'persone', attivita: 'storia', note: 'storia'
+      }[sezione];
+      if (foglio) this.apriFoglioScheda(foglio);
+
       if (sezione === 'note') {
         setTimeout(() => {
           document.querySelector('textarea[x-model="nuovaNotaTesto"]')?.focus();
@@ -1620,6 +1626,8 @@
         note: false,
         economia: !!pagamentoId
       };
+      this.schedaTappa = 0;
+      this.schedaFoglio = '';
       const { data, error } = await window.supabaseClient
         .from('note').select('*').eq('cliente_id', clienteId)
         .order('creata_il', { ascending: false });
@@ -1631,6 +1639,7 @@
       ]);
 
       if (pagamentoId) {
+        this.apriFoglioScheda('soldi');
         this.$nextTick(() => {
           document.getElementById('pagamento-' + pagamentoId)
             ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1639,6 +1648,7 @@
     },
 
     async tornaDaScheda() {
+      this.schedaFoglio = '';
       /*
        * Prima di tornare alla vista precedente rileggiamo cliente,
        * vendita attiva e riepiloghi. In questo modo anche un back
@@ -1668,6 +1678,34 @@
       ].includes(this.viewPrecedenteScheda)
         ? this.viewPrecedenteScheda
         : (this.isAdmin ? 'admin' : 'lista');
+    },
+
+    // Dettaglio di una card della scheda. Le sezioni a fisarmonica restano le
+    // stesse di prima: nel foglio sono tutte aperte e senza intestazione.
+    apriFoglioScheda(foglio) {
+      this.schedaAperture = {
+        stato: true, crm: true, pacchetto: true, contatti: true,
+        attivita: true, note: true, economia: true
+      };
+      this.schedaFoglio = foglio;
+    },
+
+    chiudiFoglioScheda() {
+      this.schedaFoglio = '';
+    },
+
+    titoloFoglioScheda() {
+      return {
+        soldi: 'Soldi',
+        contratto: 'Contratto',
+        persone: 'Persone',
+        storia: 'Storia e note'
+      }[this.schedaFoglio] || '';
+    },
+
+    inizialiScheda() {
+      const nome = String(this.clienteSelezionato()?.referente || this.clienteSelezionato()?.nome || '').trim();
+      return nome.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('') || '?';
     },
 
     toggleAccordion(sezione) {
