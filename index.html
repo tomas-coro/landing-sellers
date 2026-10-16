@@ -380,6 +380,7 @@
         </div>
         <p x-show="erroreLogin" x-text="erroreLogin" class="err" role="alert" aria-live="assertive"></p>
         <button type="submit" class="btn btn-primary" :disabled="recuperoInCorso" x-text="recuperoInCorso ? 'Salvataggio...' : 'Salva password'"></button>
+        <button type="button" class="login-help login-help-back" @click="tornaAlLogin()">Password già aggiornata? Torna all’accesso</button>
       </form>
     </div>
 
@@ -7458,7 +7459,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=174', {
+      navigator.serviceWorker.register('./service-worker.js?v=175', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

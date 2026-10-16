@@ -102,13 +102,16 @@ test('emailDaSessione legge l\'email dell\'account dalla sessione di recupero', 
   assert.strictEqual(emailDaSessione({ user: {} }), '');
 });
 
-test('il form nuova password dice al portachiavi a quale account appartiene', () => {
+test('il form nuova password identifica l’account e permette di tornare al login', () => {
   const html = fs.readFileSync(require('node:path').join(__dirname, '..', 'index.html'), 'utf8');
+  const app = fs.readFileSync(require.resolve('../js/app.js'), 'utf8');
   const inizio = html.indexOf("<form x-show=\"modalitaAccesso === 'nuova-password'\"");
   const form = html.slice(inizio, html.indexOf('</form>', inizio));
   assert.match(form, /autocomplete="username"[^>]*x-model="emailRecupero"|x-model="emailRecupero"[^>]*autocomplete="username"/);
   assert.match(form, /id="new-password"[^>]*name="new-password"/);
   assert.match(form, /id="confirm-password"[^>]*name="confirm-password"/);
+  assert.match(form, /Password già aggiornata\? Torna all’accesso/);
+  assert.match(app, /tornaAlLogin\(\)[\s\S]{0,300}?history\.replaceState[\s\S]{0,300}?signOut\(\{ scope: 'local' \}\)/);
 });
 
 test('link di recupero già usato o scaduto: l\'errore nell\'indirizzo diventa un messaggio', () => {

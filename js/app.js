@@ -1493,7 +1493,15 @@ function appState() {
       this.messaggioAccesso = '';
     },
 
-    tornaAlLogin() {
+    async tornaAlLogin() {
+      if (this.modalitaAccesso === 'nuova-password') {
+        history.replaceState(null, '', window.location.pathname);
+        try {
+          await window.AccountSessions.getClient('personale').auth.signOut({ scope: 'local' });
+        } catch (err) {
+          console.error('[auth] chiusura recupero password non riuscita', err);
+        }
+      }
       this.modalitaAccesso = 'login';
       this.erroreLogin = '';
     },
