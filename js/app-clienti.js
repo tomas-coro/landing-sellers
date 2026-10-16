@@ -23,20 +23,22 @@
   const { escapaHtml, indicizzaAlbero, sottoalbero } = reteMixin.__puri;
 
   const TAPPE = [
-    { n: 1, nome: 'Brief' },
-    { n: 2, nome: 'Mandato' },
-    { n: 3, nome: 'Produzione' },
-    { n: 4, nome: 'Online' },
-    { n: 5, nome: 'Mancati' }
+    { n: 1, nome: 'Contattato' },
+    { n: 2, nome: 'Acquisito' },
+    { n: 3, nome: 'Mandato brief' },
+    { n: 4, nome: 'Convertito' },
+    { n: 5, nome: 'Completato' },
+    { n: 6, nome: 'Mancati' }
   ];
   const MASSIMO_VISIBILI = 3;
 
-  // contattato -> Brief, brief_mandato -> Mandato, vinto -> Produzione finche'
-  // non e' pubblicato, poi Online. perso -> Mancati (quinto gruppo, chiuso).
   function tappaCliente(cliente = {}) {
-    if (cliente.stato === 'perso') return 5;
-    if (cliente.stato === 'brief_mandato') return 2;
-    if (cliente.stato === 'vinto') return cliente.stato_produzione === 'pubblicato' ? 4 : 3;
+    if (cliente.stato === 'perso') return 6;
+    if (cliente.stato === 'completato' ||
+        (cliente.stato === 'vinto' && cliente.stato_produzione === 'pubblicato')) return 5;
+    if (cliente.stato === 'vinto') return 4;
+    if (cliente.stato === 'brief_mandato') return 3;
+    if (cliente.stato === 'acquisito') return 2;
     return 1;
   }
 
@@ -53,7 +55,7 @@
     const tappa = tappaCliente(cliente);
     const scadenza = scheda?.prossimaScadenza || null;
     const azioneScritta = String(cliente.prossima_azione || '').trim();
-    const ritardo = tappa !== 5 && Boolean(scheda?.prossimaScadenzaInRitardo);
+    const ritardo = tappa !== 6 && Boolean(scheda?.prossimaScadenzaInRitardo);
     const breve = dataBreve(scadenza?.data);
 
     return {
@@ -150,7 +152,7 @@
       return '<div class="cli-grp">' +
         '<button type="button" class="cli-gh" data-gruppo="' + g.n + '" aria-expanded="' + apertoGruppo + '">' +
           '<span class="cli-n">' + g.n + '</span><b>' + escapaHtml(g.nome) + '</b>' +
-          '<small>' + g.righe.length + (g.n === 5 ? '' : ' · ' + escapaHtml(euroIntero(g.totale))) + '</small>' +
+          '<small>' + g.righe.length + (g.n === 6 ? '' : ' · ' + escapaHtml(euroIntero(g.totale))) + '</small>' +
           '<svg class="cli-ch" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6l5 5 5-5"/></svg>' +
         '</button>' +
         (apertoGruppo ? '<div class="cli-gk">' + righe + altro + '</div>' : '') +
@@ -195,17 +197,17 @@
       return this.clienti.filter(c => !ids || ids.has(c.venditore_id));
     },
 
-    // --- Scheda cliente: percorso a 4 tappe (mockup 09) ---
+    // --- Scheda cliente: percorso principale a 5 tappe ---
     tappaSchedaCliente() {
       return tappaCliente(this.clienteSelezionato());
     },
 
     tappeScheda() {
       const corrente = this.tappaSchedaCliente();
-      const scelta = this.schedaTappa || (corrente === 5 ? 0 : corrente);
-      return TAPPE.filter(t => t.n <= 4).map(t => ({
+      const scelta = this.schedaTappa || (corrente === 6 ? 0 : corrente);
+      return TAPPE.filter(t => t.n <= 5).map(t => ({
         ...t,
-        stato: corrente === 5 ? 'next' : (t.n < corrente ? 'ok' : (t.n === corrente ? 'cur' : 'next')),
+        stato: corrente === 6 ? 'next' : (t.n < corrente ? 'ok' : (t.n === corrente ? 'cur' : 'next')),
         selezionata: t.n === scelta
       }));
     },
@@ -224,10 +226,11 @@
       if (sel < corrente) return 'Tappa completata';
       if (sel > corrente) return 'Non ancora raggiunta';
       return {
-        1: 'Raccogli il brief dal cliente',
-        2: 'Contratto da chiudere',
-        3: 'Il sito è in lavorazione',
-        4: 'Il sito è online'
+        1: 'Primo contatto effettuato',
+        2: 'Cliente acquisito: prepara il brief',
+        3: 'Brief mandato al cliente',
+        4: 'Cliente convertito: lavoro in produzione',
+        5: 'Lavoro completato'
       }[sel] || '';
     },
 

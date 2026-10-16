@@ -13,14 +13,16 @@ const albero = indicizzaAlbero([
   { id: 'sel', nome: 'Selim', responsabile_id: 'nho', livello: 3 }
 ]);
 
-test('le tappe seguono stato e stato_produzione', () => {
+test('le tappe cliente seguono il percorso commerciale completo', () => {
   assert.strictEqual(tappaCliente({ stato: 'contattato' }), 1);
   assert.strictEqual(tappaCliente({}), 1);
-  assert.strictEqual(tappaCliente({ stato: 'brief_mandato' }), 2);
-  assert.strictEqual(tappaCliente({ stato: 'vinto', stato_produzione: 'in_lavorazione' }), 3);
-  assert.strictEqual(tappaCliente({ stato: 'vinto', stato_produzione: 'da_avviare' }), 3);
-  assert.strictEqual(tappaCliente({ stato: 'vinto', stato_produzione: 'pubblicato' }), 4);
-  assert.strictEqual(tappaCliente({ stato: 'perso' }), 5);
+  assert.strictEqual(tappaCliente({ stato: 'acquisito' }), 2);
+  assert.strictEqual(tappaCliente({ stato: 'brief_mandato' }), 3);
+  assert.strictEqual(tappaCliente({ stato: 'vinto', stato_produzione: 'in_lavorazione' }), 4);
+  assert.strictEqual(tappaCliente({ stato: 'vinto', stato_produzione: 'da_avviare' }), 4);
+  assert.strictEqual(tappaCliente({ stato: 'completato', stato_produzione: 'pubblicato' }), 5);
+  assert.strictEqual(tappaCliente({ stato: 'vinto', stato_produzione: 'pubblicato' }), 5);
+  assert.strictEqual(tappaCliente({ stato: 'perso' }), 6);
 });
 
 test('Alessandro: parte dai diretti, "Tutta la rete" prende il suo ramo', () => {
@@ -90,7 +92,7 @@ test('la riga usa la prossima_azione scritta, altrimenti la scadenza', () => {
 
 test('i clienti mancati non risultano mai scaduti', () => {
   const r = rigaCliente({ id: 'c4', stato: 'perso' }, scheda());
-  assert.strictEqual(r.tappa, 5);
+  assert.strictEqual(r.tappa, 6);
   assert.ok(!r.ritardo);
 });
 

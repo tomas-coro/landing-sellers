@@ -1347,18 +1347,19 @@ test('l’azione cliente apre incasso con vendita attiva e vendita negli altri c
   ]);
 });
 
-test('pipeline commerciale e produzione restano separate', () => {
+test('pipeline cliente usa i cinque step richiesti e tiene separati i mancati', () => {
   const stato = appState();
   stato.clienti = [
     { id: '1', nome: 'A', stato: 'vinto', stato_produzione: 'in_lavorazione' },
     { id: '2', nome: 'B', stato: 'perso', stato_produzione: null },
-    { id: '3', nome: 'C', stato: 'vinto', stato_produzione: 'pubblicato' }
+    { id: '3', nome: 'C', stato: 'completato', stato_produzione: 'pubblicato' }
   ];
 
   assert.deepStrictEqual(stato.statiPipeline().map(s => s.valore), [
-    'contattato', 'brief_mandato', 'vinto', 'perso'
+    'contattato', 'acquisito', 'brief_mandato', 'vinto', 'completato', 'perso'
   ]);
-  assert.deepStrictEqual(stato.clientiPipeline('vinto').map(c => c.id), ['1', '3']);
+  assert.deepStrictEqual(stato.clientiPipeline('vinto').map(c => c.id), ['1']);
+  assert.deepStrictEqual(stato.clientiPipeline('completato').map(c => c.id), ['3']);
   assert.deepStrictEqual(stato.clientiPubblicati().map(c => c.id), ['3']);
   assert.ok(stato.funnelPipeline().every(s => !('conversione' in s)));
 });

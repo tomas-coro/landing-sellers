@@ -4,8 +4,10 @@ const { formattaStato, validaClienteForm, classeUrgenza, giorniResiduiCestino, e
 
 test('formattaStato traduce ogni stato in etichetta italiana', () => {
   assert.strictEqual(formattaStato('contattato'), 'Contattato');
-  assert.strictEqual(formattaStato('brief_mandato'), 'Brief mandato');
+  assert.strictEqual(formattaStato('acquisito'), 'Acquisito');
+  assert.strictEqual(formattaStato('brief_mandato'), 'Mandato brief');
   assert.strictEqual(formattaStato('vinto'), 'Convertito');
+  assert.strictEqual(formattaStato('completato'), 'Completato');
   assert.strictEqual(formattaStato('perso'), 'Mancato');
   assert.strictEqual(formattaStato('in_lavorazione'), 'In lavorazione');
   assert.strictEqual(formattaStato('pubblicato'), 'Pubblicato');

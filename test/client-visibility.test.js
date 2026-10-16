@@ -53,7 +53,7 @@ test('la scheda cliente mostra il collegamento al brief finché è da compilare'
   const html = require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
   assert.match(
     html,
-    /x-show="clienteSelezionato\(\)\.stato === 'contattato'"[\s\S]{0,180}href="https:\/\/landingevolution\.it\/brief\.html"/
+    /x-show="\['contattato', 'acquisito'\]\.includes\(clienteSelezionato\(\)\.stato\)"[\s\S]{0,180}href="https:\/\/landingevolution\.it\/brief\.html"/
   );
 });
 

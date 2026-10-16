@@ -81,7 +81,7 @@ const FAQ_ASSISTENTE = [
   {
     "categoria": "Clienti",
     "domanda": "Come filtro i clienti per stato?",
-    "cerca": "filtrare filtro clienti stato contattato brief lavorazione pubblicato",
+    "cerca": "filtrare filtro clienti stato contattato acquisito brief convertito completato mancato",
     "risposta": "Nell’elenco completo premi un filtro di stato. Premilo di nuovo, oppure scegli “Tutti”, per rimuoverlo."
   },
   {
@@ -117,7 +117,7 @@ const FAQ_ASSISTENTE = [
   {
     "categoria": "Clienti",
     "domanda": "Come cambio lo stato di un cliente?",
-    "cerca": "cambiare aggiornare stato fase cliente contattato brief lavorazione pubblicato",
+    "cerca": "cambiare aggiornare stato fase cliente contattato acquisito brief convertito completato",
     "risposta": "Nella scheda cliente espandi “Stato” e scegli la nuova fase. La Pipeline si aggiorna automaticamente."
   },
   {
@@ -202,7 +202,7 @@ const FAQ_ASSISTENTE = [
     "categoria": "Agenda e pipeline",
     "domanda": "A cosa serve la Pipeline?",
     "cerca": "pipeline serve fasi avanzamento clienti trattativa stato",
-    "risposta": "Divide i clienti in Contattato, Brief mandato, In lavorazione e Pubblicato. Scorri le fasi e tocca un cliente per aprirlo."
+    "risposta": "Divide i clienti in Contattato, Acquisito, Mandato brief, Convertito e Completato; i mancati restano separati. Scorri le fasi e tocca un cliente per aprirlo."
   },
   {
     "categoria": "Agenda e pipeline",

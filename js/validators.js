@@ -1,8 +1,10 @@
 // js/validators.js
 const ETICHETTE_STATO = {
   contattato: 'Contattato',
-  brief_mandato: 'Brief mandato',
+  acquisito: 'Acquisito',
+  brief_mandato: 'Mandato brief',
   vinto: 'Convertito',
+  completato: 'Completato',
   perso: 'Mancato',
   in_lavorazione: 'In lavorazione',
   pubblicato: 'Pubblicato'
@@ -14,8 +16,10 @@ function formattaStato(stato) {
 
 const CLASSE_STATO = {
   contattato: 'contattato',
+  acquisito: 'brief',
   brief_mandato: 'brief',
   vinto: 'vinto',
+  completato: 'pubblicato',
   perso: 'perso',
   in_lavorazione: 'lavorazione',
   pubblicato: 'pubblicato'

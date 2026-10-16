@@ -4274,8 +4274,10 @@ costiPerMotoreRataEconomia(
     statiPipeline() {
       return [
         { valore: 'contattato', label: 'Contattato' },
-        { valore: 'brief_mandato', label: 'Brief mandato' },
+        { valore: 'acquisito', label: 'Acquisito' },
+        { valore: 'brief_mandato', label: 'Mandato brief' },
         { valore: 'vinto', label: 'Convertito' },
+        { valore: 'completato', label: 'Completato' },
         { valore: 'perso', label: 'Mancato' }
       ];
     },
@@ -4607,7 +4609,7 @@ costiPerMotoreRataEconomia(
     },
 
     async impostaStatoCliente(clienteId, stato) {
-      const consentiti = ['contattato', 'brief_mandato', 'vinto', 'perso'];
+      const consentiti = ['contattato', 'acquisito', 'brief_mandato', 'vinto', 'completato', 'perso'];
       if (!clienteId || !consentiti.includes(stato)) {
         return 'Stato non valido';
       }
@@ -4873,7 +4875,7 @@ costiPerMotoreRataEconomia(
     },
 
     conteggiPerStato() {
-      const conteggi = { contattato: 0, brief_mandato: 0, vinto: 0, perso: 0 };
+      const conteggi = { contattato: 0, acquisito: 0, brief_mandato: 0, vinto: 0, completato: 0, perso: 0 };
       for (const c of this.clientiFiltroVenditore()) {
         if (conteggi[c.stato] !== undefined) conteggi[c.stato] += 1;
       }

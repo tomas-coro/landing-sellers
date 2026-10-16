@@ -691,7 +691,7 @@
           <div class="client-filter-scroll client-filter-options">
             <span class="client-filter-label">Stato</span>
             <button type="button" :class="{ on: filtroStato === '' }" @click="filtroStato = ''; paginaClienti = 1">Tutti</button>
-            <template x-for="s in ['contattato','brief_mandato','vinto','perso']" :key="'filter-' + s">
+            <template x-for="s in ['contattato','acquisito','brief_mandato','vinto','completato','perso']" :key="'filter-' + s">
               <button type="button" :class="{ on: filtroStato === s }" @click="filtroStato = s; paginaClienti = 1" x-text="formattaStato(s)"></button>
             </template>
             <span class="client-filter-divider" aria-hidden="true"></span>
@@ -5032,7 +5032,7 @@
         </section>
         <p x-show="erroreScheda" x-text="erroreScheda" class="err" style="margin-bottom:14px"></p>
 
-        <div class="scheda-stepper" role="tablist" aria-label="Percorso del cliente" x-show="tappaSchedaCliente() !== 5">
+        <div class="scheda-stepper" role="tablist" aria-label="Percorso del cliente" x-show="tappaSchedaCliente() !== 6">
           <template x-for="t in tappeScheda()" :key="'tappa-' + t.n">
             <button type="button" role="tab" class="scheda-stp" :class="[t.stato, { sel: t.selezionata }]"
                     :aria-selected="t.selezionata" @click="selezionaTappaScheda(t.n)">
@@ -5043,11 +5043,11 @@
         </div>
 
         <div class="scheda-stage">
-          <div x-show="tappaSchedaCliente() !== 5">
+          <div x-show="tappaSchedaCliente() !== 6">
             <h2 class="scheda-stage-t" x-text="tappeScheda().find(t => t.selezionata)?.nome"></h2>
             <p class="scheda-stage-p" x-text="descrizioneTappaScheda()"></p>
           </div>
-          <div class="scheda-stage-ctrl" x-show="tappaSchedaCliente() === 5 || tappaSelezionataSchedaCorrente()">
+          <div class="scheda-stage-ctrl" x-show="tappaSchedaCliente() === 6 || tappaSelezionataSchedaCorrente()">
         <div class="accordion-section">
           <button type="button" class="accordion-header" :class="{ open: schedaAperture.stato }" @click="toggleAccordion('stato')">
             <span>Commerciale e produzione</span>
@@ -5076,7 +5076,7 @@
               Aggiungi motivazione
             </button>
 
-            <div class="production-status" x-show="clienteSelezionato().stato === 'vinto'">
+            <div class="production-status" x-show="['vinto', 'completato'].includes(clienteSelezionato().stato)">
               <div class="stato-current">
                 <span class="lbl">Produzione</span>
                 <strong x-text="formattaStatoProduzione(clienteSelezionato().stato_produzione)"></strong>
@@ -5155,7 +5155,7 @@
           </button>
 
           <a
-            x-show="clienteSelezionato().stato === 'contattato'"
+            x-show="['contattato', 'acquisito'].includes(clienteSelezionato().stato)"
             href="https://landingevolution.it/brief.html"
             target="_blank"
             rel="noopener"
@@ -6115,7 +6115,7 @@
             </div>
           </div>
         </div>
-        <div class="client-detail-footer-action" x-show="!(['vinto', 'perso'].includes(clienteSelezionato().stato))">
+        <div class="client-detail-footer-action" x-show="!(['vinto', 'completato', 'perso'].includes(clienteSelezionato().stato))">
           <a
             href="https://landingevolution.it/brief.html"
             target="_blank"
@@ -7745,7 +7745,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=188', {
+      navigator.serviceWorker.register('./service-worker.js?v=189', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
