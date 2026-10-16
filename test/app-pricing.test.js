@@ -572,7 +572,7 @@ test('i clienti legacy continuano a usare i dati storici senza ricalcolo dal cat
   );
 });
 
-test('il calendario admin riunisce le scadenze di tutti i venditori', () => {
+test('il calendario admin riunisce le scadenze condivise ma non i ricontatti privati', () => {
   const stato = appState();
   stato.isAdmin = true;
   stato.adminVenditoriPerId = { v1: 'Alessandro', v2: 'Nicola' };
@@ -582,7 +582,6 @@ test('il calendario admin riunisce le scadenze di tutti i venditori', () => {
   ];
 
   assert.deepStrictEqual(stato.eventiAgenda().map(evento => [evento.clienteNome, evento.venditoreNome]), [
-    ['Cliente Uno', 'Alessandro'],
     ['Cliente Due', 'Nicola']
   ]);
 });

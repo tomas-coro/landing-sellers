@@ -5,6 +5,9 @@ const { appState } = require('../js/app.js');
 function stato(clienti, oggi = '2026-10-15') {
   const s = appState();
   s.isAdmin = false;
+  s.sessione = { user: { id: 'v1' } };
+  s.profilo = { ruolo: 'venditore', ruolo_economico: null };
+  clienti = clienti.map(cliente => ({ venditore_id: 'v1', ...cliente }));
   s.dataISOOggi = () => oggi;
   s.clientiDiretti = () => clienti;
   s.mesiNonRegistratiCliente = () => [];

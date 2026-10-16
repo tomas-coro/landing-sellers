@@ -138,7 +138,37 @@
       this.messaggioAzioneCliente = '';
       this.erroreAzioneCliente = '';
       this.clienteProssimoContattoData =
-        this.normalizzaDataAgenda(cliente.prossimo_contatto) || '';
+        this.dataOraLocale(cliente.prossimo_contatto);
+    },
+
+    puoRicontattareCliente(cliente) {
+      const profiloEscluso =
+        ['admin', 'developer'].includes(this.profilo?.ruolo) ||
+        this.profilo?.ruolo_economico === 'produzione';
+
+      return Boolean(
+        !profiloEscluso &&
+        cliente?.venditore_id &&
+        cliente.venditore_id === this.sessione?.user?.id
+      );
+    },
+
+    apriRicontattoCliente(clienteId) {
+      const cliente = this.clienti.find(c => c.id === clienteId);
+      if (!this.puoRicontattareCliente(cliente)) return;
+
+      this.apriAzioniCliente(clienteId);
+      this.clienteAzioniContattoAperto = true;
+    },
+
+    dataOraLocale(value) {
+      if (!value) return '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return `${value}T09:00`;
+
+      const data = new Date(value);
+      if (Number.isNaN(data.getTime())) return '';
+      const parte = numero => String(numero).padStart(2, '0');
+      return `${data.getFullYear()}-${parte(data.getMonth() + 1)}-${parte(data.getDate())}T${parte(data.getHours())}:${parte(data.getMinutes())}`;
     },
 
     chiudiAzioniCliente() {
@@ -279,7 +309,16 @@
       this.erroreAzioneCliente = '';
       this.retryAzioneCliente = null;
 
-      if (!clienteId || this.salvandoProssimoContattoRapido) return;
+      const cliente = this.clienti.find(c => c.id === clienteId);
+      if (!clienteId || !this.puoRicontattareCliente(cliente) || this.salvandoProssimoContattoRapido) return;
+
+      const dataOra = this.clienteProssimoContattoData
+        ? new Date(this.clienteProssimoContattoData)
+        : null;
+      if (dataOra && Number.isNaN(dataOra.getTime())) {
+        this.erroreAzioneCliente = 'Scegli giorno e ora validi.';
+        return;
+      }
 
       this.salvandoProssimoContattoRapido = true;
 
@@ -287,7 +326,7 @@
         const { error } = await window.supabaseClient
           .rpc('imposta_prossimo_contatto_cliente', {
             p_cliente_id: clienteId,
-            p_data: this.clienteProssimoContattoData || null
+            p_data: dataOra ? dataOra.toISOString() : null
           });
 
         if (error) {

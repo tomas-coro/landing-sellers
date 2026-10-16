@@ -22,7 +22,7 @@ create table public.clienti (
   data_rinnovo date,
   stato text not null default 'contattato'
     check (stato in ('contattato', 'brief_mandato', 'in_lavorazione', 'pubblicato')),
-  prossimo_contatto date,
+  prossimo_contatto timestamptz,
   creato_il timestamptz not null default now(),
   pubblicato_il timestamptz,
   cancellato_il timestamptz

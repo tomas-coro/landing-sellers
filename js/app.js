@@ -3888,6 +3888,14 @@ costiPerMotoreRataEconomia(
       return match ? `${match[1]}-${match[2]}-${match[3]}` : null;
     },
 
+    oraAgenda(value) {
+      if (!value || !String(value).includes('T')) return '';
+      const data = new Date(value);
+      return Number.isNaN(data.getTime())
+        ? ''
+        : new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-digit' }).format(data);
+    },
+
     aggiungiGiorniISO(iso, giorni) {
       const [y, m, d] = iso.split('-').map(Number);
       const date = new Date(Date.UTC(y, m - 1, d + giorni));
@@ -3911,7 +3919,7 @@ costiPerMotoreRataEconomia(
         const contatto = contattoImpostato ||
           (briefDaInviare ? (this.normalizzaDataAgenda(cliente.creato_il) || oggi) : null);
 
-        if (contatto) {
+        if (contatto && this.puoRicontattareCliente(cliente)) {
           eventi.push({
             id: briefDaInviare
               ? `brief-${cliente.id}`
@@ -3921,6 +3929,7 @@ costiPerMotoreRataEconomia(
             venditoreId: cliente.venditore_id,
             venditoreNome: this.adminVenditoriPerId[cliente.venditore_id] || '',
             data: contatto,
+            ora: this.oraAgenda(cliente.prossimo_contatto),
             tipo: 'contatto',
             brief: briefDaInviare,
             titolo: briefDaInviare

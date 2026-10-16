@@ -5030,6 +5030,15 @@
             <strong>Chiama</strong>
           </a>
 
+          <button
+            type="button"
+            x-show="puoRicontattareCliente(clienteSelezionato())"
+            @click="apriRicontattoCliente(clienteSelezionatoId)"
+            class="client-quick-action">
+            <span>◷</span>
+            <strong>Ricontatta</strong>
+          </button>
+
           <a
             x-show="clienteSelezionato().telefono"
             :href="whatsappCliente(clienteSelezionato())"
@@ -6046,7 +6055,7 @@
               @click="evento.tipo === 'quota' ? apriQuote() : (isAdmin ? apriEventoAdmin(evento) : apriScheda(evento.clienteId))">
               <div class="agenda-event-date">
                 <strong x-text="formattaData(evento.data)"></strong>
-                <span x-text="evento.tipo === 'contatto' ? (evento.brief ? 'Brief' : 'Contatto') : evento.tipo === 'rata' ? 'Rata' : evento.tipo === 'mancante' ? 'Pagamento' : evento.tipo === 'quota' ? 'Quota' : 'Rinnovo'"></span>
+                <span x-text="evento.tipo === 'contatto' ? (evento.brief ? 'Brief' : 'Contatto' + (evento.ora ? ' · ' + evento.ora : '')) : evento.tipo === 'rata' ? 'Rata' : evento.tipo === 'mancante' ? 'Pagamento' : evento.tipo === 'quota' ? 'Quota' : 'Rinnovo'"></span>
               </div>
               <div>
                 <strong x-text="evento.clienteNome"></strong>
@@ -6528,6 +6537,7 @@
 
           <button
             type="button"
+            x-show="puoRicontattareCliente(clienteAzioniRapide())"
             :class="{ on: clienteAzioniContattoAperto }"
             @click="
               clienteAzioniContattoAperto = !clienteAzioniContattoAperto;
@@ -6535,7 +6545,7 @@
               clienteAzioniStatoAperto = false;
             ">
             <span class="client-action-symbol">◷</span>
-            <strong>Prossimo contatto</strong>
+            <strong>Ricontatta</strong>
           </button>
         </div>
 
@@ -6594,14 +6604,14 @@
 
           <div class="client-action-panel-head">
             <div>
-              <strong>Prossimo contatto</strong>
-              <small>Quando vuoi ricontattare questo cliente?</small>
+              <strong>Ricontatta</strong>
+              <small>Scegli giorno e ora: comparirà nella tua agenda.</small>
             </div>
           </div>
 
           <input
             class="client-action-date"
-            type="date"
+            type="datetime-local"
             x-model="clienteProssimoContattoData">
 
           <div class="client-action-feedback">
@@ -7459,7 +7469,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=175', {
+      navigator.serviceWorker.register('./service-worker.js?v=176', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

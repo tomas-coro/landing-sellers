@@ -1443,6 +1443,8 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
   gap:5px;
   text-decoration:none;
   color:var(--ink);
+  font:inherit;
+  cursor:pointer;
 }
 
 .client-quick-action > span{
