@@ -16744,3 +16744,25 @@ html[data-theme="dark"] .rc-card{border-color:var(--line);box-shadow:4px 4px 0 v
 .inc-bars.stretto{gap:3px}
 .inc-bars.stretto .inc-bc small{font-size:11px}
 @media (prefers-reduced-motion:reduce){.inc-bc u{transition:none}}
+
+/* ===== Rete vendita: tasto Scheda e pagina scheda venditore ===== */
+.rete-view .rete-scheda{display:inline-flex;align-items:center;gap:4px;margin:2px 0 0 auto;padding:6px 10px;min-height:32px;background:transparent;border:0;color:var(--ink-soft);font:inherit;font-size:.74rem;font-weight:700;cursor:pointer}
+.rete-view .rete-item{display:flex;flex-direction:column;align-items:stretch}
+.rete-view .rete-scheda svg{width:10px;height:10px}
+.rete-scheda-page .rs-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.rete-scheda-page .rs-head strong{display:block;font-size:1.05rem}
+.rete-scheda-page .rs-head small{color:var(--muted);font-weight:600;font-size:.76rem}
+.rete-scheda-page .rs-av{width:44px;height:44px;border-radius:50%;background:var(--lime);color:var(--on-lime);display:grid;place-items:center;font-weight:800;font-size:1.05rem}
+.rete-scheda-page .rete-mini{grid-template-columns:1fr 1fr;margin-bottom:12px}
+.rete-scheda-page .rs-switch{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:48px;margin-bottom:12px;padding:0 14px;background:var(--card);border:1px solid var(--line);border-radius:12px;color:var(--ink);font:inherit;font-weight:700;font-size:.86rem;cursor:pointer}
+.rete-scheda-page .rs-switch i{position:relative;width:40px;height:24px;border-radius:12px;background:var(--line)}
+.rete-scheda-page .rs-switch i::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--card);transition:transform .16s}
+.rete-scheda-page .rs-switch.on i{background:var(--lime)}
+.rete-scheda-page .rs-switch.on i::after{transform:translateX(16px);background:var(--on-lime)}
+.rete-scheda-page .rs-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin-bottom:14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.rete-scheda-page .rs-tabs button{min-height:40px;border:0;border-radius:9px;background:transparent;color:var(--ink-soft);font:inherit;font-weight:700;font-size:.84rem;cursor:pointer}
+.rete-scheda-page .rs-tabs button.on{background:var(--lime);color:var(--on-lime)}
+.rete-scheda-page .rs-list{display:flex;flex-direction:column;gap:8px}
+.rete-scheda-page .rs-row{display:flex;flex-direction:column;gap:2px;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.rete-scheda-page .rs-row small{color:var(--muted);font-weight:600;font-size:.74rem}
+@media (prefers-reduced-motion:reduce){.rete-scheda-page .rs-switch i::after{transition:none}}

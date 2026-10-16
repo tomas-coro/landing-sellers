@@ -7185,9 +7185,78 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
           <span x-text="etichettaIndietro()"></span>
         </button>
-        <h1 style="font-size:21px">Rete vendita</h1>
+        <h1 style="font-size:21px" x-text="reteSchedaId ? 'Scheda venditore' : 'Rete vendita'">Rete vendita</h1>
       </div>
       <div class="content">
+        <div x-show="reteSchedaId" x-cloak class="rete-scheda-page">
+          <div class="rs-head" x-show="reteSchedaNodo()">
+            <div class="rs-av" x-text="(reteSchedaNodo()?.nome || '?').charAt(0)"></div>
+            <div><strong x-text="reteSchedaNodo()?.nome"></strong><small x-text="reteSchedaSottotitolo()"></small></div>
+          </div>
+          <div class="rete-mini">
+            <div><span class="rete-lab" x-text="'Incassato ' + reteAnno"></span><strong class="rete-num" x-text="formattaEuro(reteSchedaTotaleAnno())"></strong></div>
+            <div><span class="rete-lab">Questo mese</span><strong class="rete-num" x-text="formattaEuro(reteSchedaTotaleMeseCorrente())"></strong></div>
+          </div>
+          <button type="button" class="rs-switch" :class="{ on: reteSchedaTeam }" x-show="reteSchedaHaTeam()"
+                  :aria-pressed="reteSchedaTeam" @click="reteSchedaTeam = !reteSchedaTeam">
+            <span>Includi il suo team</span><i></i>
+          </button>
+          <div class="rs-tabs" role="tablist">
+            <button type="button" role="tab" :class="{ on: reteSchedaTab === 'clienti' }" :aria-selected="reteSchedaTab === 'clienti'"
+                    @click="reteSchedaTab = 'clienti'" x-text="'Clienti (' + reteSchedaElencoClienti().length + ')'"></button>
+            <button type="button" role="tab" :class="{ on: reteSchedaTab === 'incassi' }" :aria-selected="reteSchedaTab === 'incassi'"
+                    @click="reteSchedaTab = 'incassi'">Incassi per mese</button>
+          </div>
+
+          <p x-show="erroreScheda">
+            <span x-text="erroreScheda" class="err"></span>
+            <button type="button" class="retry-btn" @click="caricaClientiScheda()">Riprova</button>
+          </p>
+
+          <div x-show="reteSchedaTab === 'clienti'">
+            <div x-show="caricandoScheda" aria-hidden="true"><div class="skeleton-block skeleton-trend"></div></div>
+            <div class="rs-list" x-show="!caricandoScheda">
+              <template x-for="c in reteSchedaElencoClienti()" :key="'rs-cli-' + c.id">
+                <div class="rs-row">
+                  <strong x-text="c.nome"></strong>
+                  <small x-text="(reteSchedaIds().length > 1 ? reteSchedaNomeVenditore(c.venditore_id) + ' · ' : '') + formattaStato(c.stato)"></small>
+                </div>
+              </template>
+            </div>
+            <div class="rete-empty" x-show="!caricandoScheda && !erroreScheda && reteSchedaElencoClienti().length === 0">Nessun cliente.</div>
+          </div>
+
+          <div x-show="reteSchedaTab === 'incassi'">
+            <section class="inc-card">
+              <p class="inc-readout" x-show="reteSchedaSerie().length > 6" x-text="reteSchedaEtichettaMese(reteSchedaMese) + ' · ' + formattaEuro(reteSchedaValoreMese())"></p>
+              <div class="inc-bars" :class="{ stretto: reteSchedaSerie().length > 6 }" role="group" aria-label="Scegli il mese">
+                <template x-for="m in reteSchedaSerie()" :key="'rs-bar-' + m.chiave">
+                  <button type="button" class="inc-bc"
+                          :class="{ sel: reteSchedaMese === m.chiave, vuoto: m.valore === 0, futuro: reteSchedaMeseFuturo(m.chiave) }"
+                          :disabled="reteSchedaMeseFuturo(m.chiave)"
+                          :aria-pressed="reteSchedaMese === m.chiave"
+                          :aria-label="m.label + ' ' + formattaEuro(m.valore)"
+                          @click="reteSchedaMese = m.chiave">
+                    <b x-show="reteSchedaSerie().length <= 6" x-text="(m.valore === 0 || reteSchedaMeseFuturo(m.chiave)) ? '-' : Math.round(m.valore).toLocaleString('de-DE')"></b>
+                    <u :style="{ height: reteSchedaAltezzaBarra(reteSchedaMeseFuturo(m.chiave) ? 0 : m.valore) + 'px' }"></u>
+                    <small x-text="reteSchedaSerie().length > 6 ? m.label.charAt(0) : m.label"></small>
+                  </button>
+                </template>
+              </div>
+            </section>
+            <div class="rs-list" style="margin-top:14px">
+              <template x-for="(r, i) in reteSchedaRigheMese()" :key="'rs-inc-' + i">
+                <div class="rs-row">
+                  <strong x-text="formattaEuro(r.valore)"></strong>
+                  <small x-text="(r.clienteNome || 'Cliente') + ' · ' + formattaData(r.data) + (reteSchedaIds().length > 1 ? ' · ' + reteSchedaNomeVenditore(r.profiloId) : '')"></small>
+                </div>
+              </template>
+            </div>
+            <div class="rete-empty" x-show="reteSchedaRigheMese().length === 0">Nessun incasso in questo mese.</div>
+          </div>
+        </div>
+
+        <div x-show="!reteSchedaId">
         <div class="rete-addrow" x-show="reteMiPuoCreare()" x-cloak>
           <button type="button" class="btn btn-primary rete-add" @click="apriNuovoProfiloAdmin()">+ Aggiungi venditore</button>
         </div>
@@ -7246,6 +7315,7 @@
 
         <div class="rete-empty" x-show="!caricandoRete && !erroreRete && reteNodi.length === 0">
           Nessun venditore da mostrare.
+        </div>
         </div>
       </div>
 
@@ -7659,7 +7729,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=185', {
+      navigator.serviceWorker.register('./service-worker.js?v=186', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

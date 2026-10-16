@@ -216,6 +216,7 @@
         (conTeam ? 'team ' + escapaHtml(euro(teamVenduto)) : 'senza team') + '</small>' +
         '<small class="r">generato ' + escapaHtml(euro(s.generato || 0)) + '</small>' +
         '</' + tag + '>' +
+        '<button type="button" class="rete-scheda" data-scheda="' + escapaHtml(id) + '">Scheda ' + freccia + '</button>' +
         (quoteRete[id]
           ? '<div class="rete-quota">quota di rete ' + escapaHtml(euro(quoteRete[id].totale)) +
             (quoteRete[id].daNomi.length ? ' da ' + escapaHtml(quoteRete[id].daNomi.join(', ')) : '') + '</div>'
@@ -232,6 +233,36 @@
     return visibili.filter(id => !padreVisibile(id)).map(nodo).join('');
   }
 
+  // Venditori coperti dalla scheda: lui solo, o lui e tutto il suo team.
+  function idsScheda(albero, id, conTeam) {
+    return conTeam ? sottoalbero(albero, id) : [id];
+  }
+
+  // Clienti della scheda: solo quelli dei venditori coperti, ordinati per nome.
+  function clientiScheda({ clienti = [], ids = [] }) {
+    const coperti = new Set(ids);
+    return clienti
+      .filter(c => coperti.has(c.venditore_id))
+      .slice()
+      .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'it'));
+  }
+
+  // Incassi della scheda come righe {data, valore, clienteNome, profiloId}: stesso
+  // formato di fatturatoGuadagniRighe, cosi serieIncassatoAnno funziona uguale.
+  // Le vendite annullate non contano (stessa regola dei guadagni personali).
+  function righeIncassiScheda({ incassi = [], ids = [], vendite = [], clientiPerId = {} }) {
+    const coperti = new Set(ids);
+    const venditaPerId = Object.fromEntries(vendite.map(v => [v.id, v]));
+    return incassi
+      .filter(r => coperti.has(r.profilo_id) && venditaPerId[r.vendita_id]?.stato === 'attiva')
+      .map(r => ({
+        data: r.data_pagamento,
+        valore: Number(r.quota_effettiva) || 0,
+        profiloId: r.profilo_id,
+        clienteNome: clientiPerId[venditaPerId[r.vendita_id].cliente_id]?.nome || ''
+      }));
+  }
+
   function dividiInBlocchi(lista, dimensione) {
     const blocchi = [];
     for (let i = 0; i < lista.length; i += dimensione) blocchi.push(lista.slice(i, i + dimensione));
@@ -243,6 +274,7 @@
     async apriRete() {
       this.view = 'rete';
       this.reteFocusId = null;
+      this.reteSchedaId = null;
       this.reteSelezionati = []; // ogni apertura riparte da "tutti"
       window.scrollTo({ top: 0, behavior: 'smooth' });
       await this.caricaRete();
@@ -361,6 +393,9 @@
         }
 
         this.reteNodi = nodi;
+        this.reteIncassiRighe = incassi.data || [];
+        this.reteVenditeRighe = vendite;
+        this.reteClientiPerId = clientiPerId;
         this.reteQuoteRete = aggregaQuoteRete(quoteRete.data || [], albero);
         await this.caricaInvitiPendenti();
         this.reteStatistiche = calcolaStatisticheRete({
@@ -413,6 +448,131 @@
         quoteRete: this.reteQuoteRete || {}
       });
     },
+
+    // ----- Scheda venditore (clienti + incassi per mese) -----
+    // I permessi veri sono nella RLS: clienti, vendite e incassi di chi non e nel
+    // team di chi guarda non arrivano mai al browser (tranne Tomas e Alessandro,
+    // che vedono tutto). Qui si mostra solo quello che e arrivato.
+    async apriSchedaVenditore(id) {
+      if (!this.reteAlbero().perId[id]) return;
+      this.reteSchedaId = id;
+      this.reteSchedaTab = 'clienti';
+      this.reteSchedaTeam = false;
+      this.reteSchedaClienti = [];
+      this.erroreScheda = '';
+      this.reteSchedaMese = meseInizialeIncassato(this.reteSchedaSerie());
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      await this.caricaClientiScheda();
+    },
+
+    chiudiSchedaVenditore() {
+      this.reteSchedaId = null;
+    },
+
+    async caricaClientiScheda() {
+      const id = this.reteSchedaId;
+      if (!id) return;
+      this.caricandoScheda = true;
+      try {
+        // Si carica tutto il sottoalbero una volta: l'interruttore "team" filtra in locale.
+        const ids = sottoalbero(this.reteAlbero(), id);
+        let clienti = [];
+        for (const blocco of dividiInBlocchi(ids, 100)) {
+          const { data, error } = await window.supabaseClient
+            .from('clienti')
+            .select('id,nome,stato,venditore_id')
+            .in('venditore_id', blocco)
+            .is('cancellato_il', null);
+          if (error) throw error;
+          clienti = clienti.concat(data || []);
+        }
+        if (this.reteSchedaId === id) this.reteSchedaClienti = clienti;
+      } catch (errore) {
+        console.warn('Clienti della scheda non disponibili:', errore?.message || errore);
+        this.erroreScheda = 'Non riesco a caricare i clienti. Riprova tra poco.';
+      } finally {
+        this.caricandoScheda = false;
+      }
+    },
+
+    reteSchedaNodo() {
+      return this.reteSchedaId ? this.reteAlbero().perId[this.reteSchedaId] : null;
+    },
+
+    reteSchedaHaTeam() {
+      return !!this.reteSchedaId && sottoalbero(this.reteAlbero(), this.reteSchedaId).length > 1;
+    },
+
+    reteSchedaIds() {
+      if (!this.reteSchedaId) return [];
+      return idsScheda(this.reteAlbero(), this.reteSchedaId, this.reteSchedaTeam && this.reteSchedaHaTeam());
+    },
+
+    reteSchedaSottotitolo() {
+      const nodo = this.reteSchedaNodo();
+      if (!nodo) return '';
+      const sopra = nodo.responsabile_id && this.reteAlbero().perId[nodo.responsabile_id];
+      return 'Lv ' + nodo.livello + ' · ' + (sopra ? 'risponde a ' + sopra.nome : 'capo rete');
+    },
+
+    reteSchedaElencoClienti() {
+      return clientiScheda({ clienti: this.reteSchedaClienti, ids: this.reteSchedaIds() });
+    },
+
+    reteSchedaNomeVenditore(id) {
+      return this.reteAlbero().perId[id]?.nome || '';
+    },
+
+    reteSchedaRigheIncassi() {
+      return righeIncassiScheda({
+        incassi: this.reteIncassiRighe,
+        ids: this.reteSchedaIds(),
+        vendite: this.reteVenditeRighe,
+        clientiPerId: this.reteClientiPerId
+      });
+    },
+
+    reteSchedaSerie() {
+      return serieIncassatoAnno(this.reteSchedaRigheIncassi(), this.reteAnno);
+    },
+
+    reteSchedaTotaleAnno() {
+      return this.reteSchedaSerie().reduce((somma, m) => somma + m.valore, 0);
+    },
+
+    reteSchedaTotaleMeseCorrente() {
+      const oggi = new Date();
+      const chiave = oggi.getFullYear() + '-' + String(oggi.getMonth() + 1).padStart(2, '0');
+      return this.reteSchedaSerie().find(m => m.chiave === chiave)?.valore || 0;
+    },
+
+    reteSchedaMeseFuturo(chiave) {
+      const oggi = new Date();
+      return chiave > oggi.getFullYear() + '-' + String(oggi.getMonth() + 1).padStart(2, '0');
+    },
+
+    reteSchedaAltezzaBarra(valore) {
+      const massimo = Math.max(1, ...this.reteSchedaSerie().map(m => m.valore));
+      if (!valore) return 4;
+      return Math.max(8, Math.round((valore / massimo) * 112));
+    },
+
+    reteSchedaEtichettaMese(chiave) {
+      return this.reteSchedaSerie().find(m => m.chiave === chiave)?.label || '';
+    },
+
+    reteSchedaValoreMese() {
+      return this.reteSchedaSerie().find(m => m.chiave === this.reteSchedaMese)?.valore || 0;
+    },
+
+    reteSchedaRigheMese() {
+      return this.reteSchedaRigheIncassi()
+        .filter(r => r.data && String(r.data).slice(0, 7) === this.reteSchedaMese)
+        .sort((a, b) => b.data.localeCompare(a.data));
+    },
+
+    // Cambiare l'interruttore team cambia la serie: il mese scelto resta valido
+    // (stesso anno), quindi non si tocca.
 
     // ----- Aggiungi venditore (le regole vere stanno nella Edge Function) -----
     // Livello assoluto dell'utente nell'albero; null per Tomas (developer non e' un nodo).
@@ -495,6 +655,11 @@
         this.reinviaInvito(reinvia.dataset.reinvia);
         return;
       }
+      const scheda = evento.target.closest('button[data-scheda]');
+      if (scheda) {
+        this.apriSchedaVenditore(scheda.dataset.scheda);
+        return;
+      }
       const nodo = evento.target.closest('button.rete-node');
       if (nodo) this.reteFocusId = nodo.dataset.id;
     },
@@ -560,7 +725,7 @@
     value: {
       escapaHtml, indicizzaAlbero, sottoalbero, percorsoNodo,
       calcolaStatisticheRete, riepilogoRete, markupAlberoRete, vendutoReteVenditore,
-      aggregaQuoteRete
+      aggregaQuoteRete, idsScheda, clientiScheda, righeIncassiScheda
     }
   });
 

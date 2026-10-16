@@ -808,6 +808,16 @@ function appState() {
     reteStatistiche: {},     // id venditore -> { venduto, generato, incassato, ... }
     reteSelezionati: [],     // venditori spuntati nel foglio
     reteFocusId: null,       // venditore in cui si e entrati (null = tutta la rete)
+    reteSchedaId: null,      // venditore di cui e aperta la scheda (null = albero)
+    reteSchedaTab: 'clienti', // 'clienti' | 'incassi'
+    reteSchedaTeam: false,   // includi il team del venditore
+    reteSchedaMese: null,    // mese scelto nelle barre ('2026-10')
+    reteSchedaClienti: [],
+    reteIncassiRighe: [],    // righe grezze di rete_vendita_incassi
+    reteVenditeRighe: [],
+    reteClientiPerId: {},
+    caricandoScheda: false,
+    erroreScheda: '',
     reteFoglioAperto: false,
     reteFoglioTmp: [],
     reteRicerca: '',
@@ -1039,7 +1049,8 @@ function appState() {
         agendaData: this.agendaDataSelezionata || null,
         agendaMese: this.agendaMese || null,
         pipelineIndice: Number(this.pipelineIndice) || 0,
-        reteFocusId: this.view === 'rete' ? (this.reteFocusId || null) : null
+        reteFocusId: this.view === 'rete' ? (this.reteFocusId || null) : null,
+        reteSchedaId: this.view === 'rete' ? (this.reteSchedaId || null) : null
       };
     },
 
@@ -1226,6 +1237,11 @@ function appState() {
       if (stato.view === 'rete') {
         this.reteFocusId = stato.reteFocusId || null;
         if (!this.reteNodi.length) await this.caricaRete();
+        // Tornando su una scheda dalla history si ricaricano anche i suoi clienti.
+        if ((stato.reteSchedaId || null) !== this.reteSchedaId) {
+          if (stato.reteSchedaId) await this.apriSchedaVenditore(stato.reteSchedaId);
+          else this.chiudiSchedaVenditore();
+        }
       }
     },
 
