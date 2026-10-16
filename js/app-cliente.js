@@ -161,6 +161,11 @@
       this.clienteAzioniContattoAperto = true;
     },
 
+    apriNotaRapidaCliente(clienteId) {
+      this.apriAzioniCliente(clienteId);
+      if (this.clienteAzioniRapideId) this.clienteAzioniNotaAperta = true;
+    },
+
     dataOraLocale(value) {
       if (!value) return '';
       if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return `${value}T09:00`;

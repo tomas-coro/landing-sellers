@@ -750,14 +750,25 @@
               </div>
 
               <div class="home-client-card-actions">
-                <span
-                  class="pill"
-                  :class="'s-' + schedaClienteCompleta(cliente).statoClasse">
-                  <i></i>
+                <div class="home-client-status">
                   <span
-                    x-text="schedaClienteCompleta(cliente).statoLabel">
+                    class="pill"
+                    :class="'s-' + schedaClienteCompleta(cliente).statoClasse">
+                    <i></i>
+                    <span
+                      x-text="schedaClienteCompleta(cliente).statoLabel">
+                    </span>
                   </span>
-                </span>
+
+                  <button
+                    type="button"
+                    class="client-card-reminder"
+                    x-show="puoRicontattareCliente(cliente) && cliente.prossimo_contatto"
+                    :aria-label="'Ricontatta il ' + formattaDataCompleta(cliente.prossimo_contatto)"
+                    @click.stop="apriRicontattoCliente(cliente.id)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+                  </button>
+                </div>
 
                 <button
                   type="button"
@@ -5012,6 +5023,23 @@
         </div>
 
         <div class="client-quick-actions">
+          <button
+            type="button"
+            x-show="puoRicontattareCliente(clienteSelezionato())"
+            @click="apriRicontattoCliente(clienteSelezionatoId)"
+            class="client-quick-action">
+            <span class="client-quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></span>
+            <strong>Ricontatta</strong>
+          </button>
+
+          <button
+            type="button"
+            @click="apriNotaRapidaCliente(clienteSelezionatoId)"
+            class="client-quick-action">
+            <span class="client-quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>
+            <strong>Nota rapida</strong>
+          </button>
+
           <a
             x-show="clienteSelezionato().stato === 'contattato'"
             href="https://landingevolution.it/brief.html"
@@ -5029,15 +5057,6 @@
             <span>☎</span>
             <strong>Chiama</strong>
           </a>
-
-          <button
-            type="button"
-            x-show="puoRicontattareCliente(clienteSelezionato())"
-            @click="apriRicontattoCliente(clienteSelezionatoId)"
-            class="client-quick-action">
-            <span>◷</span>
-            <strong>Ricontatta</strong>
-          </button>
 
           <a
             x-show="clienteSelezionato().telefono"
@@ -6509,6 +6528,31 @@
         <div class="client-action-grid">
           <button
             type="button"
+            x-show="puoRicontattareCliente(clienteAzioniRapide())"
+            :class="{ on: clienteAzioniContattoAperto }"
+            @click="
+              clienteAzioniContattoAperto = !clienteAzioniContattoAperto;
+              clienteAzioniNotaAperta = false;
+              clienteAzioniStatoAperto = false;
+            ">
+            <span class="client-action-symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></span>
+            <strong>Ricontatta</strong>
+          </button>
+
+          <button
+            type="button"
+            :class="{ on: clienteAzioniNotaAperta }"
+            @click="
+              clienteAzioniNotaAperta = !clienteAzioniNotaAperta;
+              clienteAzioniContattoAperto = false;
+              clienteAzioniStatoAperto = false;
+            ">
+            <span class="client-action-symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>
+            <strong>Nota rapida</strong>
+          </button>
+
+          <button
+            type="button"
             :disabled="!whatsappCliente(clienteAzioniRapide())"
             @click="window.open(whatsappCliente(clienteAzioniRapide()), '_blank')">
             <span class="client-action-symbol">WA</span>
@@ -6521,31 +6565,6 @@
             @click="document.location.href = 'tel:' + telefonoPulito(clienteAzioniRapide())">
             <span class="client-action-symbol">☎</span>
             <strong>Chiama</strong>
-          </button>
-
-          <button
-            type="button"
-            :class="{ on: clienteAzioniNotaAperta }"
-            @click="
-              clienteAzioniNotaAperta = !clienteAzioniNotaAperta;
-              clienteAzioniContattoAperto = false;
-              clienteAzioniStatoAperto = false;
-            ">
-            <span class="client-action-symbol">＋</span>
-            <strong>Nota rapida</strong>
-          </button>
-
-          <button
-            type="button"
-            x-show="puoRicontattareCliente(clienteAzioniRapide())"
-            :class="{ on: clienteAzioniContattoAperto }"
-            @click="
-              clienteAzioniContattoAperto = !clienteAzioniContattoAperto;
-              clienteAzioniNotaAperta = false;
-              clienteAzioniStatoAperto = false;
-            ">
-            <span class="client-action-symbol">◷</span>
-            <strong>Ricontatta</strong>
           </button>
         </div>
 
@@ -7469,7 +7488,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=177', {
+      navigator.serviceWorker.register('./service-worker.js?v=178', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

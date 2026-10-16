@@ -1452,6 +1452,18 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
   font-weight:800;
 }
 
+.client-quick-action .client-quick-action-icon{
+  width:25px;
+  height:25px;
+  display:grid;
+  place-items:center;
+}
+
+.client-quick-action-icon svg{
+  width:23px;
+  height:23px;
+}
+
 .client-quick-action strong{
   font-size:14px;
   overflow:hidden;
@@ -8020,10 +8032,37 @@ html[data-theme="dark"] .home-today-clear{
 /* Quick actions cliente */
 .home-client-card-actions{
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content:flex-end;
   gap:7px;
   flex:none;
+}
+
+.home-client-status{
+  display:grid;
+  justify-items:end;
+  gap:5px;
+}
+
+.client-card-reminder{
+  width:30px;
+  height:30px;
+  display:grid;
+  place-items:center;
+  border:1px solid color-mix(in srgb, var(--lime-deep) 45%, var(--line));
+  border-radius:10px;
+  background:rgba(200,255,61,.16);
+  color:var(--ink);
+  cursor:pointer;
+}
+
+.client-card-reminder svg{
+  width:18px;
+  height:18px;
+}
+
+.client-card-reminder:active{
+  transform:scale(.96);
 }
 
 .client-card-more{
@@ -8111,15 +8150,20 @@ html[data-theme="dark"] .home-today-clear{
 }
 
 .client-action-symbol{
-  min-width:24px;
-  height:24px;
+  width:34px;
+  height:34px;
   display:flex;
   align-items:center;
   justify-content:center;
-  border-radius:8px;
+  border-radius:10px;
   background:rgba(17,17,17,.06);
   font-size:13.5px;
   font-weight:800;
+}
+
+.client-action-symbol svg{
+  width:23px;
+  height:23px;
 }
 
 .client-action-date-row{

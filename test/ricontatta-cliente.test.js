@@ -22,6 +22,25 @@ test('Ricontatta è disponibile soltanto al venditore diretto', () => {
   assert.strictEqual(stato({ ruolo: 'admin', ruolo_economico: null }).puoRicontattareCliente(cliente), false);
 });
 
+test('le azioni cliente aprono direttamente Ricontatta o Nota rapida', () => {
+  const s = stato();
+  s.clienti = [{ id: 'c1', venditore_id: 'venditore-1', prossimo_contatto: '2030-01-10T15:30:00' }];
+  s.clienteAzioniPosizione = {};
+
+  s.apriRicontattoCliente('c1');
+  assert.strictEqual(s.clienteAzioniRapideId, 'c1');
+  assert.strictEqual(s.clienteAzioniContattoAperto, true);
+  assert.strictEqual(s.clienteAzioniNotaAperta, false);
+
+  s.apriNotaRapidaCliente('c1');
+  assert.strictEqual(s.clienteAzioniContattoAperto, false);
+  assert.strictEqual(s.clienteAzioniNotaAperta, true);
+
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  assert.match(html, /class="client-card-reminder"[\s\S]*apriRicontattoCliente\(cliente\.id\)/);
+  assert.match(html, /<strong>Ricontatta<\/strong>[\s\S]*<strong>Nota rapida<\/strong>/);
+});
+
 test('il ricontatto conserva e mostra giorno e ora nell agenda del diretto', () => {
   const s = stato();
   s.clientiDiretti = () => [{
