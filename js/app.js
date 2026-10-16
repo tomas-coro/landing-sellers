@@ -960,7 +960,9 @@ function appState() {
     // gestione utenti (creazione nuovo profilo venditore da admin)
     tuttiProfiliAdmin: [],
     nuovoProfiloAperto: false,
-    nuovoProfiloForm: { nome: '', email: '', password: '' },
+    nuovoProfiloForm: { nome: '', email: '', responsabileId: '' },
+    reteInvitiPendenti: [],  // id dei venditori mai entrati (rete_vendita_inviti_pendenti)
+    reinvioInCorso: '',      // id del venditore a cui sta partendo il reinvio
     nuovoProfiloCaricando: false,
     nuovoProfiloErrore: '',
     nuovoProfiloSuccesso: '',

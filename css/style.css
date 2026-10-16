@@ -16376,6 +16376,10 @@ html[data-theme="dark"] .rete-view{--rete-lc:#5a5e52}
 .rete-view .rete-node>span:first-child{display:flex;align-items:center;min-width:0}
 .rete-view .rete-node b{font-size:.9rem;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rete-view .rete-lv{font-size:.58rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:1px 6px;margin-right:6px;white-space:nowrap;flex:none}
+.rete-view .rete-addrow{display:flex;justify-content:flex-end;margin:0 0 12px}
+.rete-view .rete-add{padding:9px 14px;font-size:.82rem;white-space:nowrap}
+.rete-view .rete-invito{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:4px 0 0;padding:0 10px;font-size:.72rem;color:var(--muted)}
+.rete-view .rete-invito button{flex:none;background:none;border:1px solid var(--line);border-radius:99px;padding:3px 10px;font:inherit;font-weight:800;color:var(--ink);cursor:pointer}
 .rete-view .rete-v{font-size:.9rem;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
 .rete-view .rete-node small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.7rem;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
 .rete-view .rete-node small.r{text-align:right}

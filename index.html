@@ -2136,7 +2136,7 @@
               <span>GESTIONE UTENTI</span>
               <strong style="font-size:17px">Profili venditore</strong>
             </div>
-            <button type="button" class="btn btn-primary" @click="apriNuovoProfiloAdmin()">+ Nuovo profilo</button>
+            <button type="button" class="btn btn-primary" @click="apriNuovoProfiloAdmin()">+ Aggiungi venditore</button>
           </div>
 
           <div class="admin-seller-list" style="margin-top:16px">
@@ -7133,6 +7133,9 @@
         <h1 style="font-size:21px">Rete vendita</h1>
       </div>
       <div class="content">
+        <div class="rete-addrow" x-show="reteMiPuoCreare()" x-cloak>
+          <button type="button" class="btn btn-primary rete-add" @click="apriNuovoProfiloAdmin()">+ Aggiungi venditore</button>
+        </div>
         <p x-show="erroreRete">
           <span x-text="erroreRete" class="err"></span>
           <button type="button" class="retry-btn" @click="caricaRete()">Riprova</button>
@@ -7515,12 +7518,12 @@
       </div>
     </div>
 
-    <!-- NUOVO PROFILO VENDITORE (solo admin) -->
+    <!-- AGGIUNGI VENDITORE: lv1/lv2 invitano un diretto, Tomas sceglie anche "sotto chi" (regole nella Edge Function) -->
     <div x-show="nuovoProfiloAperto" x-cloak class="modal-overlay" @click.self="chiudiNuovoProfiloAdmin()">
       <div class="modal-card">
-        <h2 style="margin-top:0">Nuovo profilo venditore</h2>
+        <h2 style="margin-top:0">Aggiungi venditore</h2>
         <p style="font-size:14.5px;color:var(--ink-soft);margin-bottom:16px">
-          Il profilo viene creato subito con password temporanea: comunicala tu al venditore.
+          Gli arriva una mail con il link per scegliere la sua password. Entra come tuo diretto, senza clienti.
         </p>
 
         <form @submit.prevent="creaProfiloVenditore()">
@@ -7532,18 +7535,23 @@
             <label>Email *</label>
             <input type="email" x-model="nuovoProfiloForm.email" placeholder="email@esempio.it" required>
           </div>
-          <div class="field" style="margin-top:12px">
-            <label>Password temporanea *</label>
-            <input type="text" x-model="nuovoProfiloForm.password" placeholder="Almeno 8 caratteri" required>
+          <div class="field" style="margin-top:12px" x-show="ruoloFuoriAlbero()">
+            <label>Sotto chi *</label>
+            <select x-model="nuovoProfiloForm.responsabileId">
+              <option value="">Scegli il responsabile</option>
+              <template x-for="n in reteResponsabiliScelta()" :key="'resp-' + n.id">
+                <option :value="n.id" x-text="n.nome + ' (Lv ' + n.livello + ')'"></option>
+              </template>
+            </select>
           </div>
 
           <p x-show="nuovoProfiloErrore" x-text="nuovoProfiloErrore" class="err" style="margin-top:12px"></p>
           <p x-show="nuovoProfiloSuccesso" x-text="nuovoProfiloSuccesso" style="margin-top:12px;color:var(--ok, #2f9e44)"></p>
 
           <div class="btn-row" style="margin-top:20px">
-            <button type="button" class="btn btn-ghost" :disabled="nuovoProfiloCaricando" @click="chiudiNuovoProfiloAdmin()">Annulla</button>
+            <button type="button" class="btn btn-ghost" :disabled="nuovoProfiloCaricando" @click="chiudiNuovoProfiloAdmin()">Chiudi</button>
             <button type="submit" class="btn btn-primary" :disabled="nuovoProfiloCaricando"
-              x-text="nuovoProfiloCaricando ? 'Creazione...' : 'Crea profilo'"></button>
+              x-text="nuovoProfiloCaricando ? 'Invio...' : 'Invia invito'"></button>
           </div>
         </form>
       </div>
@@ -7572,7 +7580,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=178', {
+      navigator.serviceWorker.register('./service-worker.js?v=181', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

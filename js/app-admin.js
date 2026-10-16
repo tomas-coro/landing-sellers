@@ -13,6 +13,21 @@
     root.appAdminMixin = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  // Testo d'errore di una chiamata a Edge Function: il corpo JSON { error } sta
+  // in error.context (risposta non-2xx); null se la chiamata e' andata bene.
+  async function messaggioErroreFunzione(error, data, predefinito) {
+    if (error) {
+      try {
+        const corpo = await error.context?.json?.();
+        if (corpo?.error) return corpo.error;
+      } catch {
+        // risposta non-JSON: resta il messaggio generico
+      }
+      return error.message || predefinito;
+    }
+    return data?.error || null;
+  }
+
   return {
     // --- dashboard admin ---
     async caricaDashboardAdmin() {
@@ -371,36 +386,39 @@
       return ordinaClassificaVenditori(this.venditori);
     },
 
+    // "Aggiungi venditore": lv1/lv2 creano un diretto, Tomas sceglie anche "sotto chi".
     apriNuovoProfiloAdmin() {
-      this.nuovoProfiloForm = { nome: '', email: '', password: '' };
+      this.nuovoProfiloForm = { nome: '', email: '', responsabileId: '' };
       this.nuovoProfiloErrore = '';
       this.nuovoProfiloSuccesso = '';
       this.nuovoProfiloAperto = true;
+      // Tomas dalla dashboard admin: l'elenco "sotto chi" viene dall'albero, che potrebbe non essere ancora caricato.
+      if (!this.reteNodi.length && typeof this.caricaRete === 'function') this.caricaRete();
     },
 
     chiudiNuovoProfiloAdmin() {
       this.nuovoProfiloAperto = false;
     },
 
-    // Crea un nuovo profilo venditore (email + password temporanea) via
-    // Edge Function: il browser non puo' scrivere su auth.users, serve la
-    // service_role key che vive solo lato server (vedi
-    // supabase/functions/admin-crea-profilo). Il ruolo e' sempre
-    // 'venditore', assegnato server-side: non e' un campo del form.
+    // Chiama la Edge Function admin-crea-profilo (supabase/functions): il browser
+    // non puo' scrivere su auth.users, serve la service_role key che vive solo
+    // lato server. Le regole "chi puo' creare chi" sono applicate LI', non qui:
+    // il pulsante in Rete vendita e' solo comodita'. Il ruolo e' sempre
+    // 'venditore', il responsabile e' chi invita (salvo Tomas, che lo sceglie).
     async creaProfiloVenditore() {
       this.nuovoProfiloErrore = '';
       this.nuovoProfiloSuccesso = '';
 
       const nome = this.nuovoProfiloForm.nome.trim();
       const email = this.nuovoProfiloForm.email.trim();
-      const password = this.nuovoProfiloForm.password;
+      const responsabileId = this.nuovoProfiloForm.responsabileId || null;
 
-      if (!nome || !email || !password) {
-        this.nuovoProfiloErrore = 'Nome, email e password sono obbligatori.';
+      if (!nome || !email) {
+        this.nuovoProfiloErrore = 'Nome ed email sono obbligatori.';
         return;
       }
-      if (password.length < 8) {
-        this.nuovoProfiloErrore = 'La password deve avere almeno 8 caratteri.';
+      if (this.ruoloFuoriAlbero() && !responsabileId) {
+        this.nuovoProfiloErrore = 'Scegli sotto chi creare il venditore.';
         return;
       }
 
@@ -408,32 +426,57 @@
       try {
         const { data, error } = await window.supabaseClient.functions.invoke(
           'admin-crea-profilo',
-          { body: { nome, email, password } }
+          {
+            body: {
+              nome,
+              email,
+              responsabile_id: this.ruoloFuoriAlbero() ? responsabileId : undefined,
+              redirect_to: `${window.location.origin}${window.location.pathname}`
+            }
+          }
         );
 
-        if (error) {
-          let messaggio = error.message || 'Creazione profilo fallita.';
-          try {
-            const corpo = await error.context?.json?.();
-            if (corpo?.error) messaggio = corpo.error;
-          } catch {
-            // risposta non-JSON: resta il messaggio generico sopra
-          }
+        const messaggio = await messaggioErroreFunzione(error, data, 'Creazione venditore fallita.');
+        if (messaggio) {
           this.nuovoProfiloErrore = messaggio;
           return;
         }
-        if (data?.error) {
-          this.nuovoProfiloErrore = data.error;
-          return;
-        }
 
-        this.nuovoProfiloSuccesso = `Profilo creato: ${nome} (${email}).`;
-        this.nuovoProfiloForm = { nome: '', email: '', password: '' };
-        await this.caricaDashboardAdmin();
+        this.nuovoProfiloSuccesso = data.mailInviata
+          ? `Invito inviato a ${email}: riceverà una mail per scegliere la password.`
+          : `${nome} è stato creato ma la mail non è partita (${data.errorMail}). Usa "Reinvia" dalla Rete vendita.`;
+        this.nuovoProfiloForm = { nome: '', email: '', responsabileId: responsabileId || '' };
+        if (typeof this.caricaRete === 'function') await this.caricaRete();
+        if (this.isAdmin && typeof this.caricaDashboardAdmin === 'function') await this.caricaDashboardAdmin();
       } catch (err) {
-        this.nuovoProfiloErrore = 'Creazione profilo fallita: ' + err.message;
+        this.nuovoProfiloErrore = 'Creazione venditore fallita: ' + err.message;
       } finally {
         this.nuovoProfiloCaricando = false;
+      }
+    },
+
+    // Rimanda la mail a un diretto che non e' ancora entrato (link scaduto o perso).
+    async reinviaInvito(profiloId) {
+      if (this.reinvioInCorso) return;
+      this.reinvioInCorso = profiloId;
+      try {
+        const { data, error } = await window.supabaseClient.functions.invoke(
+          'admin-crea-profilo',
+          {
+            body: {
+              azione: 'reinvia',
+              profilo_id: profiloId,
+              redirect_to: `${window.location.origin}${window.location.pathname}`
+            }
+          }
+        );
+        const messaggio = await messaggioErroreFunzione(error, data, 'Reinvio non riuscito.');
+        if (messaggio) this.mostraToast('error', 'Reinvio non riuscito', messaggio);
+        else this.mostraToast('success', 'Invito reinviato');
+      } catch (err) {
+        this.mostraToast('error', 'Reinvio non riuscito', err.message);
+      } finally {
+        this.reinvioInCorso = '';
       }
     },
 

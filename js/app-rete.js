@@ -169,7 +169,7 @@
 
   // Markup dell'albero: riga con gomiti di collegamento, come nel mockup.
   // Il nome e l'unico testo libero e viene sempre escapato.
-  function markupAlberoRete({ albero, statistiche, visibili, centro, viewerId }) {
+  function markupAlberoRete({ albero, statistiche, visibili, centro, viewerId, pendenti = new Set(), reinviabili = new Set() }) {
     const nelloInsieme = new Set(visibili);
     const padreVisibile = id => {
       for (let p = albero.perId[id].padre; p; p = albero.perId[p]?.padre) {
@@ -200,6 +200,11 @@
         (conTeam ? 'team ' + escapaHtml(euro(teamVenduto)) : 'senza team') + '</small>' +
         '<small class="r">generato ' + escapaHtml(euro(s.generato || 0)) + '</small>' +
         '</' + tag + '>' +
+        (pendenti.has(id)
+          ? '<div class="rete-invito"><span>Invito inviato, non è ancora entrato</span>' +
+            (reinviabili.has(id) ? '<button type="button" data-reinvia="' + escapaHtml(id) + '">Reinvia</button>' : '') +
+            '</div>'
+          : '') +
         (figli.length ? '<div class="rete-kids">' + figli.map(nodo).join('') + '</div>' : '') +
         '</div>';
     };
@@ -331,6 +336,7 @@
         }
 
         this.reteNodi = nodi;
+        await this.caricaInvitiPendenti();
         this.reteStatistiche = calcolaStatisticheRete({
           albero,
           vendite,
@@ -375,8 +381,53 @@
         statistiche: this.reteStatistiche,
         visibili: vista.visibili,
         centro: vista.centro,
-        viewerId: this.sessione?.user?.id || null
+        viewerId: this.sessione?.user?.id || null,
+        pendenti: new Set(this.reteInvitiPendenti || []),
+        reinviabili: new Set(this.reteNodiReinviabili())
       });
+    },
+
+    // ----- Aggiungi venditore (le regole vere stanno nella Edge Function) -----
+    // Livello assoluto dell'utente nell'albero; null per Tomas (developer non e' un nodo).
+    reteMioLivello() {
+      const io = this.sessione?.user?.id;
+      return this.reteNodi.find(n => n.id === io)?.livello ?? null;
+    },
+
+    // Tomas: developer o admin, non e' un nodo dell'albero e sceglie lui "sotto chi".
+    ruoloFuoriAlbero() {
+      return this.profilo?.ruolo === 'developer' || this.profilo?.ruolo === 'admin';
+    },
+
+    // Pulsante visibile solo a chi puo' creare: lv1 e lv2 (un lv3 non vede niente) e Tomas.
+    reteMiPuoCreare() {
+      if (this.ruoloFuoriAlbero()) return true;
+      const livello = this.reteMioLivello();
+      return livello !== null && livello < 3;
+    },
+
+    // Per Tomas: i nodi sotto cui si puo' ancora creare (lv1 e lv2).
+    reteResponsabiliScelta() {
+      return this.reteNodi.filter(n => n.livello < 3);
+    },
+
+    // Chi puo' avere "Reinvia": Tomas su chiunque, gli altri solo sui propri diretti.
+    reteNodiReinviabili() {
+      const io = this.sessione?.user?.id;
+      const dev = this.ruoloFuoriAlbero();
+      return this.reteNodi.filter(n => dev || n.responsabile_id === io).map(n => n.id);
+    },
+
+    async caricaInvitiPendenti() {
+      // Solo un'etichetta: se non si carica la rete resta usabile.
+      try {
+        const { data, error } = await window.supabaseClient.rpc('rete_vendita_inviti_pendenti');
+        if (error) throw error;
+        this.reteInvitiPendenti = data || [];
+      } catch (errore) {
+        console.warn('Inviti in attesa non disponibili:', errore?.message || errore);
+        this.reteInvitiPendenti = [];
+      }
     },
 
     reteEtichettaTotale() {
@@ -412,6 +463,11 @@
     },
 
     reteEntra(evento) {
+      const reinvia = evento.target.closest('button[data-reinvia]');
+      if (reinvia) {
+        this.reinviaInvito(reinvia.dataset.reinvia);
+        return;
+      }
       const nodo = evento.target.closest('button.rete-node');
       if (nodo) this.reteFocusId = nodo.dataset.id;
     },
