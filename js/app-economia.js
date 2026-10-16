@@ -1399,6 +1399,88 @@
       }).format(Number(valore) || 0);
     },
 
+    dataMassimaRateVendita() {
+      const data = new Date(`${this.dataISOOggi()}T12:00:00Z`);
+      const giorno = data.getUTCDate();
+      data.setUTCDate(1);
+      data.setUTCMonth(data.getUTCMonth() + 6);
+      data.setUTCDate(Math.min(
+        giorno,
+        new Date(Date.UTC(data.getUTCFullYear(), data.getUTCMonth() + 1, 0))
+          .getUTCDate()
+      ));
+      return data.toISOString().slice(0, 10);
+    },
+
+    dataRataVendita(indice) {
+      const data = new Date(`${this.dataISOOggi()}T12:00:00Z`);
+      const giorno = data.getUTCDate();
+      data.setUTCDate(1);
+      data.setUTCMonth(data.getUTCMonth() + Math.min(indice + 1, 6));
+      data.setUTCDate(Math.min(
+        giorno,
+        new Date(Date.UTC(data.getUTCFullYear(), data.getUTCMonth() + 1, 0))
+          .getUTCDate()
+      ));
+      return data.toISOString().slice(0, 10);
+    },
+
+    ridistribuisciRateVendita() {
+      const rate = this.venditaEconomicaForm.ratePreviste || [];
+      if (!rate.length) return;
+
+      const totaleCentesimi = Math.round(
+        (Number(this.venditaEconomicaForm.importoVendita) || 0) * 100
+      );
+      const base = Math.floor(totaleCentesimi / rate.length);
+      const resto = totaleCentesimi - base * rate.length;
+
+      rate.forEach((rata, indice) => {
+        rata.importo = (base + (indice < resto ? 1 : 0)) / 100;
+      });
+    },
+
+    selezionaPagamentoVendita(modalita) {
+      if (
+        modalita === 'rateizzato' &&
+        this.venditaEconomicaForm.modalitaPagamentoVendita === 'rateizzato'
+      ) return;
+
+      this.venditaEconomicaForm.modalitaPagamentoVendita =
+        modalita === 'rateizzato' ? 'rateizzato' : 'unico';
+
+      if (modalita !== 'rateizzato') {
+        this.venditaEconomicaForm.ratePreviste = [];
+        return;
+      }
+
+      this.venditaEconomicaForm.importoIncassato = null;
+      this.venditaEconomicaForm.ratePreviste = [0, 1].map(indice => ({
+        id: `rata-${Date.now()}-${indice}`,
+        importo: 0,
+        data_scadenza: this.dataRataVendita(indice)
+      }));
+      this.ridistribuisciRateVendita();
+    },
+
+    aggiungiRataVendita() {
+      const rate = this.venditaEconomicaForm.ratePreviste;
+      if (rate.length >= 3) return;
+      rate.push({
+        id: `rata-${Date.now()}-${rate.length}`,
+        importo: 0,
+        data_scadenza: this.dataRataVendita(rate.length)
+      });
+      this.ridistribuisciRateVendita();
+    },
+
+    rimuoviRataVendita(indice) {
+      const rate = this.venditaEconomicaForm.ratePreviste;
+      if (rate.length <= 2) return;
+      rate.splice(indice, 1);
+      this.ridistribuisciRateVendita();
+    },
+
     validaVenditaEconomica() {
       if (!this.venditaEconomicaForm.clienteId) {
         return 'Seleziona un cliente.';
@@ -1436,13 +1518,51 @@
        * un dato inserito a mano, quindi qui non c'è nulla da validare.
        */
 
+      if (
+        this.venditaEconomicaForm.modalitaPagamentoVendita === 'rateizzato'
+      ) {
+        const rate = this.venditaEconomicaForm.ratePreviste || [];
+        const oggi = this.dataISOOggi();
+        const dataMassima = this.dataMassimaRateVendita();
+
+        if (rate.length < 2) return 'Inserisci almeno due rate.';
+        if (rate.length > 3) return 'Puoi inserire al massimo tre rate.';
+        if (rate.some(rata => !(Number(rata.importo) > 0))) {
+          return 'Ogni rata deve avere un importo maggiore di zero.';
+        }
+        if (rate.some(rata => !rata.data_scadenza)) {
+          return 'Scegli la data prevista di ogni rata.';
+        }
+        if (rate.some(rata =>
+          rata.data_scadenza < oggi || rata.data_scadenza > dataMassima
+        )) {
+          return 'Le rate devono concludersi entro sei mesi dalla vendita.';
+        }
+
+        const totaleRate = rate.reduce(
+          (totale, rata) => totale + Number(rata.importo || 0),
+          0
+        );
+        const totaleVendita =
+          Number(this.venditaEconomicaForm.importoVendita) || 0;
+
+        if (
+          Math.round(totaleRate * 100) !==
+          Math.round(totaleVendita * 100)
+        ) {
+          return 'La somma delle rate deve coincidere con il totale vendita.';
+        }
+      }
+
       /*
        * Il pagamento iniziale è facoltativo: importoIncassato > 0 è il
        * segnale che l'utente vuole registrarlo insieme alla vendita.
        * Se lasciato vuoto/0 non viene creato alcun pagamento.
        */
       const importoIniziale =
-        Number(this.venditaEconomicaForm.importoIncassato) || 0;
+        this.venditaEconomicaForm.modalitaPagamentoVendita === 'rateizzato'
+          ? 0
+          : Number(this.venditaEconomicaForm.importoIncassato) || 0;
 
       if (importoIniziale > 0) {
         const totaleVendita =
@@ -1925,7 +2045,9 @@
        * editabili a parte.
        */
       const importoPagamentoIniziale =
-        Number(this.venditaEconomicaForm.importoIncassato) || 0;
+        this.venditaEconomicaForm.modalitaPagamentoVendita === 'rateizzato'
+          ? 0
+          : Number(this.venditaEconomicaForm.importoIncassato) || 0;
 
       let pagamento = null;
 
@@ -2025,6 +2147,14 @@
         importo: Number(c.importo) || 0
       }));
 
+      const ratePreviste =
+        this.venditaEconomicaForm.modalitaPagamentoVendita === 'rateizzato'
+          ? this.venditaEconomicaForm.ratePreviste.map(rata => ({
+              importo: Number(rata.importo) || 0,
+              data_scadenza: rata.data_scadenza
+            }))
+          : [];
+
       this.salvandoVenditaEconomica = true;
 
       try {
@@ -2036,7 +2166,8 @@
               this.venditaEconomicaForm.configurazioneCommerciale,
             p_costi: costi,
             p_partecipanti: partecipanti,
-            p_pagamento: pagamento
+            p_pagamento: pagamento,
+            p_rate_previste: ratePreviste
           }
         );
 

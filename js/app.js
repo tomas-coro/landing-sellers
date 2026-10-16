@@ -529,6 +529,9 @@ function formVenditaEconomicaVuoto() {
     modalitaFatturazioneAdmin: 'nessuna',
     importoFatturatoAdmin: 0,
 
+    modalitaPagamentoVendita: 'unico',
+    ratePreviste: [],
+
     statoIncasso: 'incassato',
     importoIncassato: null,
     dataPagamento: '',

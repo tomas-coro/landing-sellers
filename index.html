@@ -3785,12 +3785,90 @@
               <small
                 x-text="
                   modalitaEconomia !== 'incasso'
-                    ? 'Facoltativo: se il cliente ha già pagato, indica qui l\'importo'
+                    ? venditaEconomicaForm.modalitaPagamentoVendita === 'rateizzato'
+                      ? 'Dividi il totale e scegli le date previste d’incasso'
+                      : 'Facoltativo: se il cliente ha già pagato, indica qui l\'importo'
                     : pagamentoPrevistoId
                       ? 'Stai incassando una rata già programmata'
                       : 'Registra un incasso oppure pianifica una rata'
                 ">
               </small>
+            </div>
+          </div>
+
+          <div
+            class="payment-operation-switch"
+            x-show="modalitaEconomia === 'vendita'">
+
+            <button
+              type="button"
+              :class="{ active: venditaEconomicaForm.modalitaPagamentoVendita === 'unico' }"
+              @click="selezionaPagamentoVendita('unico')">
+              <span class="payment-operation-icon">€</span>
+              <span>
+                <strong>Pagamento unico</strong>
+                <small>Incasso iniziale facoltativo</small>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              :class="{ active: venditaEconomicaForm.modalitaPagamentoVendita === 'rateizzato' }"
+              @click="selezionaPagamentoVendita('rateizzato')">
+              <span class="payment-operation-icon">≡</span>
+              <span>
+                <strong>Rateizzato</strong>
+                <small>Fino a 3 incassi entro 6 mesi</small>
+              </span>
+            </button>
+          </div>
+
+          <div
+            class="sale-installments"
+            x-show="
+              modalitaEconomia === 'vendita' &&
+              venditaEconomicaForm.modalitaPagamentoVendita === 'rateizzato'
+            ">
+            <template
+              x-for="(rata, indice) in venditaEconomicaForm.ratePreviste"
+              :key="rata.id">
+              <div class="sale-installment-row">
+                <strong x-text="'Rata ' + (indice + 1)"></strong>
+                <label class="payment-field">
+                  <span>IMPORTO</span>
+                  <div class="payment-amount-input">
+                    <b>€</b>
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      inputmode="decimal"
+                      x-model.number="rata.importo">
+                  </div>
+                </label>
+                <label class="payment-field">
+                  <span>DATA PREVISTA</span>
+                  <input
+                    type="date"
+                    :min="dataISOOggi()"
+                    :max="dataMassimaRateVendita()"
+                    x-model="rata.data_scadenza">
+                </label>
+                <button
+                  type="button"
+                  class="sale-installment-remove"
+                  :disabled="venditaEconomicaForm.ratePreviste.length <= 2"
+                  :aria-label="'Rimuovi rata ' + (indice + 1)"
+                  @click="rimuoviRataVendita(indice)">×</button>
+              </div>
+            </template>
+
+            <div class="sale-installment-actions">
+              <button
+                type="button"
+                x-show="venditaEconomicaForm.ratePreviste.length < 3"
+                @click="aggiungiRataVendita()">+ Aggiungi rata</button>
+              <small x-text="'Totale rate: ' + formattaEuroEconomia(venditaEconomicaForm.ratePreviste.reduce((totale, rata) => totale + Number(rata.importo || 0), 0))"></small>
             </div>
           </div>
 
@@ -3859,7 +3937,12 @@
 
           </div>
 
-          <div class="payment-fields-row">
+          <div
+            class="payment-fields-row"
+            x-show="
+              modalitaEconomia === 'incasso' ||
+              venditaEconomicaForm.modalitaPagamentoVendita !== 'rateizzato'
+            ">
 
             <label class="payment-field">
 
@@ -3924,7 +4007,8 @@
           <div
             class="payment-fields-row payment-fields-secondary"
             x-show="
-              venditaEconomicaForm.statoIncasso !== 'previsto'
+              venditaEconomicaForm.statoIncasso !== 'previsto' &&
+              (modalitaEconomia === 'incasso' || venditaEconomicaForm.modalitaPagamentoVendita !== 'rateizzato')
             ">
 
             <label class="payment-field">

@@ -14046,6 +14046,91 @@ html[data-theme="dark"] .flow-choice-card{
 }
 
 
+/* ---------- PIANO RATEALE VENDITA ---------- */
+
+.sale-installments{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.sale-installment-row{
+  display:grid;
+  grid-template-columns:64px minmax(0,1fr) minmax(0,1fr) 38px;
+  align-items:end;
+  gap:8px;
+  padding:10px;
+  border:1px solid rgba(128,128,128,.16);
+  border-radius:12px;
+  background:rgba(128,128,128,.04);
+}
+
+.sale-installment-row > strong{
+  align-self:center;
+  font-size:14px;
+}
+
+.sale-installment-remove{
+  min-height:46px;
+  border:0;
+  border-radius:9px;
+  background:rgba(128,128,128,.10);
+  color:inherit;
+  font:inherit;
+  font-size:20px;
+  cursor:pointer;
+}
+
+.sale-installment-remove:disabled{
+  opacity:.25;
+  cursor:not-allowed;
+}
+
+.sale-installment-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.sale-installment-actions button{
+  border:0;
+  background:transparent;
+  color:inherit;
+  padding:6px 0;
+  font:inherit;
+  font-weight:800;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  cursor:pointer;
+}
+
+.sale-installment-actions small{
+  opacity:.62;
+}
+
+@media (max-width:620px){
+  .sale-installment-row{
+    grid-template-columns:1fr 38px;
+  }
+
+  .sale-installment-row > strong{
+    grid-column:1;
+  }
+
+  .sale-installment-row > .payment-field{
+    grid-column:1 / -1;
+  }
+
+  .sale-installment-remove{
+    grid-column:2;
+    grid-row:1;
+    min-height:34px;
+  }
+}
+
+
 /* ---------- RESIDUO ---------- */
 
 .payment-amount-context{

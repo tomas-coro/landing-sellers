@@ -528,6 +528,12 @@
       this.venditaEconomicaForm.importoVendita =
         this.valoreTotaleContrattoStimatoVendita();
 
+      if (
+        this.venditaEconomicaForm.modalitaPagamentoVendita === 'rateizzato'
+      ) {
+        this.ridistribuisciRateVendita();
+      }
+
       const automatici = costiGestioneCliente(
         cfg,
         false
