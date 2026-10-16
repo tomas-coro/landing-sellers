@@ -161,6 +161,74 @@
       this.clienteAzioniContattoAperto = true;
     },
 
+    // --- Ricontatto: etichette per scheda e popup ---
+    // Giorni di calendario tra oggi e il prossimo contatto (negativo = scaduto).
+    giorniAlRicontatto(cliente) {
+      const locale = this.dataOraLocale(cliente?.prossimo_contatto);
+      if (!locale) return null;
+      const [anno, mese, giorno] = locale.slice(0, 10).split('-').map(Number);
+      const oggi = new Date();
+      oggi.setHours(0, 0, 0, 0);
+      return Math.round((new Date(anno, mese - 1, giorno) - oggi) / 86400000);
+    },
+
+    ricontattoCountdown(cliente) {
+      const giorni = this.giorniAlRicontatto(cliente);
+      if (giorni === null) return '';
+      if (giorni < 0) return 'scaduto';
+      if (giorni === 0) return 'oggi';
+      if (giorni === 1) return 'domani';
+      return `tra ${giorni} gg`;
+    },
+
+    ricontattoEtichetta(cliente) {
+      const locale = this.dataOraLocale(cliente?.prossimo_contatto);
+      if (!locale) return '';
+      const data = new Date(locale);
+      const giorno = data.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' });
+      return `${giorno} · ${locale.slice(11, 16)}`;
+    },
+
+    ricontattoBreve(cliente) {
+      const locale = this.dataOraLocale(cliente?.prossimo_contatto);
+      if (!locale) return '';
+      const data = new Date(locale);
+      return `${data.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} · ${locale.slice(11, 16)}`;
+    },
+
+    // Il campo salvato resta 'YYYY-MM-DDTHH:mm': giorno e ora si cambiano separati.
+    impostaGiornoRicontatto(giorno) {
+      if (!giorno) { this.clienteProssimoContattoData = ''; return; }
+      const ora = (this.clienteProssimoContattoData || '').slice(11, 16) || '09:00';
+      this.clienteProssimoContattoData = `${giorno}T${ora}`;
+    },
+
+    impostaOraRicontatto(ora) {
+      if (!ora) return;
+      // Senza un giorno scelto parte da domani, come i preset.
+      const giorno = (this.clienteProssimoContattoData || '').slice(0, 10) || this.dataOraLocale(this.aggiungiGiorni(1)).slice(0, 10);
+      this.clienteProssimoContattoData = `${giorno}T${ora}`;
+    },
+
+    aggiungiGiorni(n) {
+      const d = new Date();
+      d.setDate(d.getDate() + n);
+      return d;
+    },
+
+    presetRicontatto(quando) {
+      let data;
+      if (quando === 'lunedi') {
+        data = new Date();
+        do { data.setDate(data.getDate() + 1); } while (data.getDay() !== 1);
+      } else {
+        data = this.aggiungiGiorni(quando);
+      }
+      const ora = (this.clienteProssimoContattoData || '').slice(11, 16) || '09:00';
+      const p = n => String(n).padStart(2, '0');
+      this.clienteProssimoContattoData = `${data.getFullYear()}-${p(data.getMonth() + 1)}-${p(data.getDate())}T${ora}`;
+    },
+
     apriNotaRapidaCliente(clienteId) {
       this.apriAzioniCliente(clienteId);
       if (this.clienteAzioniRapideId) this.clienteAzioniNotaAperta = true;
