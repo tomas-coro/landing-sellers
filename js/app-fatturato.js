@@ -26,9 +26,52 @@
     // il resoconto mese/anno del venditore - niente sezioni azienda.
     async apriIncassato() {
       this.view = 'incassato';
-      this.fatturatoMeseSelezionato = new Date().toISOString().slice(0, 7);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       await this.caricaFatturato();
+      // Il mese si sceglie dopo il caricamento: l'anno puo' cambiare in
+      // caricaFatturato (anno corrente non presente tra quelli disponibili).
+      this.fatturatoMeseSelezionato = meseInizialeIncassato(this.incassatoSerie());
+    },
+
+    // Serie mensile della vista "I tuoi incassi": da agosto 2026 (vedi
+    // serieIncassatoAnno in app.js), niente mesi vuoti prima dell'avvio.
+    incassatoSerie() {
+      return serieIncassatoAnno(this.fatturatoGuadagniRighe, this.fatturatoAnno);
+    },
+
+    incassatoTotaleAnno() {
+      return this.incassatoSerie().reduce((somma, m) => somma + m.valore, 0);
+    },
+
+    incassatoMeseFuturo(chiave) {
+      const oggi = new Date();
+      const chiaveOggi = oggi.getFullYear() + '-' + String(oggi.getMonth() + 1).padStart(2, '0');
+      return chiave > chiaveOggi;
+    },
+
+    // Altezza (in px) della barra: proporzionale al mese migliore, con un
+    // minimo visibile per i mesi con incasso e un filo per quelli vuoti.
+    incassatoAltezzaBarra(valore) {
+      const massimo = Math.max(1, ...this.incassatoSerie().map(m => m.valore));
+      if (!valore) return 4;
+      return Math.max(8, Math.round((valore / massimo) * 112));
+    },
+
+    // Con 12 mesi non c'e' spazio per le cifre sopra le barre: resta
+    // l'iniziale del mese e l'importo si legge nel riepilogo sotto.
+    incassatoBarreStrette() {
+      return this.incassatoSerie().length > 6;
+    },
+
+    incassatoEtichettaMese(chiave) {
+      const serie = this.incassatoSerie();
+      const mese = serie.find(m => m.chiave === chiave);
+      return mese ? mese.label : '';
+    },
+
+    incassatoValoreMeseSelezionato() {
+      const mese = this.incassatoSerie().find(m => m.chiave === this.fatturatoMeseSelezionato);
+      return mese ? mese.valore : 0;
     },
 
     // Elenco dettagliato (cliente, giorno, importo) degli incassi che
@@ -40,10 +83,7 @@
     // dell'anno precedente (quasi certamente vuoto) senza spiegazione.
     selezionaAnnoIncassato(anno) {
       this.fatturatoAnno = anno;
-      const oggi = new Date();
-      this.fatturatoMeseSelezionato = anno === oggi.getFullYear()
-        ? oggi.toISOString().slice(0, 7)
-        : anno + '-01';
+      this.fatturatoMeseSelezionato = meseInizialeIncassato(this.incassatoSerie());
     },
 
     fatturatoRigheDelMeseSelezionato() {
@@ -123,7 +163,7 @@
 
       const { data, error } = await window.supabaseClient
         .from('pagamenti')
-        .select('id,data_pagamento,stato,vendita_id')
+        .select('id,data_pagamento,stato,vendita_id,importo')
         .in('id', idPagamenti);
 
       if (error) {
@@ -165,6 +205,7 @@
       // compone con un eventuale arricchimento extra del chiamante.
       const arricchisciConCliente = (riga, p) => {
         riga.pagamentoId = p.pagamento_id;
+        riga.importoPagato = Number(pagamentoPerId[p.pagamento_id]?.importo) || 0;
         riga.clienteNome = clienteNomePerVenditaId[pagamentoPerId[p.pagamento_id]?.vendita_id] || '';
         if (mappaExtra) mappaExtra(riga, p);
       };
