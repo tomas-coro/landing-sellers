@@ -2182,7 +2182,7 @@
 
         <div>
           <span class="economy-eyebrow">CRM ECONOMICO</span>
-          <h1 x-text="modalitaEconomia === 'incasso' ? 'Incassa' : 'Registra vendita'"></h1>
+          <h1 x-text="modalitaEconomia === 'incasso' ? 'Incassa' : (venditaInSostituzioneId ? 'Modifica vendita' : 'Registra vendita')"></h1>
         </div>
       </div>
 
@@ -4350,7 +4350,7 @@
                 ? 'Salvataggio...'
                 : modalitaEconomia === 'incasso'
                   ? (pagamentoInModificaId ? 'Salva modifiche' : (venditaEconomicaForm.statoIncasso === 'previsto' ? 'Registra rata prevista' : 'Incassa'))
-                  : 'Registra nuova vendita'">
+                  : (venditaInSostituzioneId ? 'Salva modifiche vendita' : 'Registra nuova vendita')">
             </span>
           </button>
 
@@ -5847,10 +5847,26 @@
               <dd x-text="venditaClienteAttiva?.data_vendita ? formattaData(venditaClienteAttiva.data_vendita) : 'Non disponibile nello storico'"></dd>
             </dl>
 
+            <!-- Il venditore modifica la vendita (finche' non ha incassi);
+                 solo l'admin la annulla. -->
+            <button
+              type="button"
+              class="btn btn-primary"
+              style="margin-top:12px"
+              x-show="!pagamentiCliente.some(p => p.stato === 'incassato')"
+              @click="modificaVenditaCliente()">
+              Modifica vendita
+            </button>
+            <p
+              style="margin-top:12px;color:var(--muted);font-size:15px"
+              x-show="!isAdmin && pagamentiCliente.some(p => p.stato === 'incassato')">
+              Ci sono incassi registrati: per cambiare questa vendita chiedi all'admin.
+            </p>
             <button
               type="button"
               class="btn btn-danger"
               style="margin-top:12px"
+              x-show="isAdmin"
               :disabled="annullandoVendita"
               @click="annullaVenditaCliente()"
               x-text="annullandoVendita ? 'Annullamento...' : 'Annulla vendita'">
@@ -7729,7 +7745,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=187', {
+      navigator.serviceWorker.register('./service-worker.js?v=188', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

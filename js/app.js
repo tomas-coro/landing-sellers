@@ -880,6 +880,8 @@ function appState() {
     pagamentoInModificaId: null,
     eliminandoPagamentoId: null,
     annullandoVendita: false,
+    // Id della vendita che si sta modificando (null = nuova vendita).
+    venditaInSostituzioneId: null,
     venditaGiaAttivaClienteId: null,
     clienteEconomiaSelezionato: null,
     anagraficaEconomiaAperta: false,

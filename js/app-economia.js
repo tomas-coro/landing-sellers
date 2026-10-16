@@ -49,6 +49,7 @@
       if (!(await this.confermaUscitaFormCliente())) return;
       this.venditaEconomicaForm = formVenditaEconomicaVuoto();
       this.modalitaEconomia = modalita;
+      this.venditaInSostituzioneId = null;
       this.venditaEconomicaAttiva = null;
 
       this.venditeClienteIncasso = [];
@@ -2279,9 +2280,13 @@
       this.salvandoVenditaEconomica = true;
 
       try {
+        // In modifica: la vendita senza incassi viene sostituita nella stessa
+        // transazione (la vecchia resta nello storico come annullata).
+        const inModifica = !!this.venditaInSostituzioneId;
         const { data, error } = await window.supabaseClient.rpc(
-          'registra_vendita_con_trasferimenti',
+          inModifica ? 'sostituisci_vendita' : 'registra_vendita_con_trasferimenti',
           {
+            ...(inModifica ? { p_vendita_id: this.venditaInSostituzioneId } : {}),
             p_vendita: payloadVendita,
             p_configurazione:
               this.venditaEconomicaForm.configurazioneCommerciale,
@@ -2299,7 +2304,7 @@
             this.venditaGiaAttivaClienteId =
               this.venditaEconomicaForm.clienteId;
             this.mostraErroreEconomia(
-              'Questo cliente ha già una vendita attiva. Aprila dalla scheda cliente: puoi incassarla oppure annullarla se non ha ancora incassi.',
+              'Questo cliente ha già una vendita attiva. Aprila dalla scheda cliente: puoi incassarla oppure modificarla se non ha ancora incassi.',
               'Vendita già esistente'
             );
           } else {
@@ -2308,7 +2313,10 @@
           return;
         }
 
-        this.successoEconomia = 'Vendita registrata correttamente.';
+        this.successoEconomia = inModifica
+          ? 'Vendita modificata correttamente.'
+          : 'Vendita registrata correttamente.';
+        this.venditaInSostituzioneId = null;
         this.aggiornaSnapshotEconomia();
 
         const clienteId = this.venditaEconomicaForm.clienteId;
@@ -2343,6 +2351,36 @@
       this.venditaGiaAttivaClienteId = null;
       this.erroreEconomia = '';
       await this.apriScheda(clienteId);
+    },
+
+    // Riapre il configuratore di vendita precompilato con la vendita attiva
+    // del cliente. Sul salvataggio la vendita viene sostituita
+    // (sostituisci_vendita), cosi' quote e rate usano lo stesso motore della
+    // registrazione. Possibile solo senza incassi (lo verifica anche la SQL).
+    async modificaVenditaCliente() {
+      const vendita = this.venditaClienteAttiva;
+      const cliente = this.clienti.find(c => c.id === this.clienteSelezionatoId);
+      if (!vendita?.id || !cliente) return;
+
+      if ((this.pagamentiCliente || []).some(p => p.stato === 'incassato')) {
+        this.mostraToast(
+          'error',
+          'Vendita non modificabile',
+          'Ci sono incassi registrati: chiedi all\'admin.'
+        );
+        return;
+      }
+
+      await this.apriEconomia('vendita');
+      this.selezionaClienteEconomia(cliente);
+
+      const config = vendita.configurazione_commerciale;
+      if (config && typeof config === 'object') {
+        Object.assign(this.venditaEconomicaForm.configurazioneCommerciale, config);
+      }
+      this.venditaInSostituzioneId = vendita.id;
+      this.aggiornaConfigurazioneVendita();
+      this.aggiornaSnapshotEconomia();
     },
 
     // Annulla la vendita attiva del cliente (solo se senza incassi: lo
