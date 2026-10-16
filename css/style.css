@@ -16746,9 +16746,12 @@ html[data-theme="dark"] .rc-card{border-color:var(--line);box-shadow:4px 4px 0 v
 @media (prefers-reduced-motion:reduce){.inc-bc u{transition:none}}
 
 /* ===== Rete vendita: tasto Scheda e pagina scheda venditore ===== */
-.rete-view .rete-scheda{display:inline-flex;align-items:center;gap:4px;margin:2px 0 0 auto;padding:6px 10px;min-height:32px;background:transparent;border:0;color:var(--ink-soft);font:inherit;font-size:.74rem;font-weight:700;cursor:pointer}
-.rete-view .rete-item{display:flex;flex-direction:column;align-items:stretch}
-.rete-view .rete-scheda svg{width:10px;height:10px}
+/* Il tasto Scheda sta DENTRO l'altezza della riga (58px), a destra: cosi non sposta
+   le linee di collegamento tra livelli. La riga riserva lo spazio col padding. */
+.rete-view .rete-item>.rete-node{padding-right:68px}
+.rete-view .rete-scheda{position:absolute;top:0;right:0;z-index:1;display:flex;align-items:center;justify-content:center;gap:3px;width:62px;height:58px;padding:0;background:transparent;border:0;border-left:1px solid var(--line);border-radius:0 12px 12px 0;color:var(--ink-soft);font:inherit;font-size:.72rem;font-weight:700;cursor:pointer}
+.rete-view .rete-node.me+.rete-scheda{border-left-color:rgba(17,17,17,.25);color:var(--on-lime)}
+.rete-view .rete-scheda svg{width:9px;height:9px}
 .rete-scheda-page .rs-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
 .rete-scheda-page .rs-head strong{display:block;font-size:1.05rem}
 .rete-scheda-page .rs-head small{color:var(--muted);font-weight:600;font-size:.76rem}
