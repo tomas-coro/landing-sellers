@@ -31,6 +31,7 @@ test('il ricontatto conserva e mostra giorno e ora nell agenda del diretto', () 
 
   const [evento] = s.eventiAgenda();
   assert.strictEqual(evento.data, '2030-01-10');
+  assert.strictEqual(evento.dataOra, '2030-01-10T15:30:00');
   assert.match(evento.ora, /15[.:]30/);
   assert.strictEqual(s.dataOraLocale('2030-01-10'), '2030-01-10T09:00');
 });
@@ -45,4 +46,16 @@ test('la RPC limita il ricontatto al proprietario e accetta data e ora', () => {
   assert.match(sql, /p\.ruolo not in \('admin', 'developer'\)/);
   assert.match(sql, /revoke all[\s\S]*from public, anon/);
   assert.match(sql, /grant execute[\s\S]*to authenticated/);
+});
+
+test('anche Fatto usa data e ora ed è riservato al venditore diretto', () => {
+  const sql = fs.readFileSync(
+    path.join(__dirname, '../supabase/migrations/20261016123000_completa_ricontatto_cliente_diretto.sql'),
+    'utf8'
+  );
+  const frontend = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+  assert.match(sql, /p_data timestamptz/);
+  assert.match(sql, /c\.venditore_id = auth\.uid\(\)/);
+  assert.match(sql, /p\.ruolo not in \('admin', 'developer'\)/);
+  assert.match(frontend, /p_data: evento\.dataOra \|\| null/);
 });

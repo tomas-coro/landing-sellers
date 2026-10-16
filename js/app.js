@@ -3929,6 +3929,7 @@ costiPerMotoreRataEconomia(
             venditoreId: cliente.venditore_id,
             venditoreNome: this.adminVenditoriPerId[cliente.venditore_id] || '',
             data: contatto,
+            dataOra: cliente.prossimo_contatto,
             ora: this.oraAgenda(cliente.prossimo_contatto),
             tipo: 'contatto',
             brief: briefDaInviare,
@@ -4617,7 +4618,7 @@ costiPerMotoreRataEconomia(
           const { error } = await window.supabaseClient
             .rpc('completa_contatto_cliente', {
               p_cliente_id: evento.clienteId,
-              p_data: evento.data || null
+              p_data: evento.dataOra || null
             });
 
           if (error) {
