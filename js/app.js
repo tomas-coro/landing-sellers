@@ -2674,7 +2674,15 @@ costiPerMotoreRataEconomia(
       }
     },
 
+    // L'accesso admin esiste solo per Tomas (developer) e Alessandro (referente).
+    // Per tutti gli altri venditori il cambio account non compare proprio.
+    puoAccedereAdmin() {
+      if (this.accountSlot === 'admin') return true;
+      return profiloHaAccessoGlobaleClienti(this.profilo);
+    },
+
     async apriAccountSwitcher() {
+      if (!this.puoAccedereAdmin()) return;
       this.adminLoginErrore = '';
       this.adminPasswordInput = '';
       this.mostraLoginAdmin = false;
@@ -2782,6 +2790,7 @@ costiPerMotoreRataEconomia(
 
     async cambiaAccountRapido(slot) {
       if (this.accountSwitchInCorso) return;
+      if (slot === 'admin' && !this.puoAccedereAdmin()) return;
       if (!(await this.confermaUscitaFormCliente())) return;
 
       if (slot === this.accountSlot) {
