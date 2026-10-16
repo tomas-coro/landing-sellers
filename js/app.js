@@ -464,6 +464,27 @@ function serieMensileAnno(righe = [], anno) {
   return mesi.map(m => ({ ...m, valore: somme[m.chiave] }));
 }
 
+// Vista "I tuoi incassi": l'attivita' parte ad agosto 2026, quindi quell'anno
+// mostra solo ago-dic (niente 7 mesi vuoti); gli anni dopo tutti i 12 mesi.
+const PRIMO_MESE_INCASSI = { anno: 2026, mese: 8 };
+
+function serieIncassatoAnno(righe = [], anno) {
+  const primo = anno === PRIMO_MESE_INCASSI.anno ? PRIMO_MESE_INCASSI.mese : 1;
+  return serieMensileAnno(righe, anno).slice(primo - 1);
+}
+
+// Mese da selezionare quando si apre la vista o si cambia anno: il mese
+// corrente se l'anno e' quello in corso, altrimenti l'ultimo mese con
+// incassi (o il primo dell'anno se non ce ne sono).
+function meseInizialeIncassato(serie = [], oggi = new Date()) {
+  if (!serie.length) return null;
+  const chiaveOggi = oggi.getFullYear() + '-' + String(oggi.getMonth() + 1).padStart(2, '0');
+  const corrente = serie.find(m => m.chiave === chiaveOggi);
+  if (corrente) return corrente.chiave;
+  const conIncassi = serie.filter(m => m.valore > 0);
+  return (conIncassi.length ? conIncassi[conIncassi.length - 1] : serie[0]).chiave;
+}
+
 function totaliPerAnno(righe = []) {
   const totali = {};
   righe.forEach(riga => {
@@ -783,6 +804,7 @@ function appState() {
     reteAnno: new Date().getFullYear(),
     vendutoReteHome: null,   // {rete, diretto, mediaVendita, haTeam} o null (nessun team)
     reteNodi: [],            // righe di rete_vendita_albero()
+    reteQuoteRete: {},       // id gestore -> { totale, daNomi } (quote di rete 10% ricevute)
     reteStatistiche: {},     // id venditore -> { venduto, generato, incassato, ... }
     reteSelezionati: [],     // venditori spuntati nel foglio
     reteFocusId: null,       // venditore in cui si e entrati (null = tutta la rete)
@@ -847,6 +869,8 @@ function appState() {
     pagamentoPrevistoId: null,
     pagamentoInModificaId: null,
     eliminandoPagamentoId: null,
+    annullandoVendita: false,
+    venditaGiaAttivaClienteId: null,
     clienteEconomiaSelezionato: null,
     anagraficaEconomiaAperta: false,
     menuAzioneAperto: false,
@@ -898,6 +922,9 @@ function appState() {
     venditaClienteAttiva: null,
     pagamentiCliente: [],
     trasferimentiDaConfermare: [],
+    quoteReteDaConfermare: [],
+    confermandoQuotaReteId: null,
+    annullandoConfermaQuotaReteId: null,
     quoteDaTrasferire: [],
     quoteConfermateRecenti: [],
     quoteAdmin: [],
@@ -1698,6 +1725,7 @@ function appState() {
       this.agendaMese = this.dataISOOggi().slice(0, 7);
       this.view = 'agenda';
       await this.caricaTrasferimentiDaConfermare();
+      await this.caricaQuoteReteDaConfermare();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
@@ -2460,6 +2488,7 @@ costiPerMotoreRataEconomia(
       this.profiloForm.username = this.profilo.username || '';
       this.view = 'profilo';
       await this.caricaTrasferimentiDaConfermare();
+      await this.caricaQuoteReteDaConfermare();
     },
 
     iniziaPressioneProfilo() {
@@ -4029,6 +4058,29 @@ costiPerMotoreRataEconomia(
         });
       });
 
+      // Quote di rete (10%) da riscattare: una voce per ogni riga, chiave q.id
+      // perché sullo stesso pagamento possono esserci più righe rete.
+      (this.quoteReteDaConfermare || []).forEach(q => {
+        const data = this.normalizzaDataAgenda(q.dataPagamento) || oggi;
+        const sotto = this.nomeVenditorePerId(q.da_profilo_id);
+        eventi.push({
+          id: `quota-rete-${q.id}`,
+          pagamentoId: q.pagamento_id,
+          importo: q.importo,
+          clienteId: null,
+          clienteNome: q.clienteNome || 'Cliente',
+          controparteNome: q.controparteNome,
+          sottotitolo: sotto ? `Dalla vendita di ${sotto}` : '',
+          venditoreId: this.sessione?.user?.id,
+          venditoreNome: '',
+          data,
+          tipo: 'quota',
+          rete: true,
+          titolo: `Quota di rete da riscattare · ${this.formattaNumeroEuro(q.importo)}`,
+          scaduto: false
+        });
+      });
+
       return eventi.sort((a, b) =>
         a.data.localeCompare(b.data) ||
         a.clienteNome.localeCompare(b.clienteNome)
@@ -5244,6 +5296,8 @@ if (typeof module !== 'undefined') {
     posizioneAvatarDaUrl,
     avatarUrlConPosizione,
     serieMensileAnno,
+    serieIncassatoAnno,
+    meseInizialeIncassato,
     totaliPerAnno,
     anniDisponibiliFatturato
   };

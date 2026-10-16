@@ -167,9 +167,25 @@
     };
   }
 
+  // Quote di rete 10% ricevute: righe di pagamento_quote_rete (la RLS le mostra
+  // solo al gestore che riceve e ad Alessandro/Tomas) -> per gestore, totale e
+  // nomi di chi le ha generate. Non entra in "generato": e una voce a parte.
+  function aggregaQuoteRete(righe = [], albero) {
+    const perGestore = {};
+    righe.forEach(r => {
+      const importo = Number(r.importo);
+      if (!r.a_profilo_id || !Number.isFinite(importo) || importo <= 0) return;
+      const voce = perGestore[r.a_profilo_id] || (perGestore[r.a_profilo_id] = { totale: 0, daNomi: [] });
+      voce.totale = Math.round((voce.totale + importo) * 100) / 100;
+      const nome = albero.perId[r.da_profilo_id]?.nome;
+      if (nome && !voce.daNomi.includes(nome)) voce.daNomi.push(nome);
+    });
+    return perGestore;
+  }
+
   // Markup dell'albero: riga con gomiti di collegamento, come nel mockup.
   // Il nome e l'unico testo libero e viene sempre escapato.
-  function markupAlberoRete({ albero, statistiche, visibili, centro, viewerId, pendenti = new Set(), reinviabili = new Set() }) {
+  function markupAlberoRete({ albero, statistiche, visibili, centro, viewerId, pendenti = new Set(), reinviabili = new Set(), quoteRete = {} }) {
     const nelloInsieme = new Set(visibili);
     const padreVisibile = id => {
       for (let p = albero.perId[id].padre; p; p = albero.perId[p]?.padre) {
@@ -200,6 +216,10 @@
         (conTeam ? 'team ' + escapaHtml(euro(teamVenduto)) : 'senza team') + '</small>' +
         '<small class="r">generato ' + escapaHtml(euro(s.generato || 0)) + '</small>' +
         '</' + tag + '>' +
+        (quoteRete[id]
+          ? '<div class="rete-quota">quota di rete ' + escapaHtml(euro(quoteRete[id].totale)) +
+            (quoteRete[id].daNomi.length ? ' da ' + escapaHtml(quoteRete[id].daNomi.join(', ')) : '') + '</div>'
+          : '') +
         (pendenti.has(id)
           ? '<div class="rete-invito"><span>Invito inviato, non è ancora entrato</span>' +
             (reinviabili.has(id) ? '<button type="button" data-reinvia="' + escapaHtml(id) + '">Reinvia</button>' : '') +
@@ -302,14 +322,19 @@
           return;
         }
 
-        const [partecipazioni, venditeDirette, incassi] = await Promise.all([
+        const [partecipazioni, venditeDirette, incassi, quoteRete] = await Promise.all([
           db.from('vendita_partecipanti').select('vendita_id,profilo_id,quota_finale').in('profilo_id', ids),
           db.from('vendite')
             .select('id,cliente_id,importo_vendita,stato,venditore_id,data_vendita')
             .in('venditore_id', ids),
-          db.rpc('rete_vendita_incassi', { p_anno: this.reteAnno })
+          db.rpc('rete_vendita_incassi', { p_anno: this.reteAnno }),
+          // Quote di rete: la RLS ritorna righe solo a chi le riceve e ad admin/developer.
+          db.from('pagamento_quote_rete')
+            .select('a_profilo_id,da_profilo_id,importo')
+            .gte('creato_il', this.reteAnno + '-01-01')
+            .lt('creato_il', (this.reteAnno + 1) + '-01-01')
         ]);
-        const errore = partecipazioni.error || venditeDirette.error || incassi.error;
+        const errore = partecipazioni.error || venditeDirette.error || incassi.error || quoteRete.error;
         if (errore) throw errore;
 
         // Vendite a cui partecipano ma di cui non sono venditori (quote condivise).
@@ -336,6 +361,7 @@
         }
 
         this.reteNodi = nodi;
+        this.reteQuoteRete = aggregaQuoteRete(quoteRete.data || [], albero);
         await this.caricaInvitiPendenti();
         this.reteStatistiche = calcolaStatisticheRete({
           albero,
@@ -383,7 +409,8 @@
         centro: vista.centro,
         viewerId: this.sessione?.user?.id || null,
         pendenti: new Set(this.reteInvitiPendenti || []),
-        reinviabili: new Set(this.reteNodiReinviabili())
+        reinviabili: new Set(this.reteNodiReinviabili()),
+        quoteRete: this.reteQuoteRete || {}
       });
     },
 
@@ -532,7 +559,8 @@
   Object.defineProperty(mixin, '__puri', {
     value: {
       escapaHtml, indicizzaAlbero, sottoalbero, percorsoNodo,
-      calcolaStatisticheRete, riepilogoRete, markupAlberoRete, vendutoReteVenditore
+      calcolaStatisticheRete, riepilogoRete, markupAlberoRete, vendutoReteVenditore,
+      aggregaQuoteRete
     }
   });
 

@@ -4,7 +4,8 @@ const { calcolaStatisticheVenditore } = require('../js/app.js');
 const mixin = require('../js/app-rete.js');
 const {
   escapaHtml, indicizzaAlbero, sottoalbero, percorsoNodo,
-  calcolaStatisticheRete, riepilogoRete, markupAlberoRete, vendutoReteVenditore
+  calcolaStatisticheRete, riepilogoRete, markupAlberoRete, vendutoReteVenditore,
+  aggregaQuoteRete
 } = mixin.__puri;
 
 // Albero come nel database: Alessandro > Nicola, Nicholas > Selim.
@@ -164,4 +165,42 @@ test('home: senza team o fuori dall\'albero non c\'e venduto di rete', () => {
   assert.strictEqual(sel.rete, 1000);
   const tomas = vendutoReteVenditore({ albero, viewerId: 'tom', vendite: VENDITE, clientiPerId: {}, calcola: calcolaStatisticheVenditore });
   assert.strictEqual(tomas, null);
+});
+
+// ----- Quota di rete 10%: cosa ha preso ogni gestore -----
+
+const QUOTE_RETE = [
+  { a_profilo_id: 'nho', da_profilo_id: 'sel', importo: 15 },
+  { a_profilo_id: 'nho', da_profilo_id: 'sel', importo: 5.5 },
+  { a_profilo_id: 'ale', da_profilo_id: 'nho', importo: 4 }
+];
+
+test('quote rete: somma per gestore e ricorda da chi arrivano', () => {
+  const albero = indicizzaAlbero(NODI);
+  const q = aggregaQuoteRete(QUOTE_RETE, albero);
+  assert.strictEqual(q.nho.totale, 20.5);
+  assert.deepStrictEqual(q.nho.daNomi, ['Selim']);
+  assert.strictEqual(q.ale.totale, 4);
+  assert.strictEqual(q.sel, undefined);
+});
+
+test('quote rete: righe vuote o con importo non valido non contano', () => {
+  const albero = indicizzaAlbero(NODI);
+  assert.deepStrictEqual(aggregaQuoteRete([], albero), {});
+  assert.deepStrictEqual(aggregaQuoteRete([{ a_profilo_id: 'nho', da_profilo_id: 'sel', importo: 'x' }], albero), {});
+});
+
+test('il nodo mostra "da rete" solo se ha ricevuto una quota, e il nome e escapato', () => {
+  const albero = indicizzaAlbero(NODI);
+  const html = markupAlberoRete({
+    albero, statistiche: statistiche(), visibili: albero.ordine, centro: 'ale', viewerId: 'ale',
+    quoteRete: aggregaQuoteRete(QUOTE_RETE, albero)
+  });
+  assert.ok(html.includes('quota di rete'));
+  assert.ok(html.includes('da Selim'));
+  assert.strictEqual((html.match(/rete-quota/g) || []).length, 2); // Nicholas e Alessandro
+  const senza = markupAlberoRete({
+    albero, statistiche: statistiche(), visibili: albero.ordine, centro: 'ale', viewerId: 'ale'
+  });
+  assert.ok(!senza.includes('rete-quota'));
 });

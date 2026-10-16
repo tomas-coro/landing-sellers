@@ -16379,6 +16379,7 @@ html[data-theme="dark"] .rete-view{--rete-lc:#5a5e52}
 .rete-view .rete-addrow{display:flex;justify-content:flex-end;margin:0 0 12px}
 .rete-view .rete-add{padding:9px 14px;font-size:.82rem;white-space:nowrap}
 .rete-view .rete-invito{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:4px 0 0;padding:0 10px;font-size:.72rem;color:var(--muted)}
+.rete-view .rete-quota{margin:4px 0 0;padding:0 10px;font-size:.72rem;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
 .rete-view .rete-invito button{flex:none;background:none;border:1px solid var(--line);border-radius:99px;padding:3px 10px;font:inherit;font-weight:800;color:var(--ink);cursor:pointer}
 .rete-view .rete-v{font-size:.9rem;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
 .rete-view .rete-node small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.7rem;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
@@ -16720,3 +16721,26 @@ html[data-theme="dark"] .agenda-content .agenda-event.ev-mancante .agenda-event-
 /* iOS centra il valore di date/time: lo riportiamo a sinistra dentro il riquadro */
 .rc-dt input::-webkit-date-and-time-value{text-align:left;margin:0}
 html[data-theme="dark"] .rc-card{border-color:var(--line);box-shadow:4px 4px 0 var(--lime)}
+
+/* ===== I tuoi incassi: barre = selettore del mese (mockup 15, proposta B) ===== */
+.inc-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 14px 12px}
+.inc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.inc-head span{display:block;font-size:10px;letter-spacing:.12em;font-weight:800;color:var(--muted)}
+.inc-head strong{display:block;font-size:15px;font-weight:800;letter-spacing:-.01em}
+.inc-total{text-align:right}
+.inc-total strong{font-size:18px}
+.inc-readout{margin:0 0 8px;font-size:12px;font-weight:800}
+.inc-bars{display:flex;gap:6px;align-items:flex-end;height:172px;padding-top:4px}
+.inc-bc{flex:1;min-width:0;height:100%;border:0;background:none;padding:0;color:var(--ink);font-family:inherit;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;cursor:pointer}
+.inc-bc b{font-size:11px;font-weight:800;line-height:1}
+.inc-bc small{font-size:10px;font-weight:800;color:var(--muted)}
+.inc-bc u{display:block;width:100%;border-radius:7px 7px 3px 3px;background:var(--line);text-decoration:none;transition:height .25s var(--ease)}
+.inc-bc.sel u{background:var(--lime);box-shadow:0 0 0 1.5px var(--ink)}
+.inc-bc.sel small{color:var(--ink)}
+.inc-bc.vuoto b,.inc-bc.futuro b,.inc-bc.futuro small{color:var(--muted);opacity:.6}
+.inc-bc.futuro{cursor:default}
+.inc-bc.futuro u{background:transparent;border:1px dotted var(--line)}
+.inc-bc:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:8px}
+.inc-bars.stretto{gap:3px}
+.inc-bars.stretto .inc-bc small{font-size:11px}
+@media (prefers-reduced-motion:reduce){.inc-bc u{transition:none}}

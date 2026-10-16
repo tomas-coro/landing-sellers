@@ -19,6 +19,16 @@
         (Number(vendita?.importo_vendita) || 0);
     },
 
+    // Mostra un errore del form economico in modo che si veda sempre:
+    // banner + toast in basso + scroll esplicito. Lo scroll non puo'
+    // dipendere dal solo x-effect del banner: se l'errore e' identico al
+    // precedente il valore non cambia e il banner non si riscorre.
+    mostraErroreEconomia(messaggio, titolo = 'Vendita non salvata') {
+      this.erroreEconomia = messaggio;
+      this.mostraToast('error', titolo, messaggio);
+      this.scorriEconomiaA('#errore-economia');
+    },
+
     scorriEconomiaA(selettore, mostraValidita = false) {
       const scorri = () => {
         const elemento = globalThis.document?.querySelector(selettore);
@@ -929,6 +939,7 @@
 
     async caricaQuoteAperte() {
       await this.caricaTrasferimentiDaConfermare();
+      await this.caricaQuoteReteDaConfermare();
       if (this.isAdmin) await this.caricaQuoteAdmin();
       else await this.caricaQuoteDaTrasferire();
     },
@@ -987,6 +998,109 @@
           importoIncasso: quota.pagamenti?.importo ?? null,
           noteIncasso: quota.pagamenti?.note || ''
         }));
+    },
+
+    // Quote di rete (10%) che HAI diritto di ricevere da pagamenti incassati
+    // da altri e che non hai ancora confermato.
+    async caricaQuoteReteDaConfermare() {
+      const profiloId = this.sessione?.user?.id;
+      this.quoteReteDaConfermare = [];
+      if (!profiloId) return;
+
+      const { data, error } = await window.supabaseClient
+        .from('pagamento_quote_rete')
+        .select(`
+          id, pagamento_id, importo, da_profilo_id,
+          pagamenti!inner(id, incassato_da, stato, importo, data_pagamento,
+            vendite!inner(cliente_id, clienti(nome)))
+        `)
+        .eq('a_profilo_id', profiloId)
+        .is('ricevuta_il', null)
+        .eq('pagamenti.stato', 'incassato');
+
+      if (error) {
+        this.mostraToast('error', 'Quote di rete non caricate', error.message);
+        return;
+      }
+
+      await this.caricaMappaNomiVenditori();
+      this.quoteReteDaConfermare = (data || [])
+        .filter(q => q.pagamenti?.incassato_da !== profiloId)
+        .map(q => ({
+          ...q,
+          clienteNome: q.pagamenti?.vendite?.clienti?.nome || '',
+          controparteNome: this.nomeVenditorePerId(q.pagamenti?.incassato_da),
+          dataPagamento: q.pagamenti?.data_pagamento || null
+        }));
+    },
+
+    async confermaQuotaRete(pagamentoId) {
+      if (!pagamentoId || this.confermandoQuotaReteId) return;
+      this.confermandoQuotaReteId = pagamentoId;
+      let salvata = false;
+
+      try {
+        const { error } = await window.supabaseClient.rpc(
+          'conferma_quota_rete',
+          { p_pagamento_id: pagamentoId }
+        );
+
+        if (error) {
+          this.mostraToast('error', 'Conferma non salvata', error.message);
+          return;
+        }
+
+        salvata = true;
+      } catch (err) {
+        this.mostraToast('error', 'Conferma non salvata', err?.message || String(err));
+      } finally {
+        this.confermandoQuotaReteId = null;
+      }
+
+      // Fuori dal try: un errore di ricarica non deve dire "non salvata".
+      if (!salvata) return;
+      await this.caricaQuoteReteDaConfermare();
+      this.mostraToast('success', 'Quota di rete confermata.');
+    },
+
+    // Come confermaQuotaConDettaglio: mostra cliente e importo prima di scrivere.
+    async confermaQuotaReteConDettaglio(q) {
+      if (!q?.pagamento_id) return;
+      const dettaglio = [
+        `Confermi di aver ricevuto la quota di rete di ${formattaEuro(q.importo)}`,
+        q.clienteNome ? `per ${q.clienteNome}` : ''
+      ].filter(Boolean).join(' ') + '?';
+      const confermato = await this.chiediConferma(dettaglio, 'Conferma ricezione');
+      if (!confermato) return;
+      await this.confermaQuotaRete(q.pagamento_id);
+    },
+
+    async annullaConfermaQuotaRete(pagamentoId) {
+      if (!pagamentoId || this.annullandoConfermaQuotaReteId) return;
+      this.annullandoConfermaQuotaReteId = pagamentoId;
+      let annullata = false;
+
+      try {
+        const { error } = await window.supabaseClient.rpc(
+          'annulla_conferma_quota_rete',
+          { p_pagamento_id: pagamentoId }
+        );
+
+        if (error) {
+          this.mostraToast('error', 'Annullamento non riuscito', error.message);
+          return;
+        }
+
+        annullata = true;
+      } catch (err) {
+        this.mostraToast('error', 'Annullamento non riuscito', err?.message || String(err));
+      } finally {
+        this.annullandoConfermaQuotaReteId = null;
+      }
+
+      if (!annullata) return;
+      await this.caricaQuoteReteDaConfermare();
+      this.mostraToast('success', 'Conferma annullata.');
     },
 
     // Quote che altri partecipanti devono ancora ricevere da pagamenti che
@@ -1973,6 +2087,7 @@
         }
 
         await this.caricaTrasferimentiDaConfermare();
+        await this.caricaQuoteReteDaConfermare();
         this.mostraToast('success', this.successoEconomia);
         this.scorriEconomiaA('.payment-history-panel');
       } finally {
@@ -1989,9 +2104,14 @@
     async salvaVenditaEconomica() {
       if (this.salvandoVenditaEconomica) return;
 
-      this.erroreEconomia = this.validaVenditaEconomica();
+      this.venditaGiaAttivaClienteId = null;
       this.successoEconomia = '';
-      if (this.erroreEconomia) return;
+      const erroreValidazione = this.validaVenditaEconomica();
+      if (erroreValidazione) {
+        this.mostraErroreEconomia(erroreValidazione, 'Completa i dati');
+        return;
+      }
+      this.erroreEconomia = '';
 
       const venditore =
         this.venditaEconomicaForm.partecipanti.find(p => p.haVenduto);
@@ -1999,7 +2119,7 @@
         this.venditaEconomicaForm.partecipanti.find(p => p.ruolo === 'referente');
 
       if (!venditore || !referente) {
-        this.erroreEconomia = 'Venditore o referente economico non disponibile.';
+        this.mostraErroreEconomia('Venditore o referente economico non disponibile.');
         return;
       }
 
@@ -2095,9 +2215,10 @@
         });
 
         if (!snapshot.valido) {
-          this.erroreEconomia =
+          this.mostraErroreEconomia(
             snapshot.errore ||
-            'La ripartizione del pagamento iniziale non quadra.';
+            'La ripartizione del pagamento iniziale non quadra.'
+          );
           return;
         }
 
@@ -2172,9 +2293,18 @@
         );
 
         if (error) {
-          this.erroreEconomia = error.code === '23505'
-            ? 'Questo cliente ha già una vendita attiva. Usa Incassa oppure annulla prima la vendita esistente.'
-            : 'Vendita non salvata: ' + error.message;
+          if (error.code === '23505') {
+            // Il cliente ha gia' una vendita attiva: il banner offre il
+            // pulsante per andare alla sua scheda e annullarla.
+            this.venditaGiaAttivaClienteId =
+              this.venditaEconomicaForm.clienteId;
+            this.mostraErroreEconomia(
+              'Questo cliente ha già una vendita attiva. Aprila dalla scheda cliente: puoi incassarla oppure annullarla se non ha ancora incassi.',
+              'Vendita già esistente'
+            );
+          } else {
+            this.mostraErroreEconomia('Vendita non salvata: ' + error.message);
+          }
           return;
         }
 
@@ -2203,6 +2333,59 @@
         }, 700);
       } finally {
         this.salvandoVenditaEconomica = false;
+      }
+    },
+
+    // Va alla scheda del cliente che ha gia' una vendita attiva.
+    async vaiAllaVenditaEsistente() {
+      const clienteId = this.venditaGiaAttivaClienteId;
+      if (!clienteId) return;
+      this.venditaGiaAttivaClienteId = null;
+      this.erroreEconomia = '';
+      await this.apriScheda(clienteId);
+    },
+
+    // Annulla la vendita attiva del cliente (solo se senza incassi: lo
+    // verifica la funzione SQL, che controlla anche i permessi).
+    async annullaVenditaCliente() {
+      const vendita = this.venditaClienteAttiva;
+      const clienteId = this.clienteSelezionatoId;
+      if (!vendita?.id || !clienteId || this.annullandoVendita) return;
+
+      const confermato = await this.chiediConferma(
+        `Annullare la vendita di ${formattaEuro(vendita.importo_vendita)}? Le rate previste vengono eliminate e potrai registrarne una nuova.`,
+        'Annulla vendita'
+      );
+      if (!confermato) return;
+
+      this.annullandoVendita = true;
+
+      try {
+        const { error } = await window.supabaseClient.rpc(
+          'annulla_vendita',
+          { p_vendita_id: vendita.id }
+        );
+
+        if (error) {
+          this.mostraToast('error', 'Vendita non annullata', error.message);
+          return;
+        }
+
+        this.mostraToast('success', 'Vendita annullata');
+
+        if (this.isAdmin) {
+          await this.caricaDashboardAdmin();
+        } else {
+          await this.caricaClienti();
+          await this.caricaStatisticheVenditore();
+        }
+
+        await Promise.all([
+          this.caricaPagamentiCliente(clienteId),
+          this.caricaAttivitaCliente(clienteId)
+        ]);
+      } finally {
+        this.annullandoVendita = false;
       }
     },
 

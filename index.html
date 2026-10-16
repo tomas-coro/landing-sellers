@@ -1175,7 +1175,7 @@
 
               <span class="admin-profile-menu-copy">
                 <strong>Quote</strong>
-                <small x-text="trasferimentiDaConfermare.length > 0 ? trasferimentiDaConfermare.length + ' da confermare' : 'Chi deve a chi'"></small>
+                <small x-text="(trasferimentiDaConfermare.length + quoteReteDaConfermare.length) > 0 ? (trasferimentiDaConfermare.length + quoteReteDaConfermare.length) + ' da confermare' : 'Chi deve a chi'"></small>
               </span>
 
               <i>›</i>
@@ -1460,7 +1460,7 @@
               @click="apriQuote()">
 
               <span>Quote</span>
-              <strong x-text="trasferimentiDaConfermare.length > 0 ? trasferimentiDaConfermare.length + ' da confermare' : 'Apri'"></strong>
+              <strong x-text="(trasferimentiDaConfermare.length + quoteReteDaConfermare.length) > 0 ? (trasferimentiDaConfermare.length + quoteReteDaConfermare.length) + ' da confermare' : 'Apri'"></strong>
             </button>
 
             <button
@@ -2189,12 +2189,22 @@
       <div class="content economy-content" :class="{ 'economy-content-incasso': modalitaEconomia === 'incasso' }">
 
         <p
+          id="errore-economia"
           x-show="erroreEconomia"
           x-text="erroreEconomia"
           x-effect="if (erroreEconomia) $el.scrollIntoView({ behavior: 'smooth', block: 'center' })"
           class="err"
           style="margin-bottom:14px">
         </p>
+
+        <button
+          type="button"
+          class="btn btn-primary"
+          style="margin-bottom:14px"
+          x-show="venditaGiaAttivaClienteId"
+          @click="vaiAllaVenditaEsistente()">
+          Vai alla vendita
+        </button>
 
         <p
           x-show="successoEconomia"
@@ -5837,6 +5847,15 @@
               <dd x-text="venditaClienteAttiva?.data_vendita ? formattaData(venditaClienteAttiva.data_vendita) : 'Non disponibile nello storico'"></dd>
             </dl>
 
+            <button
+              type="button"
+              class="btn btn-danger"
+              style="margin-top:12px"
+              :disabled="annullandoVendita"
+              @click="annullaVenditaCliente()"
+              x-text="annullandoVendita ? 'Annullamento...' : 'Annulla vendita'">
+            </button>
+
             <template x-if="configurazioneCommercialeClienteAttiva()">
               <div class="economy-config-snapshot">
                 <span class="client-payment-history-title">Configurazione commerciale</span>
@@ -6182,7 +6201,7 @@
               </div>
               <div>
                 <strong x-text="evento.clienteNome"></strong>
-                <small x-text="evento.tipo === 'quota' ? (evento.controparteNome ? 'Da ' + evento.controparteNome : evento.titolo) : (isAdmin && evento.venditoreNome ? evento.venditoreNome + ' - ' + evento.titolo : evento.titolo)"></small>
+                <small x-text="evento.tipo === 'quota' ? (evento.rete ? (evento.sottotitolo ? evento.sottotitolo + ' · ' : '') + evento.titolo : (evento.controparteNome ? 'Da ' + evento.controparteNome : evento.titolo)) : (isAdmin && evento.venditoreNome ? evento.venditoreNome + ' - ' + evento.titolo : evento.titolo)"></small>
               </div>
               <span
                 x-show="evento.tipo === 'contatto'"
@@ -7282,39 +7301,42 @@
           </template>
         </div>
 
-        <section class="metrics-trend metrics-trend-admin" style="margin-top:14px">
-          <div class="metrics-trend-head">
+        <section class="inc-card" style="margin-top:14px">
+          <div class="inc-head">
             <div>
               <span x-text="'ANNO ' + fatturatoAnno"></span>
               <strong>Incassato per mese</strong>
             </div>
-            <div class="metrics-trend-total">
+            <div class="inc-total">
               <span>Totale anno</span>
-              <strong x-text="formattaEuro(fatturatoTotaleAnno(fatturatoGuadagniRighe))"></strong>
+              <strong x-text="formattaEuro(incassatoTotaleAnno())"></strong>
             </div>
           </div>
 
-          <div class="metrics-trend-empty" x-show="!fatturatoGuadagniMensile().some(p => p.valore > 0)">
-            <span x-text="'Nessun incasso a tuo nome registrato nel ' + fatturatoAnno + '.'"></span>
-          </div>
+          <p class="inc-readout" x-show="incassatoBarreStrette()" x-text="incassatoEtichettaMese(fatturatoMeseSelezionato) + ' · ' + formattaEuro(incassatoValoreMeseSelezionato())"></p>
 
-          <div class="metrics-chart-area" x-show="fatturatoGuadagniMensile().some(p => p.valore > 0)">
-            <svg viewBox="0 0 640 248" preserveAspectRatio="xMidYMid meet" x-html="incassatoMarkupMensile()"></svg>
+          <div class="inc-bars" :class="{ stretto: incassatoBarreStrette() }" role="group" aria-label="Scegli il mese">
+            <template x-for="m in incassatoSerie()" :key="'inc-bar-' + m.chiave">
+              <button type="button" class="inc-bc"
+                      :class="{ sel: fatturatoMeseSelezionato === m.chiave, vuoto: m.valore === 0, futuro: incassatoMeseFuturo(m.chiave) }"
+                      :disabled="incassatoMeseFuturo(m.chiave)"
+                      :aria-pressed="fatturatoMeseSelezionato === m.chiave"
+                      :aria-label="m.label + ' ' + formattaEuro(m.valore)"
+                      @click="fatturatoMeseSelezionato = m.chiave">
+                <b x-show="!incassatoBarreStrette()" x-text="(m.valore === 0 || incassatoMeseFuturo(m.chiave)) ? '-' : Math.round(m.valore).toLocaleString('de-DE')"></b>
+                <u :style="{ height: incassatoAltezzaBarra(incassatoMeseFuturo(m.chiave) ? 0 : m.valore) + 'px' }"></u>
+                <small x-text="incassatoBarreStrette() ? m.label.charAt(0) : m.label"></small>
+              </button>
+            </template>
           </div>
         </section>
 
         <section class="home-attention home-today-v3" style="margin-top:14px">
           <div class="home-section-title">
             <div>
-              <span>DETTAGLIO MESE</span>
+              <span x-text="'DETTAGLIO ' + incassatoEtichettaMese(fatturatoMeseSelezionato).toUpperCase()"></span>
               <strong x-text="fatturatoRigheDelMeseSelezionato().length ? fatturatoRigheDelMeseSelezionato().length + ' incasso/i' : 'Nessun incasso'"></strong>
             </div>
-          </div>
-
-          <div class="metrics-trend-chips" role="group" aria-label="Mese" style="margin:10px 0">
-            <template x-for="m in fatturatoGuadagniMensile()" :key="'incassato-mese-chip-' + m.chiave">
-              <button type="button" :class="{ active: fatturatoMeseSelezionato === m.chiave }" @click="fatturatoMeseSelezionato = m.chiave" x-text="m.label + ' \'' + String(fatturatoAnno).slice(-2)"></button>
-            </template>
           </div>
 
           <div class="home-attention-list" x-show="fatturatoRigheDelMeseSelezionato().length > 0">
@@ -7323,7 +7345,7 @@
                 <span class="home-attention-dot type-oggi"></span>
                 <div>
                   <strong x-text="formattaEuro(riga.valore)"></strong>
-                  <small x-text="(riga.clienteNome || 'Cliente') + ' · ' + formattaData(riga.data)"></small>
+                  <small x-text="(riga.clienteNome || 'Cliente') + ' · ' + formattaData(riga.data) + (riga.importoPagato ? ' · pagati ' + formattaEuro(riga.importoPagato) : '')"></small>
                 </div>
               </div>
             </template>
@@ -7402,6 +7424,27 @@
                 </div>
                 <span class="event-done-action" x-show="quota.pagamentoIds.length === 1" x-text="quota.pagamentoIds.includes(confermandoTrasferimentoId) ? '...' : '✓ Conferma'"></span>
                 <span class="home-attention-arrow" x-show="quota.pagamentoIds.length > 1">›</span>
+              </button>
+            </template>
+          </div>
+        </section>
+
+        <section class="home-attention home-today-v3 quote-operation-section" style="margin-top:14px" x-show="quoteReteDaConfermare.length > 0">
+          <div class="home-section-title">
+            <div>
+              <span>QUOTA DI RETE DA RISCATTARE</span>
+              <strong x-text="quoteReteDaConfermare.length === 1 ? '1 quota di rete da confermare' : quoteReteDaConfermare.length + ' quote di rete da confermare'"></strong>
+            </div>
+          </div>
+          <div class="home-attention-list">
+            <template x-for="q in quoteReteDaConfermare" :key="'da-ricevere-rete-' + q.id">
+              <button type="button" class="home-attention-row" @click="confermaQuotaReteConDettaglio(q)">
+                <span class="home-attention-dot type-rata"></span>
+                <div>
+                  <strong x-text="formattaEuro(q.importo)"></strong>
+                  <small x-text="(nomeVenditorePerId(q.da_profilo_id) ? 'Dalla vendita di ' + nomeVenditorePerId(q.da_profilo_id) : 'Quota di rete') + (q.clienteNome ? ' · ' + q.clienteNome : '')"></small>
+                </div>
+                <span class="event-done-action" x-text="q.pagamento_id === confermandoQuotaReteId ? '...' : '✓ Conferma'"></span>
               </button>
             </template>
           </div>
@@ -7616,7 +7659,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=182', {
+      navigator.serviceWorker.register('./service-worker.js?v=184', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
