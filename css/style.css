@@ -16769,3 +16769,24 @@ html[data-theme="dark"] .rc-card{border-color:var(--line);box-shadow:4px 4px 0 v
 .rete-scheda-page .rs-row{display:flex;flex-direction:column;gap:2px;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
 .rete-scheda-page .rs-row small{color:var(--muted);font-weight:600;font-size:.74rem}
 @media (prefers-reduced-motion:reduce){.rete-scheda-page .rs-switch i::after{transition:none}}
+
+/* Profilo: il ritaglio resta nel cerchio anche con zoom; il + è centrato nel badge. */
+.profile-avatar-edit{overflow:visible}
+.profile-avatar-media{
+  position:absolute;inset:0;display:grid;place-items:center;
+  overflow:hidden;border-radius:inherit;
+}
+.profile-avatar-edit i{
+  right:2px;bottom:2px;display:flex;align-items:center;justify-content:center;
+  line-height:1;
+}
+.profile-avatar-edit i svg{width:15px;height:15px;display:block}
+.profile-referral-code{display:grid;gap:2px;margin-top:2px}
+.profile-referral-code small{font-size:12px!important;color:var(--muted)}
+.profile-referral-code strong{
+  width:max-content;padding:3px 7px;border:1px solid var(--line);border-radius:7px;
+  font-size:12px!important;line-height:1.2;letter-spacing:.06em;font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+@media(min-width:721px){
+  .profile-view.is-personal-profile .profile-referral-code{justify-items:center}
+}

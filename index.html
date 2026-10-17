@@ -1059,14 +1059,16 @@
           class="profile-hero-card">
 
           <label class="profile-avatar-edit" :style="avatarCustomProps()">
-            <img
-              x-show="profilo.avatar_url"
-              :src="profilo.avatar_url"
-              alt="Foto profilo">
+            <span class="profile-avatar-media">
+              <img
+                x-show="profilo.avatar_url"
+                :src="profilo.avatar_url"
+                alt="Foto profilo">
 
-            <span
-              x-show="!profilo.avatar_url"
-              x-text="inizialeProfilo()">
+              <span
+                x-show="!profilo.avatar_url"
+                x-text="inizialeProfilo()">
+              </span>
             </span>
 
             <input
@@ -1074,7 +1076,12 @@
               accept="image/jpeg,image/png,image/webp"
               @change="caricaAvatar($event)">
 
-            <i x-text="avatarCaricando ? '...' : '+'"></i>
+            <i aria-hidden="true">
+              <span x-show="avatarCaricando">…</span>
+              <svg x-show="!avatarCaricando" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+            </i>
           </label>
 
           <div class="profile-personal-identity">
@@ -1091,6 +1098,10 @@
               class="profile-role"
               x-text="profilo.ruolo === 'developer' ? 'Developer' : 'Venditore'">
             </span>
+            <div class="profile-referral-code" x-show="profilo.codice_referente" x-cloak>
+              <small>Codice referente</small>
+              <strong x-text="profilo.codice_referente"></strong>
+            </div>
             <div class="profile-photo-actions" x-show="profilo.avatar_url && !modificaInquadraturaAperta">
               <button type="button" @click="modificaInquadraturaAperta = true">Inquadratura</button>
               <button type="button" class="danger" :disabled="profiloSalvando" @click="rimuoviAvatar()">Rimuovi foto</button>
@@ -7745,7 +7756,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=189', {
+      navigator.serviceWorker.register('./service-worker.js?v=190', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

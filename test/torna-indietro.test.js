@@ -27,6 +27,33 @@ test('senza schermata precedente indietro porta alla Home (o alla dashboard per 
   assert.deepStrictEqual(a.chiamate, ['dashboard']);
 });
 
+test('con History API indietro consuma un solo passo senza creare una nuova vista', async () => {
+  const s = nuovoStato([chiave('agenda'), chiave('profilo')]);
+  s.historyPronta = true;
+  const historyOriginale = global.history;
+  let indietro = 0;
+  global.history = { state: { le: true }, back: () => { indietro += 1; } };
+
+  try {
+    await s.tornaIndietro();
+  } finally {
+    global.history = historyOriginale;
+  }
+
+  assert.strictEqual(indietro, 1);
+  assert.deepStrictEqual(s.chiamate, []);
+});
+
+test('ripristinare la Home dalla history ricarica i dati senza aggiungere passi', async () => {
+  const s = appState();
+  s.chiamate = [];
+  s.vaiHome = async () => s.chiamate.push('home-ricaricata');
+
+  await s.applicaStatoNavigazione({ le: true, view: 'lista' });
+
+  assert.deepStrictEqual(s.chiamate, ['home-ricaricata']);
+});
+
 test('da un venditore della Rete indietro porta alla Rete, poi alla Home', async () => {
   const s = nuovoStato([chiave('lista'), chiave('rete'), chiave('rete', { reteFocusId: 'x' })]);
   assert.strictEqual(s.etichettaIndietro(), 'Torna a Rete vendita');

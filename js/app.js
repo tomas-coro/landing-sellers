@@ -1006,8 +1006,8 @@ function appState() {
     nuovoProfiloErrore: '',
     nuovoProfiloSuccesso: '',
 
-    profilo: { nome: '', username: '', avatar_url: '', ruolo: '', ruolo_economico: null },
-    profiloPersonale: { nome: '', username: '', avatar_url: '', ruolo: '', email: '' },
+    profilo: { nome: '', username: '', avatar_url: '', codice_referente: '', ruolo: '', ruolo_economico: null },
+    profiloPersonale: { nome: '', username: '', avatar_url: '', codice_referente: '', ruolo: '', email: '' },
     profiloForm: { username: '' },
     avatarPosizione: { x: 50, y: 50, zoom: 1 },
     avatarTrascinamento: null,
@@ -1217,6 +1217,11 @@ function appState() {
         return;
       }
 
+      if (['lista', 'admin'].includes(stato.view)) {
+        await this.vaiHome();
+        return;
+      }
+
       this.view = stato.view || (this.isAdmin ? 'admin' : 'lista');
 
       if (stato.view === 'agenda') {
@@ -1296,10 +1301,17 @@ function appState() {
         return this.isAdmin ? this.tornaAllaDashboard() : this.vaiHome();
       }
 
-      // La Home si ricarica sempre (vedi vaiHome), le altre schermate no.
-      if (['lista', 'admin'].includes(prec.view)) return this.vaiHome();
-
       if (!(await this.confermaUscitaFormCliente())) return;
+
+      // Consuma davvero il passo corrente della history: applicare direttamente
+      // la vista precedente ne creerebbe una copia e farebbe rimbalzare indietro.
+      if (this.historyPronta && history.state?.le) {
+        history.back();
+        return;
+      }
+
+      // Fallback per ambienti senza History API (test o browser molto vecchi).
+      if (['lista', 'admin'].includes(prec.view)) return this.vaiHome();
       await this.applicaStatoNavigazione(prec);
     },
 
@@ -1622,13 +1634,14 @@ function appState() {
       this.accountSlot = window.AccountSessions.getActiveSlot();
 
       const { data: profilo } = await window.supabaseClient
-        .from('profili').select('nome,ruolo,ruolo_economico,username,avatar_url').eq('id', this.sessione.user.id).single();
+        .from('profili').select('nome,ruolo,ruolo_economico,username,avatar_url,codice_referente').eq('id', this.sessione.user.id).single();
       this.profilo = {
         nome: profilo?.nome || '',
         ruolo: profilo?.ruolo || 'venditore',
         ruolo_economico: profilo?.ruolo_economico || null,
         username: profilo?.username || '',
-        avatar_url: profilo?.avatar_url || ''
+        avatar_url: profilo?.avatar_url || '',
+        codice_referente: profilo?.codice_referente || ''
       };
       if (this.accountSlot === 'personale') {
         this.profiloPersonale = { ...this.profilo, email: this.sessione.user.email || '' };
