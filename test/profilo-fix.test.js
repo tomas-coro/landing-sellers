@@ -13,6 +13,10 @@ const migrationCodiciProgressivi = fs.readFileSync(
   'supabase/migrations/20261017200000_codici_referente_progressivi.sql',
   'utf8'
 );
+const migrationSequenzaVenditori = fs.readFileSync(
+  'supabase/migrations/20261017201000_sequenza_codici_solo_venditori.sql',
+  'utf8'
+);
 
 test('il profilo carica e mostra il codice referente stabile', () => {
   assert.match(migration, /add column if not exists codice_referente text/);
@@ -32,6 +36,7 @@ test('i codici referente usano nome e progressivo con le due eccezioni concordat
   assert.match(migrationCodiciProgressivi, /'LandingDev000'/);
   assert.match(migrationCodiciProgressivi, /create trigger trg_assegna_codice_referente/);
   assert.match(migrationCodiciProgressivi, /nextval\('public\.codice_referente_seq'/);
+  assert.match(migrationSequenzaVenditori, /where ruolo = 'venditore'/);
 });
 
 test('la foto zoomata è contenuta separatamente dal badge più', () => {
