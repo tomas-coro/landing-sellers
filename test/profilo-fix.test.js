@@ -9,6 +9,10 @@ const migration = fs.readFileSync(
   'supabase/migrations/20261017190000_codice_referente.sql',
   'utf8'
 );
+const migrationCodiciProgressivi = fs.readFileSync(
+  'supabase/migrations/20261017200000_codici_referente_progressivi.sql',
+  'utf8'
+);
 
 test('il profilo carica e mostra il codice referente stabile', () => {
   assert.match(migration, /add column if not exists codice_referente text/);
@@ -17,6 +21,17 @@ test('il profilo carica e mostra il codice referente stabile', () => {
   assert.match(app, /username,avatar_url,codice_referente/);
   assert.match(html, /Codice referente/);
   assert.match(html, /x-text="profilo\.codice_referente"/);
+});
+
+test('i codici referente usano nome e progressivo con le due eccezioni concordate', () => {
+  assert.match(migrationCodiciProgressivi, /alter column codice_referente drop expression/);
+  assert.match(migrationCodiciProgressivi, /'Nicola001'/);
+  assert.match(migrationCodiciProgressivi, /'Nicholas002'/);
+  assert.match(migrationCodiciProgressivi, /'Selim003'/);
+  assert.match(migrationCodiciProgressivi, /'LandingTop000'/);
+  assert.match(migrationCodiciProgressivi, /'LandingDev000'/);
+  assert.match(migrationCodiciProgressivi, /create trigger trg_assegna_codice_referente/);
+  assert.match(migrationCodiciProgressivi, /nextval\('public\.codice_referente_seq'/);
 });
 
 test('la foto zoomata è contenuta separatamente dal badge più', () => {
