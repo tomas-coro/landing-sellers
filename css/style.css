@@ -12510,6 +12510,7 @@ html[data-theme="dark"] .flow-choice-card{
   gap:7px;
 }
 
+.sale-control-activation input,
 .sale-discount-controls select,
 .sale-discount-controls input{
   width:100%;
