@@ -1555,6 +1555,22 @@
       });
     },
 
+    differenzaRateVendita() {
+      const totaleRate = (this.venditaEconomicaForm.ratePreviste || [])
+        .reduce((totale, rata) => totale + Number(rata.importo || 0), 0);
+      return (
+        Math.round((Number(this.venditaEconomicaForm.importoVendita) || 0) * 100) -
+        Math.round(totaleRate * 100)
+      ) / 100;
+    },
+
+    messaggioDifferenzaRateVendita() {
+      const differenza = this.differenzaRateVendita();
+      if (differenza > 0) return `Mancano ${formattaEuro(differenza)}`;
+      if (differenza < 0) return `Hai inserito ${formattaEuro(Math.abs(differenza))} in più`;
+      return 'Totale rate corretto';
+    },
+
     selezionaPagamentoVendita(modalita) {
       if (
         modalita === 'rateizzato' &&

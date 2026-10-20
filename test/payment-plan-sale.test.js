@@ -80,6 +80,17 @@ test('il piano rifiuta anche un solo centesimo di differenza', () => {
   assert.match(stato.validaVenditaEconomica(), /somma delle rate/i);
 });
 
+test('il piano espone in tempo reale soldi mancanti, in più o corretti', () => {
+  const stato = venditaValida();
+  stato.selezionaPagamentoVendita('rateizzato');
+
+  assert.equal(stato.differenzaRateVendita(), 0);
+  stato.venditaEconomicaForm.ratePreviste[0].importo = 40;
+  assert.equal(stato.differenzaRateVendita(), 10);
+  stato.venditaEconomicaForm.ratePreviste[0].importo = 60.01;
+  assert.equal(stato.differenzaRateVendita(), -10.01);
+});
+
 test('l’ultima rata non può superare sei mesi dalla vendita', () => {
   const stato = venditaValida();
   stato.dataISOOggi = () => '2026-10-16';

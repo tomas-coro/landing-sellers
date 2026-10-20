@@ -2445,9 +2445,17 @@
             </div>
 
             <div class="sale-live-price-meta">
-              <div class="sale-live-price-pack">
+              <div class="sale-live-price-pack" x-data="{ aperto: false }" :class="{ 'is-open': aperto }">
                 <span>Pacchetto</span>
                 <strong x-text="nomePacchettoVendita()"></strong>
+                <button
+                  type="button"
+                  class="sale-live-price-more"
+                  x-show="nomePacchettoVendita().length > 42"
+                  :aria-expanded="aperto"
+                  @click="aperto = !aperto"
+                  x-text="aperto ? 'Riduci' : 'Leggi di più'">
+                </button>
               </div>
 
               <div>
@@ -3891,6 +3899,17 @@
                 x-show="venditaEconomicaForm.ratePreviste.length < 3"
                 @click="aggiungiRataVendita()">+ Aggiungi rata</button>
               <small x-text="'Totale rate: ' + formattaEuroEconomia(venditaEconomicaForm.ratePreviste.reduce((totale, rata) => totale + Number(rata.importo || 0), 0))"></small>
+              <strong
+                class="sale-installment-balance"
+                role="status"
+                aria-live="polite"
+                :class="{
+                  'is-short': differenzaRateVendita() > 0,
+                  'is-over': differenzaRateVendita() < 0,
+                  'is-ok': differenzaRateVendita() === 0
+                }"
+                x-text="messaggioDifferenzaRateVendita()">
+              </strong>
             </div>
           </div>
 
@@ -7756,7 +7775,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=190', {
+      navigator.serviceWorker.register('./service-worker.js?v=191', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

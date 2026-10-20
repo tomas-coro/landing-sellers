@@ -4480,10 +4480,8 @@ costiPerMotoreRataEconomia(
       const colore = opzioni.colore || 'var(--lime-deep)';
       const hoverIndex = this[statoHoverProp];
       const selezione = Number.isInteger(hoverIndex) && barre[hoverIndex] ? hoverIndex : null;
-      // Un valore compatto ("5.6k€") e largo circa 64 unita: con piu di 9 mesi
-      // gli slot sono piu stretti e i valori di barre vicine si toccherebbero.
-      // In quel caso il valore si legge toccando la barra (riga fissa in alto).
-      const valoriInChiaro = selezione === null && (640 - 32) / Math.max(1, punti.length) >= 64;
+      const valoriInChiaro = selezione === null;
+      const classeValore = punti.length > 9 ? ' metrics-bar-value-dense' : '';
       const stato = `Alpine.$data(document.getElementById('app')).${statoHoverProp}`;
 
       // Sfondo trasparente: toccare fuori dalle barre toglie la selezione.
@@ -4503,7 +4501,7 @@ costiPerMotoreRataEconomia(
         // della selezionata sta nella riga fissa in alto, quindi niente testo
         // sopra le colonne che si possa fondere con le barre vicine.
         if (b.valore > 0 && valoriInChiaro) {
-          svg += `<text class="metrics-bar-value${dark}" x="${b.cx.toFixed(1)}" y="${Math.max(20, b.y - 10).toFixed(1)}" text-anchor="middle">${this.formattaEuroCompatto(b.valore)}</text>`;
+          svg += `<text class="metrics-bar-value${dark}${classeValore}" x="${b.cx.toFixed(1)}" y="${Math.max(20, b.y - 10).toFixed(1)}" text-anchor="middle">${this.formattaEuroCompatto(b.valore)}</text>`;
         }
         if (etichetteVisibili.has(b.chiave)) {
           svg += `<text class="metrics-bar-label${dark}${selezione === i ? ' metrics-bar-label-on' : ''}" x="${b.cx.toFixed(1)}" y="${(b.baseline + 26).toFixed(1)}" text-anchor="middle">${b.label}</text>`;

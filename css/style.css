@@ -16790,3 +16790,53 @@ html[data-theme="dark"] .rc-card{border-color:var(--line);box-shadow:4px 4px 0 v
 @media(min-width:721px){
   .profile-view.is-personal-profile .profile-referral-code{justify-items:center}
 }
+
+/* Fix operativi: trend, nuovo cliente, riepilogo vendita e rate */
+.metrics-bar-value-dense{font-size:17px;letter-spacing:-.02em}
+
+.sale-live-price-pack{position:relative}
+.sale-live-price-pack .sale-live-price-more{
+  align-self:flex-start;border:0;background:none;color:var(--ink-soft);font:inherit;
+  font-size:12px;font-weight:800;text-decoration:underline;cursor:pointer;
+}
+.sale-live-price-pack:not(.is-open) strong{
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:1.35;
+}
+.sale-live-price-pack.is-open strong{overflow:visible;white-space:normal;text-overflow:clip}
+
+.sale-installment-actions{flex-wrap:wrap}
+.sale-installment-balance{
+  flex:0 0 100%;padding:8px 10px;border-radius:9px;font-size:13px;text-align:right;
+}
+.sale-installment-balance.is-short,.sale-installment-balance.is-over{
+  background:var(--danger-bg);color:var(--danger);
+}
+.sale-installment-balance.is-ok{
+  background:color-mix(in srgb,var(--lime) 16%,transparent);color:var(--ink-soft);
+}
+
+@media (max-width:719px){
+  .client-create-view{flex:0 0 auto;width:100%;min-height:100%;touch-action:pan-y}
+  .client-create-heading p{white-space:normal}
+  .client-form-create .client-fields-grid{grid-template-columns:1fr !important;gap:0 !important}
+  .client-form-create .client-fields-grid .field,
+  .client-form-create .client-fields-grid .field-full{grid-column:1 !important;min-width:0}
+  .client-form-create .field input{font-size:16px}
+}
+
+@media (min-width:1000px) and (max-height:820px){
+  .client-create-view .brandbar{padding-top:14px;padding-bottom:10px}
+  .client-create-view .topbar{padding-top:10px;padding-bottom:8px}
+  #app .client-create-content{padding-top:8px !important;padding-bottom:12px !important}
+  .client-create-heading{margin-bottom:8px !important}
+  .client-create-heading>div>span{margin-bottom:2px !important;font-size:11px !important}
+  .client-create-heading h1{font-size:25px !important}
+  .client-create-heading p{margin-top:3px !important;font-size:13px !important}
+  .client-form-create .client-form-section{padding:13px 18px !important}
+  .client-form-create .client-form-section-head{margin-bottom:9px !important;padding-bottom:8px !important}
+  .client-form-create .client-form-section-head>span{width:30px !important;height:30px !important;min-width:30px !important}
+  .client-form-create .client-fields-grid{gap:7px 16px !important}
+  .client-form-create .field label{margin-bottom:2px !important;font-size:12px !important}
+  .client-form-create .field input{height:39px !important;min-height:39px !important;font-size:14px !important}
+  .client-form-create>.btn-primary{min-height:40px !important;margin-top:0 !important}
+}
