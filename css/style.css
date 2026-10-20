@@ -12529,6 +12529,16 @@ html[data-theme="dark"] .flow-choice-card{
   font-size:15.5px;
 }
 
+/* il date input nativo (iOS/Safari) ha larghezza intrinseca e sborda: lo blocco alla card */
+.sale-control-activation input[type="date"]{
+  display:block;
+  box-sizing:border-box;
+  max-width:100%;
+  -webkit-appearance:none;
+  appearance:none;
+  text-align:left;
+}
+
 .sale-discount-value{
   position:relative;
 }
