@@ -16873,6 +16873,6 @@ html[data-theme="dark"] .rc-card{border-color:var(--line);box-shadow:4px 4px 0 v
 .scheda-vendita-ic svg,.scheda-vendita-go{width:22px;height:22px}
 .scheda-vendita-txt b{display:block;font-size:17px;font-weight:800;letter-spacing:-.01em;line-height:1.15}
 .scheda-vendita-txt small{display:block;font-size:11.5px;font-weight:700;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-html[data-theme="dark"] .scheda-vendita-cta{border-color:var(--lime-deep);box-shadow:4px 4px 0 rgba(200,255,61,.3)}
+html[data-theme="dark"] .scheda-vendita-cta{color:#111;border-color:var(--lime-deep);box-shadow:4px 4px 0 rgba(200,255,61,.3)}
 @media (hover:hover){.scheda-vendita-cta:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 #111}}
 @media (prefers-reduced-motion:reduce){.scheda-vendita-cta{transition:none}}
