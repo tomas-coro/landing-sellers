@@ -5163,6 +5163,20 @@
           </button>
         </div>
 
+        <!-- Stessa azione del "+" della home (Registra vendita), con il cliente già scelto -->
+        <button
+          type="button"
+          x-show="!isAdmin"
+          @click="registraVenditaDaScheda()"
+          class="scheda-vendita-cta">
+          <span class="scheda-vendita-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>
+          <span class="scheda-vendita-txt">
+            <b>Registra vendita</b>
+            <small x-text="'per ' + clienteSelezionato().nome"></small>
+          </span>
+          <svg class="scheda-vendita-go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+
         <div class="client-quick-actions">
           <button
             type="button"
@@ -5182,16 +5196,6 @@
             class="client-quick-action">
             <span class="client-quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>
             <strong>Nota</strong>
-          </button>
-
-          <!-- Stessa azione del "+" della home (Registra vendita), con il cliente già scelto -->
-          <button
-            type="button"
-            x-show="!isAdmin"
-            @click="registraVenditaDaScheda()"
-            class="client-quick-action">
-            <span class="client-quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>
-            <strong>Vendita</strong>
           </button>
 
           <a
@@ -7785,7 +7789,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=195', {
+      navigator.serviceWorker.register('./service-worker.js?v=196', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
