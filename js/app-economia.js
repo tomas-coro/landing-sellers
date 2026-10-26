@@ -2458,6 +2458,16 @@
       this.selezionaClienteEconomia(cliente);
     },
 
+    // Dalla scheda cliente: apre "Registra vendita" con il cliente già scelto,
+    // senza passare dalla home. Il "Torna al cliente" riporta qui.
+    async registraVenditaDaScheda() {
+      const cliente = this.clienteSelezionato();
+      if (!cliente?.id) return;
+
+      await this.apriEconomia('vendita');
+      this.selezionaClienteEconomia(cliente);
+    },
+
     snapshotFormEconomia() {
       const {
         clienteRicerca,

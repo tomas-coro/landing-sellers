@@ -5184,6 +5184,16 @@
             <strong>Nota</strong>
           </button>
 
+          <!-- Stessa azione del "+" della home (Registra vendita), con il cliente già scelto -->
+          <button
+            type="button"
+            x-show="!isAdmin"
+            @click="registraVenditaDaScheda()"
+            class="client-quick-action">
+            <span class="client-quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>
+            <strong>Vendita</strong>
+          </button>
+
           <a
             x-show="['contattato', 'acquisito'].includes(clienteSelezionato().stato)"
             href="https://landingevolution.it/brief.html"
@@ -7775,7 +7785,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=194', {
+      navigator.serviceWorker.register('./service-worker.js?v=195', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
