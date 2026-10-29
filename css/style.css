@@ -16876,3 +16876,46 @@ html[data-theme="dark"] .rc-card{border-color:var(--line);box-shadow:4px 4px 0 v
 html[data-theme="dark"] .scheda-vendita-cta{color:#111;border-color:var(--lime-deep);box-shadow:4px 4px 0 rgba(200,255,61,.3)}
 @media (hover:hover){.scheda-vendita-cta:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 #111}}
 @media (prefers-reduced-motion:reduce){.scheda-vendita-cta{transition:none}}
+
+/* --- Home admin: hero venduto azienda (mockup 17, variante +) --- */
+.admin-home-heading>span{text-transform:uppercase}
+.admin-hero{
+  background:#111;color:#fff;border-radius:20px;padding:18px 18px 16px;
+  border:1px solid #252525;box-shadow:0 12px 30px rgba(17,17,17,.12);
+}
+.admin-hero-label{display:block;font-size:11px;letter-spacing:.12em;font-weight:800;color:#a8aaa2}
+.admin-hero-value{display:block;margin-top:3px;font-size:34px;line-height:1.05;font-weight:800;letter-spacing:-.035em;color:var(--lime)}
+.admin-hero-sub{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:6px;font-size:13px;font-weight:600;color:#c9cbc3}
+.admin-hero-sub b{color:#fff;font-weight:800}
+.admin-hero-pill{background:rgba(200,255,61,.16);color:var(--lime);border-radius:999px;padding:3px 9px;font-size:12px;font-weight:800}
+.admin-hero-bar{height:9px;border-radius:999px;background:#34362f;overflow:hidden;margin:16px 0 9px}
+.admin-hero-bar b{display:block;height:100%;border-radius:999px;background:var(--lime);transition:width .5s var(--ease)}
+.admin-hero-split{display:flex;justify-content:space-between;gap:12px}
+.admin-hero-split>div{min-width:0}
+.admin-hero-split>div:last-child{text-align:right}
+.admin-hero-split small{display:block;font-size:10.5px;letter-spacing:.1em;font-weight:700;color:#a8aaa2}
+.admin-hero-split b{display:block;margin-top:1px;font-size:17px;font-weight:800;letter-spacing:-.02em;color:#fff}
+.admin-hero-go{
+  width:100%;min-height:48px;margin-top:14px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;
+  border:1px solid #3a3c35;background:#22241f;color:#fff;border-radius:13px;
+  font:inherit;font-size:14px;font-weight:700;cursor:pointer;
+}
+.admin-hero-go i{font-style:normal;font-size:20px;color:var(--lime)}
+.admin-hero-go:active{background:#2c2f28}
+.admin-stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.admin-stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 14px;display:grid;gap:1px}
+.admin-stat b{font-size:26px;line-height:1.1;font-weight:800;letter-spacing:-.03em;color:var(--ink)}
+.admin-stat span{font-size:13px;font-weight:600;color:var(--muted)}
+.admin-stat.is-dim b{font-size:20px;color:var(--ink-soft)}
+html[data-theme="dark"] .admin-stat.is-dim b{color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.admin-hero-bar b{transition:none}}
+
+/* --- Trend admin a barre: chip di scelta serie (Tutti / venditore) --- */
+.metrics-trend-series{display:flex;gap:6px;overflow-x:auto;margin:10px -2px 0;padding:2px;scrollbar-width:none}
+.metrics-trend-series::-webkit-scrollbar{display:none}
+.metrics-trend-series button{
+  flex:none;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid var(--line);
+  background:var(--card);color:var(--ink-soft);font:inherit;font-size:14px;font-weight:700;cursor:pointer;
+}
+.metrics-trend-series button.active{background:var(--ink);color:var(--lime);border-color:var(--ink)}
+html[data-theme="dark"] .metrics-trend-series button.active{background:var(--lime);color:#0f1a00;border-color:var(--lime)}

@@ -354,6 +354,32 @@
       return Number(this.adminStats.residuoIncasso) || 0;
     },
 
+    // Quota di venduto gia' incassato, in % intera (0 se non c'e' venduto).
+    percentualeIncassatoAdmin() {
+      const venduto = this.totaleGeneraleAdmin();
+      if (venduto <= 0) return 0;
+      const quota = Math.round((this.totaleIncassatoAdmin() / venduto) * 100);
+      return Math.min(100, Math.max(0, quota));
+    },
+
+    // Venduto del mese in corso (ultimo punto della serie "Totale" del trend), o null.
+    venditoMeseCorrenteAdmin() {
+      const totale = this.trendDatiAdmin.find(serie => serie.id === 'totale');
+      const punto = totale?.punti?.[totale.punti.length - 1];
+      return punto ? { label: punto.label, valore: Number(punto.valore) || 0 } : null;
+    },
+
+    dataOggiAdmin() {
+      return new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+    },
+
+    sottotitoloAdmin() {
+      const venditori = this.classificaVenditori().length;
+      const vendite = Number(this.adminStats.venditeAttive) || 0;
+      return venditori + (venditori === 1 ? ' venditore' : ' venditori') + ', '
+        + vendite + (vendite === 1 ? ' vendita attiva' : ' vendite attive') + '.';
+    },
+
     totaleClientiAdmin() {
       return Number(this.adminStats.clienti) || 0;
     },

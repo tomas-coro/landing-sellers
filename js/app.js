@@ -796,7 +796,8 @@ function appState() {
 
     trendDatiAdmin: [], // [{ id, nome, color, punti: [{chiave,label,valore}] }]
     trendRangeAdmin: 12,
-    trendHoverAdmin: null,
+    trendHoverAdmin: null, // indice barra selezionata (come trendHoverVenditore)
+    trendSerieAdminId: 'totale', // serie mostrata: 'totale' o id venditore
 
     // Vista Rete vendita (js/app-rete.js): caricata a richiesta da apriRete.
     caricandoRete: false,
@@ -4526,13 +4527,6 @@ costiPerMotoreRataEconomia(
     // handler inline (non window.addEventListener, per non ripetere il bug
     // di doppia registrazione gia' documentato altrove in questo file) che
     // scrivono direttamente sullo stato Alpine via Alpine.$data(...).
-    trendSerieAdminVisibili() {
-      return this.trendDatiAdmin.map(serie => ({
-        ...serie,
-        puntiVisibili: this.trendVisibile(serie.punti, this.trendRangeAdmin)
-      }));
-    },
-
     trendMarkupVenditore() {
       const punti = this.trendVisibile(this.trendDatiVenditore, this.trendRangeVenditore);
       return this.disegnaMarkupBarreMensili(punti, 'trendHoverVenditore', {
@@ -4541,52 +4535,25 @@ costiPerMotoreRataEconomia(
       });
     },
 
+    // Serie scelta con i chip (Tutti / venditore); se sparisce dai dati
+    // (ricarico, venditore uscito dai primi 3) si torna al totale.
+    trendSerieAdminScelta() {
+      return this.trendDatiAdmin.find(s => s.id === this.trendSerieAdminId)
+        || this.trendDatiAdmin[0]
+        || { id: 'totale', nome: 'Totale', punti: [] };
+    },
+
+    impostaSerieTrendAdmin(id) {
+      this.trendSerieAdminId = id;
+      this.trendHoverAdmin = null;
+    },
+
+    // Stesso grafico a barre del venditore (disegnaMarkupBarreMensili):
+    // una serie alla volta, valori visibili sopra le barre, tocco = dettaglio.
     trendMarkupAdmin() {
-      const serie = this.trendSerieAdminVisibili();
-      if (!serie.some(s => s.puntiVisibili.some(p => p.valore > 0))) return '';
-
-      let svg = '';
-
-      this.trendGridLineY().forEach(y => {
-        svg += `<line class="metrics-grid-line" x1="28" y1="${y}" x2="632" y2="${y}"></line>`;
-      });
-      // Il conteggio siti sotto il mese usa sempre la serie "totale" (prima
-      // serie): sotto ogni venditore avrebbe contato solo le sue vendite,
-      // qui interessa quante vendite ci sono state in azienda quel mese.
-      const serieTotale = serie.find(s => s.id === 'totale') || serie[0];
-      this.trendEtichetteAsse(serieTotale ? serieTotale.puntiVisibili : []).forEach(a => {
-        svg += `<text class="metrics-axis-label" x="${a.x}" y="196" text-anchor="middle">${a.text}</text>`;
-        svg += `<text class="metrics-count-label" x="${a.x}" y="234" text-anchor="middle">${a.numero} sit${a.numero === 1 ? 'o' : 'i'}</text>`;
-      });
-
-      serie.forEach(s => {
-        svg += `<path class="metrics-trend-line" style="stroke:${s.color}" d="${this.trendPathLinea(s.puntiVisibili)}"></path>`;
-      });
-
-      serie.forEach((s, si) => {
-        this.trendPuntiSerie(s.puntiVisibili).forEach((p, pi) => {
-          svg += `<circle class="metrics-trend-dot" cx="${p.x}" cy="${p.y}" r="3.5" style="fill:${s.color}"
-            onmouseenter="Alpine.$data(document.getElementById('app')).trendHoverAdmin={si:${si},pi:${pi}}"
-            onmouseleave="Alpine.$data(document.getElementById('app')).trendHoverAdmin=null"
-            onclick="const __d=Alpine.$data(document.getElementById('app'));const __h=__d.trendHoverAdmin;__d.trendHoverAdmin=(__h&&__h.si===${si}&&__h.pi===${pi})?null:{si:${si},pi:${pi}}"></circle>`;
-        });
-      });
-
-      this.trendEtichetteFinali(serie.map(s => ({ color: s.color, punti: s.puntiVisibili }))).forEach(e => {
-        svg += `<text class="metrics-direct-label" x="${e.x}" y="${e.y}" style="fill:${e.color}">${e.text}</text>`;
-      });
-
-      if (this.trendHoverAdmin) {
-        const s = serie[this.trendHoverAdmin.si];
-        const p = s && this.trendPuntiSerie(s.puntiVisibili)[this.trendHoverAdmin.pi];
-        if (p) {
-          const nomeSerie = s.id !== 'totale' ? ' · ' + s.nome : '';
-          const righe = [`${p.label}${nomeSerie} · ${formattaEuro(p.valore)}`, `${p.numero} sit${p.numero === 1 ? 'o' : 'i'}`];
-          svg += this.markupTooltip(p.x, p.y - 24, righe);
-        }
-      }
-
-      return svg;
+      const serie = this.trendSerieAdminScelta();
+      const punti = this.trendVisibile(serie.punti, this.trendRangeAdmin);
+      return this.disegnaMarkupBarreMensili(punti, 'trendHoverAdmin', { colore: 'var(--lime-deep)' });
     },
 
     aggiornaPipelineIndice(event) {

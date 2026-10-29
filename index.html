@@ -1795,8 +1795,9 @@
       <div class="content admin-home-content">
 
         <header class="admin-home-heading">
-          <h1>Buongiorno, Landing Evolution.</h1>
-          <p>La rete commerciale, il portafoglio e il lavoro in corso in un solo colpo d’occhio.</p>
+          <span x-text="dataOggiAdmin()"></span>
+          <h1>Panoramica</h1>
+          <p x-text="sottotitoloAdmin()"></p>
         </header>
 
         <p
@@ -1806,51 +1807,52 @@
         </p>
 
         <!-- OVERVIEW -->
-        <section class="admin-overview-card">
-          <div class="admin-overview-top">
+        <section class="admin-hero">
+          <small class="admin-hero-label">VENDUTO AZIENDA</small>
+          <strong class="admin-hero-value" x-text="formattaEuro(totaleGeneraleAdmin())"></strong>
+          <div class="admin-hero-sub">
+            <span class="admin-hero-pill" x-show="venditoMeseCorrenteAdmin()" x-text="venditoMeseCorrenteAdmin() ? venditoMeseCorrenteAdmin().label + ' · ' + formattaEuro(venditoMeseCorrenteAdmin().valore) : ''"></span>
+            <span>Media vendita <b x-text="formattaEuro(mediaVenditaAdmin())"></b></span>
+          </div>
+
+          <div class="admin-hero-bar" role="img" :aria-label="'Incassato ' + percentualeIncassatoAdmin() + ' per cento del venduto'">
+            <b :style="{ width: percentualeIncassatoAdmin() + '%' }"></b>
+          </div>
+          <div class="admin-hero-split">
             <div>
-              <span>Venduto azienda</span>
-              <strong x-text="formattaEuro(totaleGeneraleAdmin())"></strong>
-              <small>
-                Media vendita
-                <b x-text="formattaEuro(mediaVenditaAdmin())"></b>
-              </small>
+              <small x-text="'INCASSATO · ' + percentualeIncassatoAdmin() + '%'"></small>
+              <b x-text="formattaEuro(totaleIncassatoAdmin())"></b>
+            </div>
+            <div>
+              <small>DA INCASSARE</small>
+              <b x-text="formattaEuro(residuoIncassoAdmin())"></b>
             </div>
           </div>
 
-          <div class="admin-company-cashflow">
-            <div>
-              <span>Incassato effettivo</span>
-              <strong x-text="formattaEuro(totaleIncassatoAdmin())"></strong>
-            </div>
-            <div>
-              <span>Da incassare</span>
-              <strong x-text="formattaEuro(residuoIncassoAdmin())"></strong>
-            </div>
-          </div>
-
-          <button type="button" class="retry-btn" style="margin-top:12px;width:100%" @click="apriRete()">Rete vendita ›</button>
-
-          <div class="admin-overview-grid">
-            <div>
-              <strong x-text="adminStats.venditeAttive"></strong>
-              <span>Vendite attive</span>
-            </div>
-            <div>
-              <strong x-text="totaleClientiAdmin()"></strong>
-              <span>Clienti totali</span>
-            </div>
-            <div>
-              <strong x-text="adminStats.inLavorazione"></strong>
-              <span>In lavorazione</span>
-            </div>
-            <div>
-              <strong x-text="totalePubblicatiMeseAdmin()"></strong>
-              <span>Pubblicati nel mese</span>
-            </div>
-          </div>
+          <button type="button" class="admin-hero-go" @click="apriRete()">
+            <span>Rete vendita</span>
+            <i aria-hidden="true">›</i>
+          </button>
         </section>
 
+        <div class="admin-stat-grid">
+          <div class="admin-stat">
+            <b x-text="adminStats.venditeAttive"></b>
+            <span>Vendite attive</span>
+          </div>
+          <div class="admin-stat">
+            <b x-text="totaleClientiAdmin()"></b>
+            <span>Clienti totali</span>
+          </div>
+          <div class="admin-stat is-dim">
+            <b x-text="adminStats.inLavorazione"></b>
+            <span>In lavorazione</span>
+          </div>
+          <div class="admin-stat is-dim">
+            <b x-text="totalePubblicatiMeseAdmin()"></b>
+            <span>Pubblicati nel mese</span>
+          </div>
+        </div>
 
         <section class="home-quotes-hero" x-show="numeroAzioniQuote() > 0">
           <div class="home-quotes-hero-main">
@@ -1962,26 +1964,27 @@
               <strong>Venduto per mese</strong>
             </div>
             <div class="metrics-trend-chips">
-              <button type="button" :class="{ active: trendRangeAdmin === 3 }" @click="trendRangeAdmin = 3">3 mesi</button>
-              <button type="button" :class="{ active: trendRangeAdmin === 6 }" @click="trendRangeAdmin = 6">6 mesi</button>
-              <button type="button" :class="{ active: trendRangeAdmin === 12 }" @click="trendRangeAdmin = 12">12 mesi</button>
+              <button type="button" :class="{ active: trendRangeAdmin === 3 }" @click="trendRangeAdmin = 3; trendHoverAdmin = null">3 mesi</button>
+              <button type="button" :class="{ active: trendRangeAdmin === 6 }" @click="trendRangeAdmin = 6; trendHoverAdmin = null">6 mesi</button>
+              <button type="button" :class="{ active: trendRangeAdmin === 12 }" @click="trendRangeAdmin = 12; trendHoverAdmin = null">12 mesi</button>
             </div>
           </div>
 
-          <div class="metrics-trend-legend">
-            <template x-for="serie in trendSerieAdminVisibili()" :key="'legenda-' + serie.id">
-              <div class="metrics-legend-item">
-                <span class="metrics-legend-dot" :style="{ background: serie.color }"></span>
-                <span x-text="serie.nome"></span>
-              </div>
+          <div class="metrics-trend-series" role="group" aria-label="Serie del grafico">
+            <template x-for="serie in trendDatiAdmin" :key="'serie-' + serie.id">
+              <button type="button"
+                :class="{ active: trendSerieAdminId === serie.id }"
+                :aria-pressed="trendSerieAdminId === serie.id"
+                @click="impostaSerieTrendAdmin(serie.id)"
+                x-text="serie.id === 'totale' ? 'Tutti' : serie.nome"></button>
             </template>
           </div>
 
-          <div class="metrics-trend-empty" x-show="!trendDatiAdmin.some(s => s.punti.some(p => p.valore > 0))">
+          <div class="metrics-trend-empty" x-show="!trendVisibile(trendSerieAdminScelta().punti, trendRangeAdmin).some(p => p.valore > 0)">
             <span x-text="'Nessuna vendita registrata negli ultimi ' + trendRangeAdmin + ' mesi.'"></span>
           </div>
 
-          <div class="metrics-chart-area" x-show="trendDatiAdmin.some(s => s.punti.some(p => p.valore > 0))">
+          <div class="metrics-chart-area" x-show="trendVisibile(trendSerieAdminScelta().punti, trendRangeAdmin).some(p => p.valore > 0)">
             <svg viewBox="0 0 640 248" preserveAspectRatio="xMidYMid meet" x-html="trendMarkupAdmin()"></svg>
           </div>
         </section>
@@ -7789,7 +7792,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=197', {
+      navigator.serviceWorker.register('./service-worker.js?v=199', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
