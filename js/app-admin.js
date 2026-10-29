@@ -408,6 +408,21 @@
       return this.venditori.filter(v => (v.nome || '').toLowerCase().includes(testo));
     },
 
+    // Barra di confronto: % del venduto rispetto al primo in classifica (0-100).
+    larghezzaBarraClassificaAdmin(venditore) {
+      const primo = Number(this.classificaVenditori()[0]?.totaleVenduto) || 0;
+      if (primo <= 0) return 0;
+      const quota = ((Number(venditore.totaleVenduto) || 0) / primo) * 100;
+      return Math.min(100, Math.max(0, Math.round(quota)));
+    },
+
+    descrizioneRigaClassificaAdmin(venditore) {
+      const vendite = Number(venditore.nVendite) || 0;
+      const clienti = Number(venditore.nClientiTotali) || 0;
+      return vendite + (vendite === 1 ? ' vendita' : ' vendite') + ' · '
+        + clienti + (clienti === 1 ? ' cliente' : ' clienti');
+    },
+
     classificaVenditori() {
       return ordinaClassificaVenditori(this.venditori);
     },

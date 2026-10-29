@@ -1999,15 +1999,16 @@
             <small>Per valore venduto</small>
           </div>
 
-          <div class="admin-ranking-list">
+          <div class="admin-rank-list">
             <template x-for="(v, indice) in classificaVenditori()" :key="'rank-' + v.id">
-              <button type="button" @click="apriClientiVenditore(v.id, v.nome)">
-                <span class="admin-ranking-position" x-text="indice + 1"></span>
-                <span class="admin-ranking-name">
+              <button type="button" class="admin-rank-row" :class="{ 'is-first': indice === 0 }" @click="apriClientiVenditore(v.id, v.nome)">
+                <span class="admin-rank-pos" x-text="indice + 1"></span>
+                <span class="admin-rank-main">
                   <strong x-text="v.nome"></strong>
-                  <small x-text="v.nVendite === 1 ? '1 vendita' : v.nVendite + ' vendite'"></small>
+                  <small x-text="descrizioneRigaClassificaAdmin(v)"></small>
+                  <span class="admin-rank-track" aria-hidden="true"><i :style="{ width: larghezzaBarraClassificaAdmin(v) + '%' }"></i></span>
                 </span>
-                <strong class="admin-ranking-total" x-text="formattaEuro(v.totaleVenduto)"></strong>
+                <strong class="admin-rank-total" x-text="formattaEuro(v.totaleVenduto)"></strong>
               </button>
             </template>
           </div>
@@ -7792,7 +7793,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=199', {
+      navigator.serviceWorker.register('./service-worker.js?v=200', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

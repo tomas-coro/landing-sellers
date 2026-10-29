@@ -23,3 +23,14 @@ test('sottotitolo admin: singolare e plurale', () => {
   assert.equal(stato({ venditeAttive: 12 }).sottotitoloAdmin(), '4 venditori, 12 vendite attive.');
   assert.equal(stato({ venditeAttive: 1 }).sottotitoloAdmin(), '4 venditori, 1 vendita attiva.');
 });
+
+test('classifica admin: barra relativa al primo e riga descrittiva con plurali', () => {
+  const classifica = [{ totaleVenduto: 2000 }, { totaleVenduto: 500 }];
+  const s = Object.assign({}, admin, { classificaVenditori() { return classifica; } });
+  assert.equal(s.larghezzaBarraClassificaAdmin(classifica[0]), 100);
+  assert.equal(s.larghezzaBarraClassificaAdmin(classifica[1]), 25);
+  const vuoto = Object.assign({}, admin, { classificaVenditori() { return [{ totaleVenduto: 0 }]; } });
+  assert.equal(vuoto.larghezzaBarraClassificaAdmin({ totaleVenduto: 0 }), 0);
+  assert.equal(s.descrizioneRigaClassificaAdmin({ nVendite: 1, nClientiTotali: 5 }), '1 vendita · 5 clienti');
+  assert.equal(s.descrizioneRigaClassificaAdmin({ nVendite: 3, nClientiTotali: 1 }), '3 vendite · 1 cliente');
+});
