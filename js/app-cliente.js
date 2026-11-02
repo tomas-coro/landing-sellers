@@ -892,6 +892,13 @@
       this.ritornoDopoNuovoCliente = null;
     },
 
+    async apriSchedaClienteCreato() {
+      const clienteId = this.clienteCreatoId;
+      if (!clienteId) return;
+      this.chiudiPromptClienteCreato();
+      await this.apriScheda(clienteId);
+    },
+
     async registraVenditaDopoCliente() {
       const cliente = this.clienti.find(
         c => c.id === this.clienteCreatoId

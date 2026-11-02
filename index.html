@@ -5055,16 +5055,22 @@
       <div class="flow-choice-card">
         <span class="flow-choice-kicker">CLIENTE SALVATO</span>
 
-        <h2>Vuoi registrare la vendita?</h2>
+        <h2>Cliente salvato</h2>
 
         <p>
-          L'anagrafica è stata salvata. Puoi registrare subito
-          la prima vendita oppure farlo in un secondo momento.
+          Puoi aprire la scheda, registrare una vendita oppure tornare ai clienti.
         </p>
 
         <button
           type="button"
           class="btn btn-primary"
+          @click="apriSchedaClienteCreato()">
+          Apri scheda
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-ghost"
           @click="registraVenditaDopoCliente()">
           Registra vendita
         </button>
@@ -5073,7 +5079,7 @@
           type="button"
           class="btn btn-ghost"
           @click="chiudiPromptClienteCreato()">
-          Non ora
+          Torna ai clienti
         </button>
       </div>
     </div>
@@ -7883,7 +7889,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=202', {
+      navigator.serviceWorker.register('./service-worker.js?v=203', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
