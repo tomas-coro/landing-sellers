@@ -20,6 +20,51 @@ function stato() {
   return s;
 }
 
+test('vibrazione: pattern, preferenza, motion ridotto e API assente', () => {
+  const navigatorDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  const originalMatchMedia = globalThis.matchMedia;
+  const originalStorage = globalThis.localStorage;
+  const chiamate = [];
+  try {
+    Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { vibrate: pattern => chiamate.push(pattern) } });
+    globalThis.matchMedia = () => ({ matches: false });
+    globalThis.localStorage = {
+      getItem: () => 'off', setItem: (key, value) => chiamate.push([key, value])
+    };
+    const s = stato();
+    assert.equal(s.vibrazioneAttiva, false);
+    s.vibra('vendita');
+    s.toggleVibrazione();
+    s.vibra('vendita');
+    s.vibra('incasso');
+    s.mostraFeedback({ tipo: 'errore', titolo: 'Errore' });
+    s.chiudiFeedback();
+    assert.deepEqual(chiamate, [['le-vibrazione', 'on'], 15, 12, [20, 40, 20]]);
+    globalThis.matchMedia = () => ({ matches: true });
+    s.vibra('vendita');
+    Object.defineProperty(globalThis, 'navigator', { configurable: true, value: {} });
+    globalThis.matchMedia = () => ({ matches: false });
+    s.vibra('errore');
+    assert.equal(chiamate.length, 4);
+    globalThis.localStorage = { getItem: () => { throw Error('denied'); }, setItem: () => { throw Error('denied'); } };
+    const senzaStorage = stato();
+    assert.equal(senzaStorage.vibrazioneAttiva, true);
+    senzaStorage.toggleVibrazione();
+    assert.equal(senzaStorage.vibrazioneAttiva, false);
+  } finally {
+    if (navigatorDescriptor) Object.defineProperty(globalThis, 'navigator', navigatorDescriptor);
+    else delete globalThis.navigator;
+    globalThis.matchMedia = originalMatchMedia;
+    globalThis.localStorage = originalStorage;
+  }
+});
+
+test('spunta e scontrino vibrano al termine delle animazioni', () => {
+  const html = fs.readFileSync('index.html', 'utf8');
+  assert.match(html, /class="fb-ck"[^>]*@animationend\.self="feedback\.tipo === 'vendita' && vibra\('vendita'\)"/);
+  assert.match(html, /class="fb-pp"[^>]*@animationend\.self="feedback\.stampato = true; vibra\('incasso'\)"/);
+});
+
 const incasso = {
   id: 'p1', importo: 400, data_pagamento: '2026-11-02', metodo: 'Bonifico',
   quote_trasferimento: [

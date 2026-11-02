@@ -315,7 +315,8 @@
              x-show="feedback.fase === 'overlay'" x-transition.opacity.duration.250ms>
           <svg class="fb-check" viewBox="0 0 80 80" aria-hidden="true">
             <circle class="fb-ci" cx="40" cy="40" r="36"/>
-            <path class="fb-ck" :d="feedback.tipo === 'errore' ? 'M40 22v22M40 56v.5' : 'M25 41l11 11 20-23'"/>
+            <path class="fb-ck" :d="feedback.tipo === 'errore' ? 'M40 22v22M40 56v.5' : 'M25 41l11 11 20-23'"
+                  @animationend.self="feedback.tipo === 'vendita' && vibra('vendita')"/>
           </svg>
           <div class="fb-num" x-show="feedback.tipo === 'vendita'" x-text="formattaEuro(feedback.importoMostrato)"></div>
           <div class="fb-lbl">
@@ -348,7 +349,7 @@
         <div class="fb-slot"><i></i></div>
         <div class="fb-pw" :class="{ 'fb-done': feedback.stampato }">
           <div class="fb-pp" :class="{ 'fb-annullato': feedback.annullato }"
-               @animationend="feedback.stampato = true">
+               @animationend.self="feedback.stampato = true; vibra('incasso')">
             <div class="fb-brand">
               <span x-text="feedback.annullato ? 'Incasso annullato' : 'Ricevuta incasso'"></span>
               <span x-text="feedback.dataIncasso ? formattaData(feedback.dataIncasso) : ''"></span>
@@ -1337,6 +1338,12 @@
 
           <div class="admin-profile-menu">
 
+            <button type="button" role="switch" :aria-checked="vibrazioneAttiva"
+              @click="toggleVibrazione()">
+              <span class="admin-profile-menu-copy"><strong>Vibrazione</strong><small x-text="vibrazioneAttiva ? 'Attiva' : 'Disattiva'"></small></span>
+              <i aria-hidden="true">›</i>
+            </button>
+
             <button
               type="button"
               class="profile-update-row"
@@ -1511,6 +1518,11 @@
           </div>
 
           <div class="stack-card profile-menu">
+            <button type="button" role="switch" :aria-checked="vibrazioneAttiva"
+              @click="toggleVibrazione()">
+              <span>Vibrazione</span>
+              <strong x-text="vibrazioneAttiva ? 'Attiva' : 'Disattiva'"></strong>
+            </button>
             <button
               type="button"
               class="profile-push-toggle"
@@ -7844,7 +7856,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=204', {
+      navigator.serviceWorker.register('./service-worker.js?v=205', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

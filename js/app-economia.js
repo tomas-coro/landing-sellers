@@ -38,6 +38,14 @@
       return !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
     },
 
+    vibra(tipo) {
+      if (!this.vibrazioneAttiva || this.preferisceMenoMovimento() ||
+          !globalThis.navigator || !('vibrate' in globalThis.navigator)) return;
+      try {
+        globalThis.navigator.vibrate(tipo === 'errore' ? [20, 40, 20] : tipo === 'incasso' ? 12 : 15);
+      } catch { /* Il feedback visivo resta disponibile anche se la vibrazione fallisce. */ }
+    },
+
     // Fa contare un numero del feedback da 0 al valore finale (700 ms).
     contaFeedback(campo, finale) {
       const id = this.feedback?.id;
@@ -81,6 +89,7 @@
 
       // Vendita ed errore: prima il momento di conferma, poi il riquadro.
       this.feedback.fase = 'overlay';
+      if (dati.tipo === 'errore') this.vibra('errore');
       this._feedbackTimer = setTimeout(() => {
         if (this.feedback?.id !== id) return;
         this.feedback.fase = 'chip';

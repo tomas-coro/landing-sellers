@@ -982,7 +982,20 @@ function appState() {
     aggiornamentoDisponibile: false,
     aggiornamentoStato: 'controllo', // controllo | aggiornato | disponibile | errore
 
-    temaPreferenza: globalThis.localStorage?.getItem?.('le-theme') || 'system',
+    temaPreferenza: (() => {
+      try { return globalThis.localStorage?.getItem('le-theme') || 'system'; }
+      catch { return 'system'; }
+    })(),
+    vibrazioneAttiva: (() => {
+      try { return globalThis.localStorage?.getItem('le-vibrazione') !== 'off'; }
+      catch { return true; }
+    })(),
+
+    toggleVibrazione() {
+      this.vibrazioneAttiva = !this.vibrazioneAttiva;
+      try { globalThis.localStorage?.setItem('le-vibrazione', this.vibrazioneAttiva ? 'on' : 'off'); }
+      catch { /* La preferenza resta valida per questa sessione. */ }
+    },
 
     accedendo: false,
 
