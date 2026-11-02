@@ -7520,92 +7520,47 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
           <span x-text="etichettaIndietro()"></span>
         </button>
-        <h1 style="font-size:21px">Il tuo incassato</h1>
+        <h1 style="font-size:21px">I tuoi incassi</h1>
       </div>
-      <div class="content">
-        <p x-show="erroreFatturato" x-text="erroreFatturato" class="err" style="margin-bottom:14px"></p>
-
-        <div class="metrics-trend-chips fatturato-year-chips" role="group" aria-label="Anno">
-          <template x-for="anno in fatturatoAnniDisponibili" :key="'incassato-anno-chip-' + anno">
-            <button type="button" :class="{ active: fatturatoAnno === anno }" @click="selezionaAnnoIncassato(anno)" x-text="anno"></button>
-          </template>
+      <div class="content port-page">
+        <div class="port-switch" role="group" aria-label="Tipo di importo" x-show="!caricandoFatturato && !erroreFatturato">
+          <button type="button" :aria-pressed="portafoglioModo === 'incassi'" @click="portafoglioModo = 'incassi'; portafoglioHover = null">Incassi</button>
+          <button type="button" :aria-pressed="portafoglioModo === 'vendite'" @click="portafoglioModo = 'vendite'; portafoglioHover = null">Vendite</button>
         </div>
-
-        <section class="inc-card" style="margin-top:14px">
-          <div class="inc-head">
-            <div>
-              <span x-text="'ANNO ' + fatturatoAnno"></span>
-              <strong>Incassato per mese</strong>
+        <div class="port-skeleton" x-show="caricandoFatturato" aria-label="Caricamento incassi"><i></i><i></i><i></i><i></i></div>
+        <div class="port-state" x-show="!caricandoFatturato && erroreFatturato" role="alert">
+          <strong>Non riusciamo a caricare gli incassi</strong><p x-text="erroreFatturato"></p><button type="button" @click="caricaFatturato()">Riprova</button>
+        </div>
+        <div x-show="!caricandoFatturato && !erroreFatturato">
+          <div class="port-balance">
+            <span x-text="portafoglioModo === 'incassi' ? 'La tua quota incassata' : 'La tua quota sulle vendite'"></span>
+            <strong x-text="formattaEuro(portafoglioDati().totale)"></strong>
+            <b x-text="'+' + portafoglioDati().totale.toLocaleString('it-IT', {maximumFractionDigits:2}) + ' EUR'"></b>
+            <small x-text="portafoglioDati().precedente > 0 ? 'Variazione ' + (portafoglioDati().totale >= portafoglioDati().precedente ? '+' : '') + Math.round((portafoglioDati().totale - portafoglioDati().precedente) / portafoglioDati().precedente * 100) + '% rispetto al periodo precedente' : 'Variazione % non disponibile: nessun movimento nel periodo precedente'"></small>
+          </div>
+          <nav class="port-ranges" aria-label="Periodo">
+            <template x-for="periodo in ['1G','1S','1M','3M','6M','12M','Tutto']" :key="periodo"><button type="button" :aria-pressed="portafoglioPeriodo === periodo" @click="portafoglioPeriodo = periodo; portafoglioHover = null" x-text="periodo"></button></template>
+          </nav>
+          <div class="port-graph" x-show="portafoglioDati().righe.length > 0">
+            <div class="port-caption"><strong>Andamento cumulativo</strong><small x-text="portafoglioDati().inizio + ' - ' + portafoglioDati().fine"></small></div>
+            <div class="port-chart-wrap">
+              <svg viewBox="0 0 360 226" class="port-chart" role="img" tabindex="0" aria-label="Andamento cumulativo: usa le frecce per leggere i punti" x-html="portafoglioGrafico()"
+                @pointerdown="$el.setPointerCapture($event.pointerId); portafoglioPunta($event)"
+                @pointermove="if ($event.pointerType === 'mouse' || $event.buttons) portafoglioPunta($event)"
+                @pointerleave="if ($event.pointerType === 'mouse') portafoglioHover = null"
+                @pointerup="portafoglioPunta($event); $el.releasePointerCapture($event.pointerId)"
+                @pointercancel="portafoglioHover = null"
+                @keydown.left.prevent="portafoglioPunta({currentTarget: $el, clientX: $el.getBoundingClientRect().left + Math.max(0, (portafoglioHover?.x || 100) - 5) / 100 * $el.getBoundingClientRect().width})"
+                @keydown.right.prevent="portafoglioPunta({currentTarget: $el, clientX: $el.getBoundingClientRect().left + Math.min(100, (portafoglioHover?.x || 0) + 5) / 100 * $el.getBoundingClientRect().width})"></svg>
+              <div class="port-tip" x-show="portafoglioHover" :style="{left: (portafoglioHover?.x || 50) + '%'}"><strong x-text="formattaEuro(portafoglioHover?.cumulato || 0)"></strong><span x-text="(portafoglioHover?.data || '') + ' - +' + formattaEuro(portafoglioHover?.quota || 0)"></span></div>
             </div>
-            <div class="inc-total">
-              <span>Totale anno</span>
-              <strong x-text="formattaEuro(incassatoTotaleAnno())"></strong>
-            </div>
+            <p class="port-hint" x-text="portafoglioPeriodo === '1G' ? 'I pagamenti hanno solo la data, non l’ora. Trascina sul grafico per il totale del giorno.' : 'Trascina sul grafico per data e importo. Le barre mostrano l’attività giornaliera.'"></p>
           </div>
-
-          <p class="inc-readout" x-show="incassatoBarreStrette()" x-text="incassatoEtichettaMese(fatturatoMeseSelezionato) + ' · ' + formattaEuro(incassatoValoreMeseSelezionato())"></p>
-
-          <div class="inc-bars" :class="{ stretto: incassatoBarreStrette() }" role="group" aria-label="Scegli il mese">
-            <template x-for="m in incassatoSerie()" :key="'inc-bar-' + m.chiave">
-              <button type="button" class="inc-bc"
-                      :class="{ sel: fatturatoMeseSelezionato === m.chiave, vuoto: m.valore === 0, futuro: incassatoMeseFuturo(m.chiave) }"
-                      :disabled="incassatoMeseFuturo(m.chiave)"
-                      :aria-pressed="fatturatoMeseSelezionato === m.chiave"
-                      :aria-label="m.label + ' ' + formattaEuro(m.valore)"
-                      @click="fatturatoMeseSelezionato = m.chiave">
-                <b x-show="!incassatoBarreStrette()" x-text="(m.valore === 0 || incassatoMeseFuturo(m.chiave)) ? '-' : Math.round(m.valore).toLocaleString('de-DE')"></b>
-                <u :style="{ height: incassatoAltezzaBarra(incassatoMeseFuturo(m.chiave) ? 0 : m.valore) + 'px' }"></u>
-                <small x-text="incassatoBarreStrette() ? m.label.charAt(0) : m.label"></small>
-              </button>
-            </template>
-          </div>
-        </section>
-
-        <section class="home-attention home-today-v3" style="margin-top:14px">
-          <div class="home-section-title">
-            <div>
-              <span x-text="'DETTAGLIO ' + incassatoEtichettaMese(fatturatoMeseSelezionato).toUpperCase()"></span>
-              <strong x-text="fatturatoRigheDelMeseSelezionato().length ? fatturatoRigheDelMeseSelezionato().length + ' incasso/i' : 'Nessun incasso'"></strong>
-            </div>
-          </div>
-
-          <div class="home-attention-list" x-show="fatturatoRigheDelMeseSelezionato().length > 0">
-            <template x-for="riga in fatturatoRigheDelMeseSelezionato()" :key="'incassato-riga-' + riga.pagamentoId">
-              <div class="home-attention-row">
-                <span class="home-attention-dot type-oggi"></span>
-                <div>
-                  <strong x-text="formattaEuro(riga.valore)"></strong>
-                  <small x-text="(riga.clienteNome || 'Cliente') + ' · ' + formattaData(riga.data) + (riga.importoPagato ? ' · pagati ' + formattaEuro(riga.importoPagato) : '')"></small>
-                </div>
-              </div>
-            </template>
-          </div>
-
-          <div class="crm-empty" x-show="fatturatoRigheDelMeseSelezionato().length === 0">
-            Nessun incasso a tuo nome in questo mese.
-          </div>
-        </section>
-
-        <section class="admin-ranking" x-show="fatturatoConfrontoAnni().length > 1" style="margin-top:14px">
-          <div class="admin-section-heading">
-            <div>
-              <span>STORICO</span>
-              <strong>Confronto tra anni</strong>
-            </div>
-          </div>
-
-          <div class="admin-ranking-list admin-ranking-list-flat">
-            <template x-for="riga in fatturatoConfrontoAnni()" :key="'incassato-confronto-' + riga.anno">
-              <button type="button" @click="selezionaAnnoIncassato(riga.anno)">
-                <span class="admin-ranking-name"><strong x-text="riga.anno"></strong></span>
-                <strong class="admin-ranking-total" x-text="formattaEuro(riga.guadagni)"></strong>
-              </button>
-            </template>
-          </div>
-        </section>
-
-        <div x-show="caricandoFatturato" class="empty">
-          <p>Caricamento incassato...</p>
+          <section class="port-details">
+            <div class="port-details-head"><h2>Movimenti</h2><span x-text="portafoglioDati().righe.length + (portafoglioModo === 'incassi' ? ' incassi' : ' vendite')"></span></div>
+            <template x-for="(riga, i) in portafoglioDati().righe" :key="(riga.pagamentoId || riga.data) + '-' + i"><div class="port-entry"><div><strong x-text="riga.clienteNome || 'Cliente'"></strong><small x-text="formattaData(riga.data) + (riga.importoPagato ? ' - ' + (portafoglioModo === 'incassi' ? 'pagati ' : 'contratto ') + formattaEuro(riga.importoPagato) : '')"></small></div><b x-text="'+' + formattaEuro(riga.valore)"></b></div></template>
+            <div class="port-state" x-show="portafoglioDati().righe.length === 0"><strong>Nessun movimento nel periodo</strong><p>Quando arriverà una quota a tuo nome, la vedrai qui. Prova un altro periodo.</p><button type="button" @click="portafoglioPeriodo = 'Tutto'">Vedi tutto</button></div>
+          </section>
         </div>
       </div>
     </div>
@@ -7889,7 +7844,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=203', {
+      navigator.serviceWorker.register('./service-worker.js?v=204', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

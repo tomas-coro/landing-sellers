@@ -27,9 +27,10 @@
     async apriIncassato() {
       this.view = 'incassato';
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.portafoglioModo = 'incassi';
+      this.portafoglioPeriodo = '1M';
+      this.portafoglioHover = null;
       await this.caricaFatturato();
-      // Il mese si sceglie dopo il caricamento: l'anno puo' cambiare in
-      // caricaFatturato (anno corrente non presente tra quelli disponibili).
       this.fatturatoMeseSelezionato = meseInizialeIncassato(this.incassatoSerie());
     },
 
@@ -96,12 +97,71 @@
         .sort((a, b) => b.data.localeCompare(a.data));
     },
 
+    portafoglioDati(oggi = new Date()) {
+      const primoIncasso = this.fatturatoGuadagniRighe.map(r => r.data).filter(Boolean).sort()[0];
+      const minimo = new Date(Math.max(new Date(2026, 7, 1).getTime(), primoIncasso ? new Date(primoIncasso.slice(0, 7) + '-01T00:00:00').getTime() : 0));
+      const inizio = new Date(oggi.getFullYear(), oggi.getMonth(), oggi.getDate());
+      const periodo = this.portafoglioPeriodo;
+      if (periodo === 'Tutto') inizio.setTime(minimo.getTime());
+      else if (periodo === '1S') inizio.setDate(inizio.getDate() - 6);
+      else if (periodo !== '1G') inizio.setMonth(inizio.getMonth() - ({ '1M': 1, '3M': 3, '6M': 6, '12M': 12 }[periodo] || 1));
+      if (inizio < minimo) inizio.setTime(minimo.getTime());
+      const dataISO = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      const origine = this.portafoglioModo === 'incassi' ? this.fatturatoGuadagniRighe : this.portafoglioVendite;
+      const righe = origine.filter(r => r.data >= dataISO(inizio) && r.data <= dataISO(oggi)).slice().sort((a, b) => b.data.localeCompare(a.data));
+      const totale = righe.reduce((n, r) => n + (Number(r.valore) || 0), 0);
+      const primaFine = new Date(inizio); primaFine.setDate(primaFine.getDate() - 1);
+      const primaInizio = new Date(primaFine);
+      primaInizio.setDate(primaInizio.getDate() - Math.round((oggi - inizio) / 86400000));
+      const precedente = origine.filter(r => r.data >= dataISO(primaInizio) && r.data <= dataISO(primaFine))
+        .reduce((n, r) => n + (Number(r.valore) || 0), 0);
+      const perGiorno = new Map();
+      righe.forEach(r => perGiorno.set(r.data, (perGiorno.get(r.data) || 0) + (Number(r.valore) || 0)));
+      const giorni = [];
+      for (const d = new Date(inizio); d <= oggi; d.setDate(d.getDate() + 1)) {
+        const chiave = dataISO(d);
+        giorni.push({ data: chiave, valore: perGiorno.get(chiave) || 0 });
+      }
+      return { righe, totale, precedente, giorni, inizio: dataISO(inizio), fine: dataISO(oggi) };
+    },
+
+    portafoglioGrafico(oggi = new Date()) {
+      const { giorni, inizio, fine } = this.portafoglioDati(oggi);
+      if (!giorni.length) return '';
+      const periodo = this.portafoglioPeriodo;
+      const campioni = giorni;
+      let cumulato = 0;
+      const punti = campioni.map((g, i) => ({ ...g, indice: i, cumulato: (cumulato += g.valore) }));
+      const massimo = Math.max(1, cumulato), picco = Math.max(1, ...campioni.map(g => g.valore));
+      const scala = ['3M', '6M'].includes(periodo) ? 'settimane' : ['12M', 'Tutto'].includes(periodo) ? 'mesi' : 'giorni';
+      const scelti = punti.filter((p, i) => i === 0 || i === punti.length - 1 || scala === 'giorni' || (scala === 'settimane' && new Date(p.data + 'T00:00:00').getDay() === 0) || (scala === 'mesi' && p.data.endsWith('-01')));
+      const x = i => punti.length === 1 ? 340 : 20 + i * 320 / (punti.length - 1);
+      const y = p => 152 - p.cumulato / massimo * 120;
+      const linea = (punti.length === 1 ? 'M20 152 L340 ' + y(punti[0]).toFixed(1) : scelti.map((p, i) => (i ? 'L' : 'M') + x(p.indice).toFixed(1) + ' ' + y(p).toFixed(1)).join(' '));
+      const larghezza = Math.max(.6, Math.min(8, 180 / punti.length));
+      const barre = punti.map(p => p.valore > 0 ? `<rect x="${(x(p.indice) - larghezza / 2).toFixed(1)}" y="${(197 - p.valore / picco * 29).toFixed(1)}" width="${larghezza}" height="${(p.valore / picco * 29).toFixed(1)}" rx="1"/>` : '').join('');
+      return `<line class="port-grid" x1="20" y1="32" x2="340" y2="32"/><line class="port-grid" x1="20" y1="92" x2="340" y2="92"/><line class="port-grid" x1="20" y1="152" x2="340" y2="152"/><path class="port-area" d="${linea} L340 152 L20 152 Z"/><path class="port-line" d="${linea}"/><g class="port-bars">${barre}</g><text x="20" y="220">${inizio.slice(5)}</text><text x="340" y="220" text-anchor="end">${fine.slice(5)}</text>`;
+    },
+
+    portafoglioPunta(evento) {
+      const svg = evento.currentTarget;
+      const x = Math.max(0, Math.min(1, (evento.clientX - svg.getBoundingClientRect().left) / svg.getBoundingClientRect().width));
+      const { giorni, totale } = this.portafoglioDati();
+      if (!giorni.length) return;
+      const indice = Math.round(x * (giorni.length - 1));
+      const data = giorni[indice].data;
+      const quota = giorni[indice].valore;
+      const cumulato = giorni.slice(0, indice + 1).reduce((n, d) => n + d.valore, 0);
+      this.portafoglioHover = { data, quota, cumulato, x: Math.max(18, Math.min(82, x * 100)), y: 152 - cumulato / Math.max(1, totale) * 120 };
+    },
+
     // Nessuna cache: la vista Fatturato viene ricaricata da zero ogni volta
     // che si apre, così resta sempre coerente con l'ultimo incasso/vendita/
     // eliminazione registrati altrove nell'app.
     async caricaFatturato() {
       this.erroreFatturato = '';
       this.caricandoFatturato = true;
+      if (this.view === 'incassato') { this.fatturatoGuadagniRighe = []; this.portafoglioVendite = []; }
 
       const userId = this.sessione?.user?.id;
       if (!userId) {
@@ -124,6 +184,26 @@
         this.fatturatoGuadagniRighe = await this.righeIncassatePerPartecipazioni(
           miePartecipazioni.data || []
         );
+        if (this.erroreFatturato) return;
+        if (this.view === 'incassato') {
+          const quote = await window.supabaseClient.from('vendita_partecipanti')
+            .select('vendita_id,quota_finale').eq('profilo_id', userId);
+          if (quote.error) { this.erroreFatturato = 'Errore nel caricare le vendite: ' + quote.error.message; return; }
+          const ids = [...new Set((quote.data || []).map(q => q.vendita_id))];
+          if (ids.length) {
+            const vendite = await window.supabaseClient.from('vendite')
+              .select('id,stato,data_vendita,importo_vendita,clienti(nome)').in('id', ids);
+            if (vendite.error) { this.erroreFatturato = 'Errore nel caricare le vendite: ' + vendite.error.message; return; }
+            const perId = Object.fromEntries((vendite.data || []).filter(v => v.stato === 'attiva').map(v => [v.id, v]));
+            this.portafoglioVendite = (quote.data || []).filter(q => perId[q.vendita_id]?.data_vendita).map(q => ({
+              data: perId[q.vendita_id].data_vendita,
+              valore: Number(q.quota_finale) || 0,
+              clienteNome: perId[q.vendita_id].clienti?.nome || 'Cliente',
+              importoPagato: Number(perId[q.vendita_id].importo_vendita) || 0,
+              pagamentoId: q.vendita_id
+            }));
+          }
+        }
 
         if (this.isAdmin) {
           const ok = await this.caricaFatturatoAzienda();
@@ -144,6 +224,8 @@
           this.fatturatoAnno =
             this.fatturatoAnniDisponibili[0] || new Date().getFullYear();
         }
+      } catch (errore) {
+        this.erroreFatturato = 'Connessione non disponibile. Riprova.';
       } finally {
         this.caricandoFatturato = false;
       }

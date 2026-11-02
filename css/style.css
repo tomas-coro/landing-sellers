@@ -17132,3 +17132,44 @@ html[data-theme="dark"] .admin-rank-row.is-first .admin-rank-pos{border-color:va
   .fb-pbt{transition:none;}
   .client-payment-row.fb-riga-nuova{animation:none;background:var(--lime);}
 }
+
+/* Portafoglio incassi: usa i token del tema, senza dipendere dalle card Home. */
+.port-page{max-width:720px;margin:auto}
+.port-switch{display:inline-flex;gap:3px;padding:3px;background:var(--paper-2);border:1px solid var(--line);border-radius:12px}
+.port-switch button{border:0;border-radius:9px;background:transparent;padding:9px 18px;font:700 12px var(--sans);color:var(--ink);cursor:pointer}
+.port-switch button[aria-pressed=true]{background:var(--card);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.port-balance{padding:25px 0 22px}
+.port-balance span{display:block;color:var(--muted);font-size:12px;font-weight:700}
+.port-balance strong{display:block;margin:6px 0 5px;font-size:clamp(39px,9vw,58px);line-height:1.1;letter-spacing:-.065em;font-weight:800;font-variant-numeric:tabular-nums}
+.port-balance b{display:block;color:var(--port-green,#237345);font-size:18px}
+.port-balance small{display:block;color:var(--muted);font-size:11px;margin-top:6px}
+.port-page{--port-green:#237345;--port-chart:#287b4c;--port-wash:rgba(40,123,76,.14)}
+html[data-theme=dark] .port-page{--port-green:#92e6ae;--port-chart:#9ee6ac;--port-wash:rgba(158,230,172,.15)}
+.port-ranges{display:flex;justify-content:space-between;gap:3px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.port-ranges button{flex:1;min-width:0;min-height:40px;padding:0 2px;border:0;border-radius:8px;background:none;color:var(--muted);font:800 11px var(--sans);cursor:pointer}
+.port-ranges button[aria-pressed=true]{background:var(--ink);color:var(--card)}
+.port-graph{padding-top:17px}
+.port-caption{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12px}
+.port-caption small{font-size:10px;color:var(--muted);text-align:right}
+.port-chart-wrap{position:relative;max-width:520px;margin:auto}
+.port-chart{display:block;width:100%;height:auto;touch-action:none;overflow:visible;cursor:crosshair}
+.port-chart .port-grid{stroke:var(--line);stroke-dasharray:3 5}
+.port-chart .port-area{fill:var(--port-wash)}
+.port-chart .port-line{fill:none;stroke:var(--port-chart);stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.port-chart .port-bars{fill:var(--port-chart);opacity:.55}
+.port-chart text{fill:var(--muted);font:600 10px var(--sans)}
+.port-tip{position:absolute;top:18px;transform:translateX(-50%);z-index:2;pointer-events:none;white-space:nowrap;background:var(--ink);color:var(--card);border-radius:9px;padding:8px 10px;font-size:11px;box-shadow:0 5px 16px rgba(0,0,0,.16)}
+.port-tip strong{display:block;font-size:13px}
+.port-hint{font-size:10px;color:var(--muted);line-height:1.5}
+.port-details{border-top:1px solid var(--line);margin-top:23px;padding-top:18px}
+.port-details-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:7px}
+.port-details-head h2{font-size:16px;margin:0}.port-details-head span{font-size:11px;color:var(--muted)}
+.port-entry{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}
+.port-entry:last-child{border-bottom:0}.port-entry strong{font-size:13px}.port-entry small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.port-entry b{white-space:nowrap;color:var(--port-green);font-size:14px}
+.port-state{border:1px solid var(--line);background:var(--paper-2);border-radius:12px;padding:18px;margin-top:18px}
+.port-state strong{display:block;font-size:16px}.port-state p{font-size:12px;color:var(--muted);margin:4px 0 0}
+.port-state button{margin-top:12px;border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:var(--card);color:var(--ink);font:700 12px var(--sans);cursor:pointer}
+.port-skeleton{padding:24px 0}.port-skeleton i{display:block;height:14px;width:50%;border-radius:6px;background:var(--paper-2);border:1px solid var(--line);margin-bottom:16px;animation:skeleton-shimmer 1.5s infinite}
+.port-skeleton i:nth-child(2){height:48px;width:74%}.port-skeleton i:nth-child(3){height:220px;width:100%;margin-top:30px}.port-skeleton i:nth-child(4){width:90%;height:42px}
+@media(prefers-reduced-motion:reduce){.port-skeleton i{animation:none}}

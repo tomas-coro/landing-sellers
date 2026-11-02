@@ -856,6 +856,10 @@ function appState() {
     fatturatoMeseSelezionato: null, // chiave 'YYYY-MM' per l'elenco dettagliato sotto il grafico
     fatturatoHover: null,
     incassatoHoverMensile: null, // indice barra evidenziata nel grafico "Il tuo incassato"
+    portafoglioModo: 'incassi',
+    portafoglioPeriodo: '1M',
+    portafoglioVendite: [],
+    portafoglioHover: null,
 
     ricercaGlobale: '',
     indiceNoteRicerca: [],
