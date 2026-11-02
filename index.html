@@ -392,7 +392,7 @@
           </div>
         </div>
         <div class="fb-pbt" :class="{ 'fb-in': feedback.stampato }">
-          <button type="button" @click="chiudiFeedback()">Chiudi</button>
+          <button type="button" @click="chiudiFeedback()">Torna alla scheda</button>
           <button type="button" class="fb-primary" @click="chiudiFeedback(true)">Apri vendita</button>
         </div>
       </div>
@@ -7856,7 +7856,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=205', {
+      navigator.serviceWorker.register('./service-worker.js?v=206', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

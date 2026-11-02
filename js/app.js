@@ -1060,6 +1060,7 @@ function appState() {
     historyRipristino: false,
     historyUltimaChiave: '',
     historyUltimaVista: '',
+    sostituisciEconomiaDopoIncasso: false,
     posizioniScroll: {},
     // Chiavi delle schermate attraversate: servono a capire se si sta tornando
     // indietro (si riprende la posizione di scorrimento) o aprendo qualcosa di
@@ -1105,7 +1106,15 @@ function appState() {
         this.posizioniScroll[this.historyUltimaChiave] = appEl.scrollTop;
       }
 
-      history.pushState(stato, '', location.href);
+      const sostituisci = this.sostituisciEconomiaDopoIncasso &&
+        this.historyUltimaVista === 'economia' && stato.view === 'scheda';
+      this.sostituisciEconomiaDopoIncasso = false;
+      if (sostituisci) {
+        history.replaceState(stato, '', location.href);
+        this.pilaNavigazione[this.pilaNavigazione.length - 1] = chiave;
+      } else {
+        history.pushState(stato, '', location.href);
+      }
       this.historyUltimaChiave = chiave;
 
       const vistaCambiata = stato.view !== this.historyUltimaVista;

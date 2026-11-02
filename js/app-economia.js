@@ -2322,6 +2322,7 @@
         if (nuovoIncasso) {
           // Resto sulla scheda cliente: il foglio "soldi" si apre sulla riga
           // nuova e lo scontrino esce sopra.
+          this.sostituisciEconomiaDopoIncasso = true;
           await this.apriScheda(
             this.venditaEconomicaAttiva.cliente_id,
             { pagamentoId: pagamentoSalvatoId }

@@ -17096,11 +17096,12 @@ html[data-theme="dark"] .admin-rank-row.is-first .admin-rank-pos{border-color:va
   min-height:46px;
   border-radius:12px;
   border:1.5px solid #111;
-  background:#fff;
+  background:var(--lime);
   color:#111;
   font:700 14px var(--sans);
   cursor:pointer;
 }
+html[data-theme="dark"] .fb-pbt button:not(.fb-primary){color:#111;}
 .fb-pbt .fb-primary{background:#111;color:var(--lime);}
 
 /* riga appena registrata nello storico pagamenti */

@@ -98,6 +98,45 @@ test('vendita e incasso mostrano il feedback e restano sulla scheda, non in home
   assert.match(economia, /await this\.apriScheda\(clienteId\);/);
   assert.doesNotMatch(economia, /if \(this\.successoEconomia\) this\.vaiHome\(\)/);
   assert.match(economia, /nuovoIncasso/);
+  assert.match(economia, /this\.sostituisciEconomiaDopoIncasso = true;\s*await this\.apriScheda/);
+});
+
+test('dopo un incasso la scheda sostituisce il modulo nella cronologia', () => {
+  const s = stato();
+  const precedente = s.chiaveHistory({ le: true, view: 'lista' });
+  const modulo = s.chiaveHistory({ le: true, view: 'economia', modalitaEconomia: 'incasso' });
+  s.pilaNavigazione = [precedente, modulo];
+  s.historyUltimaChiave = modulo;
+  s.historyUltimaVista = 'economia';
+  s.historyPronta = true;
+  s.view = 'scheda';
+  s.clienteSelezionatoId = 'c1';
+  s.sostituisciEconomiaDopoIncasso = true;
+  const originalDocument = globalThis.document;
+  const originalHistory = globalThis.history;
+  const originalLocation = globalThis.location;
+  const operazioni = [];
+  try {
+    globalThis.document = { getElementById: () => null };
+    globalThis.location = { href: '/' };
+    globalThis.history = {
+      pushState: () => operazioni.push('push'),
+      replaceState: stato => operazioni.push(stato.view)
+    };
+    s.gestisciScrollCambioVista = () => {};
+    s.sincronizzaHistoryNavigazione();
+    assert.deepEqual(operazioni, ['scheda']);
+    assert.equal(s.pilaNavigazione.length, 2);
+    assert.equal(s.statoPrecedenteNavigazione().view, 'lista');
+    assert.equal(s.sostituisciEconomiaDopoIncasso, false);
+    s.view = 'lista';
+    s.sincronizzaHistoryNavigazione();
+    assert.deepEqual(operazioni, ['scheda', 'push']);
+  } finally {
+    globalThis.document = originalDocument;
+    globalThis.history = originalHistory;
+    globalThis.location = originalLocation;
+  }
 });
 
 test('il feedback parte dopo la registrazione e si chiude da solo', () => {
