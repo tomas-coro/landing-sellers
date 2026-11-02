@@ -55,7 +55,7 @@ test('il caricamento quote rete e chiamato in ognuno dei punti di chiamata', () 
   const chiamata = /await this\.caricaQuoteReteDaConfermare\(\)/;
   const aperte = economia.match(/async caricaQuoteAperte\(\) \{[\s\S]*?\n    \},/)[0];
   assert.match(aperte, chiamata, 'caricaQuoteAperte');
-  assert.match(economia, /await this\.caricaTrasferimentiDaConfermare\(\);\s*await this\.caricaQuoteReteDaConfermare\(\);\s*this\.mostraToast\('success', this\.successoEconomia\)/, 'salvataggio vendita');
+  assert.match(economia, /await this\.caricaTrasferimentiDaConfermare\(\);\s*await this\.caricaQuoteReteDaConfermare\(\);[\s\S]*?this\.mostraToast\('success', this\.successoEconomia\)/, 'salvataggio incasso');
   assert.match(app, /this\.view = 'agenda';\s*await this\.caricaTrasferimentiDaConfermare\(\);\s*await this\.caricaQuoteReteDaConfermare\(\)/, 'agenda');
   assert.match(app, /this\.view = 'profilo';\s*await this\.caricaTrasferimentiDaConfermare\(\);\s*await this\.caricaQuoteReteDaConfermare\(\)/, 'profilo');
 });

@@ -725,6 +725,14 @@ function appState() {
     toasts: [],
     _toastId: 0,
 
+    // feedback dopo vendita / incasso / errore di registrazione (conferma
+    // animata o scontrino): la logica sta in js/app-economia.js
+    feedback: null,
+    _feedbackId: 0,
+    _feedbackTimer: null,
+    pagamentoEvidenziatoId: null,
+    _evidenziaTimer: null,
+
     // modal di conferma generico: sostituisce window.confirm() nativo per
     // azioni distruttive o con perdita di dati, restando coerente con lo
     // stile dell'app. risolve la Promise quando l'utente sceglie.

@@ -308,6 +308,95 @@
       </template>
     </div>
 
+    <!-- FEEDBACK REGISTRAZIONI: conferma animata (vendita), scontrino (incasso), errore rosso -->
+    <template x-if="feedback && feedback.tipo !== 'incasso'">
+      <div>
+        <div class="fb-ov" :class="{ 'fb-bad': feedback.tipo === 'errore' }" role="status"
+             x-show="feedback.fase === 'overlay'" x-transition.opacity.duration.250ms>
+          <svg class="fb-check" viewBox="0 0 80 80" aria-hidden="true">
+            <circle class="fb-ci" cx="40" cy="40" r="36"/>
+            <path class="fb-ck" :d="feedback.tipo === 'errore' ? 'M40 22v22M40 56v.5' : 'M25 41l11 11 20-23'"/>
+          </svg>
+          <div class="fb-num" x-show="feedback.tipo === 'vendita'" x-text="formattaEuro(feedback.importoMostrato)"></div>
+          <div class="fb-lbl">
+            <strong x-text="feedback.titolo"></strong>
+            <span x-show="feedback.tipo === 'vendita'" x-text="feedback.servizio + (feedback.cliente ? ' · ' + feedback.cliente : '')"></span>
+            <span x-show="feedback.tipo === 'errore'" x-text="feedback.messaggio"></span>
+          </div>
+          <div class="fb-quota" x-show="feedback.tipo === 'vendita' && feedback.quota != null">
+            La tua quota: <b x-text="formattaEuro(feedback.quotaMostrata)"></b>
+          </div>
+        </div>
+
+        <div class="fb-chip" :class="{ 'fb-bad': feedback.tipo === 'errore' }" role="status"
+             x-show="feedback.fase === 'chip'" x-transition.opacity.duration.200ms>
+          <span x-text="feedback.tipo === 'errore' ? 'Non salvato' : feedback.titolo"></span>
+          <button type="button"
+                  @click="feedback.tipo === 'errore'
+                            ? (feedback.riprova ? feedbackRiprova() : chiudiFeedback())
+                            : chiudiFeedback(true)"
+                  x-text="feedback.tipo === 'errore' ? (feedback.riprova ? 'Riprova' : 'Chiudi') : 'Vedi'"></button>
+        </div>
+      </div>
+    </template>
+
+    <template x-if="feedback && feedback.tipo === 'incasso'">
+      <div class="fb-pr" :class="{ 'fb-uscita': feedback.uscita }" role="dialog" aria-modal="true"
+           :aria-label="feedback.annullato ? 'Incasso annullato' : 'Incasso registrato'"
+           @keydown.escape.window="chiudiFeedback()">
+        <div class="fb-bd" @click="feedback.stampato && chiudiFeedback()"></div>
+        <div class="fb-slot"><i></i></div>
+        <div class="fb-pw" :class="{ 'fb-done': feedback.stampato }">
+          <div class="fb-pp" :class="{ 'fb-annullato': feedback.annullato }"
+               @animationend="feedback.stampato = true">
+            <div class="fb-brand">
+              <span x-text="feedback.annullato ? 'Incasso annullato' : 'Ricevuta incasso'"></span>
+              <span x-text="feedback.dataIncasso ? formattaData(feedback.dataIncasso) : ''"></span>
+            </div>
+            <div class="fb-logo">LANDING EVOLUTION</div>
+            <div class="fb-big" x-text="formattaEuro(feedback.importoMostrato)"></div>
+            <div class="fb-mia" x-show="feedback.quota != null">
+              <span>La tua quota</span><b x-text="formattaEuro(feedback.quotaMostrata)"></b>
+            </div>
+
+            <div class="fb-sec">Incasso</div>
+            <div class="fb-ln" x-show="feedback.cliente"><span>Cliente</span><b x-text="feedback.cliente"></b></div>
+            <div class="fb-ln" x-show="feedback.rata"><span>Rata</span><b x-text="feedback.rata"></b></div>
+            <div class="fb-ln" x-show="feedback.metodo"><span>Metodo</span><b x-text="feedback.metodo"></b></div>
+            <div class="fb-ln"><span>Stato</span><b x-text="feedback.annullato ? 'ANNULLATO' : 'INCASSATO'"></b></div>
+
+            <div class="fb-sec">Vendita collegata</div>
+            <div class="fb-ln" x-show="feedback.servizio"><span>Servizio</span><b x-text="feedback.servizio"></b></div>
+            <div class="fb-ln"><span>Importo vendita</span><b x-text="formattaEuro(feedback.importoVendita)"></b></div>
+
+            <template x-if="feedback.quote.length">
+              <div>
+                <div class="fb-sec">Ripartizione</div>
+                <template x-for="(q, i) in feedback.quote" :key="i">
+                  <div class="fb-ln"><span x-text="q.nome"></span><b x-text="formattaEuro(q.importo)"></b></div>
+                </template>
+              </div>
+            </template>
+
+            <div class="fb-sec">Da incassare</div>
+            <div class="fb-ln"><span>Incassato finora</span><b x-text="formattaEuro(feedback.incassatoFinora) + ' / ' + formattaEuro(feedback.importoVendita)"></b></div>
+            <div class="fb-bar"><i :style="'width:' + feedback.percentuale + '%'"></i></div>
+            <div class="fb-ln" x-show="feedback.saldata"><span>Vendita</span><b>SALDATA</b></div>
+            <template x-for="(r, i) in feedback.previste" :key="i">
+              <div class="fb-ln"><span x-text="r.data ? formattaData(r.data) : 'Senza data'"></span><b x-text="formattaEuro(r.importo)"></b></div>
+            </template>
+            <div class="fb-ln" x-show="feedback.altrePreviste"><span x-text="'+ altre ' + feedback.altrePreviste + ' rate'"></span><b></b></div>
+
+            <div class="fb-ft">Riepilogo interno, non è un documento fiscale</div>
+          </div>
+        </div>
+        <div class="fb-pbt" :class="{ 'fb-in': feedback.stampato }">
+          <button type="button" @click="chiudiFeedback()">Chiudi</button>
+          <button type="button" class="fb-primary" @click="chiudiFeedback(true)">Apri vendita</button>
+        </div>
+      </div>
+    </template>
+
     <!-- BANNER AGGIORNAMENTO: appare sopra qualunque vista appena il service worker scarica una versione nuova -->
     <div x-show="aggiornamentoDisponibile" x-cloak class="update-bar">
       <span>Nuova versione disponibile</span>
@@ -5727,7 +5816,8 @@
               </span>
 
               <template x-for="p in pagamentiCliente" :key="p.id">
-                <div class="client-payment-row" :id="'pagamento-' + p.id">
+                <div class="client-payment-row" :id="'pagamento-' + p.id"
+                     :class="{ 'fb-riga-nuova': pagamentoEvidenziatoId === p.id }">
 
                   <div>
                     <strong x-text="formattaEuro(p.importo)"></strong>
@@ -7793,7 +7883,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=200', {
+      navigator.serviceWorker.register('./service-worker.js?v=202', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

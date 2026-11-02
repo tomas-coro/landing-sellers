@@ -29,6 +29,175 @@
       this.scorriEconomiaA('#errore-economia');
     },
 
+    // ---- Feedback dopo la registrazione (mockup 20) ----
+    // Vendita = spunta + importo che conta + "La tua quota", poi riquadro con
+    // Vedi. Incasso (anche annullato) = scontrino che esce dalla stampante.
+    // Errore = conferma rossa con messaggio e Riprova.
+
+    preferisceMenoMovimento() {
+      return !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    },
+
+    // Fa contare un numero del feedback da 0 al valore finale (700 ms).
+    contaFeedback(campo, finale) {
+      const id = this.feedback?.id;
+      if (!id || finale == null) return;
+
+      if (this.preferisceMenoMovimento() || typeof requestAnimationFrame !== 'function') {
+        this.feedback[campo] = finale;
+        return;
+      }
+
+      const inizio = performance.now();
+      const passo = adesso => {
+        if (this.feedback?.id !== id) return;
+        const p = Math.min(1, (adesso - inizio) / 700);
+        this.feedback[campo] = finale * (1 - Math.pow(1 - p, 3));
+        if (p < 1) requestAnimationFrame(passo);
+      };
+      requestAnimationFrame(passo);
+    },
+
+    mostraFeedback(dati) {
+      clearTimeout(this._feedbackTimer);
+      const id = ++this._feedbackId;
+      this.feedback = {
+        importoMostrato: 0,
+        quotaMostrata: 0,
+        stampato: false,
+        uscita: false,
+        ...dati,
+        id
+      };
+
+      this.contaFeedback('importoMostrato', dati.importo);
+      this.contaFeedback('quotaMostrata', dati.quota);
+
+      if (dati.tipo === 'incasso') {
+        // Il tasto Chiudi compare a fine stampa (animationend sul foglio).
+        if (this.preferisceMenoMovimento()) this.feedback.stampato = true;
+        return;
+      }
+
+      // Vendita ed errore: prima il momento di conferma, poi il riquadro.
+      this.feedback.fase = 'overlay';
+      this._feedbackTimer = setTimeout(() => {
+        if (this.feedback?.id !== id) return;
+        this.feedback.fase = 'chip';
+        if (this.feedback.apriSoldi) this.vediRigaFeedback(this.feedback);
+        this._feedbackTimer = setTimeout(
+          () => this.chiudiFeedback(),
+          dati.tipo === 'errore' ? 8000 : 4500
+        );
+      }, 1700);
+    },
+
+    // Mostra la riga appena registrata: apre il foglio "soldi" e la evidenzia.
+    vediRigaFeedback(f) {
+      this.apriFoglioScheda?.('soldi');
+      if (f?.pagamentoId) this.evidenziaPagamento(f.pagamentoId);
+    },
+
+    evidenziaPagamento(id) {
+      clearTimeout(this._evidenziaTimer);
+      this.pagamentoEvidenziatoId = null;
+      const imposta = () => {
+        this.pagamentoEvidenziatoId = id;
+        this._evidenziaTimer = setTimeout(() => {
+          this.pagamentoEvidenziatoId = null;
+        }, 4000);
+        const riga = globalThis.document?.getElementById('pagamento-' + id);
+        riga?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+      };
+      return typeof this.$nextTick === 'function' ? this.$nextTick(imposta) : imposta();
+    },
+
+    // vedi=true: il tasto "Vedi" / "Apri vendita" mostra la riga nello storico.
+    chiudiFeedback(vedi = false) {
+      clearTimeout(this._feedbackTimer);
+      const f = this.feedback;
+      if (!f) return;
+
+      if (vedi || f.tipo === 'incasso') this.vediRigaFeedback(f);
+
+      if (f.tipo === 'incasso' && !this.preferisceMenoMovimento()) {
+        f.uscita = true;
+        setTimeout(() => {
+          if (this.feedback?.id === f.id) this.feedback = null;
+        }, 260);
+        return;
+      }
+      this.feedback = null;
+    },
+
+    feedbackRiprova() {
+      this.chiudiFeedback();
+      return this.salvaEconomia();
+    },
+
+    mostraFeedbackErrore(titolo, messaggio, riprova = false) {
+      this.mostraFeedback({ tipo: 'errore', titolo, messaggio, riprova });
+    },
+
+    // Dati dello scontrino presi dall'incasso reale e dallo storico della
+    // vendita (mai numeri di esempio). Va chiamato DOPO aver ricaricato
+    // pagamentiCliente / venditaClienteAttiva.
+    costruisciScontrinoIncasso(pagamento, { annullato = false, nomeCliente = '' } = {}) {
+      const vendita = this.venditaClienteAttiva || {};
+      const utenteId = this.sessione?.user?.id;
+      const validi = (this.pagamentiCliente || []).filter(p => p.stato !== 'annullato');
+      const incassati = validi.filter(p => p.stato === 'incassato');
+      const previste = validi
+        .filter(p => p.stato === 'previsto')
+        .sort((a, b) => String(a.data_scadenza || '').localeCompare(String(b.data_scadenza || '')));
+
+      const importo = Number(pagamento.importo) || 0;
+      const importoVendita = Number(vendita.importo_vendita) || 0;
+      const incassatoFinora = incassati.reduce((t, p) => t + (Number(p.importo) || 0), 0);
+
+      const quote = (pagamento.quote_trasferimento || [])
+        .map(q => ({
+          nome: q.profilo_id === utenteId ? 'Tua quota' : 'Quota ' + this.nomePartecipanteTrasferimento(q),
+          importo: Number(q.quota_effettiva) || 0,
+          mia: q.profilo_id === utenteId
+        }))
+        .sort((a, b) => Number(b.mia) - Number(a.mia));
+
+      let rata = '';
+      if (!annullato && validi.length > 1) {
+        const ordinati = [...incassati].sort((a, b) =>
+          String(a.data_pagamento || '').localeCompare(String(b.data_pagamento || '')));
+        const posizione = ordinati.findIndex(p => p.id === pagamento.id) + 1;
+        if (posizione > 0) rata = `${posizione} di ${validi.length}`;
+      }
+
+      return {
+        tipo: 'incasso',
+        fase: 'scontrino',
+        annullato,
+        pagamentoId: pagamento.id,
+        cliente: nomeCliente,
+        servizio: vendita.servizio || '',
+        importo,
+        quota: quote.find(q => q.mia)?.importo ?? null,
+        rata,
+        dataIncasso: pagamento.data_pagamento || '',
+        metodo: pagamento.metodo || '',
+        importoVendita,
+        incassatoFinora,
+        percentuale: importoVendita > 0
+          ? Math.min(100, Math.round((incassatoFinora / importoVendita) * 100))
+          : 0,
+        quote,
+        previste: previste.slice(0, 4).map(p => ({
+          data: p.data_scadenza || '',
+          importo: Number(p.importo) || 0
+        })),
+        altrePreviste: Math.max(0, previste.length - 4),
+        saldata: importoVendita > 0 && incassatoFinora >= importoVendita
+      };
+    },
+
     scorriEconomiaA(selettore, mostraValidita = false) {
       const scorri = () => {
         const elemento = globalThis.document?.querySelector(selettore);
@@ -799,6 +968,10 @@
         if (error) {
           this.errorePagamentiCliente =
             `Pagamento non ${annullaIncasso ? 'annullato' : 'eliminato'}: ${error.message}`;
+          this.mostraFeedbackErrore(
+            annullaIncasso ? 'Incasso non annullato' : 'Rata non eliminata',
+            error.message
+          );
           return;
         }
 
@@ -808,6 +981,10 @@
         if (!data || (!annullaIncasso && data.length === 0)) {
           this.errorePagamentiCliente =
             `Pagamento non ${annullaIncasso ? 'annullato' : 'eliminato'}: non hai i permessi necessari.`;
+          this.mostraFeedbackErrore(
+            annullaIncasso ? 'Incasso non annullato' : 'Rata non eliminata',
+            'Non hai i permessi necessari.'
+          );
           return;
         }
 
@@ -818,6 +995,19 @@
         } else {
           await this.caricaClienti();
           await this.caricaStatisticheVenditore();
+        }
+
+        // Incasso annullato: scontrino con i dati dell'incasso appena tolto.
+        // L'RPC restituisce l'id della rata tornata "prevista": e' la riga
+        // da evidenziare nello storico.
+        if (annullaIncasso) {
+          this.mostraFeedback({
+            ...this.costruisciScontrinoIncasso(
+              pagamento,
+              { annullato: true, nomeCliente: cliente.nome || '' }
+            ),
+            pagamentoId: typeof data === 'string' ? data : pagamento.id
+          });
         }
       } finally {
         this.eliminandoPagamentoId = null;
@@ -2069,7 +2259,10 @@
           }
         }
 
-        const { error } =
+        const nomeClienteIncasso =
+          this.clienteEconomiaSelezionato?.nome || '';
+
+        const { data: pagamentoSalvatoId, error } =
           await window.supabaseClient.rpc(
             rpcNome,
             rpcPayload
@@ -2078,8 +2271,19 @@
         if (error) {
           this.erroreEconomia =
             'Pagamento non salvato: ' + error.message;
+          this.mostraFeedbackErrore(
+            'Incasso non registrato',
+            error.message,
+            true
+          );
           return;
         }
+
+        // Scontrino solo per un incasso effettivo appena registrato: rata
+        // prevista e modifica restano il toast di testo.
+        const nuovoIncasso =
+          rpcNome === 'registra_pagamento_con_trasferimenti' &&
+          !!pagamentoSalvatoId;
 
         this.successoEconomia = modificaId
           ? 'Pagamento aggiornato.'
@@ -2105,6 +2309,29 @@
 
         await this.caricaTrasferimentiDaConfermare();
         await this.caricaQuoteReteDaConfermare();
+
+        if (nuovoIncasso) {
+          // Resto sulla scheda cliente: il foglio "soldi" si apre sulla riga
+          // nuova e lo scontrino esce sopra.
+          await this.apriScheda(
+            this.venditaEconomicaAttiva.cliente_id,
+            { pagamentoId: pagamentoSalvatoId }
+          );
+
+          const incasso = (this.pagamentiCliente || [])
+            .find(p => p.id === pagamentoSalvatoId);
+
+          if (incasso) {
+            this.mostraFeedback(this.costruisciScontrinoIncasso(
+              incasso,
+              { nomeCliente: nomeClienteIncasso }
+            ));
+          } else {
+            this.mostraToast('success', this.successoEconomia);
+          }
+          return;
+        }
+
         this.mostraToast('success', this.successoEconomia);
         this.scorriEconomiaA('.payment-history-panel');
       } finally {
@@ -2293,6 +2520,15 @@
             }))
           : [];
 
+      // Dati per la conferma: presi dal form prima che la RPC lo azzeri.
+      const confermaVendita = {
+        cliente: this.clienteEconomiaSelezionato?.nome || '',
+        servizio: this.venditaEconomicaForm.servizio || 'Servizio registrato',
+        importo: Number(this.venditaEconomicaForm.importoVendita) || 0,
+        quota: this.quotaUtenteCorrenteEconomia() || null,
+        conIncasso: !!pagamento
+      };
+
       this.salvandoVenditaEconomica = true;
 
       try {
@@ -2324,7 +2560,8 @@
               'Vendita già esistente'
             );
           } else {
-            this.mostraErroreEconomia('Vendita non salvata: ' + error.message);
+            this.erroreEconomia = 'Vendita non salvata: ' + error.message;
+            this.mostraFeedbackErrore('Vendita non registrata', error.message, true);
           }
           return;
         }
@@ -2344,17 +2581,26 @@
           await this.caricaStatisticheVenditore();
         }
 
-        if (clienteId) {
-          this.clienteSelezionatoId = clienteId;
-          await Promise.all([
-        this.caricaPagamentiCliente(clienteId),
-        this.caricaAttivitaCliente(clienteId)
-      ]);
+        if (!clienteId) {
+          this.vaiHome();
+          return;
         }
 
-        window.setTimeout(() => {
-          if (this.successoEconomia) this.vaiHome();
-        }, 700);
+        // Resto sulla scheda cliente (non torno in home): conferma animata
+        // sopra, poi riquadro con Vedi.
+        await this.apriScheda(clienteId);
+
+        const incassoIniziale = confermaVendita.conIncasso
+          ? (this.pagamentiCliente || []).find(p => p.stato === 'incassato')
+          : null;
+
+        this.mostraFeedback({
+          tipo: 'vendita',
+          titolo: inModifica ? 'Vendita modificata' : 'Vendita registrata',
+          ...confermaVendita,
+          pagamentoId: incassoIniziale?.id || null,
+          apriSoldi: !!incassoIniziale
+        });
       } finally {
         this.salvandoVenditaEconomica = false;
       }

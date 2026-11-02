@@ -16941,3 +16941,194 @@ html[data-theme="dark"] .metrics-trend-series button.active{background:var(--lim
 html[data-theme="dark"] .admin-rank-track i{background:var(--muted)}
 html[data-theme="dark"] .admin-rank-row.is-first .admin-rank-track i{background:var(--lime)}
 html[data-theme="dark"] .admin-rank-row.is-first .admin-rank-pos{border-color:var(--lime)}
+
+
+/* ==========================================================
+   FEEDBACK REGISTRAZIONI (mockups/20-feedback-scelto.html)
+   Vendita = spunta + importo che conta, incasso = scontrino
+   dalla stampante, errore = conferma rossa. Il foglio dello
+   scontrino resta chiaro anche nel tema scuro: e' carta.
+   ========================================================== */
+
+.fb-ov{
+  position:fixed;
+  inset:0;
+  z-index:4500;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:24px;
+  text-align:center;
+  background:var(--surface-overlay, rgba(244,241,234,.96));
+  font-family:var(--sans);
+  color:var(--ink);
+}
+.fb-check{width:92px;height:92px;}
+.fb-ci,.fb-ck{fill:none;stroke:var(--ink);stroke-linecap:round;stroke-linejoin:round;}
+.fb-ci{stroke-width:3;stroke-dasharray:226;stroke-dashoffset:226;animation:fb-draw .5s .05s forwards;}
+.fb-ck{stroke-width:4;stroke-dasharray:50;stroke-dashoffset:50;animation:fb-draw .35s .5s forwards;}
+.fb-ov.fb-bad .fb-ci,.fb-ov.fb-bad .fb-ck{stroke:var(--danger);}
+@keyframes fb-draw{to{stroke-dashoffset:0;}}
+.fb-num{font-size:34px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+.fb-lbl{display:flex;flex-direction:column;gap:2px;font-size:16px;color:var(--ink-soft);max-width:320px;}
+.fb-lbl strong{color:var(--ink);font-size:17px;}
+.fb-quota{
+  margin-top:8px;
+  padding:7px 14px;
+  border-radius:99px;
+  background:var(--lime);
+  color:#111;
+  font-size:15px;
+  font-weight:600;
+}
+
+.fb-chip{
+  position:fixed;
+  left:50%;
+  bottom:calc(20px + env(safe-area-inset-bottom));
+  transform:translateX(-50%);
+  z-index:4500;
+  width:calc(100% - 32px);
+  max-width:380px;
+  min-height:48px;
+  padding:0 8px 0 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  border-radius:99px;
+  background:#111;
+  color:#f4f1ea;
+  font-family:var(--sans);
+  font-size:15px;
+  font-weight:600;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+}
+.fb-chip.fb-bad{background:var(--danger);color:#fff;}
+.fb-chip button{
+  min-width:44px;
+  min-height:44px;
+  padding:0 12px;
+  background:none;
+  border:0;
+  color:var(--lime);
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+}
+.fb-chip.fb-bad button{color:#fff;text-decoration:underline;}
+
+/* scontrino */
+.fb-pr{position:fixed;inset:0;z-index:4600;font-family:var(--sans);transition:opacity .25s;}
+.fb-pr.fb-uscita{opacity:0;pointer-events:none;}
+.fb-bd{position:absolute;inset:0;background:rgba(17,17,17,.62);animation:fb-fade .25s;}
+@keyframes fb-fade{from{opacity:0;}to{opacity:1;}}
+.fb-slot{
+  position:absolute;
+  top:calc(env(safe-area-inset-top) + 28px);
+  left:50%;
+  transform:translateX(-50%);
+  width:min(380px,calc(100% - 24px));
+  height:24px;
+  z-index:3;
+  border-radius:9px 9px 5px 5px;
+  background:linear-gradient(#d6d1c7,#aaa59a);
+  box-shadow:0 4px 8px rgba(0,0,0,.35),inset 0 1px 0 #f1eee6;
+}
+.fb-slot i{position:absolute;left:9px;right:9px;top:13px;height:6px;background:#0d0d0d;border-radius:3px;box-shadow:inset 0 2px 3px #000;}
+.fb-pw{
+  position:absolute;
+  z-index:2;
+  top:calc(env(safe-area-inset-top) + 45px);
+  bottom:calc(env(safe-area-inset-bottom) + 96px);
+  left:50%;
+  transform:translateX(-50%);
+  width:min(352px,calc(100% - 40px));
+  overflow:hidden;
+}
+.fb-pw.fb-done{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+.fb-pp{
+  transform:translateY(-100%);
+  animation:fb-stampa 2.4s steps(48,end) forwards;
+  padding:16px 14px 24px;
+  color:#111;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  background:linear-gradient(90deg,#ece8db,#fffef9 12%,#fffef9 88%,#e9e4d6);
+  -webkit-mask:radial-gradient(circle 5px at 50% 100%,#0000 98%,#000) bottom/12px 100% repeat-x;
+  mask:radial-gradient(circle 5px at 50% 100%,#0000 98%,#000) bottom/12px 100% repeat-x;
+}
+@keyframes fb-stampa{to{transform:none;}}
+.fb-brand{display:flex;justify-content:space-between;gap:8px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6a6a61;}
+.fb-logo{margin:6px 0 2px;font:800 13px var(--sans);letter-spacing:.04em;}
+.fb-big{margin:2px 0 6px;font-size:27px;font-weight:600;font-variant-numeric:tabular-nums;}
+.fb-annullato .fb-big{text-decoration:line-through;color:#6a6a61;}
+.fb-mia{margin:8px 0 2px;padding:8px 9px;display:flex;justify-content:space-between;align-items:baseline;border-radius:6px;background:var(--lime);}
+.fb-mia span{font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;}
+.fb-mia b{font-size:17px;font-variant-numeric:tabular-nums;}
+.fb-annullato .fb-mia b{text-decoration:line-through;}
+.fb-sec{margin-top:10px;padding-top:7px;border-top:1px dashed #b9b3a4;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6a6a61;}
+.fb-ln{display:flex;justify-content:space-between;gap:8px;padding:3px 0;font-size:12px;}
+.fb-ln b{font-weight:600;text-align:right;}
+.fb-bar{height:7px;margin:6px 0 2px;border-radius:99px;background:#e4dfd1;overflow:hidden;}
+.fb-bar i{display:block;height:100%;background:#111;}
+.fb-ft{margin-top:10px;font-size:9.5px;text-align:center;color:#8a867a;}
+.fb-pbt{
+  position:absolute;
+  left:0;right:0;bottom:0;
+  z-index:3;
+  height:calc(env(safe-area-inset-bottom) + 92px);
+  padding:26px 16px 0;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  gap:8px;
+  background:linear-gradient(rgba(17,17,17,0),rgba(17,17,17,.82) 45%);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .3s;
+}
+.fb-pbt.fb-in{opacity:1;pointer-events:auto;}
+.fb-pbt button{
+  flex:1;
+  max-width:174px;
+  min-height:46px;
+  border-radius:12px;
+  border:1.5px solid #111;
+  background:#fff;
+  color:#111;
+  font:700 14px var(--sans);
+  cursor:pointer;
+}
+.fb-pbt .fb-primary{background:#111;color:var(--lime);}
+
+/* riga appena registrata nello storico pagamenti */
+.client-payment-row{position:relative;}
+.client-payment-row.fb-riga-nuova{animation:fb-riga 2.4s var(--ease);}
+.client-payment-row.fb-riga-nuova::after{
+  content:"NUOVO";
+  position:absolute;
+  top:-8px;
+  right:10px;
+  padding:3px 7px;
+  border-radius:99px;
+  background:#111;
+  color:var(--lime);
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.12em;
+}
+@keyframes fb-riga{
+  0%{background:var(--lime);transform:translateY(-14px) scale(.97);opacity:0;}
+  18%{transform:none;opacity:1;}
+  100%{background:transparent;}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .fb-ci,.fb-ck{animation:none;stroke-dashoffset:0;}
+  .fb-pp{animation:none;transform:none;}
+  .fb-bd,.fb-pr{animation:none;transition:none;}
+  .fb-pbt{transition:none;}
+  .client-payment-row.fb-riga-nuova{animation:none;background:var(--lime);}
+}
