@@ -9,6 +9,7 @@ const { appState } = require('../js/app.js');
 // nessuna rata mai creata, non c'era nessun evento che segnalasse il buco.
 test('mesiNonRegistratiCliente segnala ogni mese mensile senza nessuna riga pagamenti', () => {
   const stato = appState();
+  stato.dataISOOggi = () => '2026-11-15';
   stato.pacchettoVenditaPerCliente = { c1: { venditaId: 'v1' } };
   stato.mesiCopertiPerVenditaVenditore = {};
   stato.coperturaPagamentiAffidabile = true;
