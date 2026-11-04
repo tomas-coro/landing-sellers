@@ -88,6 +88,14 @@ test('riconosce una sessione creata dal link di recupero anche dopo il redirect'
   assert.strictEqual(sessioneRecuperoPassword(null), false);
 });
 
+test('ogni venditore può uscire dal profilo senza accesso admin', () => {
+  const html = fs.readFileSync(require.resolve('../index.html'), 'utf8');
+  const menu = html.split('<!-- MENU PERSONALE -->')[1].split('<!-- SWITCH ACCOUNT -->')[0];
+  assert.match(menu, /x-show="puoAccedereAdmin\(\)"[\s\S]*?@click="apriAccountSwitcher\(\)"/);
+  assert.match(menu, /class="danger-row" @click="fareLogout\(\)"/);
+  assert.match(menu, /Esci dall'account/);
+});
+
 test('logout e cambio password chiudono solo la sessione locale', () => {
   const auth = fs.readFileSync(require.resolve('../js/auth.js'), 'utf8');
   const client = fs.readFileSync(require.resolve('../js/supabase-client.js'), 'utf8');
