@@ -60,7 +60,7 @@ test('con incassi il messaggio e\' corretto e vale per tutti, admin compreso', (
   );
 });
 
-test('il form della matita non duplica servizi e prezzo se c\'e\' una vendita attiva', () => {
+test('il form della matita non duplica servizi e prezzo e non modifica la vendita (solo il cliente)', () => {
   assert.match(
     html,
     /x-show="clienteInModificaId && selezionePrezzo\.modalita === 'legacy' && !venditaClienteAttiva\?\.id"/
@@ -69,8 +69,7 @@ test('il form della matita non duplica servizi e prezzo se c\'e\' una vendita at
     html,
     /x-show="clienteInModificaId && selezionePrezzo\.modalita !== 'legacy' && !venditaClienteAttiva\?\.id"/
   );
-  assert.match(
-    html,
-    /x-show="clienteInModificaId && venditaClienteAttiva\?\.id"[\s\S]{0,900}modificaVenditaCliente\(\)/
-  );
+  // La vendita si modifica dai blocchi Contratto della scheda, non da Modifica cliente.
+  assert.doesNotMatch(html, /x-show="clienteInModificaId && venditaClienteAttiva\?\.id"/);
+  assert.match(html, /x-for="v in venditeClienteElenco"[\s\S]{0,1200}modificaVenditaCliente\(v\)/);
 });

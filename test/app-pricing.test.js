@@ -56,12 +56,12 @@ test('il database impedisce due vendite attive per lo stesso cliente', () => {
   assert.match(sql, /where stato = 'attiva'/i);
 });
 
-test('una vendita attiva duplicata mostra un errore chiaro', () => {
+test('una seconda vendita attiva sullo stesso cliente chiede conferma, senza errore 23505', () => {
   const js =
     fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8') +
     fs.readFileSync(path.join(__dirname, '..', 'js', 'app-economia.js'), 'utf8');
-  assert.match(js, /error\.code === '23505'/);
-  assert.match(js, /Questo cliente ha già una vendita attiva/);
+  assert.doesNotMatch(js, /error\.code === '23505'/);
+  assert.match(js, /ha già una vendita attiva\. Vuoi aggiungerne un'altra\?/);
 });
 
 test('la vendita salva anche lo snapshot della configurazione commerciale', () => {

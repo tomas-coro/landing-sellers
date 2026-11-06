@@ -516,6 +516,9 @@ function formVenditaEconomicaVuoto() {
     importoVendita: null,
 
     configurazioneCommerciale: {
+      // Nome breve del contratto (es. "Sito shop - dominio.it"): serve a
+      // distinguere piu vendite attive sullo stesso cliente.
+      nome_vendita: '',
       formula: 'mensile',
       upgrade: [],
       periodicita_contratto: 'mensile',
@@ -945,6 +948,8 @@ function appState() {
 
     // pagamenti cliente
     venditaClienteAttiva: null,
+    // Tutte le vendite attive del cliente aperto in scheda (blocchi Contratto).
+    venditeClienteElenco: [],
     pagamentiCliente: [],
     trasferimentiDaConfermare: [],
     quoteReteDaConfermare: [],
@@ -967,6 +972,8 @@ function appState() {
     coperturaPagamentiAffidabile: false,
     riepilogoPagamentiPerCliente: {},
     pacchettoVenditaPerCliente: {},
+    // Tutte le vendite attive di ogni cliente (piu contratti sullo stesso cliente).
+    venditeAttivePerCliente: {},
 
     // PROBLEMA 3: consultazione read-only della configurazione economica
     // consolidata della vendita, dalla scheda cliente.
@@ -3039,6 +3046,7 @@ costiPerMotoreRataEconomia(
       this.mesiCopertiPerVenditaVenditore = {};
       this.riepilogoPagamentiPerCliente = {};
       this.pacchettoVenditaPerCliente = {};
+      this.venditeAttivePerCliente = {};
       // pacchettoVenditaPerCliente (quindi il venditaId di un cliente) viene
       // popolato prima della query su pagamenti: se quella query fallisce o
       // viene saltata, mesiCopertiPerVenditaVenditore resta vuota ma il
@@ -3054,7 +3062,9 @@ costiPerMotoreRataEconomia(
         .from('vendite')
         .select('id,cliente_id,importo_vendita,servizio,configurazione_commerciale,data_vendita,creato_il')
         .in('cliente_id', clienteIds)
-        .eq('stato', 'attiva');
+        .eq('stato', 'attiva')
+        .order('data_vendita', { ascending: true, nullsFirst: true })
+        .order('creato_il', { ascending: true });
 
       if (venditeError) {
         console.warn('Scadenze pagamento non disponibili:', venditeError.message);
@@ -3072,11 +3082,19 @@ costiPerMotoreRataEconomia(
       // La vendita attiva e' la fonte di verita' commerciale piu' recente:
       // un cliente creato "al volo" prima di registrare la vendita non ha
       // mai nome_pacchetto/periodicita_contratto valorizzati sulla sua riga.
+      // Ordine crescente per data: con piu vendite attive sullo stesso cliente
+      // vince l'ultima (la piu recente), in modo deterministico.
+      this.venditeAttivePerCliente = {};
+      (vendite || []).forEach(vendita => {
+        (this.venditeAttivePerCliente[vendita.cliente_id] ||= []).push(vendita);
+      });
+
       this.pacchettoVenditaPerCliente = Object.fromEntries(
         (vendite || []).map(vendita => [
           vendita.cliente_id,
           {
             venditaId: vendita.id,
+            nomeVendita: (vendita.configurazione_commerciale?.nome_vendita || '').trim() || null,
             nomePacchetto:
               (vendita.servizio || '').trim() || null,
             configurazioneCommerciale:
@@ -4049,7 +4067,39 @@ costiPerMotoreRataEconomia(
           });
         }
 
-        const rinnovo = this.normalizzaDataAgenda(cliente.data_rinnovo);
+        // Piu vendite attive = un rinnovo per contratto, calcolato dalla
+        // vendita (data attivazione + periodicita), non dal cliente.
+        const venditeCliente = this.venditeAttivePerCliente?.[cliente.id] || [];
+        if (venditeCliente.length > 1) {
+          venditeCliente.forEach(vendita => {
+            const cfg = vendita.configurazione_commerciale || {};
+            const periodicita = cfg.periodicita_contratto || cfg.formula;
+            const base =
+              this.normalizzaDataAgenda(cfg.data_attivazione) ||
+              this.normalizzaDataAgenda(vendita.data_vendita || vendita.creato_il);
+            if (!['mensile', 'annuale'].includes(periodicita) || !base) return;
+            const data = this.calcolaProssimoRinnovo(base, periodicita, oggi);
+            if (!data) return;
+            const nomeVendita = (cfg.nome_vendita || vendita.servizio || '').trim();
+            eventi.push({
+              id: `rinnovo-${cliente.id}-${vendita.id}-${data}`,
+              clienteId: cliente.id,
+              clienteNome: cliente.nome,
+              venditaId: vendita.id,
+              venditoreId: cliente.venditore_id,
+              venditoreNome: this.adminVenditoriPerId[cliente.venditore_id] || '',
+              data,
+              tipo: 'rinnovo',
+              titolo: (periodicita === 'annuale' ? 'Rinnovo annuale' : 'Rinnovo contratto') +
+                (nomeVendita ? ' - ' + nomeVendita : ''),
+              scaduto: data < oggi
+            });
+          });
+        }
+
+        const rinnovo = venditeCliente.length > 1
+          ? null
+          : this.normalizzaDataAgenda(cliente.data_rinnovo);
         if (rinnovo) {
           eventi.push({
             id: `rinnovo-${cliente.id}-${rinnovo}`,

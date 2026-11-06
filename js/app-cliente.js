@@ -1074,6 +1074,15 @@
       return (this.pagamentiCliente || []).some(p => p.stato === 'incassato');
     },
 
+    // Titolo di un blocco Contratto: nome scelto dal venditore, altrimenti il servizio.
+    titoloVenditaCliente(vendita) {
+      return (
+        (vendita?.configurazione_commerciale?.nome_vendita || '').trim() ||
+        (vendita?.servizio || '').trim() ||
+        'Contratto'
+      );
+    },
+
     venditaModificabileCliente() {
       return !!this.venditaClienteAttiva?.id && !this.ciSonoIncassiCliente();
     },
@@ -1352,10 +1361,26 @@
       venditaId = null
     ) {
       this.venditaClienteAttiva = null;
+      this.venditeClienteElenco = [];
       this.pagamentiCliente = [];
       this.errorePagamentiCliente = '';
 
       if (!clienteId) return;
+
+      // Elenco di tutte le vendite attive: un blocco Contratto ciascuna.
+      const { data: elenco, error: elencoError } =
+        await window.supabaseClient
+          .from('vendite')
+          .select('id,cliente_id,importo_vendita,servizio,data_vendita,creato_il,configurazione_commerciale')
+          .eq('cliente_id', clienteId)
+          .eq('stato', 'attiva')
+          .order('data_vendita', { ascending: false })
+          .order('creato_il', { ascending: false });
+      if (elencoError) {
+        this.errorePagamentiCliente = elencoError.message;
+      } else {
+        this.venditeClienteElenco = elenco || [];
+      }
 
       this.caricandoPagamentiCliente = true;
 
@@ -1853,15 +1878,19 @@
     async aggiungiNota() {
       if (this.aggiungendoNota || !this.nuovaNotaTesto.trim()) return;
       this.aggiungendoNota = true;
+      this.erroreScheda = '';
       try {
-        const { error } = await window.supabaseClient.from('note').insert({
+        const { data, error } = await window.supabaseClient.from('note').insert({
           cliente_id: this.clienteSelezionatoId,
           venditore_id: this.sessione.user.id,
           testo: this.nuovaNotaTesto
-        });
+        }).select().single();
         if (error) { this.erroreScheda = 'Nota non salvata: ' + error.message; return; }
+        this.note = [data, ...this.note];
         this.nuovaNotaTesto = '';
-        await this.apriScheda(this.clienteSelezionatoId);
+        this.mostraToast('success', 'Nota aggiunta');
+      } catch (error) {
+        this.erroreScheda = 'Nota non salvata: controlla la connessione e riprova.';
       } finally {
         this.aggiungendoNota = false;
       }

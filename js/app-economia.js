@@ -850,9 +850,26 @@
         .slice(0, 8);
     },
 
-    selezionaClienteEconomia(cliente) {
+    async selezionaClienteEconomia(cliente, { senzaAvviso = false } = {}) {
       if (this.modalitaEconomia === 'incasso') {
         return this.apriPagamentoCliente(cliente);
+      }
+
+      // Un cliente puo avere piu contratti (es. due domini): se ne ha gia uno
+      // attivo chiedo conferma, cosi' non si crea una seconda vendita per errore.
+      const haVenditaAttiva =
+        cliente.haVenditaAttiva ||
+        (this.venditeAttivePerCliente?.[cliente.id] || []).length > 0;
+      if (
+        !senzaAvviso &&
+        haVenditaAttiva &&
+        this.modalitaEconomia === 'vendita' &&
+        !(await this.chiediConferma(
+          `${cliente.nome} ha già una vendita attiva. Vuoi aggiungerne un'altra?`,
+          'Aggiungi vendita'
+        ))
+      ) {
+        return;
       }
 
       this.clienteEconomiaSelezionato = cliente;
@@ -2560,19 +2577,8 @@
         );
 
         if (error) {
-          if (error.code === '23505') {
-            // Il cliente ha gia' una vendita attiva: il banner offre il
-            // pulsante per andare alla sua scheda e annullarla.
-            this.venditaGiaAttivaClienteId =
-              this.venditaEconomicaForm.clienteId;
-            this.mostraErroreEconomia(
-              'Questo cliente ha già una vendita attiva. Aprila dalla scheda cliente: puoi incassarla oppure modificarla se non ha ancora incassi.',
-              'Vendita già esistente'
-            );
-          } else {
-            this.erroreEconomia = 'Vendita non salvata: ' + error.message;
-            this.mostraFeedbackErrore('Vendita non registrata', error.message, true);
-          }
+          this.erroreEconomia = 'Vendita non salvata: ' + error.message;
+          this.mostraFeedbackErrore('Vendita non registrata', error.message, true);
           return;
         }
 
@@ -2629,12 +2635,19 @@
     // del cliente. Sul salvataggio la vendita viene sostituita
     // (sostituisci_vendita), cosi' quote e rate usano lo stesso motore della
     // registrazione. Possibile solo senza incassi (lo verifica anche la SQL).
-    async modificaVenditaCliente() {
-      const vendita = this.venditaClienteAttiva;
+    // Senza argomento modifica la vendita corrente della scheda; con una
+    // vendita (blocco Contratto) modifica quella.
+    async modificaVenditaCliente(venditaScelta = null) {
+      const vendita = venditaScelta || this.venditaClienteAttiva;
       const cliente = this.clienti.find(c => c.id === this.clienteSelezionatoId);
       if (!vendita?.id || !cliente) return;
 
-      if ((this.pagamentiCliente || []).some(p => p.stato === 'incassato')) {
+      // I pagamenti caricati sono quelli della vendita corrente: per le altre
+      // vendite il controllo sugli incassi lo fa sostituisci_vendita nel database.
+      if (
+        vendita.id === this.venditaClienteAttiva?.id &&
+        (this.pagamentiCliente || []).some(p => p.stato === 'incassato')
+      ) {
         this.mostraToast(
           'error',
           'Vendita non modificabile',
@@ -2644,7 +2657,7 @@
       }
 
       await this.apriEconomia('vendita');
-      this.selezionaClienteEconomia(cliente);
+      await this.selezionaClienteEconomia(cliente, { senzaAvviso: true });
 
       const config = vendita.configurazione_commerciale;
       if (config && typeof config === 'object') {
@@ -2652,7 +2665,47 @@
       }
       this.venditaInSostituzioneId = vendita.id;
       this.aggiornaConfigurazioneVendita();
+      await this.precaricaFatturazioneVendita(vendita.id);
       this.aggiornaSnapshotEconomia();
+    },
+
+    // In modifica il form deve ripartire dai valori salvati: senza questo
+    // ogni partecipante tornava a "fatturazione: nessuna".
+    async precaricaFatturazioneVendita(venditaId) {
+      const { data, error } = await window.supabaseClient
+        .from('vendita_partecipanti')
+        .select('profilo_id,ruolo,modalita_fatturazione,fa_fattura,importo_fatturato')
+        .eq('vendita_id', venditaId);
+
+      if (error) {
+        this.mostraToast(
+          'error',
+          'Fatturazione non precaricata',
+          'Controlla la fatturazione prima di salvare: ' + error.message
+        );
+        return;
+      }
+
+      (data || []).forEach(riga => {
+        const modalita =
+          riga.modalita_fatturazione ||
+          (riga.fa_fattura ? 'totale' : 'nessuna');
+        const importo = Number(riga.importo_fatturato) || 0;
+
+        if (riga.ruolo === 'referente') {
+          this.venditaEconomicaForm.modalitaFatturazioneAdmin = modalita;
+          this.venditaEconomicaForm.importoFatturatoAdmin = importo;
+          return;
+        }
+
+        const partecipante = this.venditaEconomicaForm.partecipanti.find(
+          p => p.id === riga.profilo_id
+        );
+        if (!partecipante) return;
+        partecipante.modalitaFatturazione = modalita;
+        partecipante.importoFatturato = importo;
+        partecipante.faFattura = modalita === 'totale';
+      });
     },
 
     // Annulla la vendita attiva del cliente (solo se senza incassi: lo

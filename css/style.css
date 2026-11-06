@@ -16694,6 +16694,9 @@ html[data-theme="dark"] .agenda-content .agenda-event.ev-mancante .agenda-event-
 .scheda-bar-btn{display:grid;place-items:center;min-height:44px;padding:0 16px;border-radius:11px;background:var(--lime);color:var(--on-lime);font-weight:800;font-size:.8rem;text-decoration:none}
 .scheda-sheetbg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1500;touch-action:none}
 .scheda-sheet{position:fixed;left:0;right:0;bottom:0;max-width:440px;margin:0 auto;max-height:82vh;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));z-index:1501;color:var(--ink)}
+.scheda-sheet-motion{transition:transform .24s var(--ease),opacity .24s var(--ease)}
+.scheda-sheet-hidden{transform:translateY(24px);opacity:0}
+@media (prefers-reduced-motion:reduce){.scheda-sheet-motion,.scheda-sheetbg{transition:none!important}}
 .scheda-shh{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .scheda-sheet h3{margin:0;font-size:1.2rem;font-weight:800}
 .scheda-x{min-height:44px;min-width:44px;border:0;background:var(--paper);color:var(--ink);border-radius:12px;font-size:1.1rem;cursor:pointer}
@@ -17210,3 +17213,7 @@ html[data-theme=dark] .port-page{--port-green:#92e6ae;--port-chart:#9ee6ac;--por
 @media (prefers-reduced-motion:reduce){
   .client-payment-row.fb-riga-nuova, .client-payment-row.fb-riga-nuova *{color:var(--on-lime) !important}
 }
+
+/* Blocchi Contratto in scheda cliente: uno per vendita attiva */
+.scheda-contratto-blocco{padding:12px;margin-bottom:12px;border:1px solid var(--line);border-radius:14px;background:var(--paper)}
+.scheda-contratto-blocco .btn{margin-top:10px;width:100%}

@@ -2936,6 +2936,19 @@
             </div>
 
 
+            <div class="sale-control-card sale-control-name">
+              <div class="sale-control-copy">
+                <span>CONTRATTO</span>
+                <strong>Nome vendita</strong>
+              </div>
+              <input
+                type="text"
+                maxlength="80"
+                placeholder="Es. Sito shop - dominio.it (facoltativo)"
+                x-model="venditaEconomicaForm.configurazioneCommerciale.nome_vendita">
+            </div>
+
+
             <div class="sale-control-card sale-control-discount">
               <div class="sale-control-copy">
                 <span>CONDIZIONI</span>
@@ -4594,29 +4607,6 @@
             </div>
           </section>
 
-          <section
-            class="client-form-section"
-            x-show="clienteInModificaId && venditaClienteAttiva?.id">
-            <div class="client-form-section-head">
-              <span>02</span>
-              <div>
-                <strong>Vendita e servizi</strong>
-                <small>Servizi, pagamento e importo si correggono insieme</small>
-              </div>
-            </div>
-            <button
-              type="button"
-              class="btn btn-primary"
-              x-show="venditaModificabileCliente()"
-              @click="modificaVenditaCliente()">
-              Modifica vendita
-            </button>
-            <p
-              style="color:var(--muted);font-size:15px"
-              x-show="ciSonoIncassiCliente()">
-              Ci sono incassi registrati: la vendita non si puo' piu' modificare.
-            </p>
-          </section>
 
           <div
             x-show="clienteInModificaId && selezionePrezzo.modalita === 'legacy' && !venditaClienteAttiva?.id"
@@ -5412,8 +5402,11 @@
         </div>
 
 
-        <div class="scheda-sheetbg" x-show="schedaFoglio" x-cloak @click="chiudiFoglioScheda()"></div>
-        <div class="scheda-sheet" x-show="schedaFoglio" x-cloak role="dialog" aria-modal="true" :aria-label="titoloFoglioScheda()"
+        <div class="scheda-sheetbg" x-show="schedaFoglio" x-cloak x-transition.opacity.duration.200ms @click="chiudiFoglioScheda()"></div>
+        <div class="scheda-sheet" x-show="schedaFoglio" x-cloak
+             x-transition:enter="scheda-sheet-motion" x-transition:enter-start="scheda-sheet-hidden"
+             x-transition:leave="scheda-sheet-motion" x-transition:leave-end="scheda-sheet-hidden"
+             role="dialog" aria-modal="true" :aria-label="titoloFoglioScheda()"
              @keydown.escape.window="schedaFoglio && chiudiFoglioScheda()">
           <div class="scheda-shh">
             <h3 x-text="titoloFoglioScheda()"></h3>
@@ -5992,6 +5985,19 @@
 
             </div>
             <div x-show="schedaFoglio === 'contratto'" x-data="{ get s() { return schedaClienteCompleta(clienteSelezionato()); } }">
+              <!-- Un blocco per ogni vendita attiva (piu contratti sullo stesso cliente) -->
+              <template x-for="v in venditeClienteElenco" :key="v.id">
+                <div class="scheda-contratto-blocco">
+                  <div class="scheda-kv"><span>Contratto</span><b x-text="titoloVenditaCliente(v)"></b></div>
+                  <div class="scheda-kv"><span>Importo vendita</span><b class="num" x-text="formattaEuro(v.importo_vendita || 0)"></b></div>
+                  <div class="scheda-kv" x-show="v.data_vendita"><span>Data vendita</span><b x-text="v.data_vendita ? formattaData(v.data_vendita) : ''"></b></div>
+                  <button type="button" class="btn btn-primary"
+                    x-show="v.id !== venditaClienteAttiva?.id || venditaModificabileCliente()"
+                    @click="chiudiFoglioScheda(); modificaVenditaCliente(v)">
+                    Modifica
+                  </button>
+                </div>
+              </template>
               <div class="scheda-kv"><span>Pacchetto</span><b x-text="s.pacchetto"></b></div>
               <div class="scheda-kv"><span>Durata</span><b x-text="s.durataContrattoLabel"></b></div>
               <div class="scheda-kv"><span>Periodicità</span><b x-text="s.periodicitaContrattoLabel"></b></div>
@@ -6291,6 +6297,7 @@
               </div>
               <button type="submit" class="btn btn-ghost" style="margin-bottom:14px" :disabled="aggiungendoNota"
                 x-text="aggiungendoNota ? 'Salvataggio...' : 'Aggiungi nota'"></button>
+              <p class="err" role="alert" x-show="erroreScheda" x-text="erroreScheda"></p>
             </form>
             <template x-for="n in note" :key="n.id">
               <div class="note-item">
@@ -7889,7 +7896,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=208', {
+      navigator.serviceWorker.register('./service-worker.js?v=209', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
