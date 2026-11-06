@@ -17174,3 +17174,39 @@ html[data-theme=dark] .port-page{--port-green:#92e6ae;--port-chart:#9ee6ac;--por
 .port-skeleton{padding:24px 0}.port-skeleton i{display:block;height:14px;width:50%;border-radius:6px;background:var(--paper-2);border:1px solid var(--line);margin-bottom:16px;animation:skeleton-shimmer 1.5s infinite}
 .port-skeleton i:nth-child(2){height:48px;width:74%}.port-skeleton i:nth-child(3){height:220px;width:100%;margin-top:30px}.port-skeleton i:nth-child(4){width:90%;height:42px}
 @media(prefers-reduced-motion:reduce){.port-skeleton i{animation:none}}
+
+/* Riquadri lime pieni: testo SEMPRE nero (anche nei figli e in tema scuro).
+   Completa il blocco "Lime controls" sopra: copre rete, scheda cliente, incassi,
+   rinnovi e feedback, dove i figli (small, span, i) ereditavano bianco/grigio. */
+.rete-view .rete-crumb-step:last-child button, .rete-view .rete-crumb-step:last-child button *,
+.rete-view .rete-node.me, .rete-view .rete-node.me *,
+.rete-view .rete-opt.on .rete-bx, .rete-view .rete-opt.on .rete-bx *,
+.rete-view .rete-apply, .rete-view .rete-apply *,
+.cli-view .cli-seg button[aria-pressed="true"], .cli-view .cli-seg button[aria-pressed="true"] *,
+.cli-view .cli-tdb, .cli-view .cli-tdb *,
+.cli-view .cli-opt.on .cli-bx, .cli-view .cli-opt.on .cli-bx *,
+.cli-view .cli-apply, .cli-view .cli-apply *,
+.scheda-stp.cur .scheda-bl, .scheda-stp.cur .scheda-bl *,
+.scheda-av, .scheda-av *,
+.scheda-bar-btn, .scheda-bar-btn *,
+.scheda-vendita-cta, .scheda-vendita-cta *,
+.client-quick-action.is-on, .client-quick-action.is-on *,
+.rete-scheda-page .rs-av, .rete-scheda-page .rs-av *,
+.rete-scheda-page .rs-tabs button.on, .rete-scheda-page .rs-tabs button.on *,
+.price-legacy-v2 .legacy-price-status, .price-legacy-v2 .legacy-price-status *,
+.renewal-required, .renewal-required *,
+.payment-transfer-row button, .payment-transfer-row button *,
+.client-seller-switcher .client-filter-scroll button.on, .client-seller-switcher .client-filter-scroll button.on *,
+.metrics-trend-venditore .metrics-trend-chips button.active, .metrics-trend-venditore .metrics-trend-chips button.active *,
+.admin-person-role, .admin-person-role *,
+.profile-role, .profile-role *,
+.activation-date-field label span,
+.home-quotes-hero-action button, .home-quotes-hero-action button *,
+.fb-mia, .fb-mia *,
+.fb-quota, .fb-quota *,
+.inc-bc.sel u{
+  color:var(--on-lime) !important;
+}
+@media (prefers-reduced-motion:reduce){
+  .client-payment-row.fb-riga-nuova, .client-payment-row.fb-riga-nuova *{color:var(--on-lime) !important}
+}

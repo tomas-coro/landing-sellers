@@ -2780,84 +2780,6 @@
                   x-model="venditaEconomicaForm.configurazioneCommerciale.data_attivazione">
               </div>
 
-
-              <div class="sale-control-card sale-control-discount">
-                <div class="sale-control-copy">
-                  <span>CONDIZIONI</span>
-                  <strong>Sconto</strong>
-                </div>
-
-                <div class="sale-discount-controls">
-                  <select
-                    x-model="venditaEconomicaForm.configurazioneCommerciale.sconto_tipo"
-                    @change="
-                      if (!venditaEconomicaForm.configurazioneCommerciale.sconto_tipo) {
-                        venditaEconomicaForm.configurazioneCommerciale.sconto_valore = 0;
-                        venditaEconomicaForm.configurazioneCommerciale.sconto_durata_anni = null;
-                      }
-                      aggiornaConfigurazioneVendita();
-                    ">
-                    <option value="">Nessuno</option>
-                    <option value="percentuale">Percentuale</option>
-                    <option value="fisso">Importo fisso</option>
-                    <option value="prezzo_fisso">Prezzo concordato</option>
-                  </select>
-
-                  <div
-                    class="sale-discount-value"
-                    x-show="venditaEconomicaForm.configurazioneCommerciale.sconto_tipo">
-
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      :max="venditaEconomicaForm.configurazioneCommerciale.sconto_tipo === 'percentuale' ? 100 : null"
-                      placeholder="0"
-                      x-model.number="venditaEconomicaForm.configurazioneCommerciale.sconto_valore"
-                      @input="aggiornaConfigurazioneVendita()"
-                      @change="normalizzaScontoVendita()">
-
-                    <span
-                      x-text="venditaEconomicaForm.configurazioneCommerciale.sconto_tipo === 'percentuale'
-                        ? '%'
-                        : '€'">
-                    </span>
-                  </div>
-
-                  <select
-                    x-show="
-                      venditaEconomicaForm.configurazioneCommerciale.sconto_tipo &&
-                      Number(venditaEconomicaForm.configurazioneCommerciale.sconto_valore) > 0
-                    "
-                    :value="venditaEconomicaForm.configurazioneCommerciale.sconto_durata_anni ?? ''"
-                    @change="
-                      setDurataScontoVendita(
-                        $event.target.value === ''
-                          ? null
-                          : Number($event.target.value)
-                      )
-                    ">
-                    <option value="">Tutto il contratto</option>
-
-                    <template
-                      x-for="anni in [1,2,3,4].filter(
-                        n => n <= Number(
-                          venditaEconomicaForm.configurazioneCommerciale.durata_contratto_anni || 1
-                        )
-                      )"
-                      :key="'discount-year-' + anni">
-
-                      <option
-                        :value="anni"
-                        x-text="anni === 1
-                          ? 'Solo 1° anno'
-                          : 'Primi ' + anni + ' anni'">
-                      </option>
-                    </template>
-                  </select>
-                </div>
-              </div>
-
             </div>
 
 
@@ -3011,6 +2933,84 @@
 
               </div>
 
+            </div>
+
+
+            <div class="sale-control-card sale-control-discount">
+              <div class="sale-control-copy">
+                <span>CONDIZIONI</span>
+                <strong>Sconto</strong>
+              </div>
+
+              <div class="sale-discount-controls">
+                <select
+                  x-model="venditaEconomicaForm.configurazioneCommerciale.sconto_tipo"
+                  @change="
+                    if (!venditaEconomicaForm.configurazioneCommerciale.sconto_tipo) {
+                      venditaEconomicaForm.configurazioneCommerciale.sconto_valore = 0;
+                      venditaEconomicaForm.configurazioneCommerciale.sconto_durata_anni = null;
+                    }
+                    aggiornaConfigurazioneVendita();
+                  ">
+                  <option value="">Nessuno</option>
+                  <option value="percentuale">Percentuale</option>
+                  <option value="fisso">Importo fisso</option>
+                  <option value="prezzo_fisso">Prezzo concordato</option>
+                </select>
+
+                <div
+                  class="sale-discount-value"
+                  x-show="venditaEconomicaForm.configurazioneCommerciale.sconto_tipo">
+
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    :max="venditaEconomicaForm.configurazioneCommerciale.sconto_tipo === 'percentuale' ? 100 : null"
+                    placeholder="0"
+                    x-model.number="venditaEconomicaForm.configurazioneCommerciale.sconto_valore"
+                    @input="aggiornaConfigurazioneVendita()"
+                    @change="normalizzaScontoVendita()">
+
+                  <span
+                    x-text="venditaEconomicaForm.configurazioneCommerciale.sconto_tipo === 'percentuale'
+                      ? '%'
+                      : '€'">
+                  </span>
+                </div>
+
+                <select
+                  x-show="
+                    venditaEconomicaForm.configurazioneCommerciale.sconto_tipo &&
+                    Number(venditaEconomicaForm.configurazioneCommerciale.sconto_valore) > 0
+                  "
+                  :value="venditaEconomicaForm.configurazioneCommerciale.sconto_durata_anni ?? ''"
+                  @change="
+                    setDurataScontoVendita(
+                      $event.target.value === ''
+                        ? null
+                        : Number($event.target.value)
+                    )
+                  ">
+                  <option value="">Tutto il contratto</option>
+
+                  <template
+                    x-for="anni in [1,2,3,4].filter(
+                      n => n <= Number(
+                        venditaEconomicaForm.configurazioneCommerciale.durata_contratto_anni || 1
+                      )
+                    )"
+                    :key="'discount-year-' + anni">
+
+                    <option
+                      :value="anni"
+                      x-text="anni === 1
+                        ? 'Solo 1° anno'
+                        : 'Primi ' + anni + ' anni'">
+                    </option>
+                  </template>
+                </select>
+              </div>
             </div>
 
 
@@ -7889,7 +7889,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=207', {
+      navigator.serviceWorker.register('./service-worker.js?v=208', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
