@@ -1068,6 +1068,25 @@
       };
     },
 
+    // Regola unica sugli incassi: dopo il primo incasso la vendita non si
+    // riscrive piu' (lo impone anche sostituisci_vendita nel database).
+    ciSonoIncassiCliente() {
+      return (this.pagamentiCliente || []).some(p => p.stato === 'incassato');
+    },
+
+    venditaModificabileCliente() {
+      return !!this.venditaClienteAttiva?.id && !this.ciSonoIncassiCliente();
+    },
+
+    // "Modifica servizi" e "Modifica vendita" portano allo stesso editor.
+    // Con incassi resta solo l'editor descrittivo (non tocca importo e rate).
+    modificaServiziCliente() {
+      if (this.venditaModificabileCliente()) {
+        return this.modificaVenditaCliente();
+      }
+      return this.apriEditorServiziCliente();
+    },
+
     apriEditorServiziCliente() {
       this.erroreServiziCliente = '';
       this.successoServiziCliente = '';

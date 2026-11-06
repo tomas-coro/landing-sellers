@@ -4594,8 +4594,32 @@
             </div>
           </section>
 
+          <section
+            class="client-form-section"
+            x-show="clienteInModificaId && venditaClienteAttiva?.id">
+            <div class="client-form-section-head">
+              <span>02</span>
+              <div>
+                <strong>Vendita e servizi</strong>
+                <small>Servizi, pagamento e importo si correggono insieme</small>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="btn btn-primary"
+              x-show="venditaModificabileCliente()"
+              @click="modificaVenditaCliente()">
+              Modifica vendita
+            </button>
+            <p
+              style="color:var(--muted);font-size:15px"
+              x-show="ciSonoIncassiCliente()">
+              Ci sono incassi registrati: la vendita non si puo' piu' modificare.
+            </p>
+          </section>
+
           <div
-            x-show="clienteInModificaId && selezionePrezzo.modalita === 'legacy'"
+            x-show="clienteInModificaId && selezionePrezzo.modalita === 'legacy' && !venditaClienteAttiva?.id"
             class="price-legacy price-legacy-v2">
 
             <div class="legacy-price-head">
@@ -4666,7 +4690,7 @@
 
           <div
             class="price-builder client-form-section"
-            x-show="clienteInModificaId && selezionePrezzo.modalita !== 'legacy'">
+            x-show="clienteInModificaId && selezionePrezzo.modalita !== 'legacy' && !venditaClienteAttiva?.id">
             <div class="client-form-section-head">
               <span>02</span>
               <div>
@@ -5440,12 +5464,16 @@
                 <button
                   type="button"
                   class="btn btn-ghost"
-                  @click="apriEditorServiziCliente()">
+                  @click="modificaServiziCliente()">
                   Modifica servizi
                 </button>
               </div>
 
-              <small>
+              <small x-show="venditaModificabileCliente()">
+                Apre l'editor della vendita: servizi, pagamento e importo
+                si correggono insieme.
+              </small>
+              <small x-show="!venditaModificabileCliente()">
                 La modifica dei servizi aggiorna la descrizione
                 del pacchetto ma non ricalcola il prezzo storico.
               </small>
@@ -6013,14 +6041,15 @@
               type="button"
               class="btn btn-primary"
               style="margin-top:12px"
-              x-show="!pagamentiCliente.some(p => p.stato === 'incassato')"
+              x-show="venditaModificabileCliente()"
               @click="modificaVenditaCliente()">
               Modifica vendita
             </button>
             <p
               style="margin-top:12px;color:var(--muted);font-size:15px"
-              x-show="!isAdmin && pagamentiCliente.some(p => p.stato === 'incassato')">
-              Ci sono incassi registrati: per cambiare questa vendita chiedi all'admin.
+              x-show="ciSonoIncassiCliente()">
+              Ci sono incassi registrati: la vendita non si puo' piu' modificare.
+              Dai servizi puoi ancora correggere solo la descrizione.
             </p>
             <button
               type="button"
@@ -7860,7 +7889,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=206', {
+      navigator.serviceWorker.register('./service-worker.js?v=207', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
