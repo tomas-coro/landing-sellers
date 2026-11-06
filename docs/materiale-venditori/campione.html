@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guida del venditore - campione</title>
+<link rel="stylesheet" href="base.css">
+<style>
+  .two{ display:grid; grid-template-columns:84mm 1fr; gap:9mm; align-items:start }
+  .pw{ position:relative; width:74mm; zoom:1.1 }
+  .defs{ display:grid; grid-template-columns:repeat(3,1fr); gap:4mm; margin-top:7mm }
+  .defs .box b.k{ color:var(--lime-ink) }
+  .defs .box strong{ display:block; font-size:10pt; margin-bottom:1mm }
+  .side .box{ margin-top:2mm }
+</style>
+</head>
+<body>
+
+<!-- ============ COPERTINA ============ -->
+<section class="page cover">
+  <div class="stripe"></div>
+  <div class="phone-peek" id="peek"></div>
+  <div class="inner">
+    <div class="brand"><img src="../../assets/landing-evolution-logo.svg" alt=""> LANDING EVOLUTION</div>
+
+    <div class="kicker">Guida del venditore</div>
+    <h1>Vendi.<br>Incassa.<br><em>Cresci.</em></h1>
+    <p class="tagline">L'app che usi ogni giorno, il piano che ti paga e la rete che costruisci. Tutto spiegato passo per passo, con le schermate vere.</p>
+
+    <div class="meta"><span>Landing Sellers · l'app dei venditori</span><span>Edizione 1 · novembre 2026</span></div>
+  </div>
+</section>
+
+<!-- ============ PAGINA CAMPIONE: LA HOME ============ -->
+<section class="page">
+  <div class="run"><span><i class="dot"></i>Guida del venditore · 03 Usare l'app</span><span>La Home</span></div>
+
+  <div class="eyebrow">Passo 1 di 4</div>
+  <h1 class="title">La Home: il tuo lavoro<br>in un colpo d'occhio</h1>
+  <p class="lead">Appena entri nell'app ti trovi qui. In pochi secondi vedi quanto hai venduto, quanto hai incassato e quali clienti toccare per primi.</p>
+
+  <div class="two">
+    <!-- Schermata -->
+    <div class="pw">
+      <div class="phone">
+        <div class="notch"><i></i></div>
+        <div class="ph-top">
+          <div class="ph-brand"><i></i>LANDING EVOLUTION</div>
+          <div class="ph-avatar">M</div>
+        </div>
+        <div class="ph-h1">Home</div>
+
+        <div class="ph-work">
+          <div class="lab">IL TUO LAVORO</div>
+          <div class="who">Marco</div>
+          <div class="ph-rete"><span>Rete vendita ›</span><b>3</b></div>
+          <div class="ph-grid">
+            <div class="ph-tile"><span>Venduto</span><strong>€ 4.280</strong></div>
+            <div class="ph-tile hot"><span>Generato</span><strong>€ 1.126</strong></div>
+            <div class="ph-tile"><span>Incassato</span><strong>€ 2.940</strong></div>
+            <div class="ph-tile"><span>Media vendita</span><strong>€ 1.070</strong></div>
+          </div>
+        </div>
+
+        <div class="ph-sec"><strong>Ultimi clienti</strong><span>Vedi tutti ›</span></div>
+        <div class="ph-row"><div class="ini">PR</div><div class="t"><b>Pizzeria Da Rosa</b><small>Prossimo contatto: domani</small></div><div class="st">Acquisito</div></div>
+        <div class="ph-row"><div class="ini">SL</div><div class="t"><b>Studio Legale Neri</b><small>Prossimo contatto: venerdì</small></div><div class="st">Brief</div></div>
+        <div class="ph-row"><div class="ini">FB</div><div class="t"><b>Fitness Box</b><small>Rinnovo tra 12 giorni</small></div><div class="st">Completato</div></div>
+
+        <div class="ph-tabbar">
+          <div class="on"><svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Home</div>
+          <div><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>Agenda</div>
+          <div class="plus"><b>+</b>Nuovo</div>
+          <div><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/></svg>Clienti</div>
+          <div><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/></svg>Profilo</div>
+        </div>
+      </div>
+      <!-- pallini -->
+      <span class="pin" style="left:-2mm;top:36mm">1</span>
+      <span class="pin" style="right:-2mm;top:52mm">2</span>
+      <span class="pin" style="right:-2mm;top:96mm">3</span>
+      <span class="pin" style="left:41mm;bottom:13mm">4</span>
+      <span class="pin" style="right:-1mm;top:12mm">5</span>
+    </div>
+
+    <!-- Spiegazioni -->
+    <div class="side">
+      <ol class="steps">
+        <li><div><b>Rete vendita</b>Tocca qui per vedere chi lavora con te e quanto vende ognuno. Il numero è quanti sono i tuoi diretti.</div></li>
+        <li><div><b>I tuoi numeri</b>Venduto, Generato (la tua parte), Incassato e Media vendita. Si aggiornano da soli a ogni vendita o incasso.</div></li>
+        <li><div><b>Ultimi clienti</b>I clienti su cui hai lavorato di recente. "Vedi tutti" apre l'elenco completo con ricerca e filtri.</div></li>
+        <li><div><b>Nuovo</b>Il tasto verde in basso: da qui aggiungi un cliente o registri un pagamento.</div></li>
+        <li><div><b>Profilo</b>La tua foto in alto: impostazioni, tema chiaro o scuro, notifiche e uscita dall'account.</div></li>
+      </ol>
+      <div class="box tip"><b class="k">Prova adesso</b>Apri la Home e tocca "Vedi tutti": se vedi l'elenco dei tuoi clienti, sei al posto giusto.</div>
+    </div>
+  </div>
+
+  <div class="defs">
+    <div class="box why"><b class="k">Venduto</b><strong>Il valore delle vendite</strong>Quanto hanno pagato in tutto i clienti che hai portato, prima di costi e quote.</div>
+    <div class="box why"><b class="k">Generato</b><strong>La tua parte</strong>La quota che ti spetta sul margine delle tue vendite. È il numero che conta per te.</div>
+    <div class="box why"><b class="k">Incassato</b><strong>Quello già pagato</strong>Quanto è davvero entrato. Una vendita pagata a rate conta man mano che le rate arrivano.</div>
+  </div>
+
+  <div class="foot"><span><b>Serve aiuto?</b> Scrivi ad Alessandro: i contatti sono nell'ultima pagina.</span><span>pag. 2</span></div>
+</section>
+
+<script>
+  // copia il telefono della Home sulla copertina, così lo mostriamo una volta sola nel sorgente
+  document.getElementById('peek').appendChild(document.querySelector('.pw .phone').cloneNode(true));
+</script>
+</body>
+</html>

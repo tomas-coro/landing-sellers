@@ -1,0 +1,23 @@
+"""Scatta 'Registra vendita' (cliente scelto, poi scorrendo) e 'Incassa' con dati finti."""
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from playwright.sync_api import sync_playwright
+from scatta import apri
+from fixtures import FIXTURES
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'img')
+D = "Alpine.$data(document.getElementById('app'))"
+with sync_playwright() as p:
+    b, pg, log, errs = apri(p, FIXTURES)
+    pg.goto('http://localhost:8878/index.html'); pg.wait_for_timeout(3500)
+    pg.evaluate("()=>{const d=%s; d.apriEconomia('vendita'); }" % D); pg.wait_for_timeout(1500)
+    pg.evaluate("()=>{const d=%s; d.selezionaClienteEconomia(d.clienti[0]); }" % D); pg.wait_for_timeout(1800)
+    for i, y in enumerate([0, 700, 1400, 2100]):
+        pg.mouse.move(200, 300); pg.mouse.wheel(0, 650 if i else 0); pg.wait_for_timeout(700)
+        pg.screenshot(path=OUT + '/12-vendita-%d.png' % (i + 1))
+    pg.evaluate("()=>{const d=%s; d.apriEconomia('incasso'); }" % D); pg.wait_for_timeout(1500)
+    pg.evaluate("()=>{const d=%s; d.selezionaClienteEconomia(d.clienti[0]); }" % D); pg.wait_for_timeout(2000)
+    for i, y in enumerate([0, 700]):
+        pg.mouse.move(200, 300); pg.mouse.wheel(0, 650 if i else 0); pg.wait_for_timeout(700)
+        pg.screenshot(path=OUT + '/13-incasso-%d.png' % (i + 1))
+    print(pg.evaluate("()=>%s.view" % D), errs[:2])
+    b.close()

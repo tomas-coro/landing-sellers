@@ -1,0 +1,166 @@
+{
+ "01-home": [
+  {
+   "x": 74.89,
+   "y": 35.17,
+   "sel": "text=Gestisci quote"
+  },
+  {
+   "x": 75.18,
+   "y": 44.79,
+   "sel": "text=Vedi agenda"
+  },
+  {
+   "x": 60.62,
+   "y": 70.79,
+   "sel": "text=Rete vendita"
+  },
+  {
+   "x": 59.13,
+   "y": 94.27,
+   "sel": ".mobile-tabbar-add"
+  },
+  {
+   "x": 85.13,
+   "y": 5.09,
+   "sel": ".profile-trigger"
+  }
+ ],
+ "02-home-numeri": [
+  {
+   "x": 9.23,
+   "y": 34.53,
+   "sel": "text=Venduto"
+  },
+  {
+   "x": 54.87,
+   "y": 34.53,
+   "sel": "text=Generato"
+  },
+  {
+   "x": 9.23,
+   "y": 49.98,
+   "sel": "text=Incassato"
+  },
+  {
+   "x": 54.87,
+   "y": 49.98,
+   "sel": "text=Media vendita"
+  }
+ ],
+ "03-clienti": [
+  {
+   "x": 92.05,
+   "y": 30.78,
+   "sel": "input[type=search]"
+  },
+  {
+   "x": 72.31,
+   "y": 24.02,
+   "sel": "text=Tutta la rete"
+  },
+  {
+   "x": 60.16,
+   "y": 52.89,
+   "sel": "text=Contattato"
+  }
+ ],
+ "04-scheda": [
+  {
+   "x": 8.21,
+   "y": 50.46,
+   "sel": "text=Pipeline commerciale"
+  },
+  {
+   "x": 71.18,
+   "y": 36.52,
+   "sel": "text=Mandato brief"
+  }
+ ],
+ "05-agenda": [
+  {
+   "x": 32.09,
+   "y": 20.31,
+   "sel": "text=Oggi"
+  },
+  {
+   "x": 80.0,
+   "y": 32.91,
+   "sel": "text=Mese"
+  },
+  {
+   "x": 22.86,
+   "y": 67.88,
+   "sel": "text=Dentista Sorrisi"
+  }
+ ],
+ "06-pipeline": [
+  {
+   "x": 4.62,
+   "y": 21.34,
+   "sel": "text=Fase corrente"
+  }
+ ],
+ "07-menu-nuovo": [
+  {
+   "x": 20.51,
+   "y": 71.68,
+   "sel": "text=Nuovo cliente"
+  },
+  {
+   "x": 20.51,
+   "y": 80.21,
+   "sel": "text=Registra vendita"
+  },
+  {
+   "x": 9.23,
+   "y": 106.97,
+   "sel": "text=Incassa"
+  }
+ ],
+ "08-profilo": [
+  {
+   "x": 18.97,
+   "y": 50.34,
+   "sel": "text=Sistema"
+  },
+  {
+   "x": 36.67,
+   "y": 31.4,
+   "sel": "text=Codice referente"
+  }
+ ],
+ "09-rete": [
+  {
+   "x": 50.0,
+   "y": 19.14,
+   "sel": "text=Aggiungi venditore"
+  },
+  {
+   "x": 8.21,
+   "y": 32.58,
+   "sel": "text=Venduto di rete"
+  },
+  {
+   "x": 7.44,
+   "y": 47.93,
+   "sel": "text=Generato"
+  }
+ ],
+ "10-incassi": [
+  {
+   "x": 4.62,
+   "y": 25.89,
+   "sel": "text=La tua quota incassata"
+  },
+  {
+   "x": 37.56,
+   "y": 19.43,
+   "sel": "text=Vendite"
+  }
+ ],
+ "11-nuovo-cliente": [],
+ "12-vendita": [],
+ "13-incasso": [],
+ "14-scheda-venditore": []
+}
