@@ -6182,7 +6182,7 @@
               <dt>P.IVA</dt><dd x-text="clienteSelezionato().piva || '-'"></dd>
               <dt>IBAN</dt><dd x-text="clienteSelezionato().iban || '-'"></dd>
             </dl>
-            <a x-show="clienteSelezionato().sito_url" :href="clienteSelezionato().sito_url" target="_blank" rel="noopener" class="btn btn-ghost" style="margin-top:12px">
+            <a x-show="clienteSelezionato().sito_url" :href="sitoCliente(clienteSelezionato())" target="_blank" rel="noopener" class="btn btn-ghost" style="margin-top:12px">
               Apri il sito
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
             </a>
@@ -8007,7 +8007,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=222', {
+      navigator.serviceWorker.register('./service-worker.js?v=223', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
