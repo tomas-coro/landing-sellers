@@ -1779,11 +1779,19 @@ function appState() {
       return 'Attiva notifiche';
     },
 
+    scrollInAlto() {
+      const appEl = document.getElementById('app');
+      if (!appEl) return;
+      const ridotto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      appEl.scrollTo({ top: 0, behavior: ridotto ? 'auto' : 'smooth' });
+    },
+
     async vaiHome() {
       if (!(await this.confermaUscitaFormCliente())) return;
 
+      const giaInHome = this.view === (this.isAdmin ? 'admin' : 'lista');
       this.view = this.isAdmin ? 'admin' : 'lista';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (giaInHome) this.scrollInAlto();
 
       /*
        * La schermata cambia subito con i dati gia in memoria; il DB viene

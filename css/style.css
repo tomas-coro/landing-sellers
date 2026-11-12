@@ -17286,6 +17286,7 @@ html[data-theme=dark] .port-page{--port-green:#92e6ae;--port-chart:#9ee6ac;--por
 .cons-card{color:#111;--muted:#6b675c;--line:#e2ded2}
 .cons-card .cons-turn{color:var(--ink)}
 .cons-card .cons-turn.me{color:var(--on-lime)}
-.cons-card .btn-ghost{color:#111;border-color:#111;background:#fff}
-.cons-card .btn-ghost:disabled{opacity:.5}
-.cons-card .btn-primary{background:#111;color:#fff}
+html .cons-card .btn-ghost,html[data-theme] .cons-card .btn-ghost{color:#111;border-color:#111;background:#fff}
+html .cons-card .btn-ghost:disabled,html[data-theme] .cons-card .btn-ghost:disabled{opacity:.5}
+html .cons-card .btn-primary,html[data-theme] .cons-card .btn-primary{background:#111;color:#fff}
+.brand-home{cursor:pointer;-webkit-tap-highlight-color:transparent}
