@@ -7684,6 +7684,8 @@
                 <span class="home-attention-dot type-rata"></span>
                 <div>
                   <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
+                  <span class="quota-colore" x-show="etichettaColoreQuota(quota) && !etichettaColoreQuota(quota).black" :class="etichettaColoreQuota(quota)?.classe" x-text="etichettaColoreQuota(quota)?.testo"></span>
+                  <span class="quota-colore is-mista" x-show="etichettaColoreQuota(quota)?.black" :aria-label="etichettaColoreQuota(quota)?.testo"><i class="qc-w" :style="'flex-grow:' + etichettaColoreQuota(quota)?.white" x-text="etichettaColoreQuota(quota)?.white + '%'"></i><i class="qc-b" :style="'flex-grow:' + etichettaColoreQuota(quota)?.black" x-text="etichettaColoreQuota(quota)?.black + '%'"></i></span>
                   <small x-text="(quota.controparteNome ? 'Da ' + quota.controparteNome : 'Da confermare') + (quota.clienteNome ? ' · ' + quota.clienteNome : '') + (quota.pagamentoIds.length > 1 ? ' · ' + quota.pagamentoIds.length + ' incassi' : '')"></small>
                 </div>
                 <span class="event-done-action" x-show="quota.pagamentoIds.length === 1" x-text="quota.pagamentoIds.includes(confermandoTrasferimentoId) ? '...' : '✓ Conferma'"></span>
@@ -8005,7 +8007,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=217', {
+      navigator.serviceWorker.register('./service-worker.js?v=218', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

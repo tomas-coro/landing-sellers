@@ -1258,6 +1258,7 @@
           controparteNome: this.nomeVenditorePerId(quota.pagamenti?.incassato_da),
           dataPagamento: quota.pagamenti?.data_pagamento || null,
           importoIncasso: quota.pagamenti?.importo ?? null,
+          percentualeFatturata: percentuali[quota.pagamento_id] ?? null,
           noteIncasso: quota.pagamenti?.note || ''
         }));
 
