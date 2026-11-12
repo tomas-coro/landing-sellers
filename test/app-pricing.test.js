@@ -1782,7 +1782,7 @@ test('il login admin carica anche la lista completa dei clienti', () => {
   );
 });
 
-test('v129 ritorno dalla scheda rilegge i clienti prima della navigazione', () => {
+test('ritorno dalla scheda torna subito e rilegge i clienti in background', () => {
   const cliente = fs.readFileSync(
     path.join(__dirname, '..', 'js', 'app-cliente.js'),
     'utf8'
@@ -1790,7 +1790,11 @@ test('v129 ritorno dalla scheda rilegge i clienti prima della navigazione', () =
 
   assert.match(
     cliente,
-    /async tornaDaScheda\(\)[\s\S]*await this\.caricaClienti\(\)[\s\S]*history\.back\(\)/
+    /async tornaDaScheda\(\)[\s\S]*this\.aggiornaDopoSchedaInBackground\(\);[\s\S]*history\.back\(\)/
+  );
+  assert.match(
+    cliente,
+    /async aggiornaDopoSchedaInBackground\(\)[\s\S]*await this\.caricaClienti\(\)/
   );
 });
 

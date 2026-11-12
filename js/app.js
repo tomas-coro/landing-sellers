@@ -830,6 +830,7 @@ function appState() {
     reteClientiPerId: {},
     caricandoScheda: false,
     erroreScheda: '',
+    schedaCaricamento: false,
     reteFoglioAperto: false,
     reteFoglioTmp: [],
     reteRicerca: '',
@@ -1768,21 +1769,29 @@ function appState() {
     async vaiHome() {
       if (!(await this.confermaUscitaFormCliente())) return;
 
-      /*
-       * La Home deve riflettere sempre l'ultimo stato salvato nel DB.
-       * Evita card obsolete dopo modifiche a servizi, contratto o cliente.
-       */
-      if (this.isAdmin) {
-        await this.caricaDashboardAdmin();
-        await this.caricaClienti();
-      } else {
-        await this.caricaClienti();
-        await this.caricaStatisticheVenditore();
-      }
-      await this.caricaQuoteAperte();
-
       this.view = this.isAdmin ? 'admin' : 'lista';
       window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      /*
+       * La schermata cambia subito con i dati gia in memoria; il DB viene
+       * riletto dopo, senza far aspettare chi tocca Home o torna indietro.
+       */
+      this.aggiornaHomeInBackground();
+    },
+
+    async aggiornaHomeInBackground() {
+      try {
+        if (this.isAdmin) {
+          await this.caricaDashboardAdmin();
+          await this.caricaClienti();
+        } else {
+          await this.caricaClienti();
+          await this.caricaStatisticheVenditore();
+        }
+        await this.caricaQuoteAperte();
+      } catch (errore) {
+        console.error('Aggiornamento Home in background fallito', errore);
+      }
     },
 
     async vaiNuovoCliente() {
@@ -2337,7 +2346,13 @@ costiPerMotoreRataEconomia(
         'pipeline',
         'ricerca',
         'assistente',
-        'economia'
+        'economia',
+        'scheda',
+        'quote',
+        'rete',
+        'cestino',
+        'fatturato',
+        'incassato'
       ].includes(this.view);
     },
 

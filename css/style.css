@@ -667,6 +667,8 @@ html[data-theme="dark"] .client-detail-dashboard{
 :root{--mobile-tabbar-h:68px}
 body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 .app-main-view .content,.profile-view .content{padding-bottom:calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom) + 22px)}
+.con-nav .content{padding-bottom:calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom) + 22px)}
+.con-nav .scheda-bar{bottom:calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom) + 8px)}
 .client-create-view .content{padding-bottom:calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom) + 64px)}
 .mobile-tabbar{position:fixed;z-index:90;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,720px);min-height:var(--mobile-tabbar-h);padding:8px 14px calc(8px + env(safe-area-inset-bottom));display:flex;align-items:flex-end;justify-content:space-around;gap:8px;background:rgba(255,255,255,.94);border-top:1px solid var(--line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
 .mobile-tabbar>button{min-width:72px;min-height:52px;border:0;background:transparent;color:var(--muted);font:inherit;display:grid;place-items:center;align-content:center;gap:4px;padding:4px 8px;border-radius:14px;touch-action:manipulation}
@@ -17225,3 +17227,7 @@ html[data-theme=dark] .port-page{--port-green:#92e6ae;--port-chart:#9ee6ac;--por
 .quota-colore.is-mista i{display:block;flex-basis:0;min-width:30px;padding:1px 0;text-align:center;font-style:normal}
 .quota-colore.is-mista .qc-w{background:#fff;color:#111}
 .quota-colore.is-mista .qc-b{background:#111;color:#fff}
+
+.scheda-caricamento{position:fixed;top:0;left:0;right:0;height:3px;z-index:1600;background:linear-gradient(90deg,transparent,var(--lime,#c8ff00),transparent);background-size:40% 100%;background-repeat:no-repeat;animation:scheda-caricamento 1s linear infinite}
+@keyframes scheda-caricamento{from{background-position:-40% 0}to{background-position:140% 0}}
+@media (prefers-reduced-motion:reduce){.scheda-caricamento{animation:none;background:var(--lime,#c8ff00)}}

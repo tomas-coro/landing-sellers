@@ -1791,15 +1791,20 @@
       };
       this.schedaTappa = 0;
       this.schedaFoglio = '';
-      const { data, error } = await window.supabaseClient
-        .from('note').select('*').eq('cliente_id', clienteId)
-        .order('creata_il', { ascending: false });
-      if (error) { this.erroreScheda = 'Errore nel caricare le note: ' + error.message; return; }
-      this.note = data;
-      await Promise.all([
-        this.caricaPagamentiCliente(clienteId),
-        this.caricaAttivitaCliente(clienteId)
-      ]);
+      this.schedaCaricamento = true;
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('note').select('*').eq('cliente_id', clienteId)
+          .order('creata_il', { ascending: false });
+        if (error) { this.erroreScheda = 'Errore nel caricare le note: ' + error.message; return; }
+        this.note = data;
+        await Promise.all([
+          this.caricaPagamentiCliente(clienteId),
+          this.caricaAttivitaCliente(clienteId)
+        ]);
+      } finally {
+        this.schedaCaricamento = false;
+      }
 
       if (pagamentoId) {
         this.apriFoglioScheda('soldi');
@@ -1810,18 +1815,22 @@
       }
     },
 
+    async aggiornaDopoSchedaInBackground() {
+      try {
+        if (this.isAdmin) await this.caricaDashboardAdmin();
+        await this.caricaClienti();
+      } catch (errore) {
+        console.error('Aggiornamento dopo la scheda fallito', errore);
+      }
+    },
+
     async tornaDaScheda() {
       this.schedaFoglio = '';
       /*
-       * Prima di tornare alla vista precedente rileggiamo cliente,
-       * vendita attiva e riepiloghi. In questo modo anche un back
-       * via history mostra subito la card aggiornata.
+       * Si torna subito alla vista precedente; cliente, vendita attiva e
+       * riepiloghi vengono riletti in background e la card si aggiorna da sola.
        */
-      if (this.isAdmin) {
-        await this.caricaDashboardAdmin();
-      }
-
-      await this.caricaClienti();
+      this.aggiornaDopoSchedaInBackground();
 
       if (
         this.historyPronta &&
