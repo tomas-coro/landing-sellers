@@ -68,7 +68,7 @@ test('la pagina Quote mostra consegne in corso, foglio e storico chiuso', () => 
 
 test('la scheda cliente non offre la conferma singola su una quota in consegna', () => {
   assert.ok(html.includes('!quota.ricevuta_il && !quota.consegnata_il'));
-  assert.ok(html.includes('In consegna, conferma da Quote'));
+  assert.ok(html.includes('Pagata, conferma da Quote'));
   const cliente = fs.readFileSync('js/app-cliente.js', 'utf8');
   assert.ok(cliente.includes('ricevuta_il,consegnata_il,consegna_gruppo_id'));
 });

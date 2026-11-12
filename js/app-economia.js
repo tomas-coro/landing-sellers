@@ -1839,28 +1839,28 @@
     async creaConsegna() {
       const ids = this.foglioConsegna.selezionate;
       if (!ids.length) return;
-      const ok = await this.eseguiAzioneConsegna('nuova', 'segna_quote_consegnate', { p_quota_ids: ids }, 'Consegna registrata. Ora tocca a chi la riceve.');
+      const ok = await this.eseguiAzioneConsegna('nuova', 'segna_quote_consegnate', { p_quota_ids: ids }, 'Pagamento registrato. Ora tocca a chi lo riceve.');
       if (ok) this.chiudiFoglioConsegna();
     },
 
     async annullaConsegna(gruppo) {
-      const ok = await this.chiediConferma('Annulli questa consegna? Le quote tornano da trasferire.', 'Annulla consegna');
+      const ok = await this.chiediConferma('Annulli questo pagamento? Le quote tornano da trasferire.', 'Annulla pagamento');
       if (!ok) return;
-      await this.eseguiAzioneConsegna(gruppo.gruppoId, 'annulla_consegna_gruppo', { p_gruppo: gruppo.gruppoId }, 'Consegna annullata.');
+      await this.eseguiAzioneConsegna(gruppo.gruppoId, 'annulla_consegna_gruppo', { p_gruppo: gruppo.gruppoId }, 'Pagamento annullato.');
     },
 
     async confermaConsegna(gruppo) {
-      await this.eseguiAzioneConsegna(gruppo.gruppoId, 'conferma_gruppo_consegna', { p_gruppo: gruppo.gruppoId }, 'Consegna ricevuta e confermata.');
+      await this.eseguiAzioneConsegna(gruppo.gruppoId, 'conferma_gruppo_consegna', { p_gruppo: gruppo.gruppoId }, 'Pagamento ricevuto e confermato.');
     },
 
     async rifiutaConsegna(gruppo) {
-      const ok = await this.chiediConferma('Non hai ricevuto questa consegna? Torna da trasferire a chi l\'ha segnata.', 'Non ricevuta');
+      const ok = await this.chiediConferma('Non hai ricevuto questo pagamento? Torna da trasferire a chi l\'ha segnata.', 'Non ricevuta');
       if (!ok) return;
-      await this.eseguiAzioneConsegna(gruppo.gruppoId, 'rifiuta_gruppo_consegna', { p_gruppo: gruppo.gruppoId }, 'Consegna rifiutata.');
+      await this.eseguiAzioneConsegna(gruppo.gruppoId, 'rifiuta_gruppo_consegna', { p_gruppo: gruppo.gruppoId }, 'Pagamento rifiutato.');
     },
 
     async annullaConfermaConsegna(gruppo) {
-      const ok = await this.chiediConferma('Annulli la conferma di questa consegna? Torna da confermare.', 'Annulla conferma');
+      const ok = await this.chiediConferma('Annulli la conferma di questo pagamento? Torna da confermare.', 'Annulla conferma');
       if (!ok) return;
       await this.eseguiAzioneConsegna(gruppo.gruppoId, 'annulla_conferma_gruppo', { p_gruppo: gruppo.gruppoId }, 'Conferma annullata.');
     },

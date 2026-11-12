@@ -5883,7 +5883,7 @@
                       <template x-for="quota in p.quote_trasferimento" :key="p.id + '-' + quota.profilo_id">
                         <div class="payment-transfer-row">
                           <span x-text="nomePartecipanteTrasferimento(quota) + ' · ' + formattaEuro(quota.quota_effettiva)"></span>
-                          <strong x-text="quota.profilo_id === p.incassato_da ? 'Ha incassato' : (quota.ricevuta_il ? 'Ricevuta' : (quota.consegnata_il ? 'In consegna, conferma da Quote' : 'Da trasferire'))"></strong>
+                          <strong x-text="quota.profilo_id === p.incassato_da ? 'Ha incassato' : (quota.ricevuta_il ? 'Ricevuta' : (quota.consegnata_il ? 'Pagata, conferma da Quote' : 'Da trasferire'))"></strong>
                           <button
                             type="button"
                             x-show="quota.profilo_id === sessione?.user?.id && quota.profilo_id !== p.incassato_da && !quota.ricevuta_il && !quota.consegnata_il"
@@ -7652,7 +7652,7 @@
           <div class="home-section-title">
             <div>
               <span>DA RICEVERE</span>
-              <strong x-text="(trasferimentiDaConfermare.length + consegneInArrivo.length) === 0 ? 'Niente da confermare' : (consegneInArrivo.length ? consegneInArrivo.length + (consegneInArrivo.length === 1 ? ' consegna' : ' consegne') : '') + (consegneInArrivo.length && trasferimentiDaConfermare.length ? ' e ' : '') + (trasferimentiDaConfermare.length ? trasferimentiDaConfermare.length + (trasferimentiDaConfermare.length === 1 ? ' quota ricevuta' : ' quote ricevute') : '') + ' da confermare'"></strong>
+              <strong x-text="(trasferimentiDaConfermare.length + consegneInArrivo.length) === 0 ? 'Niente da confermare' : (consegneInArrivo.length ? consegneInArrivo.length + (consegneInArrivo.length === 1 ? ' pagamento' : ' pagamenti') : '') + (consegneInArrivo.length && trasferimentiDaConfermare.length ? ' e ' : '') + (trasferimentiDaConfermare.length ? trasferimentiDaConfermare.length + (trasferimentiDaConfermare.length === 1 ? ' quota ricevuta' : ' quote ricevute') : '') + ' da confermare'"></strong>
             </div>
           </div>
           <div class="cons-lista" x-show="consegneInArrivo.length > 0">
@@ -7665,7 +7665,7 @@
                   </div>
                   <div class="cons-tot" x-text="formattaEuro(g.totale)"></div>
                   <div class="cons-dir" x-text="g.controparteNome + ' → Tu'"></div>
-                  <div class="cons-rail"><div class="on">Incassata</div><div class="on now">Consegnata</div><div>Confermata</div></div>
+                  <div class="cons-rail"><div class="on">Incassata</div><div class="on now">Pagata</div><div>Confermata</div></div>
                   <div class="cons-turn me"><i>!</i><span>Tocca a te: conferma di aver ricevuto</span></div>
                   <details class="cons-dett">
                     <summary x-text="'Vedi le ' + g.righe.length + (g.righe.length === 1 ? ' quota' : ' quote')"></summary>
@@ -7731,7 +7731,7 @@
               </div>
             </template>
           </div>
-          <button type="button" class="btn btn-primary cons-nuova" x-show="quoteDaTrasferire.length > 0" @click="apriFoglioConsegna()">Nuova consegna</button>
+          <button type="button" class="btn btn-primary cons-nuova" x-show="quoteDaTrasferire.length > 0" @click="apriFoglioConsegna()">Nuovo pagamento</button>
           <div class="home-attention-list" x-show="quoteDaTrasferire.length > 0">
             <template x-for="quota in quoteDaTrasferireRaggruppate()" :key="'da-trasferire-' + quota.pagamentoIds.join('-')">
               <button type="button" class="home-attention-row"
@@ -7752,8 +7752,8 @@
         <section class="home-attention home-today-v3 quote-operation-section" style="margin-top:14px" x-show="!isAdmin && consegneInviate.length > 0">
           <div class="home-section-title">
             <div>
-              <span>CONSEGNE IN CORSO</span>
-              <strong x-text="consegneInviate.length === 1 ? '1 consegna in attesa di conferma' : consegneInviate.length + ' consegne in attesa di conferma'"></strong>
+              <span>PAGAMENTI IN CORSO</span>
+              <strong x-text="consegneInviate.length === 1 ? '1 pagamento in attesa di conferma' : consegneInviate.length + ' pagamenti in attesa di conferma'"></strong>
             </div>
           </div>
           <div class="cons-lista">
@@ -7766,7 +7766,7 @@
                   </div>
                   <div class="cons-tot" x-text="formattaEuro(g.totale)"></div>
                   <div class="cons-dir" x-text="'Tu → ' + g.controparteNome"></div>
-                  <div class="cons-rail"><div class="on">Incassata</div><div class="on now">Consegnata</div><div>Confermata</div></div>
+                  <div class="cons-rail"><div class="on">Incassata</div><div class="on now">Pagata</div><div>Confermata</div></div>
                   <div class="cons-turn"><i x-text="(g.controparteNome || '?').charAt(0).toUpperCase()"></i><span x-text="'Tocca a ' + g.controparteNome + ': deve confermare'"></span></div>
                   <details class="cons-dett">
                     <summary x-text="'Vedi le ' + g.righe.length + (g.righe.length === 1 ? ' quota' : ' quote')"></summary>
@@ -7774,7 +7774,7 @@
                       <div class="cons-li"><span x-text="r.clienteNome || 'Cliente'"></span><strong x-text="formattaEuro(r.quota_effettiva)"></strong></div>
                     </template>
                   </details>
-                  <div class="cons-acts"><button type="button" class="btn btn-ghost" :disabled="!!consegnaInCorsoId" @click="annullaConsegna(g)" x-text="consegnaInCorsoId === g.gruppoId ? '...' : 'Annulla consegna'"></button></div>
+                  <div class="cons-acts"><button type="button" class="btn btn-ghost" :disabled="!!consegnaInCorsoId" @click="annullaConsegna(g)" x-text="consegnaInCorsoId === g.gruppoId ? '...' : 'Annulla pagamento'"></button></div>
                 </div>
               </div>
             </template>
@@ -7868,8 +7868,8 @@
 
     <div x-show="foglioConsegna.aperto" x-cloak class="modal-overlay" @click.self="chiudiFoglioConsegna()">
       <div class="modal-card cons-foglio">
-        <h2 style="margin-top:0">Nuova consegna</h2>
-        <p class="cons-nota">Scegli a chi consegni e cosa. Fatturato e cash vanno in consegne separate.</p>
+        <h2 style="margin-top:0">Nuovo pagamento</h2>
+        <p class="cons-nota">Scegli a chi paghi e cosa. Fatturato e cash vanno in pagamenti separati.</p>
         <div class="cons-seg" x-show="destinatariConsegna().length > 1">
           <template x-for="d in destinatariConsegna()" :key="'dest-' + d.id">
             <button type="button" :class="foglioConsegna.destinatarioId === d.id ? 'on' : ''" @click="scegliDestinatarioConsegna(d.id)" x-text="'A ' + d.nome + ' · ' + formattaEuro(d.totale)"></button>
@@ -7880,7 +7880,7 @@
           <button type="button" :class="foglioConsegna.tipo === 'C' ? 'on' : ''" @click="scegliTipoConsegna('C')" x-text="'Cash · ' + numeroQuotePerTipoConsegna('C')"></button>
           <button type="button" x-show="numeroQuotePerTipoConsegna('M') > 0" :class="foglioConsegna.tipo === 'M' ? 'on' : ''" @click="scegliTipoConsegna('M')" x-text="'Misto · ' + numeroQuotePerTipoConsegna('M')"></button>
         </div>
-        <p class="cons-nota" x-show="foglioConsegna.tipo === 'M'">Le quote miste o con colore non noto si consegnano una alla volta.</p>
+        <p class="cons-nota" x-show="foglioConsegna.tipo === 'M'">Le quote miste o con colore non noto si pagano una alla volta.</p>
         <div class="home-attention-list">
           <template x-for="q in righeFoglioConsegna()" :key="'fc-' + q.id">
             <label class="home-attention-row cons-sel">
@@ -7893,12 +7893,12 @@
           </template>
           <p class="cons-nota" x-show="righeFoglioConsegna().length === 0">Nessuna quota di questo tipo.</p>
         </div>
-        <p class="cons-nota" x-show="foglioConsegna.selezionate.length > 1" x-text="'Risulteranno consegnate insieme' + (foglioConsegna.tipo === 'F' ? ', in un\'unica fattura' : '') + '.'"></p>
+        <p class="cons-nota" x-show="foglioConsegna.selezionate.length > 1" x-text="'Risulteranno pagate insieme' + (foglioConsegna.tipo === 'F' ? ', in un\'unica fattura' : '') + '.'"></p>
         <div class="btn-row" style="margin-top:18px">
           <button type="button" class="btn btn-ghost" @click="chiudiFoglioConsegna()">Chiudi</button>
           <button type="button" class="btn btn-primary" :disabled="!foglioConsegna.selezionate.length || !!consegnaInCorsoId"
             @click="creaConsegna()"
-            x-text="consegnaInCorsoId === 'nuova' ? '...' : (foglioConsegna.selezionate.length ? 'Consegna ' + formattaEuro(totaleConsegnaSelezionata()) : 'Scegli le quote')"></button>
+            x-text="consegnaInCorsoId === 'nuova' ? '...' : (foglioConsegna.selezionate.length ? 'Ho pagato ' + formattaEuro(totaleConsegnaSelezionata()) : 'Scegli le quote')"></button>
         </div>
       </div>
     </div>
@@ -8007,7 +8007,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=219', {
+      navigator.serviceWorker.register('./service-worker.js?v=220', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
