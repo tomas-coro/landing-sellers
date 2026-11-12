@@ -17282,3 +17282,4 @@ html[data-theme=dark] .port-page{--port-green:#92e6ae;--port-chart:#9ee6ac;--por
 @media (prefers-reduced-motion:reduce){.cons-pila *{transition:none!important}}
 
 .app-version{margin:18px 0 6px;text-align:center;font-size:12px;color:var(--muted)}
+.home-attention-row strong:has(+ .quota-colore){display:inline-block;vertical-align:middle;max-width:calc(100% - 100px)}
