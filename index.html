@@ -50,6 +50,7 @@
 <script src="js/app-fatturato.js" defer></script>
 <script src="js/app-rete.js" defer></script>
 <script src="js/app-clienti.js" defer></script>
+<script src="js/app-grafici.js" defer></script>
 <script src="js/app.js" defer></script>
 <script defer src="js/vendor/alpine-3.17.4.min.js"></script>
 
@@ -8007,7 +8008,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=223', {
+      navigator.serviceWorker.register('./service-worker.js?v=224', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
