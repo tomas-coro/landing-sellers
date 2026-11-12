@@ -1105,10 +1105,21 @@
       return Object.values(gruppi);
     },
 
-    percentualeFatturataPagamento(pagamento) {
-      const calcolo = [].concat(pagamento?.pagamento_calcoli || [])[0];
-      const valore = calcolo?.percentuale_fatturata_admin;
-      return valore === null || valore === undefined ? null : Number(valore);
+    async caricaPercentualiFatturate(pagamentoIds) {
+      const ids = [...new Set((pagamentoIds || []).filter(Boolean))];
+      if (!ids.length) return {};
+
+      const { data, error } = await window.supabaseClient
+        .rpc('percentuali_fatturate_pagamenti', { p_pagamento_ids: ids });
+
+      if (error) {
+        this.mostraToast('error', 'Fatturato/cash non caricato', error.message);
+        return {};
+      }
+
+      return Object.fromEntries(
+        (data || []).map(riga => [riga.pagamento_id, Number(riga.percentuale_fatturata)])
+      );
     },
 
     etichettaColoreQuota(quota) {
@@ -1369,7 +1380,6 @@
             incassato_da,
             stato,
             importo,
-            pagamento_calcoli(percentuale_fatturata_admin),
             data_pagamento,
             note,
             vendite!inner(cliente_id, clienti(nome))
@@ -1387,6 +1397,7 @@
       }
 
       await this.caricaMappaNomiVenditori();
+      const percentuali = await this.caricaPercentualiFatturate((data || []).map(q => q.pagamento_id));
 
       this.quoteDaTrasferire = (data || []).map(quota => ({
         ...quota,
@@ -1395,7 +1406,7 @@
         aChiNome: this.nomeVenditorePerId(quota.profilo_id),
         dataPagamento: quota.pagamenti?.data_pagamento || null,
         importoIncasso: quota.pagamenti?.importo ?? null,
-        percentualeFatturata: this.percentualeFatturataPagamento(quota.pagamenti),
+        percentualeFatturata: percentuali[quota.pagamento_id] ?? null,
         noteIncasso: quota.pagamenti?.note || ''
       }));
     },
@@ -1477,7 +1488,6 @@
             incassato_da,
             stato,
             importo,
-            pagamento_calcoli(percentuale_fatturata_admin),
             vendite!inner(cliente_id, clienti(nome)),
             incassato_da_profilo:profili!pagamenti_incassato_da_fkey(nome)
           )
@@ -1491,6 +1501,8 @@
         return;
       }
 
+      const percentuali = await this.caricaPercentualiFatturate((data || []).map(q => q.pagamento_id));
+
       this.quoteAdmin = (data || [])
         .filter(quota => quota.pagamenti?.incassato_da !== quota.profilo_id)
         .map(quota => ({
@@ -1500,7 +1512,7 @@
           daChiNome: quota.pagamenti?.incassato_da_profilo?.nome || '',
           aChiNome: quota.profilo?.nome || '',
           importoIncasso: quota.pagamenti?.importo ?? null,
-          percentualeFatturata: this.percentualeFatturataPagamento(quota.pagamenti)
+          percentualeFatturata: percentuali[quota.pagamento_id] ?? null
         }));
     },
 
