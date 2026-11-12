@@ -1081,13 +1081,42 @@
       const gruppi = lista.reduce((mappa, quota) => {
         const chiave = chiaveFn(quota);
         if (!mappa[chiave]) {
-          mappa[chiave] = { ...quota, quota_effettiva: 0, pagamentoIds: [] };
+          mappa[chiave] = {
+            ...quota,
+            quota_effettiva: 0,
+            pagamentoIds: [],
+            pesoIncassi: 0,
+            pesoFatturato: 0,
+            coloreNoto: true
+          };
         }
-        mappa[chiave].quota_effettiva += Number(quota.quota_effettiva || 0);
-        mappa[chiave].pagamentoIds.push(quota.pagamento_id);
+        const gruppo = mappa[chiave];
+        gruppo.quota_effettiva += Number(quota.quota_effettiva || 0);
+        gruppo.pagamentoIds.push(quota.pagamento_id);
+        if (quota.percentualeFatturata === null || quota.percentualeFatturata === undefined) {
+          gruppo.coloreNoto = false;
+        } else {
+          const peso = Number(quota.importoIncasso) > 0 ? Number(quota.importoIncasso) : 1;
+          gruppo.pesoIncassi += peso;
+          gruppo.pesoFatturato += peso * Number(quota.percentualeFatturata) / 100;
+        }
         return mappa;
       }, {});
       return Object.values(gruppi);
+    },
+
+    percentualeFatturataPagamento(pagamento) {
+      const calcolo = [].concat(pagamento?.pagamento_calcoli || [])[0];
+      const valore = calcolo?.percentuale_fatturata_admin;
+      return valore === null || valore === undefined ? null : Number(valore);
+    },
+
+    etichettaColoreQuota(quota) {
+      if (!quota?.coloreNoto || !quota.pesoIncassi) return null;
+      const white = Math.round(quota.pesoFatturato / quota.pesoIncassi * 100);
+      if (white >= 100) return { testo: 'FATTURATO', classe: 'is-white' };
+      if (white <= 0) return { testo: 'CASH', classe: 'is-black' };
+      return { testo: white + '% fatturato · ' + (100 - white) + '% cash', classe: 'is-mista', white, black: 100 - white };
     },
 
     trasferimentiDaConfermareRaggruppati() {
@@ -1340,6 +1369,7 @@
             incassato_da,
             stato,
             importo,
+            pagamento_calcoli(percentuale_fatturata_admin),
             data_pagamento,
             note,
             vendite!inner(cliente_id, clienti(nome))
@@ -1365,6 +1395,7 @@
         aChiNome: this.nomeVenditorePerId(quota.profilo_id),
         dataPagamento: quota.pagamenti?.data_pagamento || null,
         importoIncasso: quota.pagamenti?.importo ?? null,
+        percentualeFatturata: this.percentualeFatturataPagamento(quota.pagamenti),
         noteIncasso: quota.pagamenti?.note || ''
       }));
     },
@@ -1445,6 +1476,8 @@
             id,
             incassato_da,
             stato,
+            importo,
+            pagamento_calcoli(percentuale_fatturata_admin),
             vendite!inner(cliente_id, clienti(nome)),
             incassato_da_profilo:profili!pagamenti_incassato_da_fkey(nome)
           )
@@ -1465,7 +1498,9 @@
           clienteId: quota.pagamenti?.vendite?.cliente_id || null,
           clienteNome: quota.pagamenti?.vendite?.clienti?.nome || '',
           daChiNome: quota.pagamenti?.incassato_da_profilo?.nome || '',
-          aChiNome: quota.profilo?.nome || ''
+          aChiNome: quota.profilo?.nome || '',
+          importoIncasso: quota.pagamenti?.importo ?? null,
+          percentualeFatturata: this.percentualeFatturataPagamento(quota.pagamenti)
         }));
     },
 
@@ -2775,6 +2810,13 @@
 
       await this.apriEconomia('vendita');
       this.selezionaClienteEconomia(cliente);
+    },
+
+    async registraIncassoDaScheda() {
+      const cliente = this.clienteSelezionato();
+      if (!cliente?.id) return;
+
+      await this.apriPagamentoCliente(cliente);
     },
 
     snapshotFormEconomia() {

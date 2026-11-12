@@ -16691,7 +16691,7 @@ html[data-theme="dark"] .agenda-content .agenda-event.ev-mancante .agenda-event-
 .scheda-bar{position:sticky;bottom:8px;margin:12px 0;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--ink);color:var(--paper);border-radius:16px;padding:8px 8px 8px 14px;z-index:5}
 .scheda-bar small{display:block;font-size:.6rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:.65}
 .scheda-bar b{font-size:.86rem}
-.scheda-bar-btn{display:grid;place-items:center;min-height:44px;padding:0 16px;border-radius:11px;background:var(--lime);color:var(--on-lime);font-weight:800;font-size:.8rem;text-decoration:none}
+.scheda-bar-btn{border:0;font-family:inherit;cursor:pointer;display:grid;place-items:center;min-height:44px;padding:0 16px;border-radius:11px;background:var(--lime);color:var(--on-lime);font-weight:800;font-size:.8rem;text-decoration:none}
 .scheda-sheetbg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1500;touch-action:none}
 .scheda-sheet{position:fixed;left:0;right:0;bottom:0;max-width:440px;margin:0 auto;max-height:82vh;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));z-index:1501;color:var(--ink)}
 .scheda-sheet-motion{transition:transform .24s var(--ease),opacity .24s var(--ease)}
@@ -17217,3 +17217,11 @@ html[data-theme=dark] .port-page{--port-green:#92e6ae;--port-chart:#9ee6ac;--por
 /* Blocchi Contratto in scheda cliente: uno per vendita attiva */
 .scheda-contratto-blocco{padding:12px;margin-bottom:12px;border:1px solid var(--line);border-radius:14px;background:var(--paper)}
 .scheda-contratto-blocco .btn{margin-top:10px;width:100%}
+
+.quota-colore{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:99px;border:1.5px solid #111;font-size:10.5px;font-weight:800;letter-spacing:.06em;line-height:1.5;vertical-align:middle;white-space:nowrap}
+.quota-colore.is-white{background:#fff;color:#111}
+.quota-colore.is-black{background:#111;color:#fff;border-color:#8a8a80}
+.quota-colore.is-mista{display:inline-flex;width:84px;padding:0;overflow:hidden;background:none;border-color:#8a8a80}
+.quota-colore.is-mista i{display:block;flex-basis:0;min-width:30px;padding:1px 0;text-align:center;font-style:normal}
+.quota-colore.is-mista .qc-w{background:#fff;color:#111}
+.quota-colore.is-mista .qc-b{background:#111;color:#fff}

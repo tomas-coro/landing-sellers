@@ -5398,7 +5398,8 @@
             <small>Prossima scadenza</small>
             <b class="num" x-text="s.prossimaScadenza ? s.prossimaScadenzaLabel + ' · ' + s.prossimaScadenzaDataLabel : 'Nessuna scadenza'"></b>
           </div>
-          <a class="scheda-bar-btn" x-show="clienteSelezionato().telefono" :href="'tel:' + telefonoPulito(clienteSelezionato())">Chiama</a>
+          <button type="button" class="scheda-bar-btn" x-show="clienteSelezionato().haVenditaAttiva" @click="registraIncassoDaScheda()">Incassa</button>
+          <a class="scheda-bar-btn" x-show="!clienteSelezionato().haVenditaAttiva && clienteSelezionato().telefono" :href="'tel:' + telefonoPulito(clienteSelezionato())">Chiama</a>
         </div>
 
 
@@ -7709,6 +7710,8 @@
                 <span class="home-attention-dot type-ritardo"></span>
                 <div>
                   <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
+                  <span class="quota-colore" x-show="etichettaColoreQuota(quota) && !etichettaColoreQuota(quota).black" :class="etichettaColoreQuota(quota)?.classe" x-text="etichettaColoreQuota(quota)?.testo"></span>
+                  <span class="quota-colore is-mista" x-show="etichettaColoreQuota(quota)?.black" :aria-label="etichettaColoreQuota(quota)?.testo"><i class="qc-w" :style="'flex-grow:' + etichettaColoreQuota(quota)?.white" x-text="etichettaColoreQuota(quota)?.white + '%'"></i><i class="qc-b" :style="'flex-grow:' + etichettaColoreQuota(quota)?.black" x-text="etichettaColoreQuota(quota)?.black + '%'"></i></span>
                   <small x-text="'A ' + (quota.aChiNome || 'definire') + (quota.clienteNome ? ' · ' + quota.clienteNome : '') + (quota.pagamentoIds.length > 1 ? ' · ' + quota.pagamentoIds.length + ' incassi' : '')"></small>
                 </div>
                 <span class="home-attention-arrow">›</span>
@@ -7730,6 +7733,8 @@
                 <span class="home-attention-dot type-ritardo"></span>
                 <div>
                   <strong x-text="formattaEuro(quota.quota_effettiva)"></strong>
+                  <span class="quota-colore" x-show="etichettaColoreQuota(quota) && !etichettaColoreQuota(quota).black" :class="etichettaColoreQuota(quota)?.classe" x-text="etichettaColoreQuota(quota)?.testo"></span>
+                  <span class="quota-colore is-mista" x-show="etichettaColoreQuota(quota)?.black" :aria-label="etichettaColoreQuota(quota)?.testo"><i class="qc-w" :style="'flex-grow:' + etichettaColoreQuota(quota)?.white" x-text="etichettaColoreQuota(quota)?.white + '%'"></i><i class="qc-b" :style="'flex-grow:' + etichettaColoreQuota(quota)?.black" x-text="etichettaColoreQuota(quota)?.black + '%'"></i></span>
                   <small x-text="(quota.daChiNome || '?') + ' → ' + (quota.aChiNome || '?') + (quota.clienteNome ? ' · ' + quota.clienteNome : '')"></small>
                 </div>
                 <span class="home-attention-arrow">›</span>
@@ -7896,7 +7901,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=209', {
+      navigator.serviceWorker.register('./service-worker.js?v=213', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
