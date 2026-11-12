@@ -1159,7 +1159,7 @@
     },
 
     totaleQuoteDaConfermare() {
-      return this.totaleQuote(this.trasferimentiDaConfermare);
+      return this.totaleQuote(this.trasferimentiDaConfermare) + this.totaleConsegneInArrivo();
     },
 
     totaleQuoteDaTrasferire() {
@@ -1170,6 +1170,7 @@
       return this.isAdmin
         ? this.quoteAdminRaggruppate().length
         : this.trasferimentiDaConfermareRaggruppati().length +
+            this.numeroConsegneInArrivo() +
             this.quoteDaTrasferireRaggruppate().length;
     },
 
@@ -1186,7 +1187,7 @@
           : this.numeroAzioniQuote() + ' trasferimenti da verificare';
       }
 
-      const daConfermare = this.trasferimentiDaConfermareRaggruppati().length;
+      const daConfermare = this.trasferimentiDaConfermareRaggruppati().length + this.numeroConsegneInArrivo();
       const daTrasferire = this.quoteDaTrasferireRaggruppate().length;
       return [
         daConfermare ? daConfermare + ' da confermare' : '',
@@ -1213,6 +1214,7 @@
     async caricaTrasferimentiDaConfermare() {
       const profiloId = this.sessione?.user?.id;
       this.trasferimentiDaConfermare = [];
+      this.consegneInArrivo = [];
       if (!profiloId) return;
 
       const { data, error } = await window.supabaseClient
@@ -1222,6 +1224,8 @@
           pagamento_id,
           quota_effettiva,
           ricevuta_il,
+          consegnata_il,
+          consegna_gruppo_id,
           pagamenti!inner(
             id,
             incassato_da,
@@ -1244,7 +1248,8 @@
 
       await this.caricaMappaNomiVenditori();
 
-      this.trasferimentiDaConfermare = (data || [])
+      const percentuali = await this.caricaPercentualiFatturate((data || []).map(q => q.pagamento_id));
+      const tutte = (data || [])
         .filter(quota => quota.pagamenti?.incassato_da !== profiloId)
         .map(quota => ({
           ...quota,
@@ -1255,6 +1260,13 @@
           importoIncasso: quota.pagamenti?.importo ?? null,
           noteIncasso: quota.pagamenti?.note || ''
         }));
+
+      this.trasferimentiDaConfermare = tutte.filter(quota => !quota.consegnata_il);
+      this.consegneInArrivo = this.raggruppaConsegne(
+        tutte.filter(quota => quota.consegnata_il && quota.consegna_gruppo_id),
+        quota => quota.controparteNome,
+        percentuali
+      );
     },
 
     // Quote di rete (10%) che HAI diritto di ricevere da pagamenti incassati
@@ -1365,6 +1377,7 @@
     async caricaQuoteDaTrasferire() {
       const profiloId = this.sessione?.user?.id;
       this.quoteDaTrasferire = [];
+      this.consegneInviate = [];
       if (!profiloId) return;
 
       const { data, error } = await window.supabaseClient
@@ -1375,6 +1388,8 @@
           profilo_id,
           quota_effettiva,
           ricevuta_il,
+          consegnata_il,
+          consegna_gruppo_id,
           pagamenti!inner(
             id,
             incassato_da,
@@ -1399,7 +1414,7 @@
       await this.caricaMappaNomiVenditori();
       const percentuali = await this.caricaPercentualiFatturate((data || []).map(q => q.pagamento_id));
 
-      this.quoteDaTrasferire = (data || []).map(quota => ({
+      const tutte = (data || []).map(quota => ({
         ...quota,
         clienteId: quota.pagamenti?.vendite?.cliente_id || null,
         clienteNome: quota.pagamenti?.vendite?.clienti?.nome || '',
@@ -1409,6 +1424,13 @@
         percentualeFatturata: percentuali[quota.pagamento_id] ?? null,
         noteIncasso: quota.pagamenti?.note || ''
       }));
+
+      this.quoteDaTrasferire = tutte.filter(quota => !quota.consegnata_il);
+      this.consegneInviate = this.raggruppaConsegne(
+        tutte.filter(quota => quota.consegnata_il && quota.consegna_gruppo_id),
+        quota => quota.aChiNome,
+        percentuali
+      );
     },
 
     // Totale da trasferire per destinatario (es. "Quanto devo a Tomas",
@@ -1429,6 +1451,7 @@
     async caricaQuoteConfermateRecenti() {
       const profiloId = this.sessione?.user?.id;
       this.quoteConfermateRecenti = [];
+      this.consegneChiuse = [];
       if (!profiloId) return;
 
       const { data, error } = await window.supabaseClient
@@ -1438,6 +1461,7 @@
           pagamento_id,
           quota_effettiva,
           ricevuta_il,
+          consegna_gruppo_id,
           pagamenti!inner(
             id,
             incassato_da,
@@ -1450,7 +1474,7 @@
         .gt('quota_effettiva', 0)
         .eq('pagamenti.stato', 'incassato')
         .order('ricevuta_il', { ascending: false })
-        .limit(10);
+        .limit(40);
 
       if (error) {
         this.mostraToast('error', 'Quote confermate non caricate', error.message);
@@ -1459,13 +1483,21 @@
 
       await this.caricaMappaNomiVenditori();
 
-      this.quoteConfermateRecenti = (data || [])
+      const percentuali = await this.caricaPercentualiFatturate((data || []).map(q => q.pagamento_id));
+      const tutte = (data || [])
         .filter(quota => quota.pagamenti?.incassato_da !== profiloId)
         .map(quota => ({
           ...quota,
           clienteNome: quota.pagamenti?.vendite?.clienti?.nome || '',
           controparteNome: this.nomeVenditorePerId(quota.pagamenti?.incassato_da)
         }));
+
+      this.quoteConfermateRecenti = tutte.filter(quota => !quota.consegna_gruppo_id).slice(0, 10);
+      this.consegneChiuse = this.raggruppaConsegne(
+        tutte.filter(quota => quota.consegna_gruppo_id),
+        quota => quota.controparteNome,
+        percentuali
+      );
     },
 
     // Vista admin: tutte le quote ancora da trasferire, per capire chi deve
@@ -1670,6 +1702,166 @@
       } finally {
         this.annullandoConfermaQuotaId = null;
       }
+    },
+
+    raggruppaConsegne(righe, nomeFn, percentuali = {}) {
+      const mappa = new Map();
+      righe.forEach(riga => {
+        const gruppo = mappa.get(riga.consegna_gruppo_id) || {
+          gruppoId: riga.consegna_gruppo_id,
+          righe: [],
+          totale: 0,
+          controparteNome: nomeFn(riga),
+          data: riga.ricevuta_il || riga.consegnata_il
+        };
+        gruppo.righe.push(riga);
+        gruppo.totale += Number(riga.quota_effettiva || 0);
+        mappa.set(riga.consegna_gruppo_id, gruppo);
+      });
+      return [...mappa.values()]
+        .map(gruppo => {
+          const pct = percentuali[gruppo.righe[0].pagamento_id];
+          const tipo = pct === null || pct === undefined
+            ? null
+            : (pct >= 100 ? 'FATTURATO' : (pct <= 0 ? 'CASH' : 'MISTO'));
+          return { ...gruppo, tipo };
+        })
+        .sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')));
+    },
+
+    etichettaConsegna(gruppo) {
+      const n = gruppo.righe.length;
+      return n + (n === 1 ? ' incasso' : ' incassi') + (gruppo.tipo === 'FATTURATO' && n > 1 ? ' · 1 fattura' : '');
+    },
+
+    numeroConsegneInArrivo() {
+      return this.consegneInArrivo.length;
+    },
+
+    totaleConsegneInArrivo() {
+      return this.consegneInArrivo.reduce((somma, gruppo) => somma + gruppo.totale, 0);
+    },
+
+    tipoQuotaConsegna(quota) {
+      const pct = quota.percentualeFatturata;
+      if (pct === null || pct === undefined) return 'M';
+      if (pct >= 100) return 'F';
+      if (pct <= 0) return 'C';
+      return 'M';
+    },
+
+    destinatariConsegna() {
+      const mappa = new Map();
+      this.quoteDaTrasferire.forEach(quota => {
+        const voce = mappa.get(quota.profilo_id) || { id: quota.profilo_id, nome: quota.aChiNome || 'Da definire', totale: 0 };
+        voce.totale += Number(quota.quota_effettiva || 0);
+        mappa.set(quota.profilo_id, voce);
+      });
+      return [...mappa.values()].sort((a, b) => b.totale - a.totale);
+    },
+
+    righeFoglioConsegna() {
+      return this.quoteDaTrasferire.filter(quota =>
+        quota.profilo_id === this.foglioConsegna.destinatarioId &&
+        this.tipoQuotaConsegna(quota) === this.foglioConsegna.tipo
+      );
+    },
+
+    numeroQuotePerTipoConsegna(tipo) {
+      return this.quoteDaTrasferire.filter(quota =>
+        quota.profilo_id === this.foglioConsegna.destinatarioId &&
+        this.tipoQuotaConsegna(quota) === tipo
+      ).length;
+    },
+
+    totaleConsegnaSelezionata() {
+      return this.quoteDaTrasferire
+        .filter(quota => this.foglioConsegna.selezionate.includes(quota.id))
+        .reduce((somma, quota) => somma + Number(quota.quota_effettiva || 0), 0);
+    },
+
+    apriFoglioConsegna() {
+      const destinatari = this.destinatariConsegna();
+      if (!destinatari.length) return;
+      this.foglioConsegna = { aperto: true, destinatarioId: destinatari[0].id, tipo: 'F', selezionate: [] };
+      this.scegliTipoConsegna(this.numeroQuotePerTipoConsegna('F') ? 'F' : (this.numeroQuotePerTipoConsegna('C') ? 'C' : 'M'));
+      this.bloccaScrollApp(true);
+    },
+
+    chiudiFoglioConsegna() {
+      this.foglioConsegna = { aperto: false, destinatarioId: null, tipo: 'F', selezionate: [] };
+      this.bloccaScrollApp(false);
+    },
+
+    scegliDestinatarioConsegna(id) {
+      this.foglioConsegna.destinatarioId = id;
+      this.foglioConsegna.selezionate = [];
+      const tipo = ['F', 'C', 'M'].find(t => this.numeroQuotePerTipoConsegna(t)) || 'F';
+      this.scegliTipoConsegna(tipo);
+    },
+
+    scegliTipoConsegna(tipo) {
+      this.foglioConsegna.tipo = tipo;
+      this.foglioConsegna.selezionate = tipo === 'M' ? [] : this.righeFoglioConsegna().map(q => q.id);
+    },
+
+    alternaQuotaConsegna(id) {
+      const sel = this.foglioConsegna.selezionate;
+      if (this.foglioConsegna.tipo === 'M') {
+        this.foglioConsegna.selezionate = sel.includes(id) ? [] : [id];
+        return;
+      }
+      this.foglioConsegna.selezionate = sel.includes(id) ? sel.filter(x => x !== id) : [...sel, id];
+    },
+
+    async eseguiAzioneConsegna(chiave, rpc, parametri, messaggio) {
+      if (this.consegnaInCorsoId) return false;
+      this.consegnaInCorsoId = chiave;
+      try {
+        const { error } = await window.supabaseClient.rpc(rpc, parametri);
+        if (error) {
+          this.mostraToast('error', 'Operazione non riuscita', error.message);
+          return false;
+        }
+        await this.caricaQuoteAperte();
+        await this.caricaQuoteConfermateRecenti();
+        if (this.clienteSelezionatoId) {
+          await this.caricaPagamentiCliente(this.clienteSelezionatoId);
+        }
+        this.mostraToast('success', messaggio);
+        return true;
+      } finally {
+        this.consegnaInCorsoId = null;
+      }
+    },
+
+    async creaConsegna() {
+      const ids = this.foglioConsegna.selezionate;
+      if (!ids.length) return;
+      const ok = await this.eseguiAzioneConsegna('nuova', 'segna_quote_consegnate', { p_quota_ids: ids }, 'Consegna registrata. Ora tocca a chi la riceve.');
+      if (ok) this.chiudiFoglioConsegna();
+    },
+
+    async annullaConsegna(gruppo) {
+      const ok = await this.chiediConferma('Annulli questa consegna? Le quote tornano da trasferire.', 'Annulla consegna');
+      if (!ok) return;
+      await this.eseguiAzioneConsegna(gruppo.gruppoId, 'annulla_consegna_gruppo', { p_gruppo: gruppo.gruppoId }, 'Consegna annullata.');
+    },
+
+    async confermaConsegna(gruppo) {
+      await this.eseguiAzioneConsegna(gruppo.gruppoId, 'conferma_gruppo_consegna', { p_gruppo: gruppo.gruppoId }, 'Consegna ricevuta e confermata.');
+    },
+
+    async rifiutaConsegna(gruppo) {
+      const ok = await this.chiediConferma('Non hai ricevuto questa consegna? Torna da trasferire a chi l\'ha segnata.', 'Non ricevuta');
+      if (!ok) return;
+      await this.eseguiAzioneConsegna(gruppo.gruppoId, 'rifiuta_gruppo_consegna', { p_gruppo: gruppo.gruppoId }, 'Consegna rifiutata.');
+    },
+
+    async annullaConfermaConsegna(gruppo) {
+      const ok = await this.chiediConferma('Annulli la conferma di questa consegna? Torna da confermare.', 'Annulla conferma');
+      if (!ok) return;
+      await this.eseguiAzioneConsegna(gruppo.gruppoId, 'annulla_conferma_gruppo', { p_gruppo: gruppo.gruppoId }, 'Conferma annullata.');
     },
 
     cambiaClienteEconomia() {

@@ -17231,3 +17231,52 @@ html[data-theme=dark] .port-page{--port-green:#92e6ae;--port-chart:#9ee6ac;--por
 .scheda-caricamento{position:fixed;top:0;left:0;right:0;height:3px;z-index:1600;background:linear-gradient(90deg,transparent,var(--lime,#c8ff00),transparent);background-size:40% 100%;background-repeat:no-repeat;animation:scheda-caricamento 1s linear infinite}
 @keyframes scheda-caricamento{from{background-position:-40% 0}to{background-position:140% 0}}
 @media (prefers-reduced-motion:reduce){.scheda-caricamento{animation:none;background:var(--lime,#c8ff00)}}
+
+.cons-nuova{width:100%;margin:12px 0 4px}
+.cons-lista{display:grid;gap:16px;margin:12px 0 6px}
+.cons-pila{position:relative;margin:0 8px 8px 0}
+.cons-pila::before,.cons-pila::after{content:"";position:absolute;inset:0;border:1.5px solid #111;border-radius:18px;background:var(--card)}
+.cons-pila::before{transform:translate(8px,8px);opacity:.55}
+.cons-pila::after{transform:translate(4px,4px);opacity:.85}
+.cons-card{position:relative;z-index:2;background:#fff;border:1.5px solid #111;border-radius:18px;padding:14px}
+.cons-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cons-top .quota-colore{margin-left:0}
+.cons-chip{font-size:13px;font-weight:800;color:var(--muted)}
+.cons-tot{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:8px 0 0;font-variant-numeric:tabular-nums}
+.cons-dir{font-size:15px;font-weight:700;margin-bottom:12px}
+.cons-rail{display:grid;grid-template-columns:repeat(3,1fr);margin:6px 0 10px}
+.cons-rail div{position:relative;text-align:center;font-size:12.5px;font-weight:800;color:var(--muted);padding-top:24px}
+.cons-rail div::before{content:"";position:absolute;left:50%;top:2px;width:14px;height:14px;margin-left:-7px;border-radius:50%;border:2px solid #111;background:#fff;z-index:2}
+.cons-rail div::after{content:"";position:absolute;left:-50%;top:8px;width:100%;height:2px;background:#cfcabd;z-index:1}
+.cons-rail div:first-child::after{display:none}
+.cons-rail div.on{color:#111}
+.cons-rail div.on::before{background:#111}
+.cons-rail div.on::after{background:#111}
+.cons-rail div.now::before{background:var(--lime);box-shadow:0 0 0 4px rgba(200,255,61,.45)}
+.cons-turn{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:var(--paper-2);font-weight:800;font-size:14.5px;line-height:1.3}
+.cons-turn.me{background:var(--lime);color:var(--on-lime)}
+.cons-turn i{font-style:normal;display:grid;place-items:center;flex:none;width:24px;height:24px;border-radius:50%;background:#111;color:#fff;font-size:12.5px}
+.cons-turn.me i{color:var(--lime)}
+.cons-dett{margin-top:8px;font-size:14.5px}
+.cons-dett summary{min-height:44px;display:flex;align-items:center;font-weight:800;cursor:pointer}
+.cons-li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--line)}
+.cons-li span{color:var(--muted)}
+.cons-acts{display:flex;gap:8px;margin-top:10px}
+.cons-acts .btn{flex:1 1 0;min-height:48px;padding-left:10px;padding-right:10px}
+.cons-acts .btn-ghost{flex:0 0 34%}
+.cons-acts .btn-primary{flex:1 1 0}
+.cons-acts .btn-ghost:only-child{flex:1 1 0}
+.cons-storico{padding:0}
+.cons-storico summary{list-style:none;min-height:56px;display:grid;gap:2px;padding:14px 16px;cursor:pointer}
+.cons-storico summary::-webkit-details-marker{display:none}
+.cons-storico summary span{font-size:13px;font-weight:800;letter-spacing:.12em;color:var(--muted)}
+.cons-storico summary strong{font-size:15.5px}
+.cons-storico .home-attention-list{padding:0 12px 12px}
+.cons-foglio{max-height:88vh;overflow:auto}
+.cons-nota{font-size:14px;color:var(--muted);margin:6px 0 10px}
+.cons-seg{display:flex;gap:6px;margin:4px 0 12px}
+.cons-seg button{flex:1;min-height:46px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font:800 14px var(--sans);color:var(--ink);cursor:pointer;padding:0 8px}
+.cons-seg button.on{background:#111;color:#fff;border-color:#111}
+.cons-sel{display:flex;align-items:center;gap:12px;cursor:pointer}
+.cons-sel input{width:22px;height:22px;flex:none;accent-color:#111}
+@media (prefers-reduced-motion:reduce){.cons-pila *{transition:none!important}}

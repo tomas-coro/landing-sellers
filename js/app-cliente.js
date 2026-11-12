@@ -1466,7 +1466,7 @@
         if (incassiIds.length) {
           const quoteResult = await window.supabaseClient
             .from('pagamento_partecipanti')
-            .select('pagamento_id,profilo_id,ruolo,quota_effettiva,ricevuta_il,profilo:profili(nome,username)')
+            .select('pagamento_id,profilo_id,ruolo,quota_effettiva,ricevuta_il,consegnata_il,consegna_gruppo_id,profilo:profili(nome,username)')
             .in('pagamento_id', incassiIds);
 
           if (quoteResult.error) {
