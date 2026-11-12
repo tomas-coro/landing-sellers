@@ -1611,6 +1611,8 @@
           class="err">
         </p>
 
+        <p class="app-version" x-text="'Versione app ' + (versioneApp || 'non disponibile')"></p>
+
       </div>
     </div>
 
@@ -8003,7 +8005,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=216', {
+      navigator.serviceWorker.register('./service-worker.js?v=217', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;

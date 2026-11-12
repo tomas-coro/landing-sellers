@@ -1053,6 +1053,7 @@ function appState() {
     modificaInquadraturaAperta: false,
     modificaProfiloAperta: false,
     profiloErrore: '',
+    versioneApp: '',
     profiloSalvando: false,
     avatarCaricando: false,
     avatarErrore: false,
@@ -1405,6 +1406,13 @@ function appState() {
       window.__leAppInitDone = true;
 
       this.applicaTema(this.temaPreferenza);
+
+      if (window.caches && caches.keys) {
+        caches.keys().then((chiavi) => {
+          const shell = chiavi.filter((k) => k.startsWith('venditori-le-shell-v')).sort((a, b) => parseInt(a.split('-v').pop(), 10) - parseInt(b.split('-v').pop(), 10)).pop();
+          this.versioneApp = shell ? shell.split('-').pop() : '';
+        }).catch(() => {});
+      }
 
       this._temaMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       this._temaMediaHandler = () => {
