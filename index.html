@@ -4710,6 +4710,14 @@
               </div>
             </div>
 
+            <div class="commercial-section"><div class="commercial-section-title">Dominio e posta</div><div class="domain-choice-grid"><button type="button" :class="{ on: nuovoClienteForm.cliente_ha_dominio === true }" @click="nuovoClienteForm.cliente_ha_dominio=true; nuovoClienteForm.dominio_it=0; nuovoClienteForm.dominio_com=0; nuovoClienteForm.email_5_caselle=0; aggiornaPrezzoCliente()"><strong>Sì, ce l'ha già</strong><small>Colleghiamo quello esistente</small></button><button type="button" :class="{ on: nuovoClienteForm.cliente_ha_dominio === false }" @click="nuovoClienteForm.cliente_ha_dominio=false; aggiornaPrezzoCliente()"><strong>No, non ancora</strong><small>Lo gestiamo noi</small></button></div><div x-show="nuovoClienteForm.cliente_ha_dominio === false" class="annual-extras">
+              <div class="upgrade-qty-card"><div><strong>Dominio .it</strong><small>30 €/anno cad. · max 10</small></div><div class="qty-stepper"><button type="button" @click="setQuantitaExtra('dominio_it',-1,10)" :disabled="nuovoClienteForm.dominio_it <= 0">−</button><input type="number" min="0" max="10" x-model.number="nuovoClienteForm.dominio_it" @change="normalizzaQuantitaExtra('dominio_it',10)"><button type="button" @click="setQuantitaExtra('dominio_it',1,10)" :disabled="nuovoClienteForm.dominio_it >= 10">+</button></div></div>
+              <div class="upgrade-qty-card"><div><strong>Dominio .com</strong><small>45 €/anno cad. · max 10</small></div><div class="qty-stepper"><button type="button" @click="setQuantitaExtra('dominio_com',-1,10)" :disabled="nuovoClienteForm.dominio_com <= 0">−</button><input type="number" min="0" max="10" x-model.number="nuovoClienteForm.dominio_com" @change="normalizzaQuantitaExtra('dominio_com',10)"><button type="button" @click="setQuantitaExtra('dominio_com',1,10)" :disabled="nuovoClienteForm.dominio_com >= 10">+</button></div></div>
+              <div class="upgrade-qty-card"><div><strong>Email - 5 caselle da 1 GB</strong><small>35 €/anno cad. · max 10</small></div><div class="qty-stepper"><button type="button" @click="setQuantitaExtra('email_5_caselle',-1,10)" :disabled="nuovoClienteForm.email_5_caselle <= 0">−</button><input type="number" min="0" max="10" x-model.number="nuovoClienteForm.email_5_caselle" @change="normalizzaQuantitaExtra('email_5_caselle',10)"><button type="button" @click="setQuantitaExtra('email_5_caselle',1,10)" :disabled="nuovoClienteForm.email_5_caselle >= 10">+</button></div></div>
+            </div></div>
+
+            <div x-show="selezionePrezzo.formula === 'mensile'" class="commercial-section security-section"><div class="commercial-section-title">Pacchetto sicurezza</div><label class="security-choice"><input type="checkbox" x-model="nuovoClienteForm.pacchetto_sicurezza" @change="aggiornaPrezzoCliente()"><span><strong>Conservazione garantita per 12 mesi</strong><small>100 € una tantum</small></span></label><small class="security-warning">Senza pacchetto sicurezza, dopo un mese dalla sospensione dei pagamenti sito, dominio e dati possono essere eliminati definitivamente.</small></div>
+
             <div class="contract-discount-section">
               <div class="contract-discount-head">
                 <div>
@@ -4803,14 +4811,6 @@
                 </div>
               </div>
             </div>
-
-            <div class="commercial-section"><div class="commercial-section-title">Dominio e posta</div><div class="domain-choice-grid"><button type="button" :class="{ on: nuovoClienteForm.cliente_ha_dominio === true }" @click="nuovoClienteForm.cliente_ha_dominio=true; nuovoClienteForm.dominio_it=0; nuovoClienteForm.dominio_com=0; nuovoClienteForm.email_5_caselle=0; aggiornaPrezzoCliente()"><strong>Sì, ce l'ha già</strong><small>Colleghiamo quello esistente</small></button><button type="button" :class="{ on: nuovoClienteForm.cliente_ha_dominio === false }" @click="nuovoClienteForm.cliente_ha_dominio=false; aggiornaPrezzoCliente()"><strong>No, non ancora</strong><small>Lo gestiamo noi</small></button></div><div x-show="nuovoClienteForm.cliente_ha_dominio === false" class="annual-extras">
-              <div class="upgrade-qty-card"><div><strong>Dominio .it</strong><small>30 €/anno cad. · max 10</small></div><div class="qty-stepper"><button type="button" @click="setQuantitaExtra('dominio_it',-1,10)" :disabled="nuovoClienteForm.dominio_it <= 0">−</button><input type="number" min="0" max="10" x-model.number="nuovoClienteForm.dominio_it" @change="normalizzaQuantitaExtra('dominio_it',10)"><button type="button" @click="setQuantitaExtra('dominio_it',1,10)" :disabled="nuovoClienteForm.dominio_it >= 10">+</button></div></div>
-              <div class="upgrade-qty-card"><div><strong>Dominio .com</strong><small>45 €/anno cad. · max 10</small></div><div class="qty-stepper"><button type="button" @click="setQuantitaExtra('dominio_com',-1,10)" :disabled="nuovoClienteForm.dominio_com <= 0">−</button><input type="number" min="0" max="10" x-model.number="nuovoClienteForm.dominio_com" @change="normalizzaQuantitaExtra('dominio_com',10)"><button type="button" @click="setQuantitaExtra('dominio_com',1,10)" :disabled="nuovoClienteForm.dominio_com >= 10">+</button></div></div>
-              <div class="upgrade-qty-card"><div><strong>Email - 5 caselle da 1 GB</strong><small>35 €/anno cad. · max 10</small></div><div class="qty-stepper"><button type="button" @click="setQuantitaExtra('email_5_caselle',-1,10)" :disabled="nuovoClienteForm.email_5_caselle <= 0">−</button><input type="number" min="0" max="10" x-model.number="nuovoClienteForm.email_5_caselle" @change="normalizzaQuantitaExtra('email_5_caselle',10)"><button type="button" @click="setQuantitaExtra('email_5_caselle',1,10)" :disabled="nuovoClienteForm.email_5_caselle >= 10">+</button></div></div>
-            </div></div>
-
-            <div x-show="selezionePrezzo.formula === 'mensile'" class="commercial-section security-section"><div class="commercial-section-title">Pacchetto sicurezza</div><label class="security-choice"><input type="checkbox" x-model="nuovoClienteForm.pacchetto_sicurezza" @change="aggiornaPrezzoCliente()"><span><strong>Conservazione garantita per 12 mesi</strong><small>100 € una tantum</small></span></label><small class="security-warning">Senza pacchetto sicurezza, dopo un mese dalla sospensione dei pagamenti sito, dominio e dati possono essere eliminati definitivamente.</small></div>
 
             <div class="price-summary commercial-summary contract-summary-full">
               <div class="contract-summary-title">
@@ -8008,7 +8008,7 @@
         window.location.reload();
       });
 
-      navigator.serviceWorker.register('./service-worker.js?v=224', {
+      navigator.serviceWorker.register('./service-worker.js?v=225', {
         updateViaCache: 'none'
       }).then((reg) => {
         window.leSwRegistration = reg;
