@@ -68,6 +68,24 @@ async function fetchActiveSubscriptions(userId: string): Promise<SubscriptionRow
   return await res.json();
 }
 
+const HOST_PUSH_AMMESSI = [
+  /^fcm\.googleapis\.com$/,
+  /^updates\.push\.services\.mozilla\.com$/,
+  /\.push\.services\.mozilla\.com$/,
+  /\.push\.apple\.com$/,
+  /\.notify\.windows\.com$/,
+];
+
+function endpointPushAmmesso(endpoint: string): boolean {
+  try {
+    const url = new URL(endpoint);
+    if (url.protocol !== "https:" || url.port) return false;
+    return HOST_PUSH_AMMESSI.some((re) => re.test(url.hostname));
+  } catch {
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "method not allowed" }), { status: 405 });
@@ -130,6 +148,10 @@ Deno.serve(async (req) => {
   const results = await Promise.all(subscriptions.map(async (sub) => {
     let host = "endpoint-non-valido";
     try {
+      if (!endpointPushAmmesso(sub.endpoint)) {
+        console.warn(`endpoint rifiutato (non e' un servizio push noto): subscription=${sub.id}`);
+        return { id: sub.id, ok: false, gone: false };
+      }
       host = new URL(sub.endpoint).host;
       const subscriber = appServer.subscribe({
         endpoint: sub.endpoint,
